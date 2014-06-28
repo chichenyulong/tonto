@@ -71,27 +71,25 @@ contains
       res :: BIN
    end
 
-   create_copy(x) ::: leaky
-   ! Create a copy of "x"
-      self :: PTR
-      x :: POLYNOMIAL, IN
-      .create
-      .copy(x)
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
    end
 
-   copy(x) ::: leaky
-   ! Set self to be a copy of "x"
-      x :: POLYNOMIAL, IN
+   copy(object) ::: leaky, pure
+   ! Copy the "object"
+      self :: OUT
+      object :: POLYNOMIAL, IN
 
-      ! Copy all (pointer copy)
       self = x
 
-      ! Nullify ptr parts
       .nullify_ptr_part
 
-      ! Create a copy of all pointer fields
-      if (x.d1_codes.created)         .d1_codes.create_copy(x.d1_codes)
-      if (x.series_expansion.created) .series_expansion.create_copy(x.series_expansion)
+      CREATE_COPY_COMPONENT(d1_codes)
+      CREATE_COPY_COMPONENT(series_expansion)
 
    end
 
@@ -143,9 +141,9 @@ contains
 
    end
 
-!  =====================
-!  Read/process keywords
-!  =====================
+!  ============
+!  Read methods
+!  ============
 
    read_keywords ::: get_from(OBJECT), leaky
    ! Read data from "stdin" using keyword style input.
@@ -170,18 +168,14 @@ contains
         case ("put                           "); .put
         case ("put_current_time              "); .put_current_time(timer)
         case ("put_time_taken                "); .put_time_taken(timer)
-        case ("redirect                      "); .redirect
-        case ("revert                        "); .revert
+        case ("redirect                      "); TEXTFILE:redirect(stdin)
+        case ("revert                        "); TEXTFILE:revert(stdin)
         case ("series_expansion=             "); .read_series_expansion
         case  default ;               UNKNOWN(keyword)
 
       end
 
    end
-
-!  ============
-!  Read methods
-!  ============
 
    read_name ::: get_from(OBJECT:read_and_set, VAL?=>STR, SET?=>.set_name), private
    ! Generic read and set
@@ -211,17 +205,17 @@ contains
       tonto.reset_memory_limit(limit)
    end
 
-   redirect ::: get_from(OBJECT), leaky
+   redirect ::: get_from(OBJECT), leaky, impure
    ! Redirect input
    end
 
-   revert ::: get_from(OBJECT), leaky
+   revert ::: get_from(OBJECT), leaky, impure
    ! Revert back to previous stdin file
    end
 
-! ============
-! Put routines
-! ============
+!  ============
+!  Put routines
+!  ============
 
    put
    ! Put the banner
@@ -323,9 +317,9 @@ contains
       stdout.text(timer.elapsed_time_message)
    end
 
-! ===
-! Run
-! ===
+!  ===
+!  Run
+!  ===
 
    run
    ! Main run-loop; assumes stdin and stdout have been defined.

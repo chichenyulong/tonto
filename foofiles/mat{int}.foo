@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat{int}.foo 4364 2014-05-12 07:41:15Z dylan_ $
+! $Id: mat{int}.foo 4213 2013-12-19 08:51:17Z dylan_ $
 !---------------------------------------------------------------------------
 
 module MAT{INT}
@@ -37,39 +37,39 @@ contains
 ! Memory allocation
 ! =================
 
-   create(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given dimensions
    end
 
-   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the specified "bounds" for each dimension
    end
 
-   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given dimensions
    end
 
-   create(bounds1,bounds2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds1,bounds2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the specified bounds for each dimension
    end
 
-   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given bounds for all dimensions
    end
 
-   create_copy(matrix) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create_copy(matrix) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a replica copy of matrix
    end
 
-   destroy ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   destroy ::: get_from(MAT{INTRINSIC}), leaky
    ! Destroy the object
    end
 
-   created result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   created result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   destroyed result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Returns true if self has *not* been created
    end
 
@@ -77,19 +77,19 @@ contains
 ! Size-of and shape operations 
 ! ============================
 
-   size result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   size result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the array
    end
 
-   dim1 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   dim1 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the 1st dimension
    end
 
-   dim2 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   dim2 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the 2nd dimension
    end
 
-   shape result (res) ::: get_from(MAT{INTRINSIC}), pure
+   shape result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the shape of "self"
    end
 
@@ -109,27 +109,27 @@ contains
 ! Shrinking and expansion
 ! =======================
 
-   shrink(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   shrink(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Shrinks self to dimension dim1xdim2.  Contents are retained.
    end
 
-   expand(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   expand(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Expands self to dimension dim1xdim2.  Contents are retained.
    end
 
-   shrink_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   shrink_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Shrinks columns of self to dimension dim2. Contents are retained.
    end
 
-   expand_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   expand_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Expands the columns self to dim2.  Contents are retained.
    end
 
-   append_columns(cols) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   append_columns(cols) ::: get_from(MAT{INTRINSIC}), leaky
    ! Append the columns "cols" onto the end of self.
    end
 
-   append_column(col) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   append_column(col) ::: get_from(MAT{INTRINSIC}), leaky
    ! Append the column "col" onto the end of self.
    end
 
@@ -137,35 +137,36 @@ contains
 ! Comparison functions
 ! ====================
 
-   equals(b) result (res) ::: get_from(MAT{INTRINSIC}), PURE
-   ! Check if the matrix is the same as "b".
-   end
-
-   same_as(b) result (res) ::: PURE
+   equals(b) result (res)
    ! Check if the matrix is the same as "b".
       self :: IN
       b :: MAT{INT}, IN
       res :: BIN
+      res = .same_as(b)
+   end
 
+   same_as(b) result (res)
+   ! Check if the matrix is the same as "b".
+      self :: IN
+      b :: MAT{INT}, IN
+      res :: BIN
    ENSURE(.is_same_shape_as(b),"incompatible dimensions")
-
       res = all(self==b)
-
    end
 
 ! ================
 ! Range operations
 ! ================
 
-   all_in_range(range) result (res) ::: get_from(MAT{INTRINSIC}), pure
+   all_in_range(range) result (res) ::: get_from(MAT{INTRINSIC})
    ! Return TRUE if all values of self are within the specified "range".
    end
 
-   in_range(range) result (res) ::: get_from(MAT{INTRINSIC}), pure
+   in_range(range) result (res) ::: get_from(MAT{INTRINSIC})
    ! Return element ij as TRUE if self(i,j) is within the specified "range".
    end
 
-   range result (res) ::: get_from(MAT{INTRINSIC}), pure
+   range result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the range (smallest and largest value) of self.
    end
 
@@ -173,32 +174,32 @@ contains
 ! Inquiry functions
 ! =================
 
-   is_diagonal result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   is_diagonal result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" is a diagonal matrix
    end
 
-   has_unit_diagonal result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   has_unit_diagonal result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" has 1's as diagonal elements
    end
 
-   has_minus_unit_diagonal result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   has_minus_unit_diagonal result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" has -1's as diagonal elements
    end
 
-   is_unit_matrix result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   is_unit_matrix result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" is the unit matrix
    end
 
-   is_inversion_matrix result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   is_inversion_matrix result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" is an inversion matrix
    ! i.e. minus the unit matrix
    end
 
-   is_symmetric result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   is_symmetric result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" is a symmetric matrix
    end
 
-   is_antisymmetric result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   is_antisymmetric result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" is an antisymmetric matrix
    end
 
@@ -206,98 +207,88 @@ contains
    ! Return TRUE if "self" is the zero matrix, i.e. every element is zero.
       self :: IN
       res :: BIN
-
       res = all(self==0)
-
    end
 
 ! =================
 ! Column operations 
 ! =================
 
-   has_column(c) result (res) ::: get_from(MAT{INTRINSIC}), PURE
-   ! Returns TRUE if the matrix "self" has a column "c". 
+   has_column(c,col) result (res) ::: get_from(MAT{INTRINSIC})
+   ! Returns TRUE if the matrix "self" has a column "c".  If present, the
+   ! matching column index "col" is also returned.
    end
 
-   index_for_column(c) result (res) ::: get_from(MAT{INTRINSIC}), PURE
-   ! Return the index of the first column in "self" which matches "c",
-   ! or else 0 is returned if there was no match.
+   column_index(c) result (res) ::: get_from(MAT{INTRINSIC})
+   ! The matching column index is returned, if the column matches "col".
    end
 
-   indices_for_column(c) result (res) ::: leaky, get_from(MAT{INTRINSIC}), PURE
-   ! Return the indices of columns in "self" matching "c", 
-   ! or else 0 is returned if there was no match.
-   end
-
-
-   swap_columns(col1,col2) ::: get_from(MAT{INTRINSIC}), PURE
+   swap_columns(col1,col2) ::: get_from(MAT{INTRINSIC})
    ! Swap columns "col1" and "col2" of self
    end
 
-   swap_columns(list) ::: get_from(MAT{INTRINSIC}), PURE
+   swap_columns(list) ::: get_from(MAT{INTRINSIC})
    ! Sequentially swap all columns in a column "list",
    ! self(:,i)      = self(:,list(i))
    ! self(:,col(i)) = self(:,i)
    end
 
-   reverse_column_order ::: get_from(MAT{INTRINSIC}), PURE
-   ! Reverse the order of the columns of self.
-   end
-
-
-   column_norms result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   column_norms result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the norms of every column
    end
 
-   get_column_norms(res) ::: get_from(MAT{INTRINSIC}), PURE
+   get_column_norms(res) ::: get_from(MAT{INTRINSIC})
    ! Return the norms of every column
    end
 
-   get_column_dot_products(res) ::: get_from(MAT{INTRINSIC}), PURE
+   get_column_dot_products(res) ::: get_from(MAT{INTRINSIC})
    ! Return the dot products of every column with itself.
    ! Good for testing distances without using a sqrt.
    end
 
-   index_of_minimum_column_norm result (res) ::: get_from(MAT{INTRINSIC}), pure
-   ! Return the column index of the column with the *minimum* norm.
+   index_of_minimum_column_norm(offset) result (res) ::: get_from(MAT{INTRINSIC})
+   ! Return the column index of the column with the *minimum* norm. If present,
+   ! "offset" is subtracted from every column beforehand, and then added back
+   ! afterwards. This is useful for finding the index of the column with minimum
+   ! distance to "offset", for a list of points held in "self".
    end
 
-   max_abs_column_difference result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   max_abs_column_difference result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the maximum of the absolute difference between all the column vector
    ! pairs of the matrix.
    end
 
-
-   mean_column_vector result (res) ::: pure
+   mean_column_vector result (res) 
    ! Return the mean of the column vectors.
-      self :: IN
       res :: VEC{REAL}(.dim1)
-
-      res = REALIFY(.sum_column_vectors)/.dim2
-
+      res = real(.sum_column_vectors)/.dim2
    end
 
-   sum_column_vectors result (res) ::: get_from(MAT{INTRINSIC}), pure
+   sum_column_vectors result (res) ::: get_from(MAT{INTRINSIC})
    ! Sum the column vectors (i.e. rows) in "self".
+   end
+
+   reverse_column_order ::: get_from(MAT{INTRINSIC})
+   ! Reverse the order of the columns of self.
    end
 
 ! ==============
 ! Row operations
 ! ==============
 
-   sum_row_vectors result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   sum_row_vectors result (res) ::: get_from(MAT{INTRINSIC})
    ! Sum the row vectors (i.e. columns) in "self".
    end
 
-   row_norms result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   row_norms result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the norms of every row
    end
 
-   swap_rows(row1,row2) ::: get_from(MAT{INTRINSIC}), PURE
+   swap_rows(row1,row2) ::: get_from(MAT{INTRINSIC})
    ! Swap columns "row1" and "row2" of self
    end
 
-   swap_rows(list) ::: get_from(MAT{INTRINSIC}), PURE
+   swap_rows(list) ::: get_from(MAT{INTRINSIC})
    ! Sequentially swap all rows in a row "list",
    ! self(i,:)       = self(list(i),:)
    end
@@ -306,22 +297,22 @@ contains
 ! Matrix algebra and vector space operations
 ! ==========================================
 
-   determinant result (res) ::: get_from(MAT{INTRINSIC}), recursive, PURE
+   determinant result (res) ::: get_from(MAT{INTRINSIC}), recursive
    ! Return the determinant
    end
 
-   adjugate(i,j) result (res) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   adjugate(i,j) result (res) ::: get_from(MAT{INTRINSIC}), leaky
    ! Return the adjugate of a matrix
    end
 
 
-   dot(l,r) result (res) ::: get_from(MAT{INTRINSIC}, LR?=>VEC{INT}, RES?=>INT), PURE
+   dot(l,r) result (res) ::: get_from(MAT{INTRINSIC}, LR?=>VEC{INT}, RES?=>INT)
    ! Multiply the matrix self by vector "l" on the left and vector "r" on the
    ! right ie:  res = l^dagger self r. Useful for non-unit metric dot_products.
    end
 
 
-   rotate(v) ::: get_from(MAT{INTRINSIC}), PURE
+   rotate(v) ::: get_from(MAT{INTRINSIC})
    ! Rotate vector "v" by self
    end
 
@@ -331,70 +322,70 @@ contains
    end
 
 
-   set_to(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}), PURE
+   set_to(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT})
    ! Set self to "a"
    end
 
-   set_to_transpose_of(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}), PURE
+   set_to_transpose_of(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT})
    ! Self becomes the transpose of "a"
    end
 
-   to_transpose ::: get_from(MAT{INTRINSIC}), PURE
+   to_transpose ::: get_from(MAT{INTRINSIC})
    ! Self becomes its own transpose.
    end
 
 
-   plus(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}), PURE
+   plus(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT})
    ! Add to self the matrix "a"
    end
 
-   minus(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}), PURE
+   minus(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT})
    ! Subtract from self the matrix "a"
    end
 
-   to_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, FAC?=>INT), PURE
+   to_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, FAC?=>INT)
    ! Set "self" to matrix "at" scaled by "fac"
    end
 
-   plus_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, FAC?=>INT), PURE
+   plus_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, FAC?=>INT)
    ! Add to "self" matrix "a" scaled by "fac"
    end
 
-   minus_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, FAC?=>INT), PURE
+   minus_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, FAC?=>INT)
    ! Subtract from "self" matrix "a" scaled by "fac"
    end
 
 
-   to_product_of(a,b,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>INT), PURE
+   to_product_of(a,b,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>INT)
    ! Set "self" to the matrix product of "a" and "b". If present, "transpose_a"
    ! and "transpose_b" can be set to TRUE if "a" and "b" need to be transposed.
    end
 
-   plus_product_of(a,b,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>INT), PURE
+   plus_product_of(a,b,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>INT)
    ! Add to "self" the matrix product of "a" and "b". If present, "transpose_a"
    ! and "transpose_b" can be set to TRUE if "a" and "b" need to be transposed.
    end
 
-   to_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>INT, FAC?=>INT), PURE
+   to_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>INT, FAC?=>INT)
    ! Set "self" to the matrix product of "a" and "b" scaled by "fac". If
    ! present, "transpose_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! need to be transposed.
    end
 
-   plus_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>INT, FAC?=>INT), PURE
+   plus_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>INT, FAC?=>INT)
    ! Add to "self" the matrix product of "a" and "b" scaled by "fac". If
    ! present, "transpose_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! neeb to be transposed.
    end
 
 
-   to_product_with_diagonal(a,diag,transpose_a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, DIAG?=>VEC{INT}), PURE
+   to_product_with_diagonal(a,diag,transpose_a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, DIAG?=>VEC{INT})
    ! Set "self" to the matrix product of "a" with diagonal matrix "diag" (stored
    ! as a vector).  If present, ""transpose_a" can be set to TRUE if "a" needs
    ! to be transposed.
    end
 
-   to_product_with_diagonal(dg,a,transpose_a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, DG?=>VEC{INT}), PURE
+   to_product_with_diagonal(dg,a,transpose_a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, DG?=>VEC{INT})
    ! Set "self" to the matrix product of diagonal matrix "dg" (stored as a
    ! vector) and "a".  If present, "transpose_a" can be set to TRUE if "a" needs
    ! to be transposed.
@@ -404,20 +395,20 @@ contains
 ! Trace operations
 ! ================
 
-   trace result (res) ::: get_from(MAT{INTRINSIC}), pure
+   trace result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the trace of self
    end
 
-   trace_product_with(a,transpose_a) result (res) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, RES?=>INT, CAST=>), pure
+   trace_product_with(a,transpose_a) result (res) ::: get_from(MAT{INTRINSIC}, A?=>MAT{INT}, RES?=>INT, CAST=>)
    ! Return the trace of the product of "self" with matrix "a",
    ! and if "transpose_a" is present and TRUE, then transpose "a".
    end
 
-   trace_product_with(a,b,c) result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   trace_product_with(a,b,c) result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the trace of the product of "self" with matrices "a", "b" and "c".
    end
 
-   trace_product_with(a,b,c,d,e) result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   trace_product_with(a,b,c,d,e) result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the trace of the product of "self" with matrices "a", "b" ... "e".
    end
 
@@ -425,43 +416,43 @@ contains
 ! Operations on the diagonal
 ! ==========================
 
-   set_from_diagonal(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{INT}), PURE
+   set_from_diagonal(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{INT})
    ! Converts the diagonal vector "d" to matrix "self".
    end
 
-   set_diagonal_to(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{INT}), PURE
+   set_diagonal_to(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{INT})
    ! Set the diagonal of "self" to vector "d"
    end
 
-   set_diagonal_to(val) ::: get_from(MAT{INTRINSIC}, VAL?=>INT), PURE
+   set_diagonal_to(val) ::: get_from(MAT{INTRINSIC}, VAL?=>INT)
    ! Set the diagonal of "self" to "val"
    end
 
-   put_diagonal_to(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{INT}), PURE
+   put_diagonal_to(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{INT})
    ! Get the diagonal elements of "self" in vector "d"
    end
 
-   increment_diagonal_by(val) ::: get_from(MAT{INTRINSIC}, VAL?=>INT), PURE
+   increment_diagonal_by(val) ::: get_from(MAT{INTRINSIC}, VAL?=>INT)
    ! Add "val" to the diagonal of "self"
    end
 
-   scale_diagonal_by(fac) ::: get_from(MAT{INTRINSIC}, FAC?=>INT), PURE
+   scale_diagonal_by(fac) ::: get_from(MAT{INTRINSIC}, FAC?=>INT)
    ! Weight the diagonal elements of "self" by "fac"
    end
 
-   zero_diagonal ::: get_from(MAT{INTRINSIC}), PURE
+   zero_diagonal ::: get_from(MAT{INTRINSIC})
    ! Zero the diagonal elements of "self"
    end
 
-   zero_off_diagonal ::: get_from(MAT{INTRINSIC}), PURE
+   zero_off_diagonal ::: get_from(MAT{INTRINSIC})
    ! Zero the off diagonal elements of "self"
    end
 
-   max_diagonal_element result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   max_diagonal_element result (res) ::: get_from(MAT{INTRINSIC})
    ! Get the maximum element on the diagonal of the matrix
    end
 
-   max_abs_diagonal_element result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   max_abs_diagonal_element result (res) ::: get_from(MAT{INTRINSIC})
    ! Get the maximum absolute value of the diagonal elements of the self matrix
    end
 
@@ -505,16 +496,16 @@ contains
 ! Compression and uncompression routines
 ! ======================================
 
-   zip_lower_triangle_to(tr) ::: get_from(MAT{INTRINSIC}), pure
-   ! Converts the lower triangle of "self" to the vector "tr"
+   compress_to_triangle(tr) ::: get_from(MAT{INTRINSIC})
+   ! Converts the lower triangle of matrix self to the triangle "tr".
    ! using row order.
    end
 
-   symmetric_unzip_triangle(tr) ::: get_from(MAT{INTRINSIC}), pure
+   uncompress_from_triangle(tr) ::: get_from(MAT{INTRINSIC})
    ! Converts the triangle "tr" into the symmetric matrix "self".
    end
 
-   tri_size result (ltr) ::: get_from(MAT{INTRINSIC}), pure
+   tri_size result (ltr) ::: get_from(MAT{INTRINSIC})
    ! Returns the size of the lower triangle needed to store self.
    end
 
@@ -526,9 +517,8 @@ contains
    ! Returns the minimal string lengths, with optional extra "spaces"
    end 
 
-   get_max_str_length(msl,spaces) ::: get_from(MAT{INTRINSIC}), pure
-   ! Return "msl" the maximum of the string lengths, and including
-   ! extra "spaces"
+   max_str_length(spaces) result (res) ::: get_from(MAT{INTRINSIC}), pure
+   ! Returns the maximum of the string lengths, with optional extra "spaces"
    end
 
 ! ======================
@@ -584,13 +574,12 @@ contains
    end
 
    bin_XY_data(X,Y,bin_side_length,data_count) ::: leaky
-   ! Set self to a matrix whose ij-th element contains the number of
-   ! data points [X(k),Y(k)] which lie in the ij-th bin. A bin is
-   ! simply a range of values of side length "bin_side_length"
-   ! covering the set of points from [X_min,Y_min] to [X_max,Y_max].
-   ! The dimension of self is calculated within this routine. If
-   ! "data_count" is present, then the bin count associated with each
-   ! data item [X(k),Y(k)] is returned in an array.
+   ! Set self to a matrix whose ij-th element contains the number of data points
+   ! [X(k),Y(k)] which lie in the ij-th bin. A bin is simply a range of values
+   ! of side length "bin_side_length" covering the set of points from
+   ! [X_min,Y_min] to [X_max,Y_max]. The dimension of self is calculated within
+   ! this routine. If "data_count" is present, then the bin count associated
+   ! with each data item [X(k),Y(k)] is returned in an array.
       self :: PTR
       X,Y :: VEC{REAL}, IN
       bin_side_length :: REAL, IN

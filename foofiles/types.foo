@@ -10,7 +10,7 @@
 !
 ! (c) dylan jayatilaka, university of western australia, 1998
 !
-! $Id: types.foo 4402 2014-06-02 13:41:45Z dylan_ $
+! $Id: types.foo 4236 2014-01-11 03:35:08Z dylan_ $
 !
 !===============================================================================
 
@@ -1120,7 +1120,7 @@ module TYPES
      ! The name of this entity
 
      d1_codes :: MAP{STR,INT}*  DEFAULT_NULL
-     ! Stores the recognised 1D variable types and their associated
+     ! Stores the recognized 1D variable types and their associated
      ! indices in a map table.
 
      series_expansion :: VEC{TERM}*, readonly   DEFAULT_NULL
@@ -1190,7 +1190,7 @@ module TYPES
      data_value :: VEC{REAL}*  DEFAULT_NULL
      ! The list of values corresponding to each data value.
 
-     finalised :: BIN  DEFAULT(FALSE)
+     finalized :: BIN  DEFAULT(FALSE)
      ! Set TRUE if the object is ready for use
 
      y2 :: VEC{REAL}*  DEFAULT_NULL
@@ -1304,33 +1304,14 @@ module TYPES
      weight :: VEC{REAL}*  DEFAULT_NULL
      ! The quadrature weight
 
-     finalised :: BIN  DEFAULT(FALSE)
-     ! Set TRUE when all initialisations are completed.
+     finalized :: BIN  DEFAULT(FALSE)
+     ! Set TRUE when all initializations are completed.
 
    end
 
    array type VEC{QUADRATURE}
 
      ! A 1-D array of QUADRATURE objects
-
-   end
-
-   type QUADRATURE2
-
-     x :: QUADRATURE
-     ! Quadrature object for the x-axis
-
-     y :: QUADRATURE
-     ! Quadrature object for the x-axis
-
-     n_points :: INT  DEFAULT(0)
-     ! No. of quadrature points in the direct product quadrature.
-
-     point :: MAT{REAL}*  DEFAULT_NULL
-     ! The quadrature points, in the (x,y) plane.
-
-     weight :: VEC{REAL}*  DEFAULT_NULL
-     ! The quadrature weights.
 
    end
 
@@ -1346,7 +1327,7 @@ module TYPES
      ! Coordinates of the quadrature points
 
      weight :: VEC{REAL}*  DEFAULT_NULL
-     ! The quadrature weights (normalised to unity)
+     ! The quadrature weights (normalized to unity)
 
      n_points_per_shell :: VEC{INT}*  DEFAULT_NULL
      ! No of ppoints per shell. This is used to save work when calculating the
@@ -1827,16 +1808,16 @@ module TYPES
    !   ! No. of rms elements for Ix*Iy 
 
      ef :: VEC{INT}*  DEFAULT_NULL
-     ! List of linearised "e,f" indices for accessing the esfs(e,f) integrals
+     ! List of linearized "e,f" indices for accessing the esfs(e,f) integrals
 
      efx :: VEC{INT}*  DEFAULT_NULL
-     ! List of linearised "ex,fx" indices for accessing the Ix(ex,fx) integrals
+     ! List of linearized "ex,fx" indices for accessing the Ix(ex,fx) integrals
 
      efy :: VEC{INT}*  DEFAULT_NULL
-     ! List of linearised "ey,fy" indices for accessing the Iy(ey,fy) integrals
+     ! List of linearized "ey,fy" indices for accessing the Iy(ey,fy) integrals
 
      efz :: VEC{INT}*  DEFAULT_NULL
-     ! List of linearised "ez,fz" indices for accessing the Iz(ez,fz) integrals
+     ! List of linearized "ez,fz" indices for accessing the Iz(ez,fz) integrals
 
      no_Ixy_is_1 :: INT
      ! Number of terms where Ix*Iy is 1.
@@ -2048,9 +2029,6 @@ module TYPES
 
      pair_center :: MAT{REAL}* DEFAULT_NULL
      ! The center of the product gaussian of gaussians .a and .b.
-
-     av_pair_center :: VEC{REAL}(3)  DEFAULT(ZERO)
-     ! The contractionweighted average of the pair_center's.
 
      center_diff :: MAT{REAL}* DEFAULT_NULL
      ! The difference between pair_center and the position of the gaussian of
@@ -2539,17 +2517,6 @@ module TYPES
      oxidation_state :: INT   DEFAULT(0), readonly
      ! The atomic oxidation state
 
-     ! ====
-     ! Mass
-     ! ====
-
-     mass_number :: INT  DEFAULT(0), readonly
-     ! The atomic mass number i.e. no. of protons and neutrons
-
-     mass :: REAL  DEFAULT(ZERO), readonly
-     ! The abundamce-weighted mass of the atom (if mass_number=0) or
-     ! the isotope mass in C12 mass units.
-
      ! ========
      ! Position
      ! ========
@@ -2567,8 +2534,8 @@ module TYPES
      ! Group & site data
      ! =================
 
-     group :: INT  DEFAULT(0)
-     ! An integer which describes the group to which the atom belongs
+     group :: INT  DEFAULT(1), readonly
+     ! An integer which describes thr group to which the atom belongs
 
      site_occupancy :: REAL  DEFAULT(ONE), readonly
      ! The crystallographic site occupancy.
@@ -2791,18 +2758,6 @@ module TYPES
 
      charge :: INT, readonly  DEFAULT(0)
      ! The list of charges on each group
-
-     MO_file_name :: STR DEFAULT(" "), readonly
-     ! Name of the MO file for the group
-
-     fchk_file_name :: STR DEFAULT(" "), readonly
-     ! Name of Gaussian FChk file for the group
-
-     rotation_matrix :: MAT{REAL}(3,3) DEFAULT(ZERO)
-     ! Rotation matrix
-
-     shift :: VEC{REAL}(3) DEFAULT(ZERO)
-     ! Shift vector
 
      n_MOs :: INT, readonly  DEFAULT(0)
      ! The number of MO's to use when constructing the density matrix
@@ -3211,6 +3166,178 @@ module TYPES
    end
 
 
+!  =============
+!  Least-squares
+!  =============
+
+   type LEAST_SQUARES
+
+     n_parameters :: INT, readonly  DEFAULT(0)
+     ! No. of fitting parameters used
+
+     n_data :: INT, readonly  DEFAULT(0)
+     ! No. of data points to fit
+
+     ! ===============================
+     ! Penalties, parameter and shifts
+     ! ===============================
+
+     chi2 :: REAL, readonly  DEFAULT(ZERO)
+     ! The current value of the penalty to be minimized
+
+     chi2_0 :: REAL, readonly  DEFAULT(ZERO)
+     ! The previous-iteration value of the penalty
+
+     X :: VEC{REAL}*, readonly   DEFAULT_NULL
+     ! Current parameter values
+
+     X0 :: VEC{REAL}*, readonly   DEFAULT_NULL
+     ! Previous iteration's parameter values
+
+     dX :: VEC{REAL}*, readonly   DEFAULT_NULL
+     ! These are are the parameter shifts
+
+     X_labels :: VEC{STR}*, readonly  DEFAULT_NULL
+     ! List of parameter descriptors
+
+     Y :: VEC{REAL}*, readonly   DEFAULT_NULL
+     ! Current predicted observations
+
+     Y0 :: VEC{REAL}*, readonly   DEFAULT_NULL
+     ! ACtual observed data
+
+     dY :: VEC{REAL}*, readonly   DEFAULT_NULL
+     ! Difference between predicted and observed Y, Y-Y0
+
+     inv_sigma :: VEC{REAL}*, readonly   DEFAULT_NULL
+     ! This is inverse of sigma for Y i.e. the weights
+
+     dYdX :: MAT{REAL}*, readonly   DEFAULT_NULL
+     ! Derivatives of model values wrt to parameters X
+
+     ! ==============
+     ! Iteration data
+     ! ==============
+
+     iteration :: INT, readonly  DEFAULT(0)
+     ! The iteration counter for a rigid-atom structure fit
+
+     min_iterations :: INT, readonly  DEFAULT(LEAST_SQUARES_MIN_ITER)
+     ! The minimum number of iterations for the normal equations
+
+     max_iterations :: INT, readonly  DEFAULT(LEAST_SQUARES_MAX_ITER)
+     ! The maximum number of iterations for the normal equations
+
+     ! ============
+     ! Termination?
+     ! ============
+
+     converged :: BIN, readonly  DEFAULT(FALSE)
+     ! TRUE if the fit has converged
+
+     chi2_increased :: BIN, readonly  DEFAULT(FALSE)
+     ! TRUE if chi2 increased
+
+     too_many_iterations :: BIN, readonly  DEFAULT(FALSE)
+     ! TRUE if the maximum iterations was exceeded
+
+     ! ====================
+     ! Parameter shift info
+     ! ====================
+
+     max_shift :: REAL, readonly  DEFAULT(ZERO)
+     ! The maximum shift in the parameter vector during a
+     ! least-squares step.
+
+     max_shift_tol :: REAL, readonly  DEFAULT(LEAST_SQUARES_MAX_SHIFT_TOL)
+     ! The maximum allowed shift when solving the normal equations:
+     ! If any one of the parameters shifts obtained from solving the
+     ! normal equations is greater than this value, they are all
+     ! rescaled so that the largest is this value.
+
+     max_shift_on_esd :: REAL, readonly  DEFAULT(ZERO)
+     ! The maximum shift in a parameter divided by its esd, during
+     ! the current refinement step.
+
+     max_shift_on_esd_tol :: REAL, readonly  DEFAULT(LEAST_SQUARES_MAX_SHIFT_ON_ESD_TOL)
+     ! The convergence tolerance for the shift in a parameter
+     ! divided by its esd
+
+     max_shift_on_esd_ind :: INT, readonly DEFAULT(0)
+     ! The index of the maximum parameter shift on esd, during the
+     ! current refinement step.
+
+     max_shift_on_esd_par :: STR, readonly DEFAULT(" ")
+     ! The parameter label for the index of the maximum parameter
+     ! shift on esd, during the current refinement step.
+
+     ! =====================================
+     ! Singularities in the normal equations
+     ! =====================================
+
+     n_near_0 :: INT, readonly  DEFAULT(0)
+     ! The number near zero eigenvalues detected when solving the
+     ! normal equations
+
+     tol_near_0 :: REAL, readonly  DEFAULT(LEAST_SQUARES_TOL_NEAR_0)
+     ! The tolerance used to detect near zero eigenvalues in the
+     ! normal equations
+
+     near_0_eigenvalues :: VEC{REAL}*, readonly  DEFAULT_NULL
+     ! The near zero eigenvalues obtained when solving the normal
+     ! equations. Useful to see parameter correlations.
+
+     near_0_eigenvectors :: MAT{REAL}*, readonly  DEFAULT_NULL
+     ! The columns of eigenvectors with near zero eigenvalue obtained
+     ! when solving the normal equations. Useful to see parameter
+     ! correlations.
+
+     ! ======================
+     ! Errors and covariances
+     ! ======================
+
+     esd :: VEC{REAL}*, readonly  DEFAULT_NULL
+     !  Uncertainties in the parameters; alias for esd_fit or esd_ref
+
+     covariance_matrix :: MAT{REAL}* DEFAULT_NULL
+     ! The covariance matrix for the asymmetric-unit parameters i.e.
+     ! the inverse of the LHS of the least squares matrix.
+
+     covariance_matrix0 :: MAT{REAL}* DEFAULT_NULL
+     ! The previous iteration's covariance matrix - for rollback in
+     ! case chi2 increases.
+
+     correlation_matrix :: MAT{REAL}* DEFAULT_NULL
+     ! The covariance matrix for the asymmetric-unit parameters i.e.
+     ! the inverse of the LHS of the least squares matrix.
+
+     ! ==============
+     ! Output control
+     ! ==============
+
+     show_fit_output :: BIN, readonly  DEFAULT(FALSE)
+     ! Display fit output in a refinement
+
+     display_near_0_eigenvectors :: BIN, readonly  DEFAULT(FALSE)
+     ! Whether to display the near zero eigenvectors
+
+     display_correlation_matrix :: BIN, readonly  DEFAULT(FALSE)
+     ! Whether to display the correlation matrix or not
+
+     min_correlation :: REAL, readonly  DEFAULT(LEAST_SQUARES_MIN_CORRELATION)
+     ! The minimum value for correlation matrix elements before they
+     ! are printed out in the output.
+
+     ! ============
+     ! Output table
+     ! ============
+
+     table :: VEC{TABLE_COLUMN}*, readonly  DEFAULT_NULL
+     ! The current fit table
+
+   end
+
+
 !  ===========
 !  Diffraction
 !  ===========
@@ -3229,40 +3356,30 @@ module TYPES
      theta :: REAL  DEFAULT(ZERO)
      ! The Bragg angle theta of reflection
 
+     stl :: REAL DEFAULT(ZERO)
+     !sin(theta)/lambda
+
      equivalence_factor :: INT  DEFAULT(1)
-     ! The number of distinct reflections 
-     !which are symmetry equivalent
+     ! The number of distinct reflections which are symmetry equivalent
 
-     F_exp :: REAL  DEFAULT(ZERO)
-     ! Experimental structure factor
+     obs :: REAL  DEFAULT(ZERO)
+     ! Observed data
 
-     F_sigma :: REAL  DEFAULT(ZERO)
-     ! Experimental error in the structure factor
+     sigma :: REAL  DEFAULT(ZERO)
+     ! Error in the observation
 
-     F_calc :: CPX  DEFAULT(ZERO)
-     ! Calculated complex structure factor without including corrections
+     cal :: REAL  DEFAULT(ZERO)
+     ! Pure corrected quantity on which obs. depends (real case)
 
-     F_pred :: REAL  DEFAULT(ZERO)
-     ! Calculated structure factor including scale and extinction corrections
+     calc :: CPX  DEFAULT(ZERO)
+     ! Pure corrected quantity on which obs. depends (complex case)
 
-     I_exp_inputted :: BIN  DEFAULT(FALSE)
-     ! Were experimental intensities inputted?
-
-     I_exp :: REAL  DEFAULT(ZERO)
-     ! Experimental intensity
-
-     I_sigma :: REAL  DEFAULT(ZERO)
-     ! Experimental error in the intensity
-
-     I_calc :: REAL  DEFAULT(ZERO)
-     ! Calculated intensity (F_pred==2) without scale and extinction corrections
-
-     I_pred :: REAL  DEFAULT(ZERO)
-     ! Calculated intensity (F_pred==2) including scale and extinction corrections
+     pred :: REAL  DEFAULT(ZERO)
+     ! Predicted value for observation
 
      group :: INT DEFAULT(0)
      ! Specifies the group that this reflection belongs to. Reflections in
-     ! different groups may get treated differently e.g. be optimised with
+     ! different groups may get treated differently e.g. be optimized with
      ! different scale factors.
 
    end
@@ -3275,7 +3392,7 @@ module TYPES
 
    type DIFFRACTION_DATA
 
-     data_kind :: STR  DEFAULT(DIFFRACTION_DATA_DATA_KIND)
+     data_kind :: STR  DEFAULT(" ")
      ! Tells whether this is X-ray, neutron, or whatever data
 
      reflections :: VEC{REFLECTION}* DEFAULT_NULL
@@ -3299,33 +3416,20 @@ module TYPES
      ! Data treatment options
      ! ======================
 
-     F_sigma_cutoff :: REAL  DEFAULT(DIFFRACTION_DATA_F_SIGMA_CUTOFF)
-     ! Cutoff for F_exp/F_sigma, for prune_weak_reflections
+     obs_on_sigma_cutoff :: REAL  DEFAULT(DIFFRACTION_DATA_OBS_ON_SIGMA_CUTOFF)
+     ! Cutoff for obs/F_sigma, for prune_weak_reflections
 
-     I_sigma_cutoff :: REAL  DEFAULT(DIFFRACTION_DATA_I_SIGMA_CUTOFF)
-     ! Cutoff for I_exp/I_sigma, for prune_weak_reflection data
-
-     F_z_cutoff :: REAL  DEFAULT(-ONE)
-     ! Cutoff for F_z, for prune_bad_reflections
-
-     I_z_cutoff :: REAL  DEFAULT(-ONE)
-     ! Cutoff for I_z, for prune_bad_reflections
+     z_statistic_cutoff :: REAL  DEFAULT(-ONE)
+     ! Cutoff for z statistic, for prune_bad_reflections
 
      stl_cutoff :: REAL  DEFAULT(-ONE)
      ! Cutoff for sin_theta_on_lamba, for prune_high_angle_reflections
 
+     negative_cutoff :: REAL  DEFAULT(ZERO)
+     ! Cutoff for negative reflections
+
      show_rejects :: BIN  DEFAULT(TRUE)
      ! Set TRUE if you want to see rejected reflections when pruning
-
-     synthesize_sigma_I :: BIN  DEFAULT(DIFFRACTION_DATA_SYNTHESIZE_SIGMA_I)
-     ! True if artificial sigma(I) errors are to be generated from poisson
-     ! statistics and used in calculating agreement statistics
-
-     SF_mixing_parameter :: REAL  DEFAULT(ZERO)
-     ! The SF mixing parameter which sets the proportion of the
-     ! experimental structure factors added into the predicted
-     ! structure factors. This may help convergence in constrained HF
-     ! problems. Dangerous and not recommended.
 
      ! =======================================
      ! Structure factor calculation parameters
@@ -3338,7 +3442,7 @@ module TYPES
      ! Thermal smearing model for the Fourier transform
 
      use_Voronoi_atoms :: BIN  DEFAULT(FALSE)
-     ! Set TRUE if fuzzy voronoi atoms (in the Stratmann-Sciseria
+     ! Set TRUE if fuzzy voronoi atoms (in the Stratmann-Scuseria
      ! scheme) are to be used for calculating the atomic form factors
      ! instead of Hirshfeld atoms
 
@@ -3346,24 +3450,18 @@ module TYPES
      ! Experimental corrections
      ! ========================
 
-     optimise_scale :: BIN  DEFAULT(DIFFRACTION_DATA_OPTIMISE_SCALE)
-     ! True if an overall scaler factor is to be optimised, for use in
-     ! calculating F_pred
-
-     scale_factor :: REAL  DEFAULT(DIFFRACTION_DATA_SCALE_FACTOR)
-     ! Scale factor to apply to the predicted structure factors
-
      scale_factors :: VEC{REAL}* DEFAULT_NULL
      ! A set of scale factors to apply to structure factors from
      ! different groups.
 
-     exp_scale_factor :: REAL  DEFAULT(DIFFRACTION_DATA_EXP_SCALE_FACTOR)
-     ! Fixed scale factor to apply to the experimental structure factors
+     exp_scale_factor :: REAL DEFAULT(ONE)
+     ! An experimental scale factor to apply to the observed data
+     ! before refinement.
 
-     optimise_extinction :: BIN  DEFAULT(DIFFRACTION_DATA_OPTIMISE_EXTINCTION)
-     ! True if extinction is to be optimised.
+     use_Larsen_extinction :: BIN  DEFAULT(DIFFRACTION_DATA_OPTIMIZE_EXTINCTION)
+     ! True if extinction is to be optimized.
 
-     extinction_factor :: REAL  DEFAULT(DIFFRACTION_DATA_EXTINCTION_FACTOR)
+     Larsen_extinction_factor :: REAL  DEFAULT(ZERO)
      ! Secondary extinction factor
 
      correct_dispersion :: BIN  DEFAULT(DIFFRACTION_DATA_CORRECT_DISPERSION)
@@ -3388,9 +3486,6 @@ module TYPES
 
      refine_structure :: BIN, readonly  DEFAULT(FALSE)
      ! Set TRUE if a structure is being refined (implies fitting)
-
-     refine_F :: BIN, readonly  DEFAULT(TRUE)
-     ! Set TRUE if you want to fit/refine F's *not* F2's
 
      refine_positions_only :: BIN  DEFAULT(FALSE)
      ! Set TRUE if you only want to fit/refine the coordinates
@@ -3431,192 +3526,23 @@ module TYPES
      ! promolecule guess, followed by the orginal choice of guess.
      ! This may stop convergenec problems.
 
-     ! ====================================
-     ! Refinement/fit iteration termination
-     ! ====================================
+     ! ==========================
+     ! Scale-factor least-squares
+     ! ==========================
 
-     min_iterations :: INT, readonly  DEFAULT(DIFFRACTION_DATA_MIN_ITER)
-     ! The minimum number of iterations for the normal equations
+     LS_exp :: LEAST_SQUARES*  DEFAULT_NULL
+     ! The least-squares for optimizing only phenomenological
+     ! experimental correction parameters.
 
-     max_iterations :: INT, readonly  DEFAULT(DIFFRACTION_DATA_MAX_ITER)
-     ! The maximum number of iterations for the normal equations
+     LS_fit :: LEAST_SQUARES*  DEFAULT_NULL
+     ! The least-squares for all parameters for a rigid fit
 
-     max_allowed_param_shift :: REAL  DEFAULT(DIFFRACTION_DATA_MAX_ALLOWED_SHIFT)
-     ! The maximum allowed shift when solving the normal equations:
-     ! If any one of the parameters shifts obtained from solving the
-     ! normal equations is greater than this value, they are all
-     ! rescaled so that the largest is this value.
-
-     ! =====================
-     ! Least squares options
-     ! =====================
-
-     tol_for_shift_on_esd :: REAL DEFAULT(DIFFRACTION_DATA_TOL_FOR_SHIFT_ON_ESD)
-     ! The convergence tolerance for the shift in a parameter
-     ! divided by its esd
-
-     tol_0 :: REAL  DEFAULT(DIFFRACTION_DATA_TOL_0)
-     ! The tolerance used to detect exact zero eigenvalues in the
-     ! normal equations
-
-     tol_near_0 :: REAL  DEFAULT(DIFFRACTION_DATA_TOL_NEAR_0)
-     ! The tolerance used to detect near zero eigenvalues in the
-     ! normal equations
-
-     ! =============================
-     ! Refinement/fit output control
-     ! =============================
-
-     show_fit_output :: BIN  DEFAULT(FALSE)
-     ! Display fit output in a refinement
-
-     display_near_0_eigenvectors :: BIN  DEFAULT(FALSE)
-     ! Whether to display the near zero eigenvectors
-
-     display_correlation_matrix :: BIN  DEFAULT(FALSE)
-     ! Whether to display the correlation matrix or not
-
-     min_correlation :: REAL  DEFAULT(DIFFRACTION_DATA_MIN_CORRELATION)
-     ! The minimum value for correlation matrix elements before they
-     ! are printed out in the output.
+     LS_ref :: LEAST_SQUARES*  DEFAULT_NULL
+     ! The least-squares for all parameters for a full refinement
 
      ! ================
      ! Fit otput tables
      ! ================
-
-     fit_table :: VEC{TABLE_COLUMN}*  DEFAULT_NULL
-     ! The current fit table
-
-     ref_table :: VEC{TABLE_COLUMN}*  DEFAULT_NULL
-     ! The current refinement table
-
-     ! ==================
-     ! Fit iteration data
-     ! ==================
-
-     fit_iteration :: INT  DEFAULT(0)
-     ! The iteration counter for a rigid-atom structure fit
-
-     chi2_fit :: REAL  DEFAULT(0)
-     ! The fit-iteration's value of chi2
-
-     chi2_fit0 :: REAL  DEFAULT(0)
-     ! The previous fit-iteration's value of chi2
-
-     max_shift :: REAL  DEFAULT(ZERO)
-     ! The maximum shift in the parameter vector during a refinement
-     ! step.
-
-     max_shift_on_esd :: REAL DEFAULT(ZERO)
-     ! The maximum shift in a parameter divided by its esd, during
-     ! the current refinement step.
-
-     max_shift_on_esd_ind :: INT DEFAULT(0)
-     ! The index of the maximum parameter shift on esd, during the
-     ! current refinement step.
-
-     max_shift_on_esd_par :: STR DEFAULT(" ")
-     ! The parameter label for the index of the maximum parameter
-     ! shift on esd, during the current refinement step.
-
-     fit_converged :: BIN  DEFAULT(FALSE)
-     ! TRUE if the fit has converged
-
-     chi2_increased :: BIN  DEFAULT(FALSE)
-     ! TRUE if chi2 increased
-
-     too_many_fit_iterations :: BIN  DEFAULT(FALSE)
-     ! TRUE if the maximum fit iterations was exceeded
-
-     ! =========================
-     ! Refinement iteration data
-     ! =========================
-
-     ref_iteration :: INT  DEFAULT(0)
-     ! The iteration counter for a non-rigid atom structure refinement
-     ! (includes multiple SCF/fit cycles)
-
-     chi2_ref :: REAL  DEFAULT(0)
-     ! For a given refine step, fhe final fit-iteration's value of chi2
-
-     chi2_ref0 :: REAL  DEFAULT(0)
-     ! For a given refine step, the initial fit-iteration's value of chi2
-
-     max_refshift :: REAL  DEFAULT(ZERO)
-     ! The maximum shift in the parameter vector during a refinement
-     ! step.
-
-     max_refshift_on_esd :: REAL DEFAULT(ZERO)
-     ! The maximum shift in a parameter divided by its esd, during
-     ! the current refinement step.
-
-     max_refshift_on_esd_ind :: INT DEFAULT(0)
-     ! The index of the maximum parameter shift on esd, during the
-     ! current refinement step.
-
-     max_refshift_on_esd_par :: STR DEFAULT(" ")
-     ! The parameter label for the index of the maximum parameter
-     ! shift on esd, during the current refinement step.
-
-     refinement_converged :: BIN  DEFAULT(FALSE)
-     ! TRUE if the refinement has converged
-
-     too_many_ref_iterations :: BIN  DEFAULT(FALSE)
-     ! TRUE if the maximum ref iterations was exceeded
-
-     ! ===========================
-     ! Parameter values and shifts
-     ! ===========================
-
-     dX :: VEC{REAL}*   DEFAULT_NULL
-     ! These are are the parameter shifts
-
-     X_fit :: VEC{REAL}*   DEFAULT_NULL
-     ! These are are the refinement parameter values
-
-     X_fit0 :: VEC{REAL}*   DEFAULT_NULL
-     ! These are are the previous fit-iteration's parameter values
-
-     X_ref :: VEC{REAL}*   DEFAULT_NULL
-     ! These are are the refinement parameter values
-
-     X_ref0 :: VEC{REAL}*   DEFAULT_NULL
-     ! These are are the previous refine-iteration's parameter values
-
-     ! ==========================================
-     ! Near zero eigenvalues in the least-squares
-     ! ==========================================
-
-     n_0 :: INT  DEFAULT(0)
-     ! The number of zero eigenvalues detected when solving the
-     ! normal equations
-
-     n_near_0 :: INT  DEFAULT(0)
-     ! The number near zero eigenvalues detected when solving the
-     ! normal equations
-
-     near_0_eigenvalues :: VEC{REAL}*  DEFAULT_NULL
-     ! The near zero eigenvalues obtained when solving the normal
-     ! equations. Useful to see parameter correlations.
-
-     near_0_eigenvectors :: MAT{REAL}*  DEFAULT_NULL
-     ! The columns of eigenvectors with near zero eigenvalue obtained
-     ! when solving the normal equations. Useful to see parameter
-     ! correlations.
-
-     ! ==========================================
-     ! Errors and covariances in parameter values
-     ! ==========================================
-
-     esd :: VEC{REAL}*  DEFAULT_NULL
-     !  Uncertainties in the parameters; alias for esd_fit or esd_ref
-
-     covariance_matrix :: MAT{REAL}*  DEFAULT_NULL
-     ! The covariance matrix for the asymmetric-unit parameters i.e.
-     ! the inverse of the LHS of the least squares matrix.
-
-     correlation_matrix :: MAT{REAL}*  DEFAULT_NULL
-     ! The correlation coefficient matrix for the parameters
 
      fragment_covariance_matrix :: MAT{REAL}*  DEFAULT_NULL
      ! The covariance matrix for the parameters in the full fragment
@@ -3630,41 +3556,32 @@ module TYPES
 
    type UNIT_CELL
 
-     angle :: VEC{REAL}(3)  DEFAULT(HALF_PI)
+     angle :: VEC{REAL}(3)
      ! The cell angles  (in radians)
 
-     angle_error :: VEC{REAL}(3)  DEFAULT(ZERO)
-     ! The cell angle errors (in radians)
-
-     length :: VEC{REAL}(3)  DEFAULT(ONE)
+     length :: VEC{REAL}(3)
      ! The cell lengths (in bohr)
 
-     length_error :: VEC{REAL}(3)  DEFAULT(ZERO)
-     ! The cell length errors (in bohr)
-
-     volume :: REAL  DEFAULT(-ONE)
+     volume :: REAL
      ! The cell volumes (bohr^3)
 
-     volume_error :: REAL  DEFAULT(ZERO)
-     ! The cell volume error (bohr^3)
-
-     direct_matrix :: MAT{REAL}(3,3)  DEFAULT(ZERO)
+     direct_matrix :: MAT{REAL}(3,3)
      ! Direct lattice cell matrix (bohr). The columns are vectors of the three
      ! cell axes.
 
-     inverse_matrix :: MAT{REAL}(3,3) DEFAULT(ZERO)
+     inverse_matrix :: MAT{REAL}(3,3)
      ! Inverse direct lattice cell matrix (bohr^{-1})
 
-     reciprocal_matrix :: MAT{REAL}(3,3) DEFAULT(ZERO)
+     reciprocal_matrix :: MAT{REAL}(3,3)
      ! Reciprocal lattice cell matrix (bohr^{-1}).
 
-     direct_U_matrix :: MAT{REAL}(3,3) DEFAULT(ZERO)
+     direct_U_matrix :: MAT{REAL}(3,3)
      ! Converts ADP (thermal) tensors from crystal to cartesian systems.
 
-     reciprocal_U_matrix :: MAT{REAL}(3,3) DEFAULT(ZERO)
+     reciprocal_U_matrix :: MAT{REAL}(3,3)
      ! Converts ADP (thermal) tensors from cartesian to crystal systems.
 
-     info_made :: BIN  DEFAULT(FALSE)
+     info_made :: BIN
      ! Set TRUE if all the above information is consistent.
 
    end
@@ -3686,6 +3603,10 @@ module TYPES
      unit_cell :: UNIT_CELL
      ! The crystal unit cell
 
+     ! ==================
+     ! Fragment atom info
+     ! ==================
+
      n_fragment_atoms :: INT  DEFAULT(0)
      ! No. of atoms in the inputted cell fragment, used to calculate
      ! structure factors, or do wavefunction fitting.
@@ -3704,6 +3625,10 @@ module TYPES
      ! do wavefunction fitting. NOTE: this should not to be confused
      ! with the "asymmetric_unit_geometry"; it may include symmetry
      ! non-unique atoms.
+
+     ! =========================
+     ! Asymmetric unit atom info
+     ! =========================
 
      asymmetric_unit_source :: STR  DEFAULT("?")
      ! Where did the asymmetric unit come from?
@@ -3727,6 +3652,10 @@ module TYPES
      ! input or CIF file error, or it could be genuinely correct
      ! because the repeated atom corresponds to a disordered position.  
 
+     ! ===================
+     ! Unit cell atom info
+     ! ===================
+
      n_unit_cell_atoms :: INT  DEFAULT(0)
      ! Total no. of unit cell atoms.
 
@@ -3747,13 +3676,6 @@ module TYPES
      ! Is TRUE if the the atom index corresponds to an asymmetric unit
      ! atom in unit_cell_geometry
 
-     ! ========================================================
-     ! Arrays relating fragment, unit cell, and asymmetric cell
-     ! ========================================================
-
-     fragment_info_made :: BIN  DEFAULT(FALSE)
-     ! Set TRUE if the fragment related information has been made
-
      asym_atom_for_unit_cell_atom :: VEC{INT}* DEFAULT_NULL
      ! ".asym_atom_for_unit_cell_atom(u)" is the index of the unique
      ! unit cell atom (in ".asymmetric_unit_geometry") which generates
@@ -3766,11 +3688,9 @@ module TYPES
      ! ".asym_atom_for_unit_cell_atom(u)" (and with position in
      ! ".asymmetric_unit_geometry").
 
-     asym_shift_for_unit_cell_atom :: MAT{INT}* DEFAULT_NULL
-     ! "asym_shift_for_unit_cell_atom(u)" is the shift that was
-     ! applied to atom position "unit_cell_geometry(:,u)" after it was
-     ! obtained from ".asym_atom_for_unit_cell_atom(u)" with the symop
-     ! asym_symop_for_unit_cell_atom(u) to get it into the unit cell.
+     ! =====================================
+     ! Fragment atom vs. unit cell atom info
+     ! =====================================
 
      frag_atom_for_unit_cell_atom :: VEC{INT}* DEFAULT_NULL
      ! ".frag_atom_for_unit_cell_atom(u)" is the index of the 
@@ -3778,11 +3698,12 @@ module TYPES
      ! ".unit_cell_geometry(:,u)" *by cell translation*.  The index may
      ! be zero i.e. there is no fragment atom for unit cell atom u.
 
-     frag_parent_for_cell_atom :: VEC{INT}* DEFAULT_NULL
+     frag_parent_for_unit_cell_atom :: VEC{INT}* DEFAULT_NULL
      ! ".frag_parent_for_unit_cell_atom(u)" is the index of the 
      ! fragment atom in ".fragment_geometry" which is equivalent to
      ! .unit_cell_geometry(:,u) *by any crystal symop*. It never has
      ! zero elements. Compare with ".frag_atom_for_unit_cell_atom".
+     ! NEEDED?
 
      unit_cell_atom_for_frag_atom :: VEC{INT}* DEFAULT_NULL
      ! ".unit_cell_atom_for_frag_atom(f)" is the index of the unit 
@@ -3795,12 +3716,23 @@ module TYPES
      ! ".fragment_geometry(:,f)" needed to make it the same as unit
      ! cell atom in ".unit_cell_atom_for_frag_atom(f)" above.
 
-     frag_atom_for_asym_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".frag_atom_for_asym_atom(a)" is the index of the fragment
-     ! atom (in ".fragment_geometry") which is generated from the
+     ! ===========================================
+     ! Fragment atom vs. asymmetric unit atom info
+     ! ===========================================
+
+     frag_atom_for_asym_atom :: VEC{INT}*
+     ! ".frag_atom_for_asym_atom(a)[:]" are the indices of the frag.
+     ! atoms (in ".fragment_geometry") which are generated from the
      ! asymmetric unit atom position ".asymmeric_unit_geometry(:,a)"
-     ! *by any crystal symop*.  This index may be zero meaning that
-     ! there is no fragment atom for asymmetric atom "a".  
+     ! *by all crystal symop*.  These elements may not exist meaning
+     ! that there is no fragment atom for asymmetric atom "a".  
+     ! CHANGED
+
+     frag_symops_for_asym_atom :: VEC{VEC_{INT}}* DEFAULT_NULL
+     ! ".frag_symops_for_asym_atom(a)[:]" are the symops which are
+     ! generated by the ".frag_atom_for_asym_atom(a)[:]" (see above).
+     ! These indices may not exist meaning that there areno fragment
+     ! atom for asymmetric atom "a". CHANGED.
 
      asym_atom_for_frag_atom :: VEC{INT}* DEFAULT_NULL
      ! ".asym_atom_for_frag_atom(f)" is the index of the asymmetric
@@ -3809,31 +3741,6 @@ module TYPES
      ! is used to extract the atom list of the asymmetric unit from a
      ! given fragment for cluster generation. This is the =inverse=
      ! of the array above. 
-
-     n_unique_frag_atoms :: INT  DEFAULT(0)
-     ! No. of unique fragment atoms.
-
-     unique_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! The list of unique fragment atoms, determined as the first
-     ! atom in the fragment which is generated by a particular
-     ! asymmetric unit atom.
-
-     unique_atom_for_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".unique_atom_for_frag_atom(f)" is the index of the
-     ! symmetry-unique atom position in ".fragment_geometry" which
-     ! generates ".fragment_geometry(:,f)" by the symop with index
-     ! .unique_symop_for_frag_atom(u) *except for a possible
-     ! translational shift*.  The unique atom is determined as the
-     ! first atom in the ".fragment_geometry" which is generated by a
-     ! particular asymmetric unit atom. 
-
-     unique_symop_for_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".unique_symop_for_frag_atom(f)" is the index of the symop
-     ! which generates ".fragment_geometry(:,f)" from
-     ! ".unique_atom_for_frag_atom(f)" *except for a possible
-     ! translational shift*.  The symop corresponds to the first atom
-     ! in the ".fragment_geometry" which is generated by a particular
-     ! asymmetric unit atom. WARNING: UNTESTED.
 
      asym_symop_for_frag_atom :: VEC{INT}* DEFAULT_NULL
      ! ".asym_symop_for_frag_atom(f)" is the index of the symop which
@@ -3844,6 +3751,37 @@ module TYPES
      ! "asym_shift_for_frag_atom(f)" is the shift required to map an
      ! asymmetric_unit_atom into the fragment atom after applying the
      ! 3x3 seitz operator with index ".asym_symop_for_frag_atom(f)".
+
+     ! =========================
+     ! Unique fragment atom info
+     ! =========================
+
+     n_unique_frag_atoms :: INT  DEFAULT(0)
+     ! No. of unique fragment atoms.  NOTE: This may not be the same
+     ! as the number of asymmetric unit atoms if the fragment is
+     ! incomplete!
+
+     unique_frag_atom :: VEC{INT}* DEFAULT_NULL
+     ! The list of unique fragment atoms, determined as the first
+     ! atom in the fragment which is generated by a particular
+     ! asymmetric unit atom.
+
+     unique_atom_for_frag_atom :: VEC{INT}* DEFAULT_NULL
+     ! ".unique_atom_for_frag_atom(f)" is the index of the
+     ! symmetry-unique atom position in ".fragment_geometry" which
+     ! generates ".fragment_geometry(:,f)" by the symop with index
+     ! ".unique_symop_for_frag_atom(u)" (see below) except for a
+     ! possible translational shift. The unique atom is determined
+     ! as the first atom in the ".fragment_geometry" which is
+     ! generated by a particular asymmetric unit atom. 
+
+     unique_symop_for_frag_atom :: VEC{INT}* DEFAULT_NULL
+     ! ".unique_symop_for_frag_atom(f)" is the index of the symop
+     ! which generates ".fragment_geometry(:,f)" from
+     ! ".unique_atom_for_frag_atom(f)" *except for a possible
+     ! translational shift*.  The symop corresponds to the first atom
+     ! in the ".fragment_geometry" which is generated by a particular
+     ! asymmetric unit atom. WARNING: UNTESTED.
 
      ! ==================
      ! Repetition factors
@@ -3870,6 +3808,14 @@ module TYPES
      asym_atom_stabilizer :: VEC{VEC_{INT}}* DEFAULT_NULL
      ! The partition factors for asymmetric_unit_geometry. For
      ! structure factor calcs based on the asymmetric unit.
+
+     ufrag_atom_rep_factor :: VEC{REAL}* DEFAULT_NULL
+     ! The number of times an unique fragment atom is mapped into
+     ! itself by the spacegroup. For structure factor calcs.
+
+     ufrag_atom_stabilizer :: VEC{VEC_{INT}}* DEFAULT_NULL
+     ! The partition factors for unique fragment. For
+     ! structure factor calcs.
 
      ! ==========================
      ! Unit cell connection table
@@ -3928,36 +3874,48 @@ module TYPES
      ! Representation matrices for g-type gaussian functions of the
      ! stabilizer symops.
 
+     fragment_info_made :: BIN  DEFAULT(FALSE)
+     ! Set TRUE if the fragment related information has been made
+
      ! ================
      ! Diffraction data
      ! ================
 
-     data_kind :: STR  DEFAULT("?")
-     ! Kind of diffraction experiment used.
+     sf_for_unique_frag_atom :: MAT{CPX}*   DEFAULT_NULL
+     ! Aspherical structure factors for unique fragment atoms
+
+     free_percentage :: INT  DEFAULT(0)
+     ! A percentage which tells how much of the data is to be reserved
+     ! and not fitted in the model
 
      data :: DIFFRACTION_DATA* DEFAULT_NULL
      ! The structure factor and fitting data. NOTE: this can stand for
      ! either X-ray or PND data depending on the case.
 
-     xray_data :: DIFFRACTION_DATA* DEFAULT_NULL
+     xray_F_data :: DIFFRACTION_DATA* DEFAULT_NULL
      ! The X-ray structure factor and fitting data
 
-     pnd_data :: DIFFRACTION_DATA* DEFAULT_NULL
-     ! The PND scalar structure factor and fitting data
+     xray_F_free :: DIFFRACTION_DATA*  DEFAULT_NULL
+     ! This is the excluded X-ray data used to calculate chi^2 free
 
-     r_free_percentage :: INT  DEFAULT(0)
-     ! A percentage which tells how much of the data is to be reserved
-     ! and not fitted in the model
+     xray_F2_data :: DIFFRACTION_DATA* DEFAULT_NULL
+     ! The X-ray structure factor magnitudes and fitting data
 
-     xray_r_free_data :: DIFFRACTION_DATA*  DEFAULT_NULL
-     ! This is the excluded X-ray data used to calculate R free
+     xray_F2_free :: DIFFRACTION_DATA*  DEFAULT_NULL
+     ! This is the excluded X-ray data used to calculate chi^2 free
 
-     pnd_r_free_data :: DIFFRACTION_DATA*  DEFAULT_NULL
-     ! This is the excluded PND data used to calculate R free
+     neutron_F2_data :: DIFFRACTION_DATA* DEFAULT_NULL
+     ! The neutron structure factor magnitudes and fitting data
 
-     core_reflection :: VEC{REFLECTION}* DEFAULT_NULL
-     ! Form factors for the core only ... for working out R(val) 
-     ! for example
+     neutron_F2_free :: DIFFRACTION_DATA*  DEFAULT_NULL
+     ! This is the excluded neutron magnitude data used to calculate
+     ! chi^2 free
+
+     pnd_F_data :: DIFFRACTION_DATA* DEFAULT_NULL
+     ! The PND scalar spin structure factor and fitting data
+
+     pnd_F_free :: DIFFRACTION_DATA*  DEFAULT_NULL
+     ! This is the excluded PND data used to calculate chi^2 free
 
      stl_limit :: REAL  DEFAULT(1.20d0)
      ! Sin-theta on lambda limit for generating (h k l) reflections
@@ -4045,14 +4003,12 @@ module TYPES
      shift :: MAT{INT}* DEFAULT_NULL
      ! The (3 x .n_shift) sized list of translational shifts used to generate the
      ! cluster from the crystal unit cell atoms. See ".shift_for_atom".
-     ! NOT CURRENTLY USED
 
      shift_for_atom :: VEC{INT}* DEFAULT_NULL
      ! ".shift_for_atom(a)" is the index of the translational shift in array
      ! ".shift", that shift being added to the position of the crystal unit cell
      ! atom whose index is given by ".occupation_list(a)/1000" in order to
      ! generate the cluster atom "a" whose position is given by ".geometry(a)".
-     ! NOT CURRENTLY USED
 
      is_fragment_atom :: VEC{BIN}* DEFAULT_NULL
      ! is_fragment_atom(a) is TRUE if .geometry(:,a) is the position of a fragment
@@ -4070,22 +4026,18 @@ module TYPES
 
      molecule :: VEC{VEC_{INT}}*  DEFAULT_NULL
      ! The list of atom indices corresponding to each molecule
-     ! NOT CURRENTLY USED
 
      molecule_centroid :: MAT{REAL}*  DEFAULT_NULL
      ! The list of molecule centroids in fractionals
-     ! NOT CURRENTLY USED
 
      unique_molecule_for :: VEC{INT}*  DEFAULT_NULL
      ! The unique molecules; unique_molecule_for(mi) is the molecule
      ! earlier in the list which is symmetry equivalent by the symop
      ! given in unique_symop_for.
-     ! NOT CURRENTLY USED
 
      unique_symop_for :: VEC{INT}*  DEFAULT_NULL
      ! The list of symops which maps unique_molecule_for(mi) to the
      ! non-unique molecule mi. See above.
-     ! NOT CURRENTLY USED
 
      atom_connection :: VEC{VEC_{INT}}*  DEFAULT_NULL
      ! atom_connection(i)[:] are those atoms which are connected to atom "i".
@@ -4095,10 +4047,6 @@ module TYPES
 
      info_made :: BIN  DEFAULT(FALSE)
      ! Set to true if the routine make_info has been called
-
-     unit_cell_atoms_to_suppress :: VEC{INT}* DEFAULT_NULL
-     ! A list of indices into unit cell geometry. Used
-     ! to suppress those atoms in cluster generation.
 
    end
 
@@ -4197,7 +4145,7 @@ module TYPES
      cif_files_read :: BIN   DEFAULT(FALSE)
      ! Set TRUE if the cif files have been read
 
-     initialised :: BIN   DEFAULT(FALSE)
+     initialized :: BIN   DEFAULT(FALSE)
      ! Set up starting info
 
      ! =================
@@ -4333,24 +4281,24 @@ module TYPES
 
 
 !  ======
-!  Colour
+!  Color
 !  ======
 
-   type COLOUR
+   type COLOR
 
      name :: STR   DEFAULT(" ")
-     ! The standard colour name for this colour.
+     ! The standard color name for this color.
 
      RGB255 :: VEC{INT}(3)   DEFAULT([0,0,0])
-     ! The RGB triple for this colour as a triple of integers between 0 and 255.
+     ! The RGB triple for this color as a triple of integers between 0 and 255.
 
    end
 
-   type COLOUR_FUNCTION
+   type COLOR_FUNCTION
 
      n_data :: INT
-     ! The number of data values (and their associated colours) used to make
-     ! the colour function
+     ! The number of data values (and their associated colors) used to make
+     ! the color function
 
      data :: VEC{REAL}* DEFAULT_NULL
      ! The list of data values, from smallest to largest
@@ -4359,7 +4307,7 @@ module TYPES
      ! The RGB values corresponding to each data value. Their norm should be
      ! between zero and 3.
 
-     finalised :: BIN
+     finalized :: BIN
      ! Set TRUE if the object is ready for use
 
    end
@@ -4564,13 +4512,13 @@ module TYPES
      contour_increment :: REAL  DEFAULT(ZERO)
      ! Value to increment contors by
 
-     contour_min_color :: COLOUR
+     contour_min_color :: COLOR
      ! Color for minimum-value contour 
 
-     contour_mid_color :: COLOUR
+     contour_mid_color :: COLOR
      ! Color for mid-range-contour (or the zero contour)
 
-     contour_max_color :: COLOUR
+     contour_max_color :: COLOR
      ! Color for maximum-value contour 
 
      contour_color_scale :: STR  DEFAULT(" ")
@@ -4608,11 +4556,6 @@ module TYPES
 
      iso_value :: REAL
      ! The isovalue to be used for the isosurface
-
-     skip_bit_string :: INT
-     ! A bit string which tells whether to skip processing certain 
-     ! edges. Can be used when certain edge vertex points are already
-     ! done.
 
      vertex_positions :: MAT{REAL}(3,0:3)
      ! A (3 x 0:3) dimensioned list of the actual coordinates of each square vertex.
@@ -4833,29 +4776,29 @@ module TYPES
 
    type ISOSURFACE
 
-     property :: STR  DEFAULT(" ")
+     iso_kind :: STR
      ! The kind of isosurface plot, if known. This helps in deciding which way the
      ! normals of the isosurface should point.
 
-     triangulation_method :: STR  DEFAULT(" ")
+     triangulation_method :: STR
      ! The method used to triangulate the isosurface.
 
-     iso_value :: REAL  DEFAULT(ZERO)
+     iso_value :: REAL
      ! The isovalue to be used for the isosurface
 
-     iso_values :: VEC{REAL}*  DEFAULT_NULL
+     iso_values :: VEC{REAL}*
      ! List of *multiple* isovalues to be used for the isosurfaces
 
      plot_grid :: PLOT_GRID
      ! The isosurface plotgrid
 
-     n_pt :: INT  DEFAULT(0)
+     n_pt :: INT
      ! The number of isosurface points
 
      point :: MAT{REAL}*  DEFAULT_NULL
      ! A (3 x n_pt) list of points on the isosurface
 
-     n_face :: INT  DEFAULT(0)
+     n_face :: INT
      ! The number of triangulated faces on the isosurface
 
      face :: MAT{INT}*  DEFAULT_NULL
@@ -4863,7 +4806,7 @@ module TYPES
      ! represented by three integers which move in an anticlockwise direction when
      ! viewed from the outside.
 
-     n_cap :: INT  DEFAULT(0)
+     n_cap :: INT
      ! The number of triangulated faces making up the caps
 
      cap :: MAT{INT}*  DEFAULT_NULL
@@ -4883,39 +4826,39 @@ module TYPES
      ! A (3 x n_pt) list of the gaussian surface curvatures for every point on the
      ! isosurface
 
-     area :: REAL  DEFAULT(ZERO)
+     area :: REAL
      ! The area of the isosurface, calculated from the triangulate isosurface
 
-     volume :: REAL  DEFAULT(ZERO)
+     volume :: REAL
      ! The volume of the isosurface, calculated from the triangulate isosurface.
 
-     an_volume :: REAL  DEFAULT(ZERO)
+     an_volume :: REAL
      ! The volume of the isosurface, calculated from the triangulate isosurface by
      ! using the average face normal for each triangle face. The average face
      ! normal is calculated from the average of the norms of the point_gradient's
      ! at each surface point.
 
-     volume_min :: REAL  DEFAULT(ZERO)
+     volume_min :: REAL
      ! A lower bound to the interior volume of the isosurface, calculated by
      ! counting the number of cubes inside the surface.
 
-     volume_max :: REAL  DEFAULT(ZERO)
+     volume_max :: REAL
      ! An upper bound to the interior volume of the isosurface, calculated by
      ! counting the number of cubes inside and on the surface.
 
-     n_skip :: INT  DEFAULT(0)
+     n_skip :: INT
      ! The number of function evaluations skipped (recursive method only)
      ! This is in fact worked out by counting the total number of evaluations.
 
-     level :: INT  DEFAULT(0)
+     level :: INT
      ! The current level to which the initial box has been divided, in the
      ! recursive marching cube algorithm.
 
-     final_level :: INT  DEFAULT(0)
+     final_level :: INT
      ! The final level to which the initial box must be divided, in the
      ! recursive marching cube algorithm.
 
-     scan_level :: INT  DEFAULT(0)
+     scan_level :: INT
      ! The level to which the initial box must be divided, in the recursive
      ! marching cube algorithm, to achieve resolution of all important features.
      ! It is determined by the .minimum_scan_division setting; or if this is
@@ -4953,17 +4896,17 @@ module TYPES
      del_z :: REAL   DEFAULT(ONE)
      ! The current box z side length in the recursive marching cubes algorithm.
 
-     x :: INT  DEFAULT(0)
+     x :: INT
      ! The (partial) x-coordinate of the box in the recursive marching cubes
      ! algorithm.  This is a binary number, with each bit from the right
      ! representing a segment double the size to which the current box belongs.
 
-     y :: INT  DEFAULT(0)
+     y :: INT
      ! The (partial) y-coordinate of the box in the recursive marching cubes
      ! algorithm.  This is a binary number, with each bit from the right
      ! representing a box double the size to which the current box belongs.
 
-     z :: INT  DEFAULT(0)
+     z :: INT
      ! The (partial) z-coordinate of the box in the recursive marching cubes
      ! algorithm.  This is a binary number, with each bit from the right
      ! representing a box double the size to which the current box belongs.
@@ -4990,6 +4933,37 @@ module TYPES
      suppress_caps :: BIN DEFAULT(FALSE)
      ! If TRUE caps are not outputed in put_faces even if they have been generated.
 
+   !  shift :: VEC{REAL}* DEFAULT_NULL
+   !  ! A list of distances representing how far each point shifted from its
+   !  ! estimate to come to the isosurface.
+
+   !  adjoining_face :: MAT{INT}* DEFAULT_NULL
+   !  ! A (3 x n_face) list of the three adjoining faces for a particular face
+
+   !  adjoining_edge :: MAT{INT}* DEFAULT_NULL
+   !  ! A (3 x n_face) list of the adjoining edge for the adjoining faces for
+   !  ! a particular face
+
+   !  ok :: VEC{BIN}* DEFAULT_NULL
+   !  ! A list of switches telling if each face is acceptably smooth.
+
+   !  ok_neighbours :: VEC{BIN}* DEFAULT_NULL
+   !  ! A list of switched telling if all three neighbours of each face is acceptably smooth.
+
+   !  n_skip :: INT
+   !  ! The number of faces which are acceptapbly smooth, and can be skippped
+
+   !  smallness :: REAL
+   !  ! The maximum acceptable distance between triangulated points.
+   !  ! Used as a face smallness criteria.
+
+   !  flatness :: REAL
+   !  ! The maximum acceptable distance between a triangulated point and its ray origin
+   !  ! i.e. its "shift" (see above).  Used as a face flatness criteria.
+
+   !  accuracy :: REAL
+   !  ! The accuracy to which each isosurface point is determined
+
      surface_property :: STR  DEFAULT(" ")
      ! The name of a surface property to plot or calculate on the isosurface
      ! surface.
@@ -5001,33 +4975,33 @@ module TYPES
      ! The values of the iso_value on the surface, in the case when multiple
      ! isosurfaces have been calculated and merged together into a single surface.
 
-     surface_point :: VEC{REAL}(3)  DEFAULT(ZERO)
+     surface_point :: VEC{REAL}(3)
      ! A special point which lies on or near the isosurface, used for calculations
      ! of connected area, for example.
 
-     chop_surface_property :: BIN  DEFAULT(FALSE)
+     chop_surface_property_range :: BIN
      ! When plotting a surface, whether to chop the surface property accorsding to
      ! the lower and upper bounds specified below, rather than scaling the
      ! smallest value to zero and the largest to one.
 
-     surface_property_lb :: REAL  DEFAULT(ISOSURFACE_PROPERTY_LB)
+     surface_property_lower_bound :: REAL  DEFAULT(ISOSURFACE_PROPERTY_LB)
      ! A lower bound to the property value, for calculating surface areas, and for
      ! chopping the range of surface property values.
 
-     surface_property_ub :: REAL  DEFAULT(ISOSURFACE_PROPERTY_UB)
+     surface_property_upper_bound :: REAL  DEFAULT(ISOSURFACE_PROPERTY_UB)
      ! A upper bound to the property value, for calculating surface areas, and for
      ! chopping the range of surface property values.
 
-     surface_prop_lb_abs :: REAL  DEFAULT(ISOSURFACE_PROPERTY_LB_ABS)
+     surface_prop_lower_bound_abs :: REAL  DEFAULT(ISOSURFACE_PROPERTY_LB_ABS)
      ! A lower bound to the absolute value of the property, for calculating the
      ! log of the surface property values.
 
-     surface_prop_ub_abs :: REAL  DEFAULT(ISOSURFACE_PROPERTY_UB_ABS)
+     surface_prop_upper_bound_abs :: REAL  DEFAULT(ISOSURFACE_PROPERTY_UB_ABS)
      ! A upper bound to the absolute value of the property, for calculating the
      ! log of the surface property values.
 
-     colour :: COLOUR_FUNCTION*  DEFAULT_NULL
-     ! A colourfunction used for colouring the isourface
+     color :: COLOR_FUNCTION*  DEFAULT_NULL
+     ! A colorfunction used for coloring the isourface
 
      atom :: VEC{ATOM}*  DEFAULT_NULL
      ! A list of atoms associated with the isosurface.
@@ -5080,11 +5054,11 @@ module TYPES
      ! The DFT correlation functional to be used
 
      using_GGA_exchange :: BIN, readonly  DEFAULT(SCFDATA_USING_GGA_EXCHANGE)
-     ! TRUE if the exchange functional uses the generalised gradient
+     ! TRUE if the exchange functional uses the generalized gradient
      ! approximation, otherwise false.
 
      using_GGA_correlation :: BIN, readonly  DEFAULT(SCFDATA_USING_GGA_CORRELATION)
-     ! TRUE if the correlation functional uses the generalised gradient
+     ! TRUE if the correlation functional uses the generalized gradient
      ! approximation, otherwise false.
 
      ! ==================
@@ -5271,9 +5245,6 @@ module TYPES
 
      diis :: DIIS
      ! For diis extrapolation (usually Fock matrix DIIS extrapolation)
-
-     cphf_diis :: VEC{DIIS}*  DEFAULT_NULL
-     ! For DIIS extrapolation of CPHF equations
 
      diis_error :: REAL, readonly  DEFAULT(ZERO)
      ! The DIIS error
@@ -5642,39 +5613,39 @@ module TYPES
 
    end
 
-   type MO_LOCALISER
+   type MO_LOCALIZER
 
-     algorithm :: STR  DEFAULT(MO_LOCALISER_ALGORITHM)
+     algorithm :: STR  DEFAULT(MO_LOCALIZER_ALGORITHM)
      ! Identifier for the kind of localising algorithm
 
      n_orb :: INT  DEFAULT (0)
-     ! The number of molecular orbitals to be localised. It must not exceed the
+     ! The number of molecular orbitals to be localized. It must not exceed the
      ! first dimension of the dipole integrals.
 
-     accuracy :: REAL  DEFAULT(MO_LOCALISER_ACCURACY)
+     accuracy :: REAL  DEFAULT(MO_LOCALIZER_ACCURACY)
      ! Used to decide when the iterative localising algorithm should terminate
 
      iteration :: INT  DEFAULT(0)
      ! The iteration counter, for the number of iterative steps used to refine
-     ! the localised orbitals.
+     ! the localized orbitals.
 
-     max_iterations :: INT  DEFAULT(MO_LOCALISER_MAXIT)
+     max_iterations :: INT  DEFAULT(MO_LOCALIZER_MAXIT)
      ! The maximum number of iterations allowed
 
      MO :: MAT{REAL}*  DEFAULT_NULL
-     ! The original molecular orbitals to be localised.
+     ! The original molecular orbitals to be localized.
 
      TM :: MAT{REAL}*  DEFAULT_NULL
      ! The orthogonal transformation matrix from the old to the new MO's.
 
      dipole :: MAT3{REAL}*  DEFAULT_NULL
      ! The dipole moment integrals in the (current) MO basis, used for the Boys
-     ! scheme and for analysing the spread of the localised orbitals. The first
+     ! scheme and for analysing the spread of the localized orbitals. The first
      ! two indices are for the orbitals, the last for the component x, y, or z.
 
      quadrupole :: MAT3{REAL}*  DEFAULT_NULL
      ! The quadrupole moment integrals in the (current) MO, used to analyze the
-     ! localised orbitals. The first two indices are for the orbitals, the last
+     ! localized orbitals. The first two indices are for the orbitals, the last
      ! for the component xx, yy, zz, xy, xz, yz.
 
    end
@@ -5808,7 +5779,7 @@ module TYPES
    ! default is true
 
    use_brillouin :: BIN
-   ! flag to diagonalise only the double excitated geminal matrix at step 0
+   ! flag to diagonalize only the double excitated geminal matrix at step 0
    ! default is false
 
    make_integrals :: BIN
@@ -6088,8 +6059,8 @@ module TYPES
      occupation_numbers :: OPVECTOR* DEFAULT_NULL
      ! The natural orbital occupation numbers
 
-     localiser :: MO_LOCALISER*
-     ! An MO localiser object
+     localizer :: MO_LOCALIZER*
+     ! An MO localizer object
 
      ! ========
      ! Geminals
@@ -6174,9 +6145,6 @@ module TYPES
 
      atomic_polarisabilities_made :: BIN  DEFAULT(FALSE)
      ! Set TRUE if the atomic polarisabilities are made
-
-     U2_electric_dipole :: MAT3{REAL}*
-     ! The second order U matrices for electric dipole perturbations
 
      ! ====================
      ! Dittrich's invarioms

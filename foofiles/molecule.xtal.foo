@@ -35,8 +35,8 @@ contains
    read_crystal ::: leaky
    ! Read in the crystal data. If the ".atom" list data is available,
    ! its coordinates will be resolved into cartesians at this point.
-   ! IMPORTANT NOTE: normally the crystal information will be inputted
-   ! from a CIF file.  However, if the crystal information is inputted
+   ! NOTE: normally the crystal information will be inputted from a
+   ! CIF file.  However, if the crystal information is inputted
    ! explicitly, and the asymmetric unit is not specified, then the
    ! symmetry unique atoms in the ".atom" list are used to define the
    ! crystal asymmetric unit. Once defined, the asymmetric unit in the
@@ -54,17 +54,11 @@ contains
       .crystal.read_keywords
 
       ! Finalize
-      if (.crystal.finalize) then
-         .crystal.update
-         if (.atom.created) then
-            .BASE:resolve_axis_system
-            .crystal.make_fragment_data(.atom,assign_atom=TRUE)
-         end
-
+      .crystal.update
+      if (.atom.created) then
+         .BASE:resolve_axis_system
+         .crystal.set_defaults(.atom,assign_atom=TRUE)
       end
-
-      ! Reset to finalize next time
-      .crystal.finalize = TRUE 
 
    end
 
@@ -75,8 +69,8 @@ contains
    ENSURE(.atom.created,"no atom data")
    ENSURE(.crystal.created,"no crystal data")
 
-      .crystal.make_fragment_data(.atom,assign_atom=TRUE) 
-      DIE_IF(.crystal.asymmetric_unit_atom.destroyed,"atom list does not span asymmetric unit")
+      .crystal.set_defaults(.atom,assign_atom=TRUE) 
+      ENSURE(.crystal.asymmetric_unit_atom.created,"atom list does not span asymmetric unit")
 
       .cluster.destroy
       .cluster.create(.crystal)
@@ -114,8 +108,82 @@ contains
 
    end
 
+   read_CIF_crystal_raw(cif) ::: leaky
+   ! Read crystal unit cell and spacegroup information (but NOT atom
+   ! positions) from a CIF file called "cif", but do not change axis
+   ! system or produce any information arrays.  
+      cif :: CIF
+
+   ENSURE(cif.start_of_data>0,"no start of data in CIF")
+   ENSURE(cif.end_of_data>cif.start_of_data,"no end of data in CIF")
+
+      ! Open the CIF if needed
+      if (NOT cif.file.is_open) cif.open
+
+      ! Create the crystal; it shouldn't really exist beforehand
+      WARN_IF(.crystal.created,"crystal data already defined!")
+      if (.crystal.destroyed) .crystal.create
+
+      ! Read in the crystal from the CIF
+      .crystal.read_CIF(cif,skip_atoms=TRUE)
+ 
+   end
+
+   read_CIF_crystal(cif) ::: leaky
+   ! Read crystal unit cell and spacegroup information (but NOT atom
+   ! positions) from a CIF file called "cif", and then produce the
+   ! atom and crystal informational arrays.  
+   ! NOTE: only to be called after reading .atom's from the CIF, 
+   !       see the routine below.
+      cif :: CIF
+
+   ENSURE(cif.start_of_data>0,"no start of data in CIF")
+   ENSURE(cif.end_of_data>cif.start_of_data,"no end of data in CIF")
+
+      esd :: VEC{REAL}*
+      n_pADPs :: INT
+
+      ! Read in the raw crystal information
+      .::read_CIF_crystal_raw(cif)
+
+      ! Only continue if there are some atoms ...
+      if (NOT associated(.atom)) return
+ 
+      ! Sets up all crystal fragment information arrays
+      ! Change to cartesian/Bohr units.
+      .::set_atoms_and_crystal(cif) 
+
+      ! Assume this is for x-rays -- BAD
+      if (.crystal.xray_F_data.destroyed) .crystal.xray_F_data.create
+
+      ! Read reflections BAD BAD
+      .crystal.assign_xray 
+      .crystal.data.read_CIF_reflections(cif)
+
+      ! If this is *not* an asymmetric-unit CIF, go away
+    ! if (.atom.dim/=.crystal.asymmetric_unit_atom.dim) return 
+
+      ! Read covariance matrix - if there - and make fragment
+      ! covariance the same. BAD.
+      n_pADPs = 9*.atom.dim
+      .crystal.data.read_CIF_covariance(cif,n_pADPs)
+      if (.crystal.data.LS_fit.covariance_matrix.created) &
+         .crystal.data.fragment_covariance_matrix.create_copy(.crystal.data.LS_fit.covariance_matrix)
+
+      ! Copy the errors into atoms - positions and errors in
+      ! cartesian/Bohr units
+      esd.create(n_pADPs)
+      .crystal.data.LS_fit.covariance_matrix.put_diagonal_to(esd)
+      esd = sqrt(esd)
+      .atom.set_pADP_errors_to(esd) 
+      esd.destroy
+
+   end
+
    read_CIF_atoms_raw(cif) ::: leaky
-   ! Read atom info from a "cif". Do not reset bond lengths.
+   ! Read atom info from a Crystallographic Information File, "cif",
+   ! but do not try and reset bond lengths or change axis systems.
+   ! NOTE: Any previous atom information is destroyed.
       cif :: CIF
 
    ENSURE(cif.start_of_data>0,"no start of data in CIF")
@@ -141,8 +209,8 @@ contains
    end
 
    read_CIF_atoms(cif) ::: leaky
-   ! Read atom info from a "cif" and make crystal cell info
-   ! if the crystal info is there.
+   ! Read atom info from a Crystallographic Information File, "cif".
+   ! NOTE: Any previous atom information is destroyed.
       cif :: CIF
 
    ENSURE(cif.start_of_data>0,"no start of data in CIF")
@@ -151,154 +219,38 @@ contains
       ! Read in the atoms raw
       .::read_CIF_atoms_raw(cif)
 
-      ! Set atom and crystal info. Including bond length reset
-      .::make_CIF_atoms_and_crystal(cif) 
+      ! Resolve axes in crystal is there
+      if (.crystal.destroyed) return
+      if (NOT .crystal.spacegroup.analyzed) return
+
+      ! Resolve the axis system
+      .BASE:resolve_axis_system
+ 
+      ! Set atom and crystal info. including bond length reset
+      .::set_atoms_and_crystal(cif) 
 
    end
 
-   read_CIF_crystal_raw(cif) ::: leaky
-   ! Read crystal unit cell and spacegroup information (but NOT atom
-   ! positions) from a CIF file called "cif", but do not change axis
-   ! system or produce any information arrays.  
-      cif :: CIF
-
-   ENSURE(cif.start_of_data>0,"no start of data in CIF")
-   ENSURE(cif.end_of_data>cif.start_of_data,"no end of data in CIF")
-
-      ! Open the CIF if needed
-      if (NOT cif.file.is_open) cif.open
-
-      ! Create the crystal; it shouldn't really exist beforehand
-      WARN_IF(.crystal.created,"crystal data already defined!")
-      if (.crystal.destroyed) .crystal.create
-
-      ! Read in the crystal from the CIF
-      .crystal.read_CIF(cif,skip_atoms=TRUE)
-
-   end
-
-   read_CIF_crystal(cif) ::: leaky
-   ! Read crystal unit cell and spacegroup information (but NOT atom
-   ! positions) from a CIF file called "cif", and then produce the
-   ! atom and crystal informational arrays.  
-   ! NOTE: only to be called after reading .atom's from the CIF, 
-   !       see the routine below.
-      cif :: CIF
-
-   ENSURE(cif.start_of_data>0,"no start of data in CIF")
-   ENSURE(cif.end_of_data>cif.start_of_data,"no end of data in CIF")
-
-      ! Read in the raw crystal information
-      .::read_CIF_crystal_raw(cif)
-
-      ! Only continue if there are some atoms ...
-      if (NOT associated(.atom)) return
-
-      ! Set atom and crystal info. Including bond length reset
-      .::make_CIF_atoms_and_crystal(cif) 
-
-      ! Read covariances
-      if (NOT cif.apply_bond_length) then
-         .::read_CIF_crystal_esds(cif)
-      end
-
-   end
-
-   read_CIF_crystal_esds(cif) ::: private, leaky
-   ! Read the CIF covariances and set pADP esds.
-      cif :: CIF
-
-   ENSURE(.atom.created,"no atoms")
-   ENSURE(.crystal.created,"no crystal")
-   ENSURE(cif.start_of_data>0,"no start of data in CIF")
-   ENSURE(cif.end_of_data>cif.start_of_data,"no end of data in CIF")
-
-      n_pADPs :: INT
-      label :: STR
-      fcov_there,acov_there :: BIN
-
-      ! Open the CIF if needed
-      if (NOT cif.file.is_open) cif.open
-
-      ! Below needs to be modified to remove duplicate looped
-      ! item search when blank-labelled covariance is not needed
-
-      ! Asymmetric covariance there?
-!      label = "_asym_unit"
-!      cif.find_item(trim(label)//"_covariance_matrix",acov_there)
-!
-!      if (NOT acov_there) then ! old ... blank label ... see above
-!         label = " "
-!         cif.find_item("_covariance_matrix",acov_there)
-!      end
-!
-!      if (acov_there) then
-!      if (.crystal.asymmetric_unit_atom.created) then
-!
-!         if (.crystal.data.destroyed) .crystal.data.create
-!
-!         n_pADPs = .crystal.asymmetric_unit_atom.no_of_pADPs
-!
-!         .crystal.data.covariance_matrix.destroy
-!         .crystal.data.covariance_matrix.create(n_pADPs,n_pADPs)
-!         .crystal.data.read_CIF_covariance(cif,trim(label),.crystal.data.covariance_matrix)
-!
-!      end
-!      end
-
-      ! Fragment covariance there?
-      label = "_fragment"
-      cif.find_looped_item(trim(label)//"_covariance_matrix",fcov_there)
-
-      ! WRONG - for gly ala only
-      ! Delete this later
-      if (NOT fcov_there) then ! old ... blank label ... see above
-         label = " "
-         cif.find_item("_covariance_matrix",fcov_there)
-      end
-
-      if (fcov_there) then
-      if (.crystal.fragment_atom.created) then
-
-         if (.crystal.data.destroyed) .crystal.data.create
-
-         n_pADPs = .crystal.fragment_atom.no_of_pADPs
-
-         ! WRONG - for gly ala only
-         ! Delete this later
-         n_pADPs = .atom.no_of_pADPs
-
-         .crystal.data.fragment_covariance_matrix.destroy
-         .crystal.data.fragment_covariance_matrix.create(n_pADPs,n_pADPs)
-         .crystal.data.read_CIF_covariance(cif,trim(label),.crystal.data.fragment_covariance_matrix)
-
-      end
-      end
-
-   end
-
-   make_CIF_atoms_and_crystal(cif) ::: private, leaky
+   set_atoms_and_crystal(cif) ::: private, leaky
    ! Set the atom and crystal fragment information when processing the
    ! CIF. If requested in cif, reset H atom bond lengths.
       cif :: CIF
 
    ENSURE(.atom.created,"no atoms")
+   ENSURE(.crystal.created,"no crystal")
  
       H_bond_length :: VEC{REAL}*
       has_Hs,reset :: BIN
 
-      ! Is crystal there?
-      if (.crystal.destroyed) return
-      if (NOT .crystal.spacegroup.analyzed) return
-
-      ! Must be cartesian
+      ! Change atom positions to cartesian
       .BASE:resolve_axis_system
 
       if (.atom.has_all_Hs_single_bonded(has_Hs)) then
 
-         ! Reset H bond lengths the simple way.
-         ! If disordered, the disordered atoms must
-         ! be proximate to their bonded neighbours.
+      ! If the hydrogen's are all single bonded, reset the simple way.
+      ! If disordered, this code assumes the disordered atoms are
+      ! proximate to their bonded neighbours.
+
          if (has_Hs) then
             if (cif.apply_BH_bond_length) .atom.set_bond_lengths(5,1,cif.BH_bond_length) 
             if (cif.apply_CH_bond_length) .atom.set_bond_lengths(6,1,cif.CH_bond_length) 
@@ -306,11 +258,14 @@ contains
             if (cif.apply_OH_bond_length) .atom.set_bond_lengths(8,1,cif.OH_bond_length) 
          end
 
-         .crystal.make_fragment_data(.atom,assign_atom=TRUE)
+         .crystal.set_defaults(.atom,assign_atom=TRUE)
 
       else 
 
-         ! There are floating hydrogens or multiple bonded H's ...
+      ! Yikes! There are floating hydrogens or multiple bonded H's ...
+
+         ! Ensure fragment symmetry information is there
+       ! .crystal.set_defaults(.atom,assign_atom=TRUE)
 
          ! Uses the crystal to reset the hydrogen bond lengths.
          ! Uses UC conn. table to skip multiple-bonded H atoms.
@@ -319,10 +274,7 @@ contains
          H_bond_length(6) =  cif.CH_bond_length
          H_bond_length(7) =  cif.NH_bond_length
          H_bond_length(8) =  cif.OH_bond_length
-
-         ! Remake fragment data?
          .crystal.reset_H_bond_lengths_in(.atom,H_bond_length,reset)
-
          H_bond_length.destroy
 
          ! Return if nothing was done
@@ -336,7 +288,7 @@ contains
          ! Re-analyze the fragment symmetry information
          ! Maybe not all things in here need doing again ...
          .crystal.destroy_asymmetric_unit
-         .crystal.make_fragment_data(.atom,assign_atom=TRUE,warnings=FALSE)
+         .crystal.set_defaults(.atom,assign_atom=TRUE,warnings=FALSE)
 
       end
 
@@ -345,17 +297,6 @@ contains
 !  ===========================
 !  Cluster generation routines
 !  ===========================
-
-   destroy_cluster ::: leaky
-   ! Destroy a molecule created by the "create_cluster" routine, and
-   ! recover the original molecule from .saved
-      self :: PTR
-
-   ENSURE(.saved.created,"no crystal data")
-
-      .BASE:unsave
-
-   end
 
    create_cluster ::: leaky
    ! Create a new "self" by generating a cluster from information
@@ -378,7 +319,7 @@ contains
       ! Finalize basis on new .atom list
       .BASE:set_atom_info
       .BASE:resolve_basis_info
-      .crystal.make_fragment_data(.atom,assign_atom=TRUE)
+      .crystal.set_defaults(.atom,assign_atom=TRUE)
 
       ! Message
       stdout.flush
@@ -421,71 +362,12 @@ contains
 
    end
 
-   create_HS_cluster ::: leaky
-   ! Create a cluster from the molecules which touch the Hirshfeld
-   ! surface in isosurface. It is assumed there is a .saved.cluster
-   ! and that the current .atom's correspond to it (i.e. this is
-   ! called after a standard HS job).
+   destroy_cluster ::: leaky
+   ! Destroy a molecule created by the "create_cluster" routine, and
+   ! recover the original molecule from .saved
       self :: PTR
-
-   ENSURE(.saved.crystal.created,"no crystal data")
-   ENSURE(.saved.cluster.created,"no cluster data")
-   ENSURE(.saved.cluster.info_made,"no cluster data")
-   ENSURE(.saved.atom.created,"no atoms")
-   ENSURE(.atom.created,"no atoms")
-   ENSURE(.isosurface.created,"no isosurface")
-
-      surface_atoms :: VEC{INT}*
-      atom :: VEC{ATOM}*
-      n :: INT
-
-      ! Get surface atoms
-      n = .saved.atom.dim
-      surface_atoms => .isosurface.surface_group_atom_indices(.atom(n+1:))
-      surface_atoms = surface_atoms + n
-
-      ! Append them to the fragment
-      .atom.nullify_bases
-      atom.create_copy(.atom(1:n))
-      atom.append(.atom(surface_atoms))
-
-      surface_atoms.destroy
-
-      ! Base crystal on this fragment
-      .atom.destroy
-      .atom => atom
-      .crystal.make_fragment_data(.atom,assign_atom=TRUE)
-      .crystal.set_destroy_fragment_atom(TRUE)
-
-      ! Make the new HS-contact-group-cluster
-      .cluster.destroy
-      .cluster.create(.crystal)
-      .cluster.set_generation_method("fragment")
-      .cluster.set_defragment(TRUE)
-      .cluster.make_info
-      .cluster.create_atom_list(atom) 
-      .cluster.destroy
-
-      ! Set the completed-group atom list 
-    ! .atom.destroy ! will destroy as part of crystal
-      .atom => atom
-
-      ! Base crystal on this cluster
-      .crystal.destroy_asymmetric_unit
-      .crystal.destroy_fragment_data
-      .crystal.make_fragment_data(.atom,assign_atom=TRUE)
-
-      ! Change name to reflect atom-list change
-      .name = trim(.saved.name) // "_HS_cluster"
-
-      ! Finalize atom info
-      .atom.nullify_bases
-      .BASE:set_atom_info
-      .BASE:resolve_basis_info
-
-      ! Set basis info
-      .BASE:set_basis_info
-
+   ENSURE(.saved.created,"no crystal data")
+      .BASE:unsave
    end
 
 !  =====================
@@ -524,7 +406,7 @@ contains
         .crystal.unit_cell.change_from_fractional(pos)
         x = pos(1); y = pos(2); z = pos(3)
 
-        ft = ft + dc * exp(COMPLEXIFY(ZERO,k1*x+k2*y+k3*z))
+        ft = ft + dc * exp(cmplx(ZERO,k1*x+k2*y+k3*z,kind=CPX_KIND))
 
       end
 
@@ -567,7 +449,7 @@ contains
 !           .crystal.unit_cell.change_from_fractional(pos)
 !           x = pos(1); y = pos(2); z = pos(3)
 !
-!           phases = disp * exp(COMPLEXIFY(ZERO,k_pts(:,1)*x + k_pts(:,2)*y + k_pts(:,3)*z))
+!           phases = disp * exp(cmplx(ZERO,k_pts(:,1)*x + k_pts(:,2)*y + k_pts(:,3)*z,kind=CPX_KIND))
 !           ft(:) = ft(:) + phases
 !
 !         end
@@ -609,7 +491,7 @@ contains
 !             Bh = k_pts(k,:)
 !             UBh = matmul(U,Bh)
 !             T = (dot_product(Bh,UBh))
-!             phase = exp(COMPLEXIFY(T,Bh(1)*x + Bh(2)*y + Bh(3)*z))
+!             phase = exp(cmplx(T,Bh(1)*x + Bh(2)*y + Bh(3)*z,kind=CPX_KIND))
 !             ft(k) = ft(k) + disp * phase
 !           end
 !
@@ -750,69 +632,6 @@ contains
          else
            do k = 1,k_max
               res(k) = res(k) + ft_ab(k,:,:).trace_product_with(dens_ba)
-           end
-         end
-
-         ft_ab.destroy
-         sh.destroy_ptr_part
-
-      end
-
-      PARALLEL_SUM(res)
-
-   end
-
-   make_ft_gc(res,dens,k_pts)
-   ! Fourier transform of a density described by AO density matrix dens
-   ! evaluated at a series of reciprocal space points k_pts
-   ! Size of res is [size(k_pts,1)].
-      dens :: MAT{CPX}, target
-      k_pts :: MAT{REAL}
-      res :: VEC{CPX}
-
-   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.atom.created,  "no atom list")
-
-      k_max,q,k,fa,la,fb,lb,na,nb,atom_a,atom_b :: INT
-      ft_ab :: MAT3{CPX}*
-      dens_ba_aa,dens_ba_ab,dens_ba_ba,dens_ba_bb :: MAT{CPX}*
-      cutoff :: REAL
-      sh :: SHELL2
-
-      k_max = size(k_pts,1)
-      cutoff = TOL(10) / .n_shell_pairs
-
-      res = ZERO
-
-      parallel do q = 1,.n_shell_pairs
-
-         .BASE:get_precomputed_shell_pair(sh,q,fa,la,na,fb,lb,nb,atom_a,atom_b)
-
-         if (sh.skip_ft(cutoff)) then
-           sh.destroy_ptr_part
-           cycle
-         end
-
-         ft_ab.create(k_max,na,nb)
-         .::make_ft_pair(ft_ab,k_pts,sh,atom_a,atom_b)
-
-         dens_ba_aa => dens(fb:lb,fa:la)
-         dens_ba_ab => dens(fb:lb,fa+.n_bf:la+.n_bf)
-         dens_ba_ba => dens(fb+.n_bf:lb+.n_bf,fa:la)
-         dens_ba_bb => dens(fb+.n_bf:lb+.n_bf,fa+.n_bf:la+.n_bf)
-         if (fa/=fb) then ! count off-diagonals twice.
-           do k = 1,k_max
-              res(k) = res(k) + TWO*ft_ab(k,:,:).trace_product_with(dens_ba_aa)
-              res(k) = res(k) + TWO*ft_ab(k,:,:).trace_product_with(dens_ba_ab)
-              res(k) = res(k) + TWO*ft_ab(k,:,:).trace_product_with(dens_ba_ba)
-              res(k) = res(k) + TWO*ft_ab(k,:,:).trace_product_with(dens_ba_bb)
-           end
-         else
-           do k = 1,k_max
-              res(k) = res(k) + ft_ab(k,:,:).trace_product_with(dens_ba_aa)
-              res(k) = res(k) + ft_ab(k,:,:).trace_product_with(dens_ba_ab)
-              res(k) = res(k) + ft_ab(k,:,:).trace_product_with(dens_ba_ba)
-              res(k) = res(k) + ft_ab(k,:,:).trace_product_with(dens_ba_bb)
            end
          end
 
@@ -1321,7 +1140,7 @@ contains
    ! Make the X-ray structure factors for this molecule.
 
    ENSURE(.crystal.created, "no crystal")
-   ENSURE(.crystal.xray_data.created, "no x-ray reflection data")
+   ENSURE(.crystal.xray_F_data.created, "no x-ray reflection data")
    ENSURE(.density_matrix.created, "no density matrix")
 
       ! Assign data
@@ -1358,7 +1177,7 @@ contains
    make_x_structure_factors_p ::: private
    ! Make the structure factors for this molecule.
    ENSURE(.crystal.created, "no crystal")
-   ENSURE(.crystal.xray_data.created, "no x-ray reflection data")
+   ENSURE(.crystal.xray_F_data.created, "no x-ray reflection data")
    ENSURE(.density_matrix.created, "no density matrix")
 
       sf_eq,Fc :: VEC{CPX}*
@@ -1379,16 +1198,11 @@ contains
       sf_eq.create(k_pts.dim1)
 
       ! Make symmetry-generated SF's
-      !genre = .density_matrix.spinorbital_kind
-      genre = .scfdata.spinorbital_kind
+      genre = .density_matrix.spinorbital_kind
 
       if (genre.includes("complex")) then
 
-         if (.scfdata.spinorbital_kind=="general_complex") then
-           .XTAL:make_ft_gc(sf_eq,.density_matrix.general_complex,k_pts)
-         else
-           .XTAL:make_ft(sf_eq,.density_matrix.restricted_complex,k_pts)
-         end if
+         .XTAL:make_ft(sf_eq,.density_matrix.restricted_complex,k_pts)
 
       else
 
@@ -1428,7 +1242,7 @@ contains
       D :: MAT{REAL}
 
    ENSURE(.crystal.created, "no crystal")
-   ENSURE(.crystal.xray_data.created, "no x-ray reflection data")
+   ENSURE(.crystal.xray_F_data.created, "no x-ray reflection data")
 
       sf_eq,Fc :: VEC{CPX}*
       k_pts :: MAT{REAL}*
@@ -1484,7 +1298,7 @@ contains
    ENSURE(.crystal.created, "no crystal")
    ENSURE(.crystal.reflection_data_exists, "no reflection data")
    ENSURE(.crystal.spacegroup.centrosymmetric, "must be a centrosymmetric crystal")
-   DIE_IF(NOT .crystal.spacegroup.centrosymmetric,"crystal must be centrosymmetric")
+   ENSURE(.crystal.spacegroup.centrosymmetric,"crystal must be centrosymmetric")
 
       ! Assign PND data
       .crystal.assign_pnd  
@@ -1830,7 +1644,7 @@ contains
          atom_c => .atom(c)
 
          ! Die if there are only ADP3s
-         DIE_IF(atom_c.has_only_ADP3s_and_errors,"3rd order ADPs with Hirshfeld-atom XCW not yet implemented")
+         ENSURE(NOT atom_c.has_only_ADP3s_and_errors,"3rd order ADPs with Hirshfeld-atom XCW not yet implemented")
 
          ! Temperature factor for this atom for all k_pts
          r1 => pt(:,1)
@@ -1858,7 +1672,7 @@ contains
 
                do i = 1,n_pt 
                   kr = kv(1)*r1(i)+kv(2)*r2(i)+kv(3)*r3(i)
-                  sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+                  sf = sf + rho(i)*cmplx(cos(kr),sin(kr),kind=CPX_KIND)
                end
 
                ! Temperature factor contributions
@@ -1866,7 +1680,7 @@ contains
                tf3 = adp3.contract_with(kv)
                tf4 = adp4.contract_with(kv)
 
-               tfc = exp(-HALF*tf2) * SIXTH * COMPLEXIFY(SIX + QUARTER*tf4,-tf3)
+               tfc = exp(-HALF*tf2) * SIXTH * cmplx(SIX + QUARTER*tf4,-tf3,kind=CPX_KIND)
 
                sf  = sf * rf
 
@@ -1887,7 +1701,7 @@ contains
 
                do i = 1,n_pt 
                   kr = kv(1)*r1(i)+kv(2)*r2(i)+kv(3)*r3(i)
-                  sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+                  sf = sf + rho(i)*cmplx(cos(kr),sin(kr))
                end
 
                sf  = sf * rf
@@ -2235,7 +2049,7 @@ contains
             sf = (ZERO,ZERO)
             do i = 1,n_pt 
                kr = k1k*r1(i)+k2k*r2(i)+k3k*r3(i)
-               sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+               sf = sf + rho(i)*cmplx(cos(kr),sin(kr))
             end
             sf = sf * rf
             sf_eq(k) = sf_eq(k) + sf * exp(-HALF*(u1(k)*k1k+u2(k)*k2k+u3(k)*k3k))
@@ -2769,7 +2583,7 @@ contains
    get_x_structure_factors_test 
    ! Make the structure factors for this molecule.
 !   ENSURE(.crystal.created, "no crystal")
-!   ENSURE(.crystal.xray_data.created, "no x-ray reflection data")
+!   ENSURE(.crystal.xray_F_data.created, "no x-ray reflection data")
 !   ENSURE(.density_matrix.created, "no density matrix")
 
       sf_eq,Fc :: VEC{CPX}*
@@ -2814,10 +2628,10 @@ contains
 
    end
 
-   get_x_structure_factors_pce
+   get_x_structure_factors_dkh
    ! Make the structure factors for this molecule.
 !   ENSURE(.crystal.created, "no crystal")
-!   ENSURE(.crystal.xray_data.created, "no x-ray reflection data")
+!   ENSURE(.crystal.xray_F_data.created, "no x-ray reflection data")
 !   ENSURE(.density_matrix.created, "no density matrix")
 
       sf_eq,Fc :: VEC{CPX}*
@@ -2832,12 +2646,7 @@ contains
 
       sf_eq.create(k_pts.dim1)
       sf_eq = (ZERO,ZERO)
-      select case (.scfdata.relativity_kind)
-         case ("douglas-kroll-hess"); .::make_ft_DKH(sf_eq,.density_matrix.restricted,k_pts)
-         case ("dkh");                .::make_ft_DKH(sf_eq,.density_matrix.restricted,k_pts)
-         case ("iotc");               .::make_ft_IOTC(sf_eq,.density_matrix.restricted,k_pts)
-         case default;                .::make_ft_test(sf_eq,.density_matrix.restricted,k_pts)
-      end    
+      .::make_ft_DKH(sf_eq,.density_matrix.restricted,k_pts)
 
       if (.scfdata.created) then
       if (.scfdata.spinorbital_kind=="unrestricted") then
@@ -2892,7 +2701,7 @@ contains
       R.destroy 
 
       MM.create(.n_prim,.n_bf)
-      .BASE:make_normalised_contraction_mx(MM)
+      .BASE:make_normalized_contraction_mx(MM)
 
       ft_hkl.create(.n_bf,.n_bf)
       GG.create(.n_prim,.n_prim)
@@ -3372,7 +3181,7 @@ contains
 
       !!! moving back to contracted basis sets 
       M.create(.n_prim,.n_bf)
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
       buco.create(.n_bf,.n_prim)
       buco.to_product_of(M,R,transpose_a=TRUE)
       R.destroy
@@ -3383,362 +3192,6 @@ contains
       buco.destroy
 
    end   
-
-   make_ft_IOTC(sf,D,k_pts)
-   ! make the PCE corrected structure factors 
-   ! 
-       sf :: VEC{CPX}
-       D :: MAT{REAL}, IN
-       k_pts :: MAT{REAL}, IN
-       n_gcm :: INT
-       n,i,j,k,k_max :: INT
-       g :: CPX
-       c,alpha,alpha2 :: REAL
-       m_out :: MAT{INT}* 
-       ft_hkl :: MAT{CPX}*
-       Y,U,YU,T,A,S,R,Z,PZP :: MAT{REAL}*
-       Yr,O,SOx,SOy,SOz :: MAT{REAL}*
-       P2,Ap,E,p,ep,bp :: VEC{REAL}*
-
-      k_max = size(k_pts,1)
-      ! the method is for the PCE corr is sfs
-     R.create(.n_prim,.n_prim)
-    .REL:make_primitive_overlap_matrix(R)
-     m_out.create(.n_prim,.n_prim) 
-    .REL:make_ready_da_gcm_tr2(m_out,n_gcm)  
-!    .make_ready_da_gcm_tr(R,m_out,n_gcm)  
-! put the overlap matrix into the n_gcm non-redundant space
-     S.create(n_gcm,n_gcm)
-     .REL:get_da_gcm_now(R,S,m_out)  
-     
-     Y.create(n_gcm,n_gcm)
-     Y.to_inverse_sqrt_of(S)
-
-!!!  KINETIC ENERGY MATRIX !!!
-     R=ZERO
-     .REL:make_primitive_kinetic_matrix(R) 
-     T.create(n_gcm,n_gcm)
-! put the kinetic energy matrix into the n_gcm non-redundant space
-     .REL:get_da_gcm_now(R,T,m_out)  
-
-     A.create(n_gcm,n_gcm)
-     A.to_product_of(Y,T)   
-     T.to_product_of(A,Y)              ! T=YTY  kinetic energy in an orthogonal basis
-     U.create(n_gcm,n_gcm)
-     P2.create(n_gcm)
-     T.solve_eigenproblem(P2,U)
-     P2= TWO * P2
-     YU.create(n_gcm,n_gcm)
-     YU.to_product_of(Y,U)
-     T.destroy
-     Y.destroy
-     U.destroy
-   
-!!!  POTENTIAL ENERGY MATRIX (electron-nucleus) !!!
-     R=ZERO
-     .REL:make_primitive_nuclear_matrix(R)
-     Z.create(n_gcm,n_gcm)
-! put the potential energy matrix into the n_gcm non-redundant space
-     .REL:get_da_gcm_now(R,Z,m_out)  
-
-     A.to_product_of(YU,Z,transpose_a=TRUE)
-     Z.to_product_of(A,YU)
-
-!!!  PZP MATRIX  !!!
-     SOx.create(.n_prim,.n_prim)
-     SOy.create(.n_prim,.n_prim)
-     SOz.create(.n_prim,.n_prim)
-     R=ZERO
-         .REL:make_primitive_DKH_matrices(R,SOx,SOy,SOz)
-       SOx.destroy
-       SOy.destroy
-       SOz.destroy
-
-     PZP.create(n_gcm,n_gcm)
-! put the PZP matrix into the n_gcm non-redundant space
-     .REL:get_da_gcm_now(R,PZP,m_out) 
-
-     A.to_product_of(YU,PZP,transpose_a=TRUE)
-     PZP.to_product_of(A,YU)
-     R.destroy
-
-!!! A-O LETS GO !!!
-     c = SPEED_OF_LIGHT_AU
-     alpha = ONE/c
-     alpha2= alpha*alpha
- 
-     E.create(n_gcm)
-     p.create(n_gcm)
-     ep.create(n_gcm)
-     Ap.create(n_gcm)
-     bp.create(n_gcm)
-
-     E=ZERO 
-     p=ZERO
-     ep=ZERO
-     Ap=ZERO
-     bp=ZERO
-
-     do i = 1,n_gcm
-
-       E(i)= c * sqrt(P2(i) + c * c)
-       p(i)=sqrt(P2(i))
-       ep(i)=sqrt(ONE+P2(i)*alpha2) 
-       Ap(i)= sqrt( (E(i) + c * c)/(TWO * E(i)) )  
-       bp(i)=ONE/(ep(i)+ONE)
-
-     end  
-    P2.destroy
-
-     do i=1,n_gcm
-       do j=1,n_gcm
-    
-        Z(i,j) = Ap(i)*Z(i,j)*Ap(j)
-        PZP(i,j) = Ap(i)*PZP(i,j)*Ap(j)
-    
-       end
-     end
-
-     Yr.create(n_gcm,n_gcm)
-     Yr=ZERO
-
-    .REL:find_da_Y_iterative(Yr,PZP,Z,p,bp,ep)
-    .BASE:put_debug(Yr,"Y matrix")
-
-! lets make ready the normalzation matrix
-     O.create(n_gcm,n_gcm)
-     O=ZERO
-     do i=1,n_gcm
-       O(i,i)=ONE
-       do j=1,n_gcm
-         do k=1,n_gcm
-           O(i,j)=O(i,j)+Yr(k,i)*Yr(k,j)
-         end do
-       end do
-     end do
-        
-     A.to_inverse_sqrt_of(O)
-     O=A
-     Z.destroy
-     PZP.destroy
-     A.destroy
-
-! hkl ft starts here
-     ft_hkl.create(.n_bf,.n_bf)
-     do n = 1,k_max
-        ft_hkl=(ZERO,ZERO)
-       .::make_IOTC_ft_PCE_off(ft_hkl,Yr,YU,Ap,bp,p,k_pts(n,1),k_pts(n,2),k_pts(n,3),m_out,n_gcm,S,O)
-
-       .::make_part_and_therm_smear(ft_hkl,k_pts(n,:))
-
-        g=(ZERO,ZERO) !???
-   
-        do i=1,.n_bf
-           do j=1,.n_bf
-               g = g + D(i,j)*ft_hkl(i,j)  !????? cmpx matrix ??? perhaps the cpx parts is not needed BUT!!!!
-           end do           
-        end do           
-
-        stdout.flush
-        stdout.put(n)
-        stdout.put(k_pts(n,1))
-        stdout.put(k_pts(n,2))
-        stdout.put(k_pts(n,3))
-        stdout.put(real(g))
-
-        sf(n)=g
-     end do
-
-    S.destroy
-    O.destroy
-    YU.destroy
-    Yr.destroy
-    Ap.destroy
-    E.destroy
-    p.destroy
-    bp.destroy
-    ep.destroy
-    m_out.destroy
-    ft_hkl.destroy
-    
-   end
-  
-   make_IOTC_ft_PCE_off(GG,Yr,YU,Ap,bp,p,xx,yy,zz,m_out,n_gcm,S,O)
-   ! correct the picture change
-   ! g is the electron density in a given point with coordinates x=xx, y=yy, z=zz
-   ! this routine is based on the make_r_DKH_matrix(H) routine
-        GG :: MAT{CPX} , OUT
-        Yr,YU :: MAT{REAL} 
-        Ap,bp,p :: VEC{REAL} 
-        xx,yy,zz :: REAL 
-        m_out :: MAT{INT} 
-        n_gcm :: INT 
-        S,O :: MAT{REAL} 
-
-        i,j :: INT   
-        D,PDP,R :: MAT{CPX}*
-        A,B,buco :: MAT{CPX}*
-        M :: MAT{REAL}* 
-
-!!!  the density operator X !!!
-     R.create(.n_prim,.n_prim)
-     R=(ZERO,ZERO)
-! it do not exist in the moment
-     .::make_primitive_ft_matrix(R,xx,yy,zz)
-     D.create(n_gcm,n_gcm)
-     D=(ZERO,ZERO)
-! put the potential energy matrix into the n_gcm non-redundant space
-     .REL:get_da_gcm_now(R,D,m_out)  
-
-     A.create(n_gcm,n_gcm)
-     A.to_product_of(YU,D,transpose_a=TRUE)
-     D.to_product_of(A,YU)
-
-!!!  PDP MATRIX  !!!
-     R=(ZERO,ZERO)
-     .::make_primitive_pftp_matrix(R,xx,yy,zz)
-
-     PDP.create(n_gcm,n_gcm)
-     PDP=(ZERO,ZERO)
-! put the PDP matrix into the n_gcm non-redundant space
-     .REL:get_da_gcm_now(R,PDP,m_out)  
-     A=(ZERO,ZERO)
-     A.to_product_of(YU,PDP,transpose_a=TRUE)
-     PDP.to_product_of(A,YU)
-
-!   if( .scfdata.using_ppzpp)then
-!      R=(ZERO,ZERO) 
-!      .make_primitive_ppDpp_matrix(R,xx,yy,zz) 
-!      PPDPP.create(n_gcm,n_gcm)
-!      .get_da_gcm_now(R,PPDPP,m_out)  
-!      A=(ZERO,ZERO)
-!      A.to_product_of(YU,PPDPP,transpose_a=TRUE)
-!      PPDPP.to_product_of(A,YU)
-!  end if 
-
-!!! A-O LETS GO !!!
-        
-     do i=1,n_gcm
-       do j=1,n_gcm
-    
-        D(i,j) = Ap(i)*D(i,j)*Ap(j)
-        PDP(i,j) = Ap(i)*PDP(i,j)*Ap(j)                                        
-    
-       end
-     end
-
-!     if(.scfdata.using_ppzpp)then
-! use the second derivatives in the [W1,[W1,X(even,0)]] and [W2,X(odd,0)] terms   
-!       do i=1,n_gcm
-!         do j=1,n_gcm
-!           PPDPP(i,j) = Ap(i)*PPDPP(i,j)*Ap(j) 
-!         end do
-!       end do
-!     end if  
-    
-     B.create(n_gcm,n_gcm) 
-     B=(ZERO,ZERO)  
-!     if(.scfdata.using_ppzpp)then
-!       .build_da_IOTC_dens(B,Yr,PDP,D,p,bp,E,n_gcm,PPDPP)
-!     else
-     .::build_da_IOTC_ft(B,Yr,PDP,D,p,bp,n_gcm)
-!     end if  
-
-     D=(ZERO,ZERO)
-!     D=matmul(O,matmul(B,O))
-     A.to_product_of(O,B)
-     D.to_product_of(A,O)
-
-     PDP.destroy
-!    if(.scfdata.using_ppzpp)then
-!     PPDPP.destroy
- !   end if 
-   
-     B=(ZERO,ZERO)
-     B.to_product_of(S,YU)
-
-     A=(ZERO,ZERO)
-     A.to_product_of(B,D)
-     D.to_product_of(A,B,transpose_b=TRUE)
-
-     A.destroy
-     B.destroy
-
-!!! moving back to tonto style primitive basis sets 
-     R=(ZERO,ZERO)
-! put the Fock matrix back to the space .n_prim space
-     .REL:get_back_prim_now(D,R,m_out)  
-     D.destroy
-
-!!! moving back to contracted basis sets 
-     M.create(.n_prim,.n_bf)
-     .BASE:make_normalised_contraction_mx(M)
-     buco.create(.n_bf,.n_prim)
-     buco.to_product_of(M,R,transpose_a=TRUE)
-     R.destroy
-
-     GG.to_product_of(buco,M)
-
-     M.destroy
-     buco.destroy
-   end   
-
-   build_da_IOTC_ft(F,Yr,PAP,A,p,bp,n_gcm)
-   ! build the IOTC Y matrix 
-   F :: MAT{CPX}, OUT
-   Yr :: MAT{REAL}, IN
-   PAP,A :: MAT{CPX}, IN
-   p,bp :: VEC{REAL}, IN
-   n_gcm :: INT, IN
-
-   i,j,dim :: INT
-   c,alpha,alpha2,alpha3,alpha4 :: REAL
-   AAA,F1R,F1L,F2 :: MAT{CPX}*
-   
-!     n_gcm=.n_prim
-     c = SPEED_OF_LIGHT_AU
-     alpha = ONE/c
-     alpha2= alpha*alpha
-     alpha3= alpha2*alpha
-     alpha4= alpha3*alpha
-
-     dim=n_gcm
-
-     F1L.create(dim,dim);F1R.create(dim,dim);F2.create(dim,dim)
-     AAA.create(dim,dim)
-
-!     if( .scfdata.using_ppzpp)then
-!       do i = 1,dim
-!       do j = 1,dim
-!         AAA(i,j)=alpha2*bp(i)/p(i)*ppApp(i,j)*bp(j)/p(j)
-!       end do
-!       end do
-!     else
-       do i = 1,dim
-       do j = 1,dim
-         AAA(i,j)=alpha2*p(i)*bp(i)*A(i,j)*bp(j)*p(j)
-       end do
-       end do
-!     end
-
-     do i = 1,dim
-       do j = 1,dim
-         F(i,j)   =  A(i,j) + alpha2*bp(i)*PAP(i,j)*bp(j)
-         F1L(i,j) =  alpha * ( bp(i)*p(i)*A(i,j)-PAP(i,j)/p(i)*bp(j) )         
-         F1R(i,j) =  alpha * ( A(i,j)*bp(j)*p(j)-bp(i)*PAP(i,j)/p(j) )
-         F2(i,j)  =  PAP(i,j)/p(j)/p(i) + AAA(i,j)
-        end do
-     end do
-
-     AAA.to_product_of(Yr,F1L,transpose_a=TRUE)
-     F=F+AAA+matmul(F1R,Yr)
-     AAA.to_product_of(Yr,F2,transpose_a=TRUE)
-     F=F+matmul(AAA,Yr)
-  
-     AAA.destroy     
-     F1L.destroy;F1R.destroy;F2.destroy
-     
-   end
 
 
    make_primitive_ft_matrix(ft,h1,h2,h3)
@@ -3786,9 +3239,9 @@ contains
            ft_ab = (ZERO,ZERO)
 
             if ( (fa-la)==0 AND (fb-lb)==0 ) then 
-               G.make_normalised_ft_00(ft_ab,h1,h2,h3)
+               G.make_normalized_ft_00(ft_ab,h1,h2,h3)
             else                             
-               G.make_normalised_ft_v2(ft_ab,h1,h2,h3,.use_spherical_basis) ! cleaner newer version
+               G.make_normalized_ft_v2(ft_ab,h1,h2,h3,.use_spherical_basis) ! cleaner newer version
             end if
 
             ! perhaps the thermal smearing should come after building
@@ -3863,7 +3316,7 @@ contains
            ft_ab.create(la-fa+1,lb-fb+1)
            ft_ab = (ZERO,ZERO)
 
-           G.make_normalised_pftp_v2(ft_ab,h1,h2,h3,.use_spherical_basis) ! cleaner newer version
+           G.make_normalized_pftp_v2(ft_ab,h1,h2,h3,.use_spherical_basis) ! cleaner newer version
 
            ! perhaps the thermal smearing should come after building
            ! the whole sf-matrix
@@ -3985,6 +3438,5 @@ contains
       end
 
    end
-  
-end
 
+end

@@ -50,7 +50,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: textfile.foo 4394 2014-05-31 08:51:05Z dylan_ $
+! $Id: textfile.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 module TEXTFILE
@@ -63,9 +63,9 @@ module TEXTFILE
 
 contains
 
-!  =============================
-!  File creation type operations
-!  =============================
+!  =================
+!  Std File creation
+!  =================
 
    create_stdin ::: leaky
    ! Create a the standard input file object, if needed.
@@ -157,6 +157,10 @@ contains
       self => stderr
 
    end
+
+!  ==========
+!  Allocation
+!  ==========
 
    create(name) ::: leaky
    ! Create a textfile, and optionally set the name. Does not open the file.
@@ -265,7 +269,11 @@ contains
       res :: BIN
    end
 
-   create_copy(file) ::: recursive, leaky
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(file) ::: recursive, leaky, impure
    ! Create a copy of this textfile
       self :: PTR
       file :: TEXTFILE
@@ -281,25 +289,27 @@ contains
 
    end
 
-   copy(file,copy_saved) ::: recursive, leaky
-   ! Make a copy of this textfile. If "saved" is TRUE, recursively
+   copy(object,copy_saved) ::: recursive, leaky, pure
+   ! Make "self" a copy of "object". If "saved" is TRUE, recursively
    ! copy the .saved component. Default is *not* to recursively copy.
-      file :: TEXTFILE
+      object :: TEXTFILE
       copy_saved :: BIN, optional
       
       ! Non pointer (simple) copy
-      self = file
+      self = object
 
-      ! Pointer parts are create-copied
+      COPY_COMPONENT(buffer)
+
       .nullify_ptr_part
-      .buffer.copy(file.buffer)
-      if (file.internal.created)         .internal.create_copy(file.internal)
-      if (file.replacement_list.created) .replacement_list.create_copy(file.replacement_list)
+      CREATE_COPY_COMPONENT(internal)
+      CREATE_COPY_COMPONENT(replacement_list)
 
       ! Copy saved only if requested (recursive)
       if (present(copy_saved)) then
       if (copy_saved) then
-      if (file.saved.created)            .saved.create_copy(file.saved)
+      if (object.saved.created) then
+         .saved.create_copy(object.saved)
+      end
       end
       end
 
@@ -359,16 +369,29 @@ contains
       self  => saved
    end
 
-!  ========================
-!  File redirect and revert
-!  ========================
+!  =========================
+!  Redirecting and reverting
+!  =========================
+
+   redirect ::: leaky, impure
+   ! Redirect "self" to a file with name "filename", 
+   ! which is read from stdin.
+      self :: PTR
+
+      filename :: STR
+
+      filename = stdin.next_str
+
+      .redirect(trim(filename))
+
+   end
 
    redirect(name) ::: leaky
    ! Save all the info for the current file in ".saved", and open a
    ! new textfile.  This is used for input, or output redirection. 
    ! The new file retains the style settings of the saved file
       self :: PTR
-      name :: STR
+      name :: STR, IN
 
       saved :: TEXTFILE*
 
@@ -415,8 +438,9 @@ contains
    revert ::: leaky
    ! Revert to the previously redirected textfile, but keep current
    ! style settings, including (for example) any default_units settings.
-   ENSURE(.saved.created,"no previous settings")
       self :: PTR
+
+   ENSURE(.saved.created,"no previous settings")
 
       saved :: TEXTFILE*
 
@@ -426,7 +450,7 @@ contains
       ! Soft-ending
       .saved.io_status = -1     
 
-      ! Keep original .saved file
+      ! Keep previous .saved file
       saved => .saved
 
       ! Destroy pointer parts of self ...
@@ -442,9 +466,8 @@ contains
       DELETE_MEMORY(SELF_TYPE_SIZE)
       deallocate(self)          
 
-      ! Self is the original
+      ! Self is the old .saved
       self => saved
-
    end
 
    use_style(saved) ::: private
@@ -470,9 +493,9 @@ contains
 
    end
 
-!  ============================
-!  File open, close, and delete
-!  ============================
+!  ==============================
+!  Opening, closing, and deletion
+!  ==============================
 
    open
    ! Open the textfile based on its action attribute
@@ -528,7 +551,7 @@ contains
       end
 
       PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail/=0,"error opening old file for reading: "//trim(name))
+      ENSURE(fail==0,"error opening old file for reading: "//trim(name))
       .io_status = fail
 
    end
@@ -571,7 +594,7 @@ contains
       end
 
       PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail/=0,"error opening old file: "//trim(name))
+      ENSURE(fail==0,"error opening old file: "//trim(name))
       .io_status = fail
 
       .clear_and_put_margin
@@ -605,7 +628,7 @@ contains
       end
 
       PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail/=0,"error opening new file "//trim(name))
+      ENSURE(fail==0,"error opening new file "//trim(name))
       .io_status = fail
 
    end
@@ -706,7 +729,7 @@ contains
       end
 
       PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail/=0,"error opening old file for reading: "//trim(name))
+      ENSURE(fail==0,"error opening old file for reading: "//trim(name))
       .io_status = fail
 
       ! Read the lines until done
@@ -723,9 +746,7 @@ contains
 
       PARALLEL_BROADCAST(l,0)
 
-      ! Set the number of lines.
-      ! WARNING: this assumes the fail happens after
-      ! the stop record, so we have to move befor that.
+      ! Set the number of lines
       .no_of_lines = l - 1
 
       ! Rewind
@@ -734,7 +755,7 @@ contains
       end
 
       PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail/=0,"error closing file for reading: "//trim(name))
+      ENSURE(fail==0,"error closing file for reading: "//trim(name))
       .io_status = fail
 
    end
@@ -743,20 +764,15 @@ contains
    ! Set the file name
       name :: STR
 
-   DIE_IF(name==" ","name is blank!")
+   ENSURE(name/=" ","name is blank!")
 
       .name = name
 
    end
 
-   reset_io_status
-   ! Reset manually the io_status if it is safe to do so.
-      .io_status = 0
-   end
-
-!  =========================================
-!  Set comment, quote and specials character
-!  =========================================
+!  =======================
+!  Set quotes and specials
+!  =======================
 
    set_comment_chars(comment_chars)
    ! Set .comment_chars to "comment_chars".
@@ -881,25 +897,25 @@ contains
       ! First and last character
       tmp = adjustl(fmt)
       tmp.get_next_item_position(f,l)
-      DIE_IF(l==0, "fmt is blank")
+      ENSURE(l>0, "fmt is blank")
       tmp = tmp(:l)
  
       ! Get the number of columns
       s = tmp.index_of_character_not_in("0123456789")
-      DIE_IF(s==0, "fmt has no # of fields")
+      ENSURE(s>0, "fmt has no # of fields")
       .set_no_of_fields_per_line(tmp(:s-1).to_int)
 
       ! Get the style
       tmp = tmp(s:)
       s = tmp.index_of_character_in("0123456789")
-      DIE_IF(s==0, "fmt has no real style")
+      ENSURE(s>0, "fmt has no real style")
       .set_real_style(tmp(:s-1))
 
       ! Get the width
       tmp = tmp(s:)
       s = tmp.index_of_character_not_in("0123456789")
-      DIE_IF(s==0, "fmt has no width")
-      DIE_IF(tmp(s:s)/=".", "fmt has no dot before precision")
+      ENSURE(s>0, "fmt has no width")
+      ENSURE(tmp(s:s)==".", "fmt has no dot before precision")
       .set_real_precision(0)
       .set_real_width(tmp(:s-1).to_int)
 
@@ -1006,29 +1022,24 @@ contains
 
    end
 
-!  ====================
-!  File inquiry methods
-!  ====================
+!  ===============
+!  Inquiry methods
+!  ===============
 
    exists(name) result (res)
    ! Returns true if the file exists on the file system.
    ! Uses "name" if present, otherwise ".name".
-      self :: IN
-      name :: STR, optional, IN
+      name :: STR, optional
       res :: BIN
 
       if (present(name)) then
-
          if (IO_IS_ALLOWED) then
             inquire(file=trim(name),exist=res)
          end
-
       else
-
          if (IO_IS_ALLOWED) then
             inquire(file=trim(.name),exist=res)
          end
-
       end
 
       PARALLEL_BROADCAST(res,0)
@@ -1037,7 +1048,6 @@ contains
 
    is_open result (res)
    ! Returns true if the file has been opened
-      self :: IN
       res :: BIN
 
       if (.unit==TEXTFILE_STDIN_UNIT OR .unit==TEXTFILE_STDOUT_UNIT) then
@@ -1065,12 +1075,71 @@ contains
       PARALLEL_BROADCAST(res,0)
    end
 
+   next_line_item result (res)
+   ! Return the index of the next item to be processed on the line
+      res :: INT
+      res = .buffer.next_item_number
+   end
+
+   previous_line_item  result (res)
+   ! Return the index of the previous item to be processed on the line
+      res :: INT
+      res = .buffer.item_index
+   end
+
+   last_line_item  result (res)
+   ! Return the index of the final item on the line
+      res :: INT
+      res = .buffer.n_items
+   end
+
+   n_line_items result (res)
+   ! Return the number of items on the line
+      res :: INT
+      res = .buffer.n_items
+   end
+
+   at_end_of_line result (res)
+   ! Return TRUE if at the end of the line
+      res :: BIN
+      res = .buffer.item_index==.buffer.n_items
+   end
+
+   line_number result (res)
+   ! Return the input file line number which is being processed
+      res :: INT
+      res = .record
+   end
+
+   buffer_string result (res)
+   ! Put a string into the buffer
+      res :: STR(len=BSTR_SIZE)
+      res = .buffer.buffer_string
+   end
+
+   end_of_file result (res)
+   ! See if .io_status/=0, indicating the end of file has been found.
+      res :: BIN
+      res = .io_status/=0
+   end
+
+   reverted result (res)
+   ! See if .io_status/=0, indicating an internal file has ended 
+   ! i.e. a soft ending).  
+      res :: BIN
+      res = .io_status/=0 
+   end
+
+   reset_io_status
+   ! Reset manually the io_status if it is safe to do so.
+      .io_status = 0
+   end
+
    at_end_of_file result (res)
    ! Read a line into the buffer from the input file and see if it is
    ! at the end of file. This is an explicit test, not just a viewing
    ! of ".io_status".  NOTE: If all lines to the end of file are
    ! empty, then the result is also true.
-      self :: INOUT
       res :: BIN
 
    ENSURE(.action=="read","file does not have read status")
@@ -1097,37 +1166,21 @@ contains
 
    end
 
-   end_of_file result (res) ::: pure
-   ! See if .io_status/=0, indicating the end of file has been found.
-      self :: IN
-      res :: BIN
-
-      res = .io_status/=0
-
+   buffer_exhausted result (res)
+   ! Return whether the buffer is exhausted
+     res :: BIN
+       res = .buffer.exhausted
    end
 
-   reverted result (res) ::: pure
-   ! See if .io_status/=0, indicating an internal file has ended 
-   ! i.e. a soft ending).  
-      self :: IN
-      res :: BIN
-
-      res = .io_status/=0 
-
-   end
-
-!  ===========
-!  Read a line
-!  ===========
+!  ==================================
+!  Line repositioning type operations
+!  ==================================
 
    read_line
    ! Read a line into the buffer. 
-      self :: INOUT
-
       if (.internal.created) then; .read_line_internal
       else;                        .read_line_external
       end
-
    end
 
    read_line_internal ::: private
@@ -1138,7 +1191,6 @@ contains
    ! useful for testing whether at the end of a file), OR (2) there is
    ! a .saved file, in which case the current file reverts to the
    ! saved file, and an attempt is made to read from that saved file.
-      self :: INOUT
 
    ENSURE(.internal.created,"no internal file")
 
@@ -1146,29 +1198,24 @@ contains
 
       .update_system_info
 
-      if (.record<size(.internal)) then      
-      
-          ! No errors.
+      if (.record<size(.internal)) then      ! No errors.
+
          .io_status = 0
          .record = .record + 1
          string = .internal(.record)
          .buffer.set_and_analyze(string)
       
-      else                                   
-      
-         ! At end of file.
+      else                                   ! At end of file.
+
          .io_status = 1
-
-         if (.ignore_end_of_file) then       
-
-            ! Next time don't ignore eof
-            .ignore_end_of_file = FALSE      
-
+         if (.ignore_end_of_file) then       ! Ignore end of file ... 
+            .ignore_end_of_file = FALSE      ! Next time don't ignore
          else                               
-
-            ! WTF?
-            .read_line_bad_eof
-
+            if(.saved.created) then          ! It's OK, go back to saved file
+               DIE("did you forget to set ignore_end_of_file?")
+            else
+               DIE("unexpected end of file") ! Die if nothing saved
+            end
          end
 
       end
@@ -1179,15 +1226,12 @@ contains
 
    read_line_external ::: private
    ! Read a line into the buffer from the input file. If the file
-   ! ends, this routine dies, UNLESS 
-   ! (1) .ignore_end_of_file is set, in which case another succesive
-   !     failure to read a line will generate an error (this prevents
-   !     infinite read loops, and is also useful for testing whether
-   !     at the end of a file), OR 
-   ! (2) there is a .saved file, in which case the current file
-   !     reverts to the saved file, and an attempt is made to read
-   !     that saved file.
-      self :: INOUT
+   ! ends, this routine dies, UNLESS (1) .ignore_end_of_file is set,
+   ! in which case another succesive failure to read a line will
+   ! generate an error (this prevents infinite read loops, and is also
+   ! useful for testing whether at the end of a file), OR (2) there is
+   ! a .saved file, in which case the current file reverts to the
+   ! saved file, and an attempt is made to read that saved file.
 
    ENSURE(.is_open,"file is not open")
    ENSURE(.action=="read","file does not have read action!")
@@ -1203,8 +1247,14 @@ contains
          unit = .unit
          fail = 0
          string = " "
-         read(unit=unit,fmt="(a)",iostat=fail) string 
+         read(unit=unit,fmt="(a)",iostat=fail) string          ! could fail
+       ! if (.record>=.no_of_lines) fail = TEXTFILE_IOSTAT_EOF ! could also fail
+       ! inquire(unit=.unit,position=position)
+       ! print *,.record
+       ! print *,trim(string)
+       ! print *,trim(position)
       end
+
       PARALLEL_BROADCAST(string,0)
       PARALLEL_BROADCAST(fail,0)
 
@@ -1216,24 +1266,28 @@ contains
          
          case (0)                               
 
-               ! No errors. Analyze the line.
-               .buffer.set_and_analyze(string) 
-               .record = .record + 1
+            ! No errors. Analyze the line
+            .io_status = 0              
+            .buffer.set_and_analyze(string) 
+            .record = .record + 1
 
          case (TEXTFILE_IOSTAT_EOF)             
 
+            ! Expected EOF
             if (.ignore_end_of_file) then       
 
-               ! Explicit backspace
-               ! Status still indicates EOF
-               if (IO_IS_ALLOWED) then
-                  backspace(unit=.unit,iostat=fail)
-               end
+               ! Next time don't ignore EOF
+               .ignore_end_of_file = FALSE      
+               .record = .record + 1
 
+            ! Unexpected EOF
             else                               
 
-               ! Unexpected EOF
-               .read_line_bad_eof
+               if(.saved.created) then          
+                  DIE("unexpected end of file -- did you forget to REVERT?")
+               else
+                  DIE("unexpected end of file") 
+               end
 
             end
          
@@ -1247,15 +1301,6 @@ contains
       ! Update
       .update_system_info
 
-   end
-
-   read_line_bad_eof ::: private
-   ! Reading a line encountered an unexpected EOF.
-      if(.saved.created) then          
-         DIE("did you forget to set ignore_end_of_file?")
-      else
-         DIE("unexpected end of file")
-      end
    end
 
    update_line ::: private
@@ -1299,9 +1344,73 @@ contains
 
    end
 
-!  ========================
-!  File rewind, move to end
-!  ========================
+   skip_next_item ::: leaky
+   ! Move to (i.e. just after) the next item in the input file.
+      .update_line
+      .buffer.skip_item
+   end
+
+   skip_next_items(n) ::: leaky
+   ! Skip several items.
+      n :: INT, IN
+      i :: INT
+      do i = 1,n
+         .skip_next_item
+      end
+   end
+
+   move_to_previous_item
+   ! Move to (i.e. before) the previous item in the input file.
+   ! Backspace a line if required.
+      .revert_line
+      .move_to_previous_item_on_line     ! move to the last read item
+   end
+
+   move_to_last_item_on_line
+   ! Move the cursor over to the beginning of the last item on the line
+      item :: INT
+      item = .last_line_item
+      .move_to_line_item(item)
+   end
+
+   move_to_previous_item_on_line
+   ! Move the cursor over to the beginning of the previous item on the
+      item :: INT
+      item = .previous_line_item
+      .move_to_line_item(item)
+   end
+
+   move_to_line_item(number)
+   ! Move the cursor over to the beginning of the item with index "number"
+   ! on the current line. (More accurately: after the end of the previous item
+   ! on the current line. So if there are "nitems" on the line you can move to
+   ! "nitem+1" if you want to, and that will be the end of the line).
+      number :: INT
+      n :: INT
+      .update_system_info
+      n = number
+      .buffer.move_to_item(n)
+   end
+
+   rest_of_line result (res)
+   ! If there is anything left on the input line, then it is returned, else
+   ! nothing is returned.  Record moves to the next line.
+      res :: STR
+   ENSURE(.action=="read","file does not have read action!")
+      if (NOT .buffer.empty) then
+         res = .buffer.string(.buffer.item_end+1: )
+         .read_line
+      else
+         res = " "
+         .read_line
+      end
+   end
+
+   reset_input_position
+   ! Reset the locators for the current input file.
+      .move_to_previous_item
+      .skip_next_item
+   end
 
    rewind
    ! Rewind the input file, reading the first line for read-only files.
@@ -1333,7 +1442,7 @@ contains
          rewind(unit=.unit,iostat=fail)
       end
       PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail>0,"rewind error")
+      ENSURE(fail==0,"rewind error")
       .io_status = fail
 
       .record = 0
@@ -1393,146 +1502,96 @@ contains
 
    end
 
-!  =================
-!  Skip file records
-!  =================
+   backspace_line
+   ! Reprocess previously input line
+      .move_to_record(.record-1)
+   end
 
    skip_line
    ! Skip the next line in the input file
-      self :: INOUT
-
-      record :: INT
-
-      record = .record + 1
-      .move_to_record(record)
-
-   end
-
-   backspace_line
-   ! Move to the previous line
-      self :: INOUT
-
-      record :: INT
-
-      record = .record - 1
-      .move_to_record(record)
-
+      .move_to_record(.record+1)
    end
 
    move_to_line(line)
    ! Make sure that "line" was the last one processed
    ! in the input file
-      self :: INOUT
-      line :: INT, IN
-
+      line :: INT
+   ENSURE(line>=0,"line number must be non-negative")
       .move_to_record(line)
-
    end
 
    move_to_record(rec)
    ! Move to the requested record "rec" in the input file.
    ! and read it into the buffer. Set .record to the 
    ! last processed record.
-      self :: INOUT
-      rec :: INT, IN
-
-   ENSURE(rec>=0,"line number must be non-negative")
-
+      rec :: INT
       if (.internal.created) then; .move_to_record_internal(rec)
       else;                        .move_to_record_external(rec)
       end
-
    end
 
    move_to_record_internal(rec) ::: private
    ! Move to the requested record "rec" in the internal file.
    ! and read it into the buffer. Set .record to the 
    ! last processed record.
-      self :: INOUT
-      rec :: INT, IN
-
+      rec :: INT
    ENSURE(rec>=0,"record number must be non-negative")
    ENSURE(rec<=size(.internal),"record outside file range")
-
-      .record = rec - 1
-
+      .record = rec-1
       .read_line
-
    end
 
    move_to_record_external(rec) ::: private
    ! Move to the requested record "rec" in the input file.
    ! and read it into the buffer. Set .record to the 
    ! last processed record.
-      self :: INOUT
-      rec :: INT, IN
+      rec :: INT
 
    ENSURE(rec>=0,"record number must be non-negative")
+
+      fail :: INT
 
       .update_system_info
 
       if (rec<(.record+1)) then
 
-         ! Go backwards
          do
-            .move_to_back_record
+
+            fail = 0
+            if (IO_IS_ALLOWED) then
+               backspace(unit=.unit,iostat=fail)
+            end
+            PARALLEL_BROADCAST(fail,0)
+            ENSURE(fail==0,"backspace error")
+            .io_status = fail
+
+            .record = .record - 1
+
             if (rec==(.record+1)) exit
+
          end
 
       else if (rec>(.record+1)) then
 
-         ! Go forwards
          do
-           .move_to_next_record
+
+           fail = 0
+           if (IO_IS_ALLOWED) then
+              read(unit=.unit,fmt="()",iostat=fail)
+           end
+           PARALLEL_BROADCAST(fail,0)
+           ENSURE(fail==0,"read error")
+            .io_status = fail
+
+           .record = .record + 1
+
            if (rec==(.record+1)) exit
+
          end
 
       end
 
-      ! Read it
       .read_line
-
-   end
-
-   move_to_back_record ::: private
-   ! Backspace a record. Skip system info update.
-      self :: INOUT
-
-      fail :: INT
-
-      fail = 0
-
-      if (IO_IS_ALLOWED) then
-         backspace(unit=.unit,iostat=fail)
-      end
-
-      PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail>0,"backspace error")
-      .io_status = fail
-
-      ! Next record
-      .record = .record - 1
-
-   end
-
-   move_to_next_record ::: private
-   ! Forward space a record. Skip system info update.
-      self :: INOUT
-
-      fail :: INT
-
-      fail = 0
-
-      if (IO_IS_ALLOWED) then
-         read(unit=.unit,fmt="()",iostat=fail)
-      end
-
-      PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail>0,"read error")
-       .io_status = fail
-
-      ! Next record
-      .record = .record + 1
 
    end
 
@@ -1541,21 +1600,26 @@ contains
 !  ===========
 
    look_for_item(item,from,until,end_tokens,exact_match,head_match,return_cursor,found)
-   ! Scan through the file for an "item". If present:
-   ! . Starting at line "from"  inclusive
-   ! . Ending at line "until" inclusive
-   ! . Ending at any token which *begins* with "end_tokens"
-   ! . With "item" matching exactly, if "exact_match" is TRUE
-   ! . With "item" head-matching,    if "head_match" is TRUE
-   ! . Return cursor to orginal line, if "return_cursor" is TRUE
-   ! . Return without error, with "found" TRUE if "item" was found
-      item  :: STR, IN
-      from  :: INT, IN, optional
-      until :: INT, IN, optional
-      end_tokens  :: VEC{STR}, IN, optional
-      exact_match :: BIN, IN, optional
-      head_match  :: BIN, IN, optional
-      return_cursor :: BIN, IN, optional
+   ! Scans through the file for a token which includes the given "item" (the
+   ! token in the file must be a separate thing surrounded by whitespace, begin
+   ! or end of line, or comment characters; whereas "item" may may match only a
+   ! part of a given token). If a token matching "item" exists, the file cursor
+   ! is left just after this token. If no match is found, the file is rewound to
+   ! the initial line of the search.  If "from" is present then it is used as
+   ! the start line for the search. If "until" is present, it is used as the
+   ! last line of the search. If "end_tokens" is present then an exact match to
+   ! any of these tokens indicates the end of search for "item".  If
+   ! "exact_match" is present and TRUE, then "item" must match exactly the token
+   ! in the file, instead of just being included in it. If "head_match" is
+   ! present and TRUE, then occurs only if the characters at the head of the
+   ! "item" string match the token in the file. only If "return_cursor" is
+   ! present and FALSE, the cursor is not returned to the starting line of the
+   ! search in the case where no match is found. If "found" is present, it is
+   ! set TRUE when the item is found, else FALSE. 
+      item :: STR, IN
+      from,until :: INT, IN, optional
+      end_tokens :: VEC{STR}, IN, optional
+      exact_match,head_match,return_cursor :: BIN, IN, optional
       found :: BIN, OUT, optional
 
       start_record :: INT
@@ -1563,79 +1627,70 @@ contains
       fnd,exact,head,put_back,has_item,has_end,match :: BIN
       i :: INT
 
-      ! Look from .record or "from"
-      start_record = .record                
-      if (present(from)) start_record = from
-
-      ! Look until EOF or "until"
-      if (present(until)) then
-         ENSURE(until>=start_record,"ending line must be greater than starting line")
-      end
-
-      ! Item to match exactly?
-      exact = FALSE
-      if (present(exact_match)) exact = exact_match
-
-      ! Item to match token head only?
-      head = FALSE
-      if (present(head_match))  head = head_match
-      if (head) exact = FALSE
-
-      ! Rewind afterwards?
-      put_back = FALSE
-      if (present(return_cursor)) put_back = return_cursor
-
-      ! Move to start
-      .move_to_record(start_record)
-
-      ! Initialize
       .ignore_end_of_file = TRUE
       fnd = FALSE
+
+      ! Look from current record
+      start_record = .record                
+
+      ! Look from record "from"
+      if (present(from)) then
+         start_record = from
+         if (from==1) then; .rewind
+         else;              .move_to_record(from)
+         end
+      end
+
+      ! Rewind to original record?
+      put_back = TRUE
+      if (present(return_cursor)) put_back = return_cursor
 
       ! Loop over file lines
       if (NOT .end_of_file) then
 
-        ! Now do the search here ...
-        line_search: do                       
+        if (present(until)) then
+        ENSURE(until>=start_record,"ending line must be greater than starting line")
+        end
 
-           ! Item found?
+        exact = FALSE
+        if (present(exact_match)) exact = exact_match
+
+        head = FALSE
+        if (present(head_match))  head = head_match
+
+        ENSURE(NOT (head AND exact),"don't specify head *and* exact match")
+
+        has_end = FALSE
+
+        line_search: do                       ! Now do the search here ...
+
            has_item = .buffer.string.includes(item)
 
-           ! End token found?
-           has_end = FALSE
-           if (present(end_tokens)) then
-           if (.record>start_record) then
+           if (present(end_tokens) AND .record>start_record) &
               has_end = .buffer.string.includes_any_in(end_tokens)
-           end
-           end
 
            if (has_item OR has_end) then
 
-              ! Find the matching token
               do i = 1,.buffer.n_items
 
                  .get_next_item(word)
 
                  if (has_item) then
-
-                    ! What kind of match was it?
-                    if (head) then;       match = word.includes(item,at_start=TRUE)
-                    else if (exact) then; match = word==item
-                    else;                 match = word.includes(item)
+                    if (head) then;           match = word.includes(item,at_start=TRUE)
+                    else if (exact) then;     match = word==item
+                    else if (NOT exact) then; match = word.includes(item)
                     end
-
-                    if (match) then           
+                    if (match) then           ! Found a match
                        fnd = TRUE
                        exit line_search
                     end
-
                  end
 
                  if (has_end) then
-                 if (end_tokens.has_any_included_in(word,at_start=TRUE)) then
+                    if (end_tokens.has_any_included_in(word,at_start=TRUE)) then
                        fnd = TRUE
                        exit line_search
-                 end
+                    end
                  end
 
               end
@@ -1662,21 +1717,26 @@ contains
    end
 
    look_backwards_for_item(item,from,until,end_tokens,exact_match,head_match,return_cursor,found)
-   ! Scan *backwards* through the file for an "item". If present:
-   ! . Starting at line "from"  inclusive
-   ! . Ending at line "until" inclusive
-   ! . Ending at any token which *begins* with "end_tokens"
-   ! . With "item" matching exactly, if "exact_match" is TRUE
-   ! . With "item" head-matching,    if "head_match" is TRUE
-   ! . Return cursor to orginal line, if "return_cursor" is TRUE
-   ! . Return without error, with "found" TRUE if "item" was found
-      item  :: STR, IN
-      from  :: INT, IN, optional
-      until :: INT, IN, optional
-      end_tokens  :: VEC{STR}, IN, optional
-      exact_match :: BIN, IN, optional
-      head_match  :: BIN, IN, optional
-      return_cursor :: BIN, IN, optional
+   ! Scans *backwards* through the file for a token which includes the given
+   ! "item" (the token in the file must be a separate thing surrounded by
+   ! whitespace, begin or end of line, or comment characters; whereas "item" may
+   ! may match only a part of a given token). If a token matching "item" exists,
+   ! the file cursor is left just after this token. If no match is found, the
+   ! file is rewound to the initial line of the search.  If "from" is present
+   ! then it is used as the start line for the search. If "until" is present, it
+   ! is used as the last line of the search. If "end_tokens" is present then an
+   ! exact match to any of these tokens indicates the end of search for "item".
+   ! If "exact_match" is present and TRUE, then "item" must match exactly the
+   ! token in the file, instead of just being included in it. If "head_match" is
+   ! present and TRUE, then occurs only if the characters at the head of the
+   ! "item" string match the token in the file. only If "return_cursor" is
+   ! present and FALSE, the cursor is not returned to the starting line of the
+   ! search in the case where no match is found. If "found" is present, it is
+   ! set TRUE when the item is found, else FALSE. 
+      item :: STR, IN
+      from,until :: INT, IN, optional
+      end_tokens :: VEC{STR}, IN, optional
+      exact_match,head_match,return_cursor :: BIN, IN, optional
       found :: BIN, OUT, optional
 
       start_record,end_record :: INT
@@ -1684,92 +1744,56 @@ contains
       fnd,exact,head,put_back,has_item,has_end,match :: BIN
       i :: INT
 
-      ! Look from .record or "from"
-      start_record = .record                
-      if (present(from)) start_record = from
-
-      ! Look until SOF or "until"
-      end_record = 1
-      if (present(until)) end_record = until
-      ENSURE(end_record<=start_record,"ending line must be smaller than starting line")
-
-      ! Item to match exactly?
-      exact = FALSE
-      if (present(exact_match)) exact = exact_match
-
-      ! Item to match token head only?
-      head = FALSE
-      if (present(head_match))  head = head_match
-      if (head) exact = FALSE
-
-      ! Rewind afterwards?
-      put_back = FALSE
-      if (present(return_cursor)) put_back = return_cursor
-
-      ! Move to start
-      .move_to_record(start_record)         
-
-      ! Initialise
       .ignore_end_of_file = TRUE
+
       fnd = FALSE
 
+      start_record = .record                ! Initialize switches and counters
+
+      if (present(from)) start_record = from
+
+      .move_to_record(start_record)         ! Possible EOF here ...
+
+      put_back = TRUE; if (present(return_cursor)) put_back = return_cursor
+
       if (NOT .end_of_file) then
-
         .move_to_last_item_on_line
+        end_record = 1; if (present(until)) end_record = until
+        ENSURE(end_record<=start_record,"ending line must be smaller than starting line")
+        exact = FALSE; if (present(exact_match)) exact = exact_match
+        head = FALSE;  if (present(head_match))  head = head_match
+        ENSURE(NOT (head AND exact),"don't specify head *and* exact match")
 
-        ! Search for tokens ...
-        line_search: do                       
+        has_end = FALSE
 
-           ! Item found?
+        line_search: do                       ! Now do the search here ...
+
            has_item = .buffer.string.includes(item)
-
-           ! End token found?
-           has_end = FALSE
-           if (present(end_tokens)) then
-           if (.record>start_record) then
-              has_end = .buffer.string.includes_any_in(end_tokens)
-           end
-           end
+           if (present(end_tokens) AND .record>start_record) &
+           has_end = .buffer.string.includes_any_in(end_tokens)
 
            if (has_item OR has_end) then
-
-              ! Look backwards ...
-              do i = .buffer.n_items,1,-1     
-
+              do i = .buffer.n_items,1,-1     ! Look backwards ...
                  .move_to_line_item(i)
                  .get_next_item(word)
-
                  if (has_item) then
-
-                    ! What kind of match was it?
-                    if (head) then;       match = word.includes(item,at_start=TRUE)
-                    else if (exact) then; match = word==item
-                    else;                 match = word.includes(item)
+                    if (head) then;           match = word.includes(item,at_start=TRUE)
+                    else if (exact) then;     match = word==item
+                    else if (NOT exact) then; match = word.includes(item)
                     end
-
-                    ! Found a match
-                    if (match) then           
-                       fnd = TRUE
-                       exit line_search
+                    if (match) then           ! Found a match
+                       fnd = TRUE; exit line_search
                     end
-
                  end
-
                  if (has_end) then
-                 if (end_tokens.has_any_included_in(word,at_start=TRUE)) then
-                      fnd = TRUE
-                      exit line_search
+                    if (end_tokens.has_any_included_in(word,at_start=TRUE)) exit line_search
                  end
-                 end
-
               end
-
            end
 
            if (.record==end_record) exit line_search
 
-           ! Move to previous line
-           .backspace_line                    
+           .backspace_line                    ! Move to previous line
 
         end do line_search
 
@@ -1784,21 +1808,27 @@ contains
    end
 
    look_for_any_item(item,from,until,end_tokens,exact_match,head_match,return_cursor,found)
-   ! Scan through the file for *any* in "item". If present:
-   ! . Starting at line "from"  inclusive
-   ! . Ending at line "until" inclusive
-   ! . Ending at any token which *begins* with "end_tokens"
-   ! . With "item" matching exactly, if "exact_match" is TRUE
-   ! . With "item" head-matching,    if "head_match" is TRUE
-   ! . Return cursor to orginal line, if "return_cursor" is TRUE
-   ! . Return without error, with "found" TRUE if "item" was found
-      item  :: VEC{STR}, IN
-      from  :: INT, IN, optional
-      until :: INT, IN, optional
-      end_tokens  :: VEC{STR}, IN, optional
-      exact_match :: BIN, IN, optional
-      head_match  :: BIN, IN, optional
-      return_cursor :: BIN, IN, optional
+   ! Scans through the file for a token which includes the any of the given
+   ! elements in the "item" list (the token in the file must be a separate thing
+   ! surrounded by whitespace, begin or end of line, or comment characters;
+   ! whereas "item" may may match only a part of a given token). If a token
+   ! matching "item" exists, the file cursor is left just after this token. If
+   ! no match is found, the file is rewound to the initial line of the search.
+   ! If "from" is present then it is used as the start line for the search. If
+   ! "until" is present, it is used as the last line of the search. If
+   ! "end_tokens" is present then an exact match to any of these tokens
+   ! indicates the end of search for "item".  If "exact_match" is present and
+   ! TRUE, then "item" must match exactly the token in the file, instead of just
+   ! being included in it. If "head_match" is present and TRUE, then occurs only
+   ! if the characters at the head of the "item" string match the token in the
+   ! file. only If "return_cursor" is present and FALSE, the cursor is not
+   ! returned to the starting line of the search in the case where no match is
+   ! found. If "found" is present, it is set TRUE when the item is found, else
+   ! FALSE. 
+      item :: VEC{STR}, IN
+      from,until :: INT, IN, optional
+      end_tokens :: VEC{STR}, IN, optional
+      exact_match,head_match,return_cursor :: BIN, IN, optional
       found :: BIN, OUT, optional
 
       start_record :: INT
@@ -1806,61 +1836,37 @@ contains
       fnd,exact,head,put_back,has_item,has_end,match :: BIN
       i,j :: INT
 
-      ! Look from .record or "from"
-      start_record = .record                
-      if (present(from)) start_record = from
-
-      ! Look until EOF or "until"
-      if (present(until)) then
-         ENSURE(until>=start_record,"ending line must be greater than starting line")
-      end
-
-      ! Item to match exactly?
-      exact = FALSE
-      if (present(exact_match)) exact = exact_match
-
-      ! Item to match token head only?
-      head = FALSE
-      if (present(head_match))  head = head_match
-      if (head) exact = FALSE
-
-      ! Rewind afterwards?
-      put_back = FALSE
-      if (present(return_cursor)) put_back = return_cursor
-
-      ! Move to start
-      .move_to_record(start_record)
-
-      ! Initialize
       .ignore_end_of_file = TRUE
       fnd = FALSE
+      start_record = .record                ! Initialize switches and counters
+
+      if (present(from)) then
+         start_record = from
+         if (from==1) then; .rewind         ! The following may yeild an EOF
+         else;              .move_to_record(from)
+         end
+      end
+
+      put_back = TRUE; if (present(return_cursor)) put_back = return_cursor
 
       if (NOT .end_of_file) then
 
-        ! Now do the search here ...
-        line_search: do                       
+        if (present(until)) then
+        ENSURE(until>=start_record,"ending line must be greater than starting line")
+        end
+        exact = FALSE; if (present(exact_match)) exact = exact_match
+        head = FALSE;  if (present(head_match))  head = head_match
+        ENSURE(NOT (head AND exact),"don't specify head *and* exact match")
 
-           ! Item found?
+        has_end = FALSE
+        line_search: do                       ! Now do the search here ...
            has_item = .buffer.string.includes_any_in(item)
-
-           ! End token found?
-           has_end = FALSE
-           if (present(end_tokens))  then
-           if (.record>start_record) then
-              has_end = .buffer.string.includes_any_in(end_tokens)
-           end
-           end
-
+           if (present(end_tokens) AND .record>start_record) &
+           has_end = .buffer.string.includes_any_in(end_tokens)
            if (has_item OR has_end) then
-
-              ! Find the matching token
               do i = 1,.buffer.n_items
-
                  .get_next_item(word)
-
                  if (has_item) then
-
-                    ! What kind of match was it?
                     if (head) then
                        do j = 1,item.dim
                           match = word.includes(item(j),at_start=TRUE)
@@ -1871,41 +1877,27 @@ contains
                           match = word==item(j)
                           if (match) exit
                        end
-                    else ! partial
+                    else if (NOT exact) then
                        do j = 1,item.dim
                           match = word.includes(item(j))
                           if (match) exit
                        end
                     end
-
-                    ! Found a match
-                    if (match) then           
-                       fnd = TRUE
-                       exit line_search
+                    if (match) then           ! Found a match
+                       fnd = TRUE; exit line_search
                     end
-
                  end
-
                  if (has_end) then
-                 if (end_tokens.has_any_included_in(word,at_start=TRUE)) then
-                       exit line_search
+                    if (end_tokens.has_any_included_in(word,at_start=TRUE)) exit line_search
                  end
-                 end
-
               end
-
            end
-
            if (present(until)) then
               if (.record==until) exit line_search
            end
-
            .read_line
-
            if (.end_of_file) exit line_search
-
         end do line_search
-
       end
 
       if (present(found)) found = fnd
@@ -1935,48 +1927,50 @@ contains
 
       start_record :: INT
       word :: STR
-      fnd :: BIN
 
       start_record = .record
-      if (present(from)) start_record = from
 
-      ! Move to start
-      .move_to_record(start_record)
+      if (present(from)) then
+         if (from==1) then
+            .rewind
+            start_record = 1
+         else
+            .move_to_record(from)
+            start_record = from
+         end
+      else
+         ENSURE(start_record>0,"must start looking from +ve line number")
+      end
 
-      ! Initialize
+      if (present(found)) found = FALSE
+
       .ignore_end_of_file = TRUE
-      fnd = FALSE
 
       line_search: do
 
          word = .buffer.string.trim_blanks_from_start
 
          if (item.is_included_in(word,first)) then
-            fnd = TRUE
+            if (present(found)) found = TRUE
             exit line_search
          end
 
-         if (present(until)) then
-         if (.record>start_record) then
+         if (present(until) AND .record>start_record) then
          if (until.has_any_included_in(word,first)) then
             .move_to_record(start_record)
-            fnd = FALSE
+            if (present(found)) found = FALSE
             exit line_search
-         end
          end
          end
 
          .read_line
-
          if (.end_of_file) then
             .move_to_record(start_record)
-            fnd = FALSE
+            if (present(found)) found = FALSE
             exit line_search
          end
 
       end do line_search
-
-      if (present(found)) found = fnd
 
       .ignore_end_of_file = FALSE
 
@@ -2002,50 +1996,45 @@ contains
 
       start_record :: INT
       word :: STR
-      fnd :: BIN
 
-      ! Look from .record or "from"
       start_record = .record
-      if (present(from)) start_record = from
 
-      ! Move to start
-      .move_to_record(start_record)
+      if (present(from)) then
+         .move_to_record(from)
+         start_record = from
+      end
 
-      ! Initialize
+      if (present(found)) found = FALSE
+
       .ignore_end_of_file = TRUE
-      fnd = FALSE
 
       do
 
          word = .buffer.string.trim_blanks_from_start
 
          if (item.is_included_in(word,first)) then
-            fnd = TRUE
+            if (present(found)) found = TRUE
             exit
          end
 
-         ! Start of the file?
          if (.record==1) then 
+            ! This is the start of the file
             .move_to_record(start_record)
-            fnd = FALSE
+            if (present(found)) found = FALSE
             exit
          end
 
          .backspace_line
 
-         if (present(until)) then
-         if (.record<start_record) then
+         if (present(until) AND .record<start_record) then
          if (until.has_any_included_in(word,first)) then
             .move_to_record(start_record)
-            fnd = FALSE
+            if (present(found)) found = FALSE
             exit
-         end
          end
          end
 
       end
-
-      if (present(found)) found = fnd
 
       .ignore_end_of_file = FALSE
 
@@ -2054,9 +2043,9 @@ contains
    has_string(search) result (res)
    ! Returns TRUE if the file contains string "search". The file is returned
    ! to its original line number after this routine.
-      search :: STR, IN
-
+      search :: STR
       res :: BIN
+
       update_record :: INT
       found :: BIN
 
@@ -2065,13 +2054,14 @@ contains
       .rewind
 
       .ignore_end_of_file = TRUE
+
       found = FALSE
 
       do
 
          if (search.is_included_in(.buffer.string)) then
-            found = TRUE
-            exit
+           found = TRUE
+           exit
          end
 
          .read_line
@@ -2088,84 +2078,11 @@ contains
 
    end
 
-!  ====================
-!  Item inquiry methods
-!  ====================
+!  ==========================
+!  Data input type operations
+!  ==========================
 
-   next_line_item result (res)
-   ! Return the index of the next item to be processed on the line
-      self :: IN
-      res :: INT
-      res = .buffer.next_item_number
-   end
-
-   previous_line_item  result (res)
-   ! Return the index of the previous item to be processed on the line
-      res :: INT
-      res = .buffer.item_index
-   end
-
-   last_line_item  result (res)
-   ! Return the index of the final item on the line
-      res :: INT
-      res = .buffer.n_items
-   end
-
-   n_line_items result (res)
-   ! Return the number of items on the line
-      res :: INT
-      res = .buffer.n_items
-   end
-
-   at_end_of_line result (res)
-   ! Return TRUE if at the end of the line
-      res :: BIN
-      res = .buffer.item_index==.buffer.n_items
-   end
-
-   line_number result (res)
-   ! Return the input file line number which is being processed
-      res :: INT
-      res = .record
-   end
-
-   buffer_string result (res)
-   ! Put a string into the buffer
-      self :: IN
-      res :: STR(len=BSTR_SIZE)
-      res = .buffer.buffer_string
-   end
-
-   rest_of_line result (res)
-   ! If there is anything left on the input line, then it is returned, else
-   ! nothing is returned.  Record moves to the next line.
-      res :: STR
-
-   ENSURE(.action=="read","file does not have read action!")
-
-      if (NOT .buffer.empty) then
-
-         res = .buffer.string(.buffer.item_end+1: )
-         .read_line
-
-      else
-
-         res = " "
-         .read_line
-
-      end
-
-   end
-
-   buffer_exhausted result (res)
-   ! Return whether the buffer is exhausted
-     res :: BIN
-       res = .buffer.exhausted
-   end
-
-!  ============
-!  Read an item
-!  ============
+! Basic
 
    get_next_item(word) ::: private
    ! Get the next item in the file
@@ -2188,61 +2105,7 @@ contains
       .read(word)
    end
 
-!  ==================
-!  Skip/move to items
-!  ==================
-
-   skip_next_item ::: leaky
-   ! Move to (i.e. just after) the next item in the input file.
-      .update_line
-      .buffer.skip_item
-   end
-
-   skip_next_items(n) ::: leaky
-   ! Skip several items.
-      n :: INT, IN
-      i :: INT
-      do i = 1,n
-         .skip_next_item
-      end
-   end
-
-   move_to_previous_item
-   ! Move to (i.e. before) the previous item in the input file.
-   ! Backspace a line if required.
-      .revert_line
-      .move_to_previous_item_on_line     ! move to the last read item
-   end
-
-   move_to_last_item_on_line
-   ! Move the cursor over to the beginning of the last item on the line
-      item :: INT
-      item = .last_line_item
-      .move_to_line_item(item)
-   end
-
-   move_to_previous_item_on_line
-   ! Move the cursor over to the beginning of the previous item on the
-      item :: INT
-      item = .previous_line_item
-      .move_to_line_item(item)
-   end
-
-   move_to_line_item(number)
-   ! Move the cursor over to the beginning of the item with index "number"
-   ! on the current line. (More accurately: after the end of the previous item
-   ! on the current line. So if there are "nitems" on the line you can move to
-   ! "nitem+1" if you want to, and that will be the end of the line).
-      number :: INT
-      n :: INT
-      .update_system_info
-      n = number
-      .buffer.move_to_item(n)
-   end
-
-!  ====================
-!  Read a built-in TYPE 
-!  ====================
+! Read a built-in TYPE 
 
    read(value) ::: template
    ! Read a built-in type into "value".
@@ -2286,13 +2149,12 @@ contains
    read(value,error)
    ! Read a REAL into "value" and also its associated "error", which appears in
    ! parentheses after it.
-      value :: REAL, OUT
-      error :: REAL, OUT
+      value,error :: REAL, OUT
 
    ENSURE(.action=="read","file does not have read action!")
 
       .update_line
-      .buffer.get_imprecise_real(value,error)
+      .buffer.get(value,error)
 
    end
 
@@ -2300,9 +2162,7 @@ contains
    ! Read a built-in type into "value".
    end
 
-!  =============================
-!  Read a built-in TYPE quantity
-!  =============================
+! Read a built-in TYPE quantity
 
    read_quantity(value) ::: template
    ! Read a number quantity (with optional units) into "value".
@@ -2330,7 +2190,9 @@ contains
         known_unit = units.is_known_unit
 
         ! Has conversion already been done?
-        DIE_IF(known_unit AND .default_units/=" ","two units specified!")
+        if (known_unit) then
+           ENSURE(.default_units==" ","explicit and default units specified!")
+        end
 
         ! Convert from known units if we can ...
         ! Or move back to where we were
@@ -2357,67 +2219,15 @@ contains
    ! routine, since it will try to read the next token as a units specifier. 
    end
 
-   read_quantity(value,error)
-   ! Read a number quantity (with optional units) into "value".
-   ! WARNING: You must *not* be at the end of file to use this
-   ! routine, since it will try to read the next token as a units specifier. 
-      value :: REAL, OUT
-      error :: REAL, OUT
-
-   ENSURE(.action=="read","file does not have read action!")
-
-      units :: STR
-      known_unit :: BIN
-
-      ! Read the value & error
-      .read(value,error)
-
-      ! Convert from assumed default units
-      if (.default_units/=" ") then
-         value.convert_from(.default_units)
-         error.convert_from(.default_units)
-      end
-
-      ! Check for explicit units
-      if (NOT .at_end_of_file) then
-
-        ! Is there a known unit next?
-        .read(units)
-        known_unit = units.is_known_unit
-
-        ! Has conversion already been done?
-        DIE_IF(known_unit AND .default_units/=" ","two units specified!")
-
-        ! Convert from known units if we can ...
-        ! Or move back to where we were
-        if (known_unit) then
-           value.convert_from(units)              
-           error.convert_from(units)              
-        else                 
-           .move_to_previous_item
-        end
-
-      end
-
-      ! Reset default units
-      .default_units = " "
-
-   end
-
-!  ==============
-!  Read VEC{TYPE}
-!  ==============
+! Read VEC{TYPE}
 
    read(v) ::: template
    ! Read in a vector sequentially. Line breaks are not significant.
       v :: V?, OUT
-
       i :: INT
-
       do i = 1,v.dim
          .read(v(i))
       end
-
    end
 
    read(v) ::: get_from(TEXTFILE, V?=>VEC{STR})
@@ -2440,22 +2250,7 @@ contains
    ! Read in a vector sequentially. Line breaks are not significant.
    end
 
-   read(v,e)
-   ! Read in a vector sequentially. Line breaks are not significant.
-      v :: VEC{REAL}, OUT
-      e :: VEC{REAL}, OUT
-
-      i :: INT
-
-      do i = 1,v.dim
-         .read(v(i),e(i))
-      end
-
-   end
-
-!  =========================
-!  Read VEC{TYPE} quantities
-!  =========================
+! Read VEC{TYPE} quantities
 
    read_quantity(v) ::: template
    ! Read in a vector quantity (with units).  Line breaks are not
@@ -2482,7 +2277,9 @@ contains
         known_unit = units.is_known_unit
 
         ! Has conversion already been done?
-        DIE_IF(known_unit AND .default_units/=" ","two units specified!")
+        if (known_unit) then
+           ENSURE(.default_units==" ","explicit and default units specified!")
+        end
 
         ! Convert from known units if we can ...
         ! Or move back to where we were
@@ -2511,55 +2308,7 @@ contains
    ! the vector as a units specifier. 
    end
 
-   read_quantity(v,e)
-   ! Read in a vector quantity (with units).  Line breaks are not
-   ! significant.  WARNING: You must *not* be at the end of file to
-   ! use this routine, since it will try to read the next token after
-   ! the vector as a units specifier. 
-      v :: VEC{REAL}, OUT
-      e :: VEC{REAL}, OUT
-
-      units :: STR
-      known_unit :: BIN
-
-      ! Read the vector
-      .read(v,e)
-
-      ! Convert from assumed default units
-      if (.default_units/=" ") then
-         v.convert_from(.default_units)
-         e.convert_from(.default_units)
-      end
-
-      ! Check for explicit units
-      if (NOT .at_end_of_file) then
-        
-        ! Is there a known unit next?
-        .read(units)                      
-        known_unit = units.is_known_unit
-
-        ! Has conversion already been done?
-        DIE_IF(known_unit AND .default_units/=" ","two units specified!")
-
-        ! Convert from known units if we can ...
-        ! Or move back to where we were
-        if (known_unit) then
-           v.convert_from(units)              
-           e.convert_from(units)              
-        else
-           .move_to_previous_item
-        end
-
-      end
-
-      ! Reset default units
-      .default_units = " "
-
-   end
-
-!  ===============
-!  Read VEC{TYPE}*
-!  ===============
+! Read VEC{TYPE}*
 
    list_length result (res) ::: leaky, private
    ! Return the size of the list, by reading the input after an
@@ -2693,9 +2442,7 @@ contains
    ! significant. The "v" vector pointer is created.
    end
 
-!  ========================
-!  Read VEC{TYPE}* quantity
-!  ========================
+! Read VEC{TYPE}* quantity
 
    read_ptr_quantity(v) ::: template
    ! Read in a vector pointer quantity (with units) sequentially.
@@ -2722,7 +2469,9 @@ contains
         known_unit = units.is_known_unit
 
         ! Has conversion already been done?
-        DIE_IF(known_unit AND .default_units/=" ","two units specified!")
+        if (known_unit) then
+           ENSURE(.default_units==" ","explicit and default units specified!")
+        end
 
         ! Convert from known units if we can ...
         ! Or move back to where we were
@@ -2743,11 +2492,9 @@ contains
    ! the end of file to use this routine, since it will try to read
    end
 
-!  ===========================
-!  Read VEC{T1}, VEC{T2} pairs 
-!  ===========================
+! Read VEC{T1}, VEC{T2} pairs 
 
-   read_pair(v1,v2) ::: template
+   read(v1,v2) ::: template
    ! Read in a pair of vectors sequentially, alternating. Line breaks
    ! are not significant.
       v1 :: V1?, OUT
@@ -2764,19 +2511,19 @@ contains
 
    end
 
-   read_pair(v1,v2) ::: get_from(TEXTFILE, V1?=>VEC{INT}, V2?=>VEC{INT})
+   read(v1,v2) ::: get_from(TEXTFILE, V1?=>VEC{INT}, V2?=>VEC{INT})
    ! Read in a pair of vectors sequentially, alternating. Line breaks
    ! are not significant.
    end
 
-   read_pair(v1,v2) ::: get_from(TEXTFILE, V1?=>VEC{REAL}, V2?=>VEC{REAL})
+   read(v1,v2) ::: get_from(TEXTFILE, V1?=>VEC{REAL}, V2?=>VEC{REAL})
    ! Read in a pair of vectors sequentially, alternating. Line breaks
    ! are not significant.
    end
 
-!  Read VEC{T1}, VEC{T2}, VEC{T3} triples
+! Read VEC{T1}, VEC{T2}, VEC{T3} triples
 
-   read_triple(v1,v2,v3) ::: template
+   read(v1,v2,v3) ::: template
    ! Read in a triple of vectors sequentially, alternating. Line
    ! breaks are not significant.
       v1 :: V1?, OUT
@@ -2796,14 +2543,12 @@ contains
 
    end
 
-   read_triple(v1,v2,v3) ::: get_from(TEXTFILE, V1?=>VEC{REAL}, V2?=>VEC{REAL}, V3?=>VEC{REAL})
+   read(v1,v2,v3) ::: get_from(TEXTFILE, V1?=>VEC{REAL}, V2?=>VEC{REAL}, V3?=>VEC{REAL})
    ! Read in a triple of vectors sequentially, alternating. Line
    ! breaks are not significant.
    end
 
-!  ==============
-!  Read MAT{TYPE}
-!  ==============
+! Read MAT{TYPE}
 
    read(mx,by_column) ::: template
    ! Read in matrix "mx" by row. If "by_column" is present and TRUE it
@@ -2891,9 +2636,7 @@ contains
    ! is read in sequentially by column. Line breaks not significant.
    end
 
-!  ===============
-!  Read MAT{TYPE}*
-!  ===============
+! Read MAT{TYPE}*
 
    get_matrix_shape(dim) ::: private
    ! Returns dim(1) as the number of lines which are not blank, and
@@ -2940,7 +2683,7 @@ contains
          ! Next line
          .skip_line
 
-         ! Skip empty lines
+         ! Empty lines?
          if (.n_line_items==0) cycle
 
          ! Exit if first item of next non-blank line
@@ -2957,11 +2700,12 @@ contains
          if (dim2>dim(2)) then
             dim2 = dim(2)
             .move_to_line_item(dim2+1)
-            DIE_IF(.next_item/="}","different number of line items on succesive lines")
+            ENSURE(.next_item=="}","different number of line items on succesive lines")
             exit
          else
-            DIE_IF(dim2/=dim(2),"different number of line items on succesive lines")
+            ENSURE(dim2==dim(2),"different number of line items on succesive lines")
          end
+
       end
 
       ! Return to initial position
@@ -3023,9 +2767,7 @@ contains
    ! induced from the formatting. Line breaks are significant!
    end
 
-!  ====================
-!  Read VEC{VEC_{TYPE}}
-!  ====================
+! Read VEC{VEC_{TYPE}}
 
    read(v) ::: template
    ! Read in an VEC{VEC_{TYPE}} "v" sequentially. Line breaks are not
@@ -3050,9 +2792,7 @@ contains
    ! significant. The "v" is created.
    end
 
-!  =====================
-!  Read VEC{VEC_{TYPE}}*
-!  =====================
+! Read VEC{VEC_{TYPE}}*
 
    list_list_length result (res) ::: leaky, private
    ! Return the size of an VEC{VEC_{INT}} list, by reading the input
@@ -3124,9 +2864,7 @@ contains
    ! significant. The "v" is created.
    end
 
-!  ===================
-!  Read VEC{MAT{TYPE}}
-!  ===================
+! Read VEC{MAT{TYPE}}
 
    read(v) ::: template
    ! Read in an VEC{MAT_{TYPE}} "v" sequentially. Line breaks are not
@@ -3151,9 +2889,7 @@ contains
    ! significant. The "v" is created.
    end
 
-!  ===============
-!  Read MAT3{TYPE}
-!  ===============
+! Read MAT3{TYPE}
 
    read(mx) ::: template
    ! Read a MAT3{TYPE} matrix "mx". Indices for the element precede
@@ -3185,9 +2921,7 @@ contains
    ! the element value.
    end
 
-!  ===============
-!  Read MAT4{TYPE}
-!  ===============
+! Read MAT4{TYPE}
 
    read(mx) ::: template
    ! Read a MAT4{TYPE} matrix "mx". Indices for the element precede
@@ -3222,9 +2956,7 @@ contains
    ! the element value.
    end
 
-!  ===============
-!  Read MAT5{TYPE}
-!  ===============
+! Read MAT5{TYPE}
 
    read(mx) ::: template
    ! Read a MAT5{TYPE} matrix "mx". Indices for the element precede
@@ -3262,9 +2994,9 @@ contains
    ! the element value.
    end
 
-!  ===============
-!  Output routines
-!  ===============
+!  ====================
+!  Data output routines
+!  ====================
 
 ! Clearing, flushing, tabbing, dashing & plain text line
 
@@ -3288,11 +3020,11 @@ contains
 
       fail = 0
       if (IO_IS_ALLOWED) then
-         ENSURE(.is_open,"file "//trim(.name)//" is not open!")
+         ENSURE(.is_open,"file is not open!")
          write(unit=.unit,iostat=fail,fmt="(a)") trim(.buffer.string)
       end
       PARALLEL_BROADCAST(fail,0)
-      DIE_IF(fail>0,"read error")
+      ENSURE(fail==0,"read error")
       .io_status = fail
 
       if (IO_IS_ALLOWED) then
@@ -3391,9 +3123,7 @@ contains
 
    end
 
-!  ===========================
-!  Put TYPE methods (no flush)
-!  ===========================
+! Put TYPE methods (no flush)
 
    put(string,left,center,int_width,width)
    ! Put a "string" into the output buffer; if it is too big, put as is.
@@ -3442,7 +3172,7 @@ contains
          if (present(center)) centrify = center
 
          ! Sanity check
-         DIE_IF(leftify AND centrify,"too many justifications")
+         ENSURE(NOT(leftify AND centrify),"too many justifications")
 
          ! The actual string lenth
          len = len_trim(string)
@@ -3549,9 +3279,7 @@ contains
 
    end
 
-!  ==============
-!  Put REAL & CPX
-!  ==============
+! Put REAL & CPX
 
    put(value,left,center,int_width,style,width,precision) ::: template
    ! Put a real or complex "value" into the output buffer. 
@@ -3629,15 +3357,23 @@ contains
    ! . "precision" sets the fortran precision (default: .real_precision)
    end
 
-!  ==============================
-!  Put imprecise REAL(WITH_ERROR)
-!  ==============================
+!   put(value,error,units)
+!   ! Put a formatted REAL into the output buffer with bracketed error. 
+!      value :: REAL, IN
+!      error :: REAL, IN
+!      units :: STR, optional
+!
+!      .put(value.to_str(error,.real_width,.real_precision,units))
+!
+!   end
+
+! Put imprecise REAL
 
    put(value,error,left,int_width,width,precision)
    ! Put a real "value" into the output buffer which has "error".
    ! You can specify the "width" (defualt .real_width) or the
-   ! maximum "precision". The decimal points are lined up.
-   ! WARNING: Make sure the error is larger than the precision! 
+   ! maximum "precision". You better make sure ther error is larger
+   ! than the precision! The decimal points are lined up.
       value,error :: REAL, IN
       left :: BIN, IN, optional
       int_width :: BIN, IN, optional
@@ -3671,11 +3407,10 @@ contains
 
       ! Change to string, and put it out. Need to use wid+3 to allow
       ! for the error e.g. 1.002(2) takes up three extra spaces.
-      valstr = value.to_str(error,wid0,pre)
+      valstr = value.to_str(error,wid0,pre,pr=pr)
       if (present(left)) then
             .put(valstr,left=left,width=wid)
       else
-         error.get_error_dp(pr)
          if (pr<pre) then
             sp = pre - pr
             .put(valstr,width=max(wid-sp,0))
@@ -3687,9 +3422,55 @@ contains
 
    end
 
-!  =============
-!  Put VEC{TYPE}
-!  =============
+!   put(value,error,left,center,int_width,width,precision)
+!   ! Put a real "value" into the output buffer which has "error".
+!   ! If present and TRUE:
+!   ! . "left" will left justify the string    (default: right-justified)
+!   ! . "center" will center the string        (default: left-justified)
+!   ! . "int_width" sets width to .inty_width  (default: .real_width)
+!   ! If present:
+!   ! . "width" sets the field_width           (default: .real_width)
+!   ! . "precision" sets the fortran precision (default: .real_precision)
+!      value,error :: REAL, IN
+!      left :: BIN, IN, optional
+!      center :: BIN, IN, optional
+!      int_width :: BIN, IN, optional
+!      width :: INT, IN, optional
+!      precision :: INT, IN, optional
+!
+!      wid,pre,pr,sp :: INT
+!      valstr :: STR
+!
+!      ! Defaults
+!      wid = .real_width
+!      pre = .real_precision
+!
+!      ! Set int_width option
+!      if (present(int_width)) then
+!      if (int_width) then
+!         wid = .int_width
+!         pre = 3 
+!      end
+!      end
+!
+!      ! Set options
+!      if (present(width))     wid = width
+!      if (present(precision)) pre = precision
+!
+!      ! Change to string, and put it out. Need to use wid+3 to allow
+!      ! for the error e.g. 1.002(2) takes up three extra spaces.
+!      valstr = value.to_str(error,wid,pre,pr=pr)
+!      if (pr<pre) then
+!         sp = pre - pr
+!         .put(valstr,left,center,FALSE,width=wid-sp)
+!         .put(repeat(" ",sp),width=sp) ! line up decimal place
+!      else
+!         .put(valstr,left,center,FALSE,width=wid)
+!      end
+!
+!   end
+
+! Put VEC{TYPE}
 
    put(v,by_row,by_column,left,width,auto_width) ::: template
    ! Put VEC{TYPE} into the output buffer
@@ -3723,7 +3504,7 @@ contains
       if (present(auto_width)) auto = auto_width
 
       ! Auto field width overrides width
-      if (auto) v.get_max_str_length(rwid ARG?,.spacing)
+      if (auto) rwid = V?:max_str_length(v ARG?) + .spacing
 
       if (column) then
 
@@ -3824,8 +3605,8 @@ contains
       WARN_IF(v.dim==0,"zero sized dimensiont!")
 
       ! Get the width
-      row_label.get_max_str_length(widr,.spacing)
-      col_label.get_str_length(widc,spaces=0)
+      widr = row_label.max_str_length + .spacing
+      widc = col_label.str_length     + .spacing
       wid  = max(widr,widc,.real_width)
 
       ! Tab column width & put column label
@@ -3847,9 +3628,7 @@ contains
    ! single "col_label".
    end
 
-!  =============
-!  Put MAT{TYPE}
-!  =============
+! Put MAT{TYPE}
 
    put(mx,by_row,by_column,transpose,left,width,auto_width) ::: template
    ! Put MAT{TYPE} into the output buffer
@@ -3892,7 +3671,7 @@ contains
       if (present(auto_width)) auto = auto_width
 
       ! Auto field width overrides real_width
-      if (auto) mx.get_max_str_length(rwid ARG?,.spacing)
+      if (auto) rwid = MX?:max_str_length(mx ARG?) + .spacing
 
       ! No of fields per line
       fields = .n_fields_per_line
@@ -4066,8 +3845,7 @@ contains
    put(mx,row_label,col_label,left) ::: template
    ! Put MAT{TYPE} into output with "row_labels" and "column_labels"
       mx :: MX?, IN
-      row_label :: VEC{STR}, IN
-      col_label :: VEC{STR}, IN
+      row_label,col_label :: VEC{STR}, IN
       left :: BIN, IN, optional
 
       wid,widc,widr, i,j,block,n_block,fields,f,l :: INT
@@ -4076,8 +3854,8 @@ contains
       WARN_IF(any(mx.shape==0),"zero sized dimensions present!")
 
       ! Get the width
-      row_label.get_max_str_length(widr,.spacing)
-      col_label.get_max_str_length(widc,.spacing)
+      widr = row_label.max_str_length + .spacing
+      widc = col_label.max_str_length + .spacing
       wid  = max(widr,widc,.real_width)
 
       ! No of fields per line
@@ -4129,9 +3907,7 @@ contains
    ! Put MAT{TYPE} into output with "row_labels" and "column_labels"
    end
 
-!  ==============
-!  Put MAT3{TYPE}
-!  ==============
+! Put MAT3{TYPE}
 
    put(mx,by_dim3_matrices,width,auto_width) ::: template
    ! Put a MAT3{TYPE} into the output buffer flat style
@@ -4163,7 +3939,7 @@ contains
       if (present(auto_width)) auto = auto_width
 
       ! Auto field width overrides width
-      if (auto) mx.get_max_str_length(rwid ARG?,.spacing)
+      if (auto) rwid = MX?:max_str_length(mx ARG?) + .spacing
 
       if (by_d3_matrices) then
  
@@ -4204,9 +3980,7 @@ contains
    ! Put a MAT3{TYPE} into the output buffer flat style
    end
 
-!  ==============
-!  Put MAT4{TYPE}
-!  ==============
+! Put MAT4{TYPE}
 
    put(mx,by_matrices,width,auto_width) ::: template
    ! Put a MAT4{TYPE} into the output buffer
@@ -4239,7 +4013,7 @@ contains
       if (present(auto_width)) auto = auto_width
 
       ! Auto field width overrides width
-      if (auto) mx.get_max_str_length(rwid ARG?,.spacing)
+      if (auto) rwid = MX?:max_str_length(mx ARG?) + .spacing
 
       if (do_matrices) then
  
@@ -4285,9 +4059,7 @@ contains
    ! Put a MAT4{TYPE} into the output buffer
    end
 
-!  ==============
-!  Put MAT5{TYPE}
-!  ==============
+! Put MAT5{TYPE}
 
    put(mx) ::: template
    ! Put a MAT5{TYPE} into the output buffer flat style
@@ -4329,9 +4101,7 @@ contains
    ! Put a MAT5{TYPE} into the output buffer flat style
    end
 
-!  ===================
-!  Put VEC{VEC_{TYPE}}
-!  ===================
+! Put VEC{VEC_{TYPE}}
 
    put(v) ::: template
    ! Put a VEC{VEC_{TYPE}} list into the output buffer
@@ -4354,10 +4124,6 @@ contains
 
    end
 
-   put(v) ::: get_from(TEXTFILE, V?=>VEC{VEC_{STR}})
-   ! Put a VEC{VEC_{TYPE}} list into the output buffer
-   end
-
    put(v) ::: get_from(TEXTFILE, V?=>VEC{VEC_{INT}})
    ! Put a VEC{VEC_{TYPE}} list into the output buffer
    end
@@ -4366,9 +4132,7 @@ contains
    ! Put a VEC{VEC_{TYPE}} list into the output buffer
    end
 
-!  ===================
-!  Put VEC{MAT_{TYPE}}
-!  ===================
+! Put VEC{MAT_{TYPE}}
 
    put(v) ::: template
    ! Put a VEC{MAT_{TYPE}} list into the output buffer
@@ -4399,9 +4163,7 @@ contains
    ! Put a VEC{MAT_{TYPE}} list into the output buffer
    end
 
-!  =========================
-!  Put OPVECTOR and OPMATRIX
-!  =========================
+! Put OPVECTOR and OPMATRIX objects
 
    put(v)
    ! Outputs the OPVECTOR "v"
@@ -4530,9 +4292,9 @@ contains
    
    end
 
-!  =================
-!  Show TYPE methods
-!  =================
+!  ============
+!  Show methods
+!  ============
 
    show(pretext,value,width,dots) ::: template
    ! Put a left-justfied formatted "value" into the output buffer with
@@ -4589,21 +4351,17 @@ contains
    ! some descriptive "pretext".
    end
 
-   show(pretext,value,width,precision,right,dots) ::: template
+   show(pretext,value,width,precision,dots) ::: template
    ! Put a left-justfied formatted "value" into the output buffer with
    ! descriptive "pretext" and nondefault "width" and "precision".
       pretext :: STR, IN
       value :: VALUE?, IN
       width :: INT, IN, optional
       precision :: INT, IN, optional
-      right :: BIN, IN, optional
       dots  :: BIN, IN, optional
 
       description :: STR(len=(len(pretext)+3))
-      do_dots,do_right :: BIN
-      
-      do_right = FALSE
-      if (present(right)) do_right = right
+      do_dots :: BIN
 
       do_dots = TRUE
       if (present(dots)) do_dots = dots
@@ -4627,7 +4385,6 @@ contains
 
       ! Put the value
       if (present(width)) then; .put(value,width=width,precision=precision)
-      else if (do_right) then;  .put(value,precision=precision)
       else;                     .put(value,left=TRUE,width=0,precision=precision)
       end
 
@@ -4635,60 +4392,14 @@ contains
 
    end
 
-   show(pretext,value,width,precision,right,dots) ::: get_from(TEXTFILE, VALUE?=>REAL)
+   show(pretext,value,width,precision,dots) ::: get_from(TEXTFILE, VALUE?=>REAL)
    ! Put a left-justfied formatted "value" into the output buffer with
    ! descriptive "pretext" and nondefault "width" and "precision".
    end
 
-   show(pretext,value,width,precision,right,dots) ::: get_from(TEXTFILE, VALUE?=>CPX)
+   show(pretext,value,width,precision,dots) ::: get_from(TEXTFILE, VALUE?=>CPX)
    ! Put a left-justfied formatted "value" into the output buffer with
    ! descriptive "pretext" and nondefault "width" and "precision".
-   end
-
-   show(pretext,value,error,width,precision,dots)
-   ! Put a left-justfied formatted "value" into the output buffer with
-   ! some descriptive "pretext".
-      pretext :: STR, IN
-      value :: REAL, IN
-      error :: REAL, IN
-      width :: INT, IN, optional
-      precision :: INT, IN, optional
-      dots  :: BIN, IN, optional
-
-      description :: STR(len=(len(pretext)+3))
-      do_dots :: BIN
-
-      do_dots = TRUE
-      if (present(dots)) do_dots = dots
-
-      if (do_dots) then
-
-         ! Modify the description pretext
-         description = " "
-         description = pretext
-         description.replace_end_from(" =",".",plus=1)
-   
-         ! Show it
-         .text(description,flush=FALSE)
-
-      else
-   
-         ! Show it
-         .text(pretext,flush=FALSE)
-
-      end
-
-      ! Put the value
-      if (present(width) AND present(precision)) then
-         .put(value,error,width=width,precision=precision)
-      else if (present(precision)) then
-         .put(value,error,left=TRUE,width=0,precision=precision)
-      else
-         .put(value,error,left=TRUE,width=0)
-      end
-
-      .flush
-
    end
 
    show_bit_string(pretext,value,width)
@@ -4706,9 +4417,7 @@ contains
 
    end
 
-!  ===============
-!  Show two TYPE's
-!  ===============
+! Show two TYPE's
 
    show(pretext,val1,val2) ::: template
    ! Put two scalars "val1", "val2" into the output buffer, with
@@ -4733,9 +4442,7 @@ contains
 !   ! descriptive "pretext" before.
 !   end
 
-!  =================
-!  Show three TYPE's
-!  =================
+! Show three TYPE's
 
    show(pretext,val1,val2,val3,tol) ::: template
    ! Put three scalar "val1", "val2" and "val3" into the output buffer, with
@@ -4784,9 +4491,7 @@ contains
    ! descriptive "pretext" before.
    end
 
-!  ==============
-!  Show VEC{TYPE}
-!  ==============
+! Show VEC{TYPE}
 
    show(pretext,value,width,dots) ::: template
    ! Put a formatted VEC{TYPE} "value" into the output buffer with
@@ -4852,9 +4557,11 @@ contains
    ! descriptive "pretext".
    end
 
-!  =================
-!  Dump TYPE methods
-!  =================
+!  ============
+!  Dump methods
+!  ============
+
+! Scalars
 
    dump(varname,value) ::: template
    ! Dump a "value" with variable name "varname".
@@ -4900,9 +4607,7 @@ contains
    ! Dump a REAL/CPX "value" with variable name "varname".
    end
 
-!  ==============================
-!  Dump VEC{TYPE} without pretext
-!  ==============================
+! VEC{TYPE} without pretext
 
    dump(v) ::: template
    ! Dump a non-numeric vector "v" without any description
@@ -4970,9 +4675,7 @@ contains
    ! Dump a numeric vector "v" without any description
    end
 
-!  ==============
-!  Dump VEC{TYPE}
-!  ==============
+! VEC{TYPE}
 
    dump(varname,v,ptr) ::: template
    ! Dump a vector "v" with variable name "varname".
@@ -5025,9 +4728,7 @@ contains
    ! Dump a vector "v" with variable name "varname".
    end
 
-!  ==============
-!  Dump MAT{TYPE}
-!  ==============
+! MAT{TYPE}
 
    dump(varname,mx,ptr) ::: template
    ! Dump a matrix "mx" with variable name "varname".
@@ -5086,9 +4787,7 @@ contains
    ! Dump a matrix "mx" with variable name "varname".
    end
 
-!  ===============
-!  Dump MAT3{TYPE}
-!  ===============
+! MAT3{TYPE}
 
    dump(varname,mx,ptr) ::: template
    ! Dump a 3d matrix "mx" with variable name "varname".
@@ -5144,9 +4843,7 @@ contains
    ! Dump a 3d matrix "mx" with variable name "varname".
    end
 
-!  =============
-!  Dump Pointers
-!  =============
+! Pointers
 
    dmpp(varname,value) ::: template
    ! Dump a pointer "value" with variable name "varname".
@@ -5162,9 +4859,7 @@ contains
 
    end
 
-!  ===============
-!  Dump VEC{TYPE}*
-!  ===============
+! VEC{TYPE}*
 
    dmpp(varname,value) ::: get_from(TEXTFILE, VALUE?=>VEC{STR})
    ! Dump a pointer "value" with variable name "varname".
@@ -5186,9 +4881,7 @@ contains
    ! Dump a pointer "value" with variable name "varname".
    end
 
-!  ===============
-!  Dump MAT{TYPE}*
-!  ===============
+! MAT{TYPE}*
 
    dmpp(varname,value) ::: get_from(TEXTFILE, VALUE?=>MAT{STR})
    ! Dump a pointer "value" with variable name "varname".
@@ -5210,9 +4903,7 @@ contains
    ! Dump a pointer "value" with variable name "varname".
    end
 
-!  ================
-!  Dump MAT3{TYPE}*
-!  ================
+! MAT3{TYPE}*
 
    dmpp(varname,value) ::: get_from(TEXTFILE, VALUE?=>MAT3{BIN})
    ! Dump a pointer "value" with variable name "varname".
@@ -5230,9 +4921,7 @@ contains
    ! Dump a pointer "value" with variable name "varname".
    end
 
-!  ==========================
-!  Dump OPVECTOR and OPMATRIX
-!  ==========================
+! OPVECTOR and OPMATRIX
 
    dump(varname,v,ptr)
    ! Dump an OPVECTOR with variable name "varname".

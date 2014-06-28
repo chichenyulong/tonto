@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: basis.foo 4263 2014-01-22 06:32:26Z durhammike $
+! $Id: basis.foo 4248 2014-01-12 06:58:59Z dylan_ $
 !
 !-------------------------------------------------------------------------------
 
@@ -35,54 +35,63 @@ contains
 !  Memory allocation
 !  =================
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the shell parts of self
       nullify(.shell)
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the shell parts of self
       .shell.destroy
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
    ! Create a copy of object
    end
 
-   copy(b) ::: leaky
-   ! Copy a basis "b" to "self". Make sure pointer parts are first
+   copy(object) ::: leaky, pure
+   ! Copy a basis "object".  Make sure pointer parts are first
    ! destroyed or nullified, as you want.
-      b :: BASIS, IN
-      self = b
+      self :: INOUT
+      object :: BASIS, IN
+
+      self = object
+
       .nullify_ptr_part
-      if (b.shell.created) .shell.create_copy(b.shell)
+
+      CREATE_COPY_COMPONENT(shell)
+
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set_defaults
+   set_defaults ::: always_pure
    ! Create and set up a default basis set
 
       .label   = " "
@@ -269,7 +278,7 @@ contains
       basis :: VEC{BASIS}*
       clobber,minmatch,found :: BIN, optional
 
-   DIE_IF(basis.destroyed,"no basis set")
+   ENSURE(basis.created,"no basis set")
 
       b :: INT
       check :: VEC{BIN}*
@@ -309,22 +318,24 @@ contains
       end
 
       ! Assign "found" or die
-      if (present(found)) then; found = fnd
-      else; DIE_IF(NOT fnd,"unknown basis label, "// trim(label))
+      if (present(found)) then
+         found = fnd
+      else
+         ENSURE(fnd,"unknown basis label, "// trim(label))
       end
 
    end
 
-   unnormalise
+   unnormalize
    ! Take the normalisation factors out of the primitives, assuming
-   ! that the contraction coeff's refer to normalised basis functions
-      if (.shell.created) .shell.unnormalise
+   ! that the contraction coeff's refer to normalized basis functions
+      if (.shell.created) .shell.unnormalize
    end
 
-   renormalise
+   renormalize
    ! Put back in the normalisation factors of the primitives, assuming
-   ! that the contraction coeff's refer to unnormalised basis functions
-      if (.shell.created) .shell.renormalise
+   ! that the contraction coeff's refer to unnormalized basis functions
+      if (.shell.created) .shell.renormalize
    end
 
    get_lc_bf_ex_cc(lc,bf,ex,cc)
@@ -405,9 +416,9 @@ contains
 
    end
 
-   make_normalised_contraction_mx(ccm,spherical)
-   ! Set the normalised contraction coefficient matrix "ccm".
-   ! i.e. primitive components are properly normalised.
+   make_normalized_contraction_mx(ccm,spherical)
+   ! Set the normalized contraction coefficient matrix "ccm".
+   ! i.e. primitive components are properly normalized.
       self :: IN
       ccm :: MAT{REAL}
       spherical :: BIN, optional
@@ -439,7 +450,7 @@ contains
            n_b = sh.n_comp
            n_p = sh.n_prim
          end
-         sh.make_normalised_contraction_mx(ccm(p+1:p+n_p,b+1:b+n_b),is_sph)
+         sh.make_normalized_contraction_mx(ccm(p+1:p+n_p,b+1:b+n_b),is_sph)
          b = b + n_b
          p = p + n_p
       end
@@ -450,23 +461,23 @@ contains
 !  Inquiry methods
 !  ===============
 
-   same_as(b) result (res) ::: pure
+   same_as(b) result (res) ::: always_pure
    ! Return TRUE if the basis set "self" is the same as "b". Only the
    ! shell vector is compared to see if they are "really" the same.
       self :: IN
       b :: BASIS, IN
       res :: BIN
-      res = .shell.same_as(b.shell) 
+      res = .shell.same_as(b.shell)
    end
 
-   is_resolved result (res) ::: pure
+   is_resolved result (res) ::: always_pure
    ! Return TRUE if self is resolved i.e. has shells
       self :: IN
       res :: BIN
       res = .shell.created
    end
 
-   is_created_and_resolved result (res) ::: pure
+   is_created_and_resolved result (res) ::: always_pure
    ! Return TRUE if self is resolved
       self :: PTR
       res :: BIN
@@ -474,7 +485,7 @@ contains
       if (res) res = .shell.created
    end
 
-   is_created_and_has_label result (res) ::: pure
+   is_created_and_has_label result (res) ::: always_pure
    ! Return TRUE if self has a non-blank label
       self :: PTR
       res :: BIN
@@ -538,7 +549,7 @@ contains
       res = .shell.min_exponent
    end
 
-   r_max(cutoff) result (res) ::: pure
+   r_max(cutoff) result (res) ::: always_pure
    ! Return the radius where all basis functions becomes smaller than "cutoff".
       self :: IN
       cutoff :: REAL, IN
@@ -546,7 +557,7 @@ contains
       res = .shell.r_max(cutoff)
    end
 
-   r2_max(cutoff) result (res) ::: pure
+   r2_max(cutoff) result (res) ::: always_pure
    ! Return the radius where all basis functions becomes smaller than "cutoff".
       self :: IN
       cutoff :: REAL, IN

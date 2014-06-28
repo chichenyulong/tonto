@@ -39,7 +39,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: diis.foo 4068 2013-06-18 10:32:59Z dylan_ $
+! $Id: diis.foo 4248 2014-01-12 06:58:59Z dylan_ $
 !---------------------------------------------------------------------------
 
 module DIIS
@@ -50,32 +50,22 @@ module DIIS
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
-   ! Returns true if self has been created
-      self :: PTR
-      res :: BIN
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
-   ! Returns true if self has *not* been created
-      self :: PTR
-      res :: BIN
-   end
-
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts of self
+      self :: INOUT
+
       nullify(.oldest)
       nullify(.iter_4)
       nullify(.itor_4)
@@ -84,10 +74,13 @@ contains
       nullify(.lhs)
       nullify(.rhs)
       nullify(.coeff)
+
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts of self
+      self :: INOUT
+
       .oldest.destroy
       .iter_4.destroy
       .itor_4.destroy
@@ -96,37 +89,56 @@ contains
       .lhs.destroy
       .rhs.destroy
       .coeff.destroy
+
    end
+
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
+   ! Returns true if self has been created
+      self :: PTR
+      res :: BIN
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
+   ! Returns true if self has *not* been created
+      self :: PTR
+      res :: BIN
+   end
+
+!  ============
+!  Copy methods
+!  ============
 
    create_copy(object) ::: get_from(OBJECT)
    ! Create a copy of object
    end
 
-   copy(object) ::: leaky
+   copy(object) ::: leaky, pure
    ! Copy the "object"
-      object :: DIIS
+      self :: OUT
+      object :: DIIS, IN
 
       self = object
 
       .nullify_ptr_part
 
-      if (object.oldest.created)   .oldest.create_copy(object.oldest)
-      if (object.iter_4.created)   .iter_4.create_copy(object.iter_4)
-      if (object.itor_4.created)   .itor_4.create_copy(object.itor_4)
-      if (object.param.created)    .param.create_copy(object.param)
-      if (object.error.created)    .error.create_copy(object.error)
-      if (object.lhs.created)      .lhs.create_copy(object.lhs)
-      if (object.rhs.created)      .rhs.create_copy(object.rhs)
-      if (object.coeff.created)    .coeff.create_copy(object.coeff)
+      CREATE_COPY_COMPONENT(oldest)
+      CREATE_COPY_COMPONENT(iter_4)
+      CREATE_COPY_COMPONENT(itor_4)
+      CREATE_COPY_COMPONENT(param)
+      CREATE_COPY_COMPONENT(error)
+      CREATE_COPY_COMPONENT(lhs)
+      CREATE_COPY_COMPONENT(rhs)
+      CREATE_COPY_COMPONENT(coeff)
 
    end
 
-! ===========
-! Set methods
-! ===========
+!  ===========
+!  Set methods
+!  ===========
 
-   set_defaults ::: leaky
+   set_defaults ::: leaky, pure
    ! Set up the default settings
+      self :: INOUT
 
       .iteration             = 0 
       .use_errors            = TRUE
@@ -180,7 +192,7 @@ contains
    ! Set the number of parameter/error vectors to keep 
       keep :: INT, IN
 
-   DIE_IF(keep<4,"no. to keep must be more than 4")
+   ENSURE(keep>=4,"no. to keep must be more than 4")
 
       .keep = keep
 
@@ -224,9 +236,9 @@ contains
 
    end
 
-! ==============================
-! Read the keywords and settings
-! ==============================
+!  ==============================
+!  Read the keywords and settings
+!  ==============================
 
    read_keywords ::: get_from(OBJECT)
    ! Read data from "stdin" using keyword style input.
@@ -283,9 +295,9 @@ contains
    ! Generic read and set a quantity with units
    end
 
-! =======
-! Queries
-! =======
+!  =======
+!  Queries
+!  =======
 
    subspace_saturated result (res)
    ! Return TRUE if the subspace is saturated; no more new
@@ -462,8 +474,8 @@ contains
 
       res = .oldest(1)
 
-      DIE_IF(res<1,"oldest item must be positive")
-      DIE_IF(res>.kept,"oldest item must be less than # kept")
+   ENSURE(res>=1,    "oldest item must be positive")
+   ENSURE(res<=.kept,"oldest item must be less than # kept")
 
    end
 
@@ -529,9 +541,9 @@ contains
       res = .itor_4(.new)
    end
 
-! =============
-! Extrapolation
-! =============
+!  =============
+!  Extrapolation
+!  =============
 
    extrapolate(par,dim) ::: leaky
    ! Generic extrapolation of the parameter vector "par".
@@ -700,9 +712,9 @@ contains
       res = .error_length<.convergence_tolerance
    end
 
-! ======
-! Output
-! ======
+!  ======
+!  Output
+!  ======
 
    put(matrices)
    ! Print out the data to stdout

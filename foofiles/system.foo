@@ -72,7 +72,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: system.foo 4082 2013-07-17 06:04:05Z dylan_ $
+! $Id: system.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module SYSTEM
@@ -125,40 +125,40 @@ contains
 !  Creation routines
 !  =================
 
-   create ::: leaky
+   create ::: always_pure, leaky
    ! Create the system object
       self :: PTR
 
       allocate(self)
-      .initialise
+      .initialize
 
    end
 
-   destroy ::: leaky
+   destroy ::: always_pure, leaky
    !  Destroy the memory manager object
       self :: PTR
 
       if (.destroyed) return
 
-      .finalise
+      .finalize
       .destroy_ptr_part
       deallocate(self)
 
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), pure, inlined_by_foo
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), pure, inlined_by_foo
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts of self
       self :: INOUT
 
@@ -177,7 +177,7 @@ contains
 
    end
 
-   destroy_ptr_part
+   destroy_ptr_part ::: always_pure
    ! Nullify the pointer parts of self
       self :: INOUT
 
@@ -196,7 +196,7 @@ contains
 
    end
 
-   set_defaults(memory_limit)
+   set_defaults(memory_limit) ::: always_pure
    !  Set defaults
       self :: INOUT
       memory_limit :: INT, optional
@@ -244,22 +244,25 @@ contains
 
    end
 
-   initialise
-   ! Initialise the system object and set defaults
+   initialize ::: impure
+   ! Initialize the system object and set defaults
    ! Set the random seed from the date
+      self :: INOUT
 
       .nullify_ptr_part
+
       .set_defaults
 
-      .initialise_cloned_random_seed
+      .initialize_cloned_random_seed
 
-      .parallel_initialise
+      .parallel_initialize
 
    end
 
-   initialise_cloned_random_seed 
-   ! Initialise the random seed. Only for master and broadcast it
+   initialize_cloned_random_seed ::: impure
+   ! Initialize the random seed. Only for master and broadcast it
    ! so that all processors get the same random numbers.
+      self :: IN
       seed :: VEC{INT}*
       dt :: VEC{INT}(8)
       n,i,t :: INT
@@ -306,9 +309,9 @@ contains
 
    end
 
-   finalise
-   !  Finalise the system object
-      .parallel_finalise
+   finalize
+   !  Finalize the system object
+      .parallel_finalize
    end
 
    unit_conversion_factor result (res) ::: private
@@ -399,14 +402,6 @@ contains
 
    end
 
-   die_if(condition,message)
-   ! Set the error flag to 1 and terminate the program with a message
-   ! provided "condition" is TRUE
-      condition :: BIN
-      message :: STR
-      if (condition) .die(message)
-   end
-
    warn(message,iostat,use_stack_name)
    ! Set the error flag to -1 and issue a warning message.
    ! If "use_stack_name" is present, the call stacl routine name is used
@@ -495,8 +490,7 @@ contains
    end
 
    ensure(condition,message)
-   ! Ensure "condition" is true, otherwise set the error flag to 1 and
-   ! terminate the program with a "message"
+   ! Ensure "condition" is true, or stop the program with a "message"
       condition :: BIN, IN
       message :: STR, IN
       if (NOT condition) .die(message)
@@ -597,7 +591,7 @@ contains
 !  Basic memory allocation tracking
 !  ================================
 
-   add_memory(used) ::: pure
+   add_memory(used) ::: always_pure
    !  Add memory usage data to the memory manager
       self :: INOUT
       used :: INT, IN
@@ -610,7 +604,7 @@ contains
 
    end
 
-   delete_memory(used) ::: pure
+   delete_memory(used) ::: always_pure
    !  Delete memory usage data from the memory manager
       self :: INOUT
       used :: INT, IN
@@ -620,153 +614,6 @@ contains
       .memory_used_stack(1:.stack_level) = .memory_used_stack(1:.stack_level) - used
 
    end
-
-! More advanced memory tracking
-
-
-   add_memory(used,address) ::: pure
-   !  Add memory usage data and address data to the memory manager
-      self :: INOUT
-      used :: INT, IN
-      address :: INT, IN
-
-#ifdef TRACK_MEMORY_LOCATIONS
-      n :: INT
-#endif
-
-      .memory_used        = address
-      .memory_used        = .memory_used + used
-      .max_memory_used    = max(.memory_used,.max_memory_used)
-      .memory_blocks_used = .memory_blocks_used + 1
-
-#ifdef TRACK_MEMORY_LOCATIONS
-      .n_addresses = .n_addresses + 1
-      n = .n_addresses - .max_addresses
-      if (n>0) then
-         .expand_int(.memory_address_stack,n)
-         .expand_int(.memory_amount_stack,n)
-         .expand_str(.memory_call_stack,n)
-      end
-      .max_addresses = max(.n_addresses,.max_addresses)
-      
-      n = .n_addresses
-      .memory_address_stack(n) = address                  ! Address of block
-      .memory_amount_stack(n)  = used
-      .memory_call_stack(n)    = .flat_stack ! Calling stack
-      if (.leaky_amount/=0 AND .leaky_routine/=" ") then
-         if (.leaky_amount==used) then
-         if (trim(.flat_stack)==trim(.leaky_routine)) then
-            allocate(.leaky_call_stack(.stack_level))
-            .leaky_call_stack = .call_stack(1:.stack_level)
-         end
-         end
-      end
-#endif
-
-      .max_memory_blocks_used            = max(.memory_blocks_used,.max_memory_blocks_used)
-      .memory_used_stack(1:.stack_level) = .memory_used_stack(1:.stack_level) + used
-
-   end
-
-   delete_memory(used,address) ::: pure
-   !  Delete memory usage data and address data from the memory manager
-      self :: INOUT
-      used :: INT, IN
-      address :: INT, IN
-
-#ifdef TRACK_MEMORY_LOCATIONS
-      n,i,j :: INT
-#endif
-
-      .memory_used = address
-      .memory_used = .memory_used - used
-
-#ifdef TRACK_MEMORY_LOCATIONS
-      j = 0
-      do i = .n_addresses,1,-1
-         if (address/=.memory_address_stack(i)) cycle
-         j = i
-         exit
-      end
-
-      if (j==0) then
-      !    write(.error_output_unit,"(a)") "can't find memory address"
-      else ! remove the address
-          .n_addresses = .n_addresses - 1
-          n = .n_addresses
-          .memory_address_stack(j:n) = .memory_address_stack(j+1:n+1)
-          .memory_amount_stack(j:n)  = .memory_amount_stack(j+1:n+1)
-          .memory_call_stack(j:n)    = .memory_call_stack(j+1:n+1)
-      end
-#endif
-
-      .memory_blocks_used                = .memory_blocks_used - 1
-      .memory_used_stack(1:.stack_level) = .memory_used_stack(1:.stack_level) - used
-
-   end
-
-   report_undeleted_memory(out) ::: private
-   ! Report undeleted memory allocation info i.e. a profile. If present, use the
-   ! unit number for file "out", otherwise use "tonto.error_output_unit".  
-      out :: TEXTFILE, optional
-
-#ifdef TRACK_MEMORY_LOCATIONS
-      unit,i :: INT
-#endif
-
-      if (present(out)) out = out
-
-      if (.n_addresses == 0)  return
-      if (NOT .IO_is_allowed) return
-
-#ifdef TRACK_MEMORY_LOCATIONS
-      ! Process arguments ...
-      unit = tonto.error_output_unit
-      if (present(out)) unit = out.unit
-       write(unit,*)
-       write(unit,"(a)") "Undeleted memory calls:"
-       write(unit,*)
-       write(unit,"('      Address    Amount   Traceback')")
-      do i = 1,.n_addresses
-       write(unit,"(i13,i10,3x,a)") .memory_address_stack(i), &
-                                    .memory_amount_stack(i),  &
-                                    adjustl(trim(.memory_call_stack(i)))
-      end
-
-      if (unit/=TEXTFILE_STDOUT_UNIT) then
-       write(TEXTFILE_STDOUT_UNIT,*)
-       write(TEXTFILE_STDOUT_UNIT,"(a)") "Undeleted memory calls:"
-       write(TEXTFILE_STDOUT_UNIT,*)
-       write(TEXTFILE_STDOUT_UNIT,"('      Address    Amount   Traceback')")
-      do i = 1,.n_addresses
-       write(TEXTFILE_STDOUT_UNIT,"(i13,i10,3x,a)") .memory_address_stack(i), &
-                                                    .memory_amount_stack(i),  &
-                                                    adjustl(trim(.memory_call_stack(i)))
-      end
-      end
-
-      if (.leaky_call_stack.created) then
-         write(unit,*)
-         write(unit,"(a)") "Requested leaky call stack:"
-         write(unit,*)
-      do i = 1,size(.leaky_call_stack)
-         write(unit,"(i4,'. ',a43)") i,adjustl(.leaky_call_stack(i))
-      end
-      if (unit/=TEXTFILE_STDOUT_UNIT) then
-         write(TEXTFILE_STDOUT_UNIT,*)
-         write(TEXTFILE_STDOUT_UNIT,"(a)") "Requested leaky call stack:"
-         write(TEXTFILE_STDOUT_UNIT,*)
-      do i = 1,size(.leaky_call_stack)
-         write(TEXTFILE_STDOUT_UNIT,"(i4,'. ',a43)") i,adjustl(.leaky_call_stack(i))
-      end
-      end
-      end
-
-      .flush_buffer
-#endif
-
-   end
-
 
 !  ========================================================================
 !  Call stack management, per-call level memory reporting and leak checking
@@ -780,9 +627,6 @@ contains
 
       show_call_stack :: BIN 
       l :: INT
-#ifdef TRACK_MEMORY_LOCATIONS
-      i,n :: INT
-#endif
 
       .stack_level = .stack_level + 1
       .expand_call_stacks
@@ -790,15 +634,6 @@ contains
 
       if (present(routine_name)) then
         .call_stack(.stack_level) = routine_name
-#ifdef TRACK_MEMORY_LOCATIONS
-        .flat_stack = trim(routine_name)
-        n = len_trim(.flat_stack)
-        do i = .stack_level-1,2,-1
-           .flat_stack = trim(.flat_stack)//","//trim(.call_stack(i))
-           n = n + 1 + len_trim(.call_stack(i))
-           if (n>len(.flat_stack)) exit
-        end
-#endif
       else
         .call_stack(.stack_level) = "Unknown routine"
       end
@@ -960,9 +795,10 @@ contains
 
    end
 
-   will_exceed_memory_limit(amount) result (res)
+   will_exceed_memory_limit(amount) result (res) ::: always_pure
    !  Returns TRUE if memory limit will be exceeded after an allocation of
    !  "amount" units of memory
+      self :: IN
       amount :: INT
       res :: BIN
       res = (.memory_used+amount)>.memory_limit
@@ -1020,14 +856,15 @@ contains
 
    end
 
-   ignore_memory_leak(memory_blocks_gained)
+   ignore_memory_leak(memory_blocks_gained) ::: always_pure
    ! If called, this routine will reset any memory leak in the current
    ! procedure at the point of call. This is highly dangerous and should be used
    ! only in special cases when you are sure the leak can be tolerated.
    ! "memory_blocks_gained" is the number of blocks that were gained in the leak
    ! process: it is negative for a loss in memory, and positive for a gain in
    ! memory.
-      memory_blocks_gained :: INT
+      self :: IN
+      memory_blocks_gained :: INT, IN
 
       if (NOT associated(.memory_used_stack)) return
 
@@ -1036,15 +873,16 @@ contains
 
    end
 
-   start_memory_trace(depth,show_call_stack)
+   start_memory_trace(depth,show_call_stack) ::: always_pure
    ! Start printing out the memory stack for all routines that are
    ! called (i.e.  at the next level). This command is undone by the
    ! "end_memory_trace" routine. If "depth" is present, the show
    ! starts at the current level plus "depth".  If "show_call_stack"
    ! is present and FALSE, then a tabular style output is shown rather
    ! than the default indented style.
-      depth :: INT, optional
-      show_call_stack :: BIN, optional
+      self :: INOUT
+      depth :: INT, IN, optional
+      show_call_stack :: BIN, IN, optional
 
       .stack_show_min_level = .stack_level + 1
       .stack_show_max_level = .stack_level + 2
@@ -1055,14 +893,15 @@ contains
 
    end
 
-   end_memory_trace
+   end_memory_trace ::: always_pure
    ! Ends memory leak testing at this level
+      self :: INOUT
       .stack_show_min_level = -1
       .stack_show_max_level = -1
       .show_call_stack = FALSE
    end
 
-   expand_call_stacks ::: private
+   expand_call_stacks ::: pure, private
    ! Expand both stacks to a length at least equal to ".stack_level".
 
       dim :: INT
@@ -1114,9 +953,6 @@ contains
       end
 
       .report_timing_info 
-#ifdef TRACK_MEMORY_LOCATIONS
-      .report_undeleted_memory
-#endif
 
       .flush_buffer
 
@@ -1278,7 +1114,7 @@ contains
 !  Timing and profiling: is limited by fortrans poor clock resolution
 !  ==================================================================
 
-   start_timer(routine_name)
+   start_timer(routine_name) ::: always_pure
    ! Start timing routine "routine_name". Placed at the start of every routine
    ! when profiling is requested. 
       self :: INOUT
@@ -1370,10 +1206,8 @@ contains
         .time_for_routine(index) = ZERO
         .name_for_routine(index) = routine_name
         .n_calls_for_routine(index) = 1
-        ! write(*,*) "NEW=",index,"name=",trim(routine_name)
       else
         .n_calls_for_routine(index) = .n_calls_for_routine(index) + 1
-        ! write(*,*) "old=",index,"name=",trim(routine_name)
       end
 
       ! Now expand the timed call stack ...
@@ -1390,7 +1224,7 @@ contains
 
    end
 
-   index_for_routine(routine_name) result (index) ::: pure, leaky, private
+   index_for_routine(routine_name) result (index) ::: always_pure, leaky, private
    ! Return the "index" for routine "routine_name" in the ".name_for_routine"
    ! stack. 
       self :: IN
@@ -1401,9 +1235,10 @@ contains
 
       index = 0
       do i = 1,.n_timed_routines
-        if (.name_for_routine(i)/=routine_name) cycle
-        index = i
-        exit
+        if (.name_for_routine(i)==routine_name) then
+           index = i
+           exit
+        end
       end
 
    end
@@ -1442,7 +1277,7 @@ contains
       end
 
       allocate(order(.n_timed_routines))
-      order = [(i,i=1,.n_timed_routines)] ! initialise order
+      order = [(i,i=1,.n_timed_routines)] ! initialize order
       .quick_sort_decreasing(.time_for_routine,order)
 
       write(unit,*)
@@ -1532,9 +1367,9 @@ contains
 
    end
 
-! ====================================
-! These would be inherited if possible
-! ====================================
+!  ====================================
+!  These would be inherited if possible
+!  ====================================
 
    expand_real(stack,dim) ::: pure, leaky, private
    ! Expands "stack" by amount "dim". Contents are retained.
@@ -1551,18 +1386,20 @@ contains
       if (FALSE) n = transfer(self,n)
 
       if (NOT associated(stack)) then
-      ! write(*,*) "NOT associated, dim=",dim
-        allocate(stack(dim))
-        stack = ZERO
+
+         allocate(stack(dim))
+         stack = ZERO
+      
       else
-        n = stack.dim
-        old_stack => stack
-      ! write(*,*) "Associated, copying, n=",n," dim=",dim
-        nullify(stack)
-        allocate(stack(n+dim))
-        stack(1:n) = old_stack
-        stack(n+1:n+dim) = ZERO
-        deallocate(old_stack)
+
+         n = stack.dim
+         old_stack => stack
+         nullify(stack)
+         allocate(stack(n+dim))
+         stack(1:n) = old_stack
+         stack(n+1:n+dim) = ZERO
+         deallocate(old_stack)
+
       end
 
    end
@@ -1611,16 +1448,20 @@ contains
       if (FALSE) n = transfer(self,n)
 
       if (NOT associated(stack)) then
-        allocate(stack(dim))
-        stack = " "
+
+         allocate(stack(dim))
+         stack = " "
+
       else
-        n = stack.dim
-        old_stack => stack
-        nullify(stack)
-        allocate(stack(n+dim))
-        stack(1:n) = old_stack
-        stack(n+1:n+dim) = " "
-        deallocate(old_stack)
+
+         n = stack.dim
+         old_stack => stack
+         nullify(stack)
+         allocate(stack(n+dim))
+         stack(1:n) = old_stack
+         stack(n+1:n+dim) = " "
+         deallocate(old_stack)
+
       end
 
    end
@@ -1670,36 +1511,42 @@ contains
    end
 
 
-! =====================================
-! These are all inherited from PARALLEL
-! =====================================
+!  =====================================
+!  These are all inherited from PARALLEL
+!  =====================================
 
-   parallel_initialise ::: get_from(PARALLEL:initialise)
-   ! Initialise the parallel environment.
+   parallel_initialize ::: get_from(PARALLEL:initialize), impure
+   ! Initialize the parallel environment.
    end
 
-   parallel_finalise ::: get_from(PARALLEL:finalise)
-   ! Finalise the parallel environment.
+   parallel_finalize ::: get_from(PARALLEL:finalize), impure
+   ! Finalize the parallel environment.
    end
 
-! Inquiry routines.
 
-   is_master_processor result (res) ::: get_from(PARALLEL), pure
+!  ================
+!  Inquiry routines
+!  ================
+
+   is_master_processor result (res) ::: get_from(PARALLEL), always_pure
    ! Return TRUE if this is the master processor. The index of the master
    ! processor is normally 0.
    end
 
-   master_processor result (res) ::: get_from(PARALLEL), pure
+   master_processor result (res) ::: get_from(PARALLEL), always_pure
    ! Return the index of the master processor, which is normally 0.
    end
 
-   this_processor result (res) ::: get_from(PARALLEL), pure
+   this_processor result (res) ::: get_from(PARALLEL), always_pure
    ! Return the index of this processor.  First index is zero!
    end
 
-! Parallel do loops
 
-   parallel_do_start(first,stride) result (res) ::: get_from(PARALLEL), pure
+!  ============================================================================
+!  Parallel do loops: simple parallel loops are implemented in the preprocessor
+!  ============================================================================
+
+   parallel_do_start(first,stride) result (res) ::: get_from(PARALLEL), always_pure
    ! Return the starting index to be used in a parallel do statement. The
    ! "first" index and the loop "stride" can optionally be supplied, if they are
    ! not equal to 1.  In this model, each processor skips through the whole
@@ -1709,20 +1556,20 @@ contains
    ! routine.
    end
 
-   parallel_do_stride(stride) result (res) ::: get_from(PARALLEL), pure
+   parallel_do_stride(stride) result (res) ::: get_from(PARALLEL), always_pure
    ! Return the stride to be used in a parallel do statement.  The "stride"
    ! length can be optionally supplied, if it is not 1.
    end
 
-   do_in_parallel result (res) ::: get_from(PARALLEL), pure
+   do_in_parallel result (res) ::: get_from(PARALLEL), always_pure
    ! Return TRUE if we are allowed to start to implement a given do-loop in
-   ! parallel. NOTE: Once you have parallelised a loop, remember to prevent
+   ! parallel. NOTE: Once you have parallelized a loop, remember to prevent
    ! further parallelisation, using the ".lock_parallel_do" method. This is
    ! typically used as the first statement after the parallel do loop is
    ! entered.
    end
 
-   lock_parallel_do(name) ::: get_from(PARALLEL)
+   lock_parallel_do(name) ::: get_from(PARALLEL), always_pure
    ! Sets the parallel do-loop lock to the "name" of the locking routine.
    ! Only the routine with the same "name" may unlock the loop. WARNING: This
    ! assumes that the names of the routines are all distinct. NOTE: It is
@@ -1730,81 +1577,95 @@ contains
    ! OK but disabled.
    end
 
-   unlock_parallel_do(name) ::: get_from(PARALLEL)
+   unlock_parallel_do(name) ::: get_from(PARALLEL), always_pure
    ! Allow parallelisation again, if the name matches the original.
    end
 
-! Summation routines.
 
-   parallel_vector_sum(vec,dim) ::: get_from(PARALLEL, X=>BIN, Y=>MPI_LOGICAL), public
+!  ==================
+!  Summation routines
+!  ==================
+
+   parallel_vector_sum(vec,dim) ::: get_from(PARALLEL, X?=>BIN, Y?=>MPI_LOGICAL), impure
    ! This routine adds the versions of "vec" with dimension "dim" from all
    ! processors, and gives the result to all processors.
    end
 
-   parallel_vector_sum(vec,dim) ::: get_from(PARALLEL, X=>INT, Y=>MPI_INTEGER), public
+   parallel_vector_sum(vec,dim) ::: get_from(PARALLEL, X?=>INT, Y?=>MPI_INTEGER), impure
    ! This routine adds the versions of "vec" with dimension "dim" from all
    ! processors, and gives the result to all processors.
    end
 
-   parallel_vector_sum(vec,dim) ::: get_from(PARALLEL, X=>REAL, Y=>MPI_DOUBLE_PRECISION), public
+   parallel_vector_sum(vec,dim) ::: get_from(PARALLEL, X?=>REAL, Y?=>MPI_DOUBLE_PRECISION), impure
    ! This routine adds the versions of "vec" with dimension "dim" from all
    ! processors, and gives the result to all processors.
    end
 
-   parallel_vector_sum(vec,dim) ::: get_from(PARALLEL, X=>CPX, Y=>MPI_DOUBLE_COMPLEX), public
+   parallel_vector_sum(vec,dim) ::: get_from(PARALLEL, X?=>CPX, Y?=>MPI_DOUBLE_COMPLEX), impure
    ! This routine adds the versions of "vec" with dimension "dim" from all
    ! processors, and gives the result to all processors.
    end
 
-   parallel_sum(val) ::: get_from(PARALLEL, XX=>BIN, YY=>MPI_LOGICAL), public
+
+   parallel_sum(val) ::: get_from(PARALLEL, X?=>BIN, Y?=>MPI_LOGICAL), impure
    ! This routine adds the versions of scalar "val" from all
    ! processors, and gives the result to all processors.
    end
 
-   parallel_sum(val) ::: get_from(PARALLEL, XX=>INT, YY=>MPI_INTEGER), public
+   parallel_sum(val) ::: get_from(PARALLEL, X?=>INT, Y?=>MPI_INTEGER), impure
    ! This routine adds the versions of scalar "val" from all
    ! processors, and gives the result to all processors.
    end
 
-   parallel_sum(val) ::: get_from(PARALLEL, XX=>REAL, YY=>MPI_DOUBLE_PRECISION), public
+   parallel_sum(val) ::: get_from(PARALLEL, X?=>REAL, Y?=>MPI_DOUBLE_PRECISION), impure
    ! This routine adds the versions of scalar "val" from all
    ! processors, and gives the result to all processors.
    end
 
-   parallel_sum(val) ::: get_from(PARALLEL, XX=>CPX, YY=>MPI_DOUBLE_COMPLEX), public
+   parallel_sum(val) ::: get_from(PARALLEL, X?=>CPX, Y?=>MPI_DOUBLE_COMPLEX), impure
    ! This routine adds the versions of scalar "val" from all
    ! processors, and gives the result to all processors.
    end
 
-   parallel_sum(vec) ::: get_from(PARALLEL, X=>BIN, Y=>MPI_LOGICAL)
+
+   parallel_sum(vec) ::: get_from(PARALLEL, X?=>BIN, Y?=>MPI_LOGICAL), impure
    ! This routine adds the versions of "vec" from all processors, and gives the
    ! result to all processors.
    end
 
-   parallel_sum(vec) ::: get_from(PARALLEL, X=>INT, Y=>MPI_INTEGER)
+   parallel_sum(vec) ::: get_from(PARALLEL, X?=>INT, Y?=>MPI_INTEGER), impure
    ! This routine adds the versions of "vec" from all processors, and gives the
    ! result to all processors.
    end
 
-   parallel_sum(vec) ::: get_from(PARALLEL, X=>REAL, Y=>MPI_DOUBLE_PRECISION)
+   parallel_sum(vec) ::: get_from(PARALLEL, X?=>REAL, Y?=>MPI_DOUBLE_PRECISION), impure
    ! This routine adds the versions of "vec" from all processors, and gives the
    ! result to all processors.
    end
 
-   parallel_sum(vec) ::: get_from(PARALLEL, X=>CPX, Y=>MPI_DOUBLE_COMPLEX)
+   parallel_sum(vec) ::: get_from(PARALLEL, X?=>CPX, Y?=>MPI_DOUBLE_COMPLEX), impure
    ! This routine adds the versions of "vec" from all processors, and gives the
    ! result to all processors.
    end
 
-   parallel_sum(mat) ::: get_from(PARALLEL, X=>REAL, Y=>MPI_DOUBLE_PRECISION)
+
+!  ====================================================================
+!  These matrix summations may not be implemented, because the fortran
+!  90 interfaces might be missing from the MPICH MPI implementation; we
+!  could work around this by using temporary one dimensional arrays,
+!  but that would be inefficient.
+!  ====================================================================
+
+   parallel_sum(mat) ::: get_from(PARALLEL, X?=>REAL, Y?=>MPI_DOUBLE_PRECISION), impure
    ! This routine adds the versions of "mat" from all processors, and gives the
    ! result to all processors.
    end
 
-   parallel_sum(mat) ::: get_from(PARALLEL, X=>CPX, Y=>MPI_DOUBLE_COMPLEX)
+   parallel_sum(mat) ::: get_from(PARALLEL, X?=>CPX, Y?=>MPI_DOUBLE_COMPLEX), impure
    ! This routine adds the versions of "mat" from all processors, and gives the
    ! result to all processors.
    end
+
 
    parallel_symmetric_sum(mat) ::: get_from(PARALLEL)
    ! This routine adds the versions of "mat" from all processors, and gives the
@@ -1813,225 +1674,206 @@ contains
    ! the same as the lower triangle.
    end
 
-   parallel_sum(mat) ::: get_from(PARALLEL, X=>REAL, Y=>MPI_DOUBLE_PRECISION)
+
+   parallel_sum(mat) ::: get_from(PARALLEL, X?=>REAL, Y?=>MPI_DOUBLE_PRECISION), impure
    ! This routine adds the versions of a 3d "mat" from all processors, and gives
    ! the result to all processors.
    end
 
-   parallel_sum(mat) ::: get_from(PARALLEL, X=>CPX, Y=>MPI_DOUBLE_COMPLEX)
+   parallel_sum(mat) ::: get_from(PARALLEL, X?=>CPX, Y?=>MPI_DOUBLE_COMPLEX), impure
    ! This routine adds the versions of a 3d "mat" from all processors, and gives
    ! the result to all processors.
    end
 
-   parallel_sum(mat) ::: get_from(PARALLEL, X=>REAL, Y=>MPI_DOUBLE_PRECISION)
+
+   parallel_sum(mat) ::: get_from(PARALLEL, X?=>REAL, Y?=>MPI_DOUBLE_PRECISION), impure
    ! This routine adds the versions of a 4d "mat" from all processors, and gives
    ! the result to all processors.
    end
 
-   parallel_sum(mat) ::: get_from(PARALLEL, X=>CPX, Y=>MPI_DOUBLE_COMPLEX)
+   parallel_sum(mat) ::: get_from(PARALLEL, X?=>CPX, Y?=>MPI_DOUBLE_COMPLEX), impure
    ! This routine adds the versions of a 4d "mat" from all processors, and gives
    ! the result to all processors.
    end
 
-   parallel_sum(mat) ::: get_from(PARALLEL, X=>REAL, Y=>MPI_DOUBLE_PRECISION)
+
+   parallel_sum(mat) ::: get_from(PARALLEL, X?=>REAL, Y?=>MPI_DOUBLE_PRECISION), impure
    ! This routine adds the versions of a 5d "mat" from all processors, and gives
    ! the result to all processors.
    end
 
-   parallel_sum(mat) ::: get_from(PARALLEL, X=>CPX, Y=>MPI_DOUBLE_COMPLEX)
+   parallel_sum(mat) ::: get_from(PARALLEL, X?=>CPX, Y?=>MPI_DOUBLE_COMPLEX), impure
    ! This routine adds the versions of a 5d "mat" from all processors, and gives
    ! the result to all processors.
    end
 
-   compress_to_triangle(tr,mat) ::: get_from(PARALLEL)
+
+   compress_to_triangle(tr,mat) ::: get_from(PARALLEL), selfless, always_pure
    ! Converts the lower triangle of matrix "mat" to the triangle "tr".
    ! using row order.
    end
 
-   uncompress_from_triangle(tr,mat) ::: get_from(PARALLEL)
+   uncompress_from_triangle(tr,mat) ::: get_from(PARALLEL), selfless, always_pure
    ! Converts the triangle "tr" into the symmetric matrix "mat".
    end
 
-! Broadcast variables to all processors.
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>STR, MPI_TYPE=>MPI_CHARACTER, LEN=>len(var))
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
+!  =====================================
+!  Broadcast variables to all processors
+!  =====================================
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>BIN, MPI_TYPE=>MPI_LOGICAL, LEN=>1)
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>INT, MPI_TYPE=>MPI_INTEGER, LEN=>1)
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>REAL, MPI_TYPE=>MPI_DOUBLE_PRECISION, LEN=>1)
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>CPX, MPI_TYPE=>MPI_DOUBLE_COMPLEX, LEN=>1)
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>VEC{STR}, MPI_TYPE=>MPI_CHARACTER, LEN=>size(var)*len(var))
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>VEC{BIN}, MPI_TYPE=>MPI_LOGICAL, LEN=>size(var))
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>VEC{INT}, MPI_TYPE=>MPI_INTEGER, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>STR, Y?=>MPI_CHARACTER, LEN?=>len(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>VEC{REAL}, MPI_TYPE=>MPI_DOUBLE_PRECISION, LEN=>size(var))
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>VEC{CPX}, MPI_TYPE=>MPI_DOUBLE_COMPLEX, LEN=>size(var))
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT{STR}, MPI_TYPE=>MPI_CHARACTER, LEN=>size(var)*len(var))
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT{BIN}, MPI_TYPE=>MPI_LOGICAL, LEN=>size(var))
-   ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
-   end
-
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT{INT}, MPI_TYPE=>MPI_INTEGER, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>BIN, Y?=>MPI_LOGICAL, LEN?=>1), impure
    ! Broadcast variable "var" from "processor" to all the others.
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT{REAL}, MPI_TYPE=>MPI_DOUBLE_PRECISION, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>INT, Y?=>MPI_INTEGER, LEN?=>1), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT{CPX}, MPI_TYPE=>MPI_DOUBLE_COMPLEX, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>REAL, Y?=>MPI_DOUBLE_PRECISION, LEN?=>1), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>CPX, Y?=>MPI_DOUBLE_COMPLEX, LEN?=>1), impure
+   ! Broadcast variable "var" from "processor" to all the others.
    end
 
 
-!   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT3{STR}, MPI_TYPE=>MPI_CHARACTER, LEN=>size(var)*len(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>VEC{STR}, Y?=>MPI_CHARACTER, LEN?=>size(var)*len(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>VEC{BIN}, Y?=>MPI_LOGICAL, LEN?=>size(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>VEC{INT}, Y?=>MPI_INTEGER, LEN?=>size(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>VEC{REAL}, Y?=>MPI_DOUBLE_PRECISION, LEN?=>size(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>VEC{CPX}, Y?=>MPI_DOUBLE_COMPLEX, LEN?=>size(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT{STR}, Y?=>MPI_CHARACTER, LEN?=>size(var)*len(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT{BIN}, Y?=>MPI_LOGICAL, LEN?=>size(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT{INT}, Y?=>MPI_INTEGER, LEN?=>size(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT{REAL}, Y?=>MPI_DOUBLE_PRECISION, LEN?=>size(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT{CPX}, Y?=>MPI_DOUBLE_COMPLEX, LEN?=>size(var)), impure
+   ! Broadcast variable "var" from "processor" to all the others.
+   end
+
+
+!   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT3{STR}, Y?=>MPI_CHARACTER, LEN?=>size(var)*len(var)), impure
 !   ! Broadcast variable "var" from "processor" to all the others.
 !   end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT3{BIN}, MPI_TYPE=>MPI_LOGICAL, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT3{BIN}, Y?=>MPI_LOGICAL, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT3{INT}, MPI_TYPE=>MPI_INTEGER, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT3{INT}, Y?=>MPI_INTEGER, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT3{REAL}, MPI_TYPE=>MPI_DOUBLE_PRECISION, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT3{REAL}, Y?=>MPI_DOUBLE_PRECISION, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT3{CPX}, MPI_TYPE=>MPI_DOUBLE_COMPLEX, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT3{CPX}, Y?=>MPI_DOUBLE_COMPLEX, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
 
-!   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT4{STR}, MPI_TYPE=>MPI_CHARACTER, LEN=>size(var)*len(var))
+!   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT4{STR}, Y?=>MPI_CHARACTER, LEN?=>size(var)*len(var)), impure
 !   ! Broadcast variable "var" from "processor" to all the others.
 !   end
 
-!   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT4{BIN}, MPI_TYPE=>MPI_LOGICAL, LEN=>size(var))
+!   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT4{BIN}, Y?=>MPI_LOGICAL, LEN?=>size(var)), impure
 !   ! Broadcast variable "var" from "processor" to all the others.
 !   end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT4{INT}, MPI_TYPE=>MPI_INTEGER, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT4{INT}, Y?=>MPI_INTEGER, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT4{REAL}, MPI_TYPE=>MPI_DOUBLE_PRECISION, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT4{REAL}, Y?=>MPI_DOUBLE_PRECISION, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT4{CPX}, MPI_TYPE=>MPI_DOUBLE_COMPLEX, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT4{CPX}, Y?=>MPI_DOUBLE_COMPLEX, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
 
-!   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT5{STR}, MPI_TYPE=>MPI_CHARACTER, LEN=>size(var)*len(var))
+!   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT5{STR}, Y?=>MPI_CHARACTER, LEN?=>size(var)*len(var)), impure
 !   ! Broadcast variable "var" from "processor" to all the others.
 !   end
 
-!   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT5{BIN}, MPI_TYPE=>MPI_LOGICAL, LEN=>size(var))
+!   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT5{BIN}, Y?=>MPI_LOGICAL, LEN?=>size(var)), impure
 !   ! Broadcast variable "var" from "processor" to all the others.
 !   end
 
-!   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT5{INT}, MPI_TYPE=>MPI_INTEGER, LEN=>size(var))
+!   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT5{INT}, Y?=>MPI_INTEGER, LEN?=>size(var)), impure
 !   ! Broadcast variable "var" from "processor" to all the others.
 !   end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT5{REAL}, MPI_TYPE=>MPI_DOUBLE_PRECISION, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT5{REAL}, Y?=>MPI_DOUBLE_PRECISION, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
-   broadcast(var,processor) ::: get_from(PARALLEL, VAR_TYPE=>MAT5{CPX}, MPI_TYPE=>MPI_DOUBLE_COMPLEX, LEN=>size(var))
+   broadcast(var,processor) ::: get_from(PARALLEL, X?=>MAT5{CPX}, Y?=>MPI_DOUBLE_COMPLEX, LEN?=>size(var)), impure
    ! Broadcast variable "var" from "processor" to all the others.
-      var :: VAR_TYPE
-      processor :: INT, IN, optional
    end
 
-   IO_is_allowed result (res)
+   IO_is_allowed result (res) ::: get_from(PARALLEL), always_pure
    ! Return whether or not this processor is allowed to do the I/O operation.
    ! Here, only the master processor does I/O in a parallel job.
-      res :: BIN
-      res = .is_master_processor OR (NOT .is_parallel)
    end
 
-   synchronise_processors ::: get_from(PARALLEL)
-   ! Synchronise all processors at this point.
+   synchronize_processors ::: get_from(PARALLEL), selfless, impure
+   ! Synchronize all processors at this point.
+   end
+
+!  =====================
+!  Scalapack/blacs stuff
+!  =====================
+
+   init_2d_proc_grid ::: get_from(PARALLEL), impure
+   ! This routine initializes blacs for a two-dimensional processor grid.
+   end
+
+   done_proc_grid ::: get_from(PARALLEL), impure
+   ! Uninitialize blacs.
+   end
+
+   n_this_row(n) result (res) ::: get_from(PARALLEL), impure
+   ! Number of rows of a matrix of n rows assigned to this processor.
+   end
+
+   n_this_col(n) ::: get_from(PARALLEL), impure
+   ! Number of columns of a matrix of n columns assigned to this processor.
    end
 
 end

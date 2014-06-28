@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat4{cpx}.foo 4349 2014-05-06 02:01:54Z dylan_ $
+! $Id: mat4{cpx}.foo 3752 2012-05-31 09:27:34Z dylan_ $
 !---------------------------------------------------------------------------
 
 module MAT4{CPX}
@@ -112,8 +112,12 @@ contains
       res :: MAT4{INT}(.dim1,.dim2,.dim3,.dim4)
    end 
 
-   get_max_str_length(msl,max_dp,spaces) ::: get_from(MAT4{INTRINSIC}), pure
-   ! Returns the maximum of the string lengths.
+   max_str_length(dp,spaces) result (res) ::: get_from(MAT4{INTRINSIC}), pure
+   ! Returns the maximum of the string lengths, with optional extra "spaces"
+      self :: IN
+      dp :: INT, IN
+      spaces :: INT, IN, optional
+      res :: INT
    end
 
 end

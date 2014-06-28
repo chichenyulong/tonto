@@ -29,7 +29,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: interpolator.foo 4071 2013-06-18 12:59:43Z dylan_ $
+! $Id: interpolator.foo 4229 2014-01-10 09:36:13Z dylan_ $
 !
 !------------------------------------------------------------------------------
 
@@ -39,8 +39,24 @@ module INTERPOLATOR
 
 contains
 
-   create ::: get_from(OBJECT), leaky
+!  ==================
+!  Allocation methods
+!  ==================
+
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object
+   end
+
+   destroy ::: get_from(OBJECT), leaky, pure
+   ! Destroy an object
+   end
+
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
+   ! Returns true if self has been created
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
+   ! Returns true if self has *not* been created
    end
 
    create(spacing,first) ::: leaky
@@ -51,24 +67,6 @@ contains
      .create
      .set_spacing(spacing)
      if (present(first)) .set_table_origin(first)
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(c) ::: leaky
-   ! Copy the contents of "c" to self.
-     c :: INTERPOLATOR, IN
-     self = c
-     .nullify_ptr_part
-     if (c.data_point.created) .data_point.create_copy(c.data_point)
-     if (c.data_value.created) .data_value.create_copy(c.data_value)
-     if (c.y2.created)         .y2.create_copy(c.y2)
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
    end
 
    nullify_ptr_part
@@ -85,17 +83,32 @@ contains
       .y2.destroy
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
-   ! Returns true if self has been created
-      self :: PTR
-      res :: BIN
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky
+   ! Create a copy of object
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
-   ! Returns true if self has *not* been created
-      self :: PTR
-      res :: BIN
+   copy(object) ::: leaky, pure
+   ! Copy the contents of "c" to self.
+     self :: OUT
+     object :: INTERPOLATOR, IN
+
+     self = object
+
+     .nullify_ptr_part
+
+      CREATE_COPY_COMPONENT(data_point)
+      CREATE_COPY_COMPONENT(data_value)
+      CREATE_COPY_COMPONENT(y2)
+
    end
+
+!  ===========
+!  Set methods
+!  ===========
 
    set_defaults(spacing,first)
    ! Set up a defaults
@@ -114,7 +127,7 @@ contains
       .n_data = 0
       .data_point.destroy
       .data_value.destroy
-      .finalised = FALSE
+      .finalized = FALSE
       .y1_initial = INTERPOLATOR_Y1_INITIAL
       .y1_final   = INTERPOLATOR_Y1_FINAL
       if (present(spacing)) .set_spacing(spacing)
@@ -242,7 +255,7 @@ contains
    first_data_point result (res) 
    ! Returns the first data point
       res :: REAL
-   ENSURE(.finalised,"Not finalised")
+   ENSURE(.finalized,"Not finalized")
    ENSURE(.n_data>0,"No data")
    ENSURE(.data_point.created,"No data")
       res = .data_point(1)
@@ -251,7 +264,7 @@ contains
    last_data_point result (res) 
    ! Returns the last data point
       res :: REAL
-   ENSURE(.finalised,"Not finalised")
+   ENSURE(.finalized,"Not finalized")
    ENSURE(.n_data>0,"No data")
    ENSURE(.data_point.created,"No data")
       res = .data_point(.n_data)
@@ -260,7 +273,7 @@ contains
    last_data_value result (res) 
    ! Returns the last data value
       res :: REAL
-   ENSURE(.finalised,"Not finalised")
+   ENSURE(.finalized,"Not finalized")
    ENSURE(.n_data>0,"No data")
    ENSURE(.data_value.created,"No data")
       res = .data_value(.n_data)
@@ -385,7 +398,7 @@ contains
 !  ============
 
    set_data_points(points) ::: leaky
-   ! Set the data "points". NOTE: Make sure that .finalise is called after all
+   ! Set the data "points". NOTE: Make sure that .finalize is called after all
    ! set routines.
       points :: VEC{REAL}
       .data_point.destroy
@@ -393,14 +406,14 @@ contains
    end
 
    set_data_values(values) ::: leaky
-   ! Set the data "values". NOTE: Make sure that .finalise is called after all
+   ! Set the data "values". NOTE: Make sure that .finalize is called after all
    ! set routines.
       values :: VEC{REAL}
       .data_value.destroy
       .data_value.create_copy(values)
    end
 
-   finalise ::: leaky
+   finalize ::: leaky
    ! Check everything is OK after reading data. 
    ENSURE(.data_point.created," no data_point's")
    ENSURE(.data_value.created," no data_value's")
@@ -410,7 +423,7 @@ contains
       ! Generate spline data
       if (.interpolation_is_spline) .set_spline_2nd_derivatives
 
-      .finalised = TRUE
+      .finalized = TRUE
 
    end
 
@@ -593,7 +606,7 @@ contains
 
          ! Range mapping
          if (.range_is_logarithmic) then
-            DIE_IF(val<=ZERO,"-ve func cant be used with log interpolation")
+            ENSURE(val>ZERO,"-ve func cant be used with log interpolation")
             val = log(val)
          end
 
@@ -657,11 +670,11 @@ contains
 
       end
 
-      .finalised = TRUE
+      .finalized = TRUE
 
    end
 
-   the_table_length(func,tol) result (p)
+   the_table_length(func,tol) result (p) ::: pure
    ! Return the length of the interpolation table starting from ".table_origin"
    ! with a given ".table_spacing", extending for a total ".table_length", and
    ! with the data values to be the corresponding values evaluated using
@@ -776,15 +789,15 @@ contains
       ! Reset the table length
       .table_length = .data_point(.n_data) 
 
-      ! Finalise: assume monotonic decreasing function
+      ! Finalize: assume monotonic decreasing function
       if (.range_is_logarithmic) then
-         DIE_IF(any(.data_value<=ZERO),"-ve data_values cant be used with log interpolation")
+         ENSURE(all(.data_value>ZERO),"-ve data_values cant be used with log interpolation")
          .data_value = log(-.data_value)
       end
 
       if (.interpolation_is_spline) .set_spline_2nd_derivatives
 
-      .finalised = TRUE
+      .finalized = TRUE
 
    end
 
@@ -866,8 +879,8 @@ contains
       ! Reset the table size
       .table_length = .data_point(.n_data) 
 
-      ! Finalise
-      .finalise
+      ! Finalize
+      .finalize
 
    end
 
@@ -881,7 +894,7 @@ contains
             values :: VEC{REAL}, OUT
          end
       end
-   ENSURE(.finalised,"not finalised")
+   ENSURE(.finalized,"not finalized")
    ENSURE(.data_point.created,"no data_points")
    ENSURE(.data_point.dim==.n_data,"wrong number of data_points")
    WARN_IF(.data_value.created,"data_values will be lost")
@@ -900,7 +913,7 @@ contains
          end
       end
       pos :: VEC{REAL}(3)
-   ENSURE(.finalised,"not finalised")
+   ENSURE(.finalized,"not finalized")
    ENSURE(.data_point.created,"no data_points")
    ENSURE(.data_point.dim==.n_data,"wrong number of data_points")
    WARN_IF(.data_value.created,"data_values will be lost")
@@ -922,7 +935,7 @@ contains
       point :: REAL, IN
       res :: REAL
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       if (.interpolation_is_spline) then; res = .value_for_spline(point)
       else;                               res = .value_for_linear(point)
@@ -940,7 +953,7 @@ contains
       point :: REAL, IN
       res :: REAL
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       pt,first,last,frac,s :: REAL
       f,f1 :: INT
@@ -978,7 +991,7 @@ contains
       point :: REAL, IN
       res :: REAL
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       pt,first,last,frac,dl6,v2,a,b,s :: REAL
       f,f1,f2 :: INT
@@ -1015,7 +1028,7 @@ contains
    end
 
 
-   values_for(points,values,fac)
+   values_for(points,values,fac) ::: always_pure
    ! Return the interpolated "values" for a series of squared "points".
    ! Optional "fac" may be app[lied to the "values"
    ! WARNING: not to be used with domain mapping unless the user
@@ -1026,7 +1039,7 @@ contains
       values :: VEC{REAL}, OUT
       fac :: REAL, IN, optional
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       if (.interpolation_is_spline) then; .values_for_spline(points,values,fac)
       else;                               .values_for_linear(points,values,fac)
@@ -1034,7 +1047,7 @@ contains
 
    end
 
-   values_for_linear(points,values,fac)
+   values_for_linear(points,values,fac) ::: always_pure
    ! Get interpolated "values" for a series of squared "points" 
    ! Optional "fac" may be app[lied to the "values"
    ! WARNING: To used with sqrt type domain mapping.
@@ -1044,7 +1057,7 @@ contains
       values :: VEC{REAL}, OUT
       fac :: REAL, IN, optional
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       pt :: VEC{REAL}*
       first,last,del1,p,frac,res,s :: REAL
@@ -1077,33 +1090,47 @@ contains
          if (.range_is_logarithmic) then
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) then
+
                   values(i) = ZERO
+
                else
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   res  = .data_value(f1)
                   if (frac>f) res = res + (frac-f)*(.data_value(f1+1)-res)
                   values(i) = exp(res)
+
                end
+
             end
 
          else
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) then
+
                   values(i) = ZERO
+
                else
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   res  = .data_value(f1)
                   if (frac>f) res = res + (frac-f)*(.data_value(f1+1)-res)
                   values(i) = res
+
                end
+
             end
 
          end
@@ -1113,33 +1140,47 @@ contains
          if (.range_is_logarithmic) then
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) then
+
                   values(i) = ZERO
+
                else
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   res  = .data_value(f1)
                   if (frac>f) res = res + (frac-f)*(.data_value(f1+1)-res)
                   values(i) = fac*exp(res)
+
                end
+
             end
 
          else
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) then
+
                   values(i) = ZERO
+
                else
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   res  = .data_value(f1)
                   if (frac>f) res = res + (frac-f)*(.data_value(f1+1)-res)
                   values(i) = fac*res
+
                end
+
             end
 
          end
@@ -1151,7 +1192,7 @@ contains
 
    end
 
-   values_for_spline(points,values,fac)
+   values_for_spline(points,values,fac) ::: always_pure
    ! Return the spline interpolated "values" for squared "points".
    ! Optional "fac" may be app[lied to the "values"
    ! WARNING: To used with sqrt type domain mapping.
@@ -1161,7 +1202,7 @@ contains
       values :: VEC{REAL}, OUT
       fac :: REAL, IN, optional
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       pt :: VEC{REAL}*
       first,last,p,frac,del1,del6,v1,v2,a,b,s :: REAL
@@ -1178,11 +1219,11 @@ contains
 
       ! Rescale data if required
       if (.domain_is_sqrt_x1x) then
-        pt.create(points.dim)
-        s = .domain_scale_factor; s = s*s
-        pt = points/(s+points)
+         pt.create(points.dim)
+         s = .domain_scale_factor; s = s*s
+         pt = points/(s+points)
       else
-        pt => points
+         pt => points
       end
 
       first = .data_point(1)
@@ -1196,45 +1237,65 @@ contains
          if (.range_is_logarithmic) then
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) then
+
                   values(i) = ZERO
+
                else
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   v1   = .data_value(f1)
-                  if (frac>f) then ! point lies between spacings
+
+                  ! Point lies between spacings
+                  if (frac>f) then 
                      f2 = f1 + 1
                      v2 = .data_value(f2)
                      b  = frac - f
                      a  = ONE - b
                      v1 = a*v1 + b*v2 +(a*(a*a-1)*.y2(f1) + b*(b*b-1)*.y2(f2))*del6
                   end
+
                   values(i) = exp(v1)
+
                end
+
             end
 
          else
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) then
+
                   values(i) = ZERO
+
                else
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   v1   = .data_value(f1)
-                  if (frac>f) then ! point lies between spacings
+
+                  ! Point lies between spacings
+                  if (frac>f) then 
                      f2 = f1 + 1
                      v2 = .data_value(f2)
                      b  = frac - f
                      a  = ONE - b
                      v1 = a*v1 + b*v2 +(a*(a*a-1)*.y2(f1) + b*(b*b-1)*.y2(f2))*del6
                   end
+
                   values(i) = v1
+
                end
+
             end
 
          end
@@ -1244,45 +1305,65 @@ contains
          if (.range_is_logarithmic) then
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) then
+
                   values(i) = ZERO
+
                else
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   v1   = .data_value(f1)
-                  if (frac>f) then ! point lies between spacings
+
+                  ! Point lies between spacings
+                  if (frac>f) then 
                      f2 = f1 + 1
                      v2 = .data_value(f2)
                      b  = frac - f
                      a  = ONE - b
                      v1 = a*v1 + b*v2 +(a*(a*a-1)*.y2(f1) + b*(b*b-1)*.y2(f2))*del6
                   end
+
                   values(i) = fac*exp(v1)
+
                end
+
             end
 
          else
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) then
+
                   values(i) = ZERO
+
                else
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   v1   = .data_value(f1)
-                  if (frac>f) then ! point lies between spacings
+
+                  ! point lies between spacings
+                  if (frac>f) then 
                      f2 = f1 + 1
                      v2 = .data_value(f2)
                      b  = frac - f
                      a  = ONE - b
                      v1 = a*v1 + b*v2 +(a*(a*a-1)*.y2(f1) + b*(b*b-1)*.y2(f2))*del6
                   end
+
                   values(i) = fac*v1
+
                end
+
             end
 
          end
@@ -1295,7 +1376,7 @@ contains
    end
 
 
-   add_values_for(points,values,fac)
+   add_values_for(points,values,fac) ::: always_pure
    ! Add in the interpolated "values" for a series of "points". 
    ! Optional "fac" may be applied to the values.
    ! WARNING: not to be used with domain mapping unless the user
@@ -1306,7 +1387,7 @@ contains
       values :: VEC{REAL}, INOUT
       fac :: REAL, IN, optional
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       if (.interpolation_is_spline) then; .add_values_for_spline(points,values,fac)
       else;                               .add_values_for_linear(points,values,fac)
@@ -1314,7 +1395,7 @@ contains
 
    end
 
-   add_values_for_linear(points,values,fac)
+   add_values_for_linear(points,values,fac) ::: always_pure
    ! Add interpolated "values" for a series of "points" 
    ! Optional "fac" may be applied to the values.
    ! WARNING: To used with sqrt type domain mapping.
@@ -1324,7 +1405,7 @@ contains
       values :: VEC{REAL}, INOUT
       fac :: REAL, IN, optional
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       pt :: VEC{REAL}*
       first,last,del1,p,frac,res,s :: REAL
@@ -1341,11 +1422,11 @@ contains
 
       ! Rescale data if required
       if (.domain_is_sqrt_x1x) then
-        pt.create(points.dim)
-        s = .domain_scale_factor; s = s*s
-        pt = points/(s+points)
+         pt.create(points.dim)
+         s = .domain_scale_factor; s = s*s
+         pt = points/(s+points)
       else
-        pt => points
+         pt => points
       end
 
       first = .data_point(1)
@@ -1357,8 +1438,11 @@ contains
          if (.range_is_logarithmic) then
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) cycle
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
@@ -1370,7 +1454,9 @@ contains
          else
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) cycle
                   frac = (p-first)*del1
                   f    = floor(frac)
@@ -1387,7 +1473,9 @@ contains
          if (.range_is_logarithmic) then
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) cycle
                   frac = (p-first)*del1
                   f    = floor(frac)
@@ -1400,7 +1488,9 @@ contains
          else
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) cycle
                   frac = (p-first)*del1
                   f    = floor(frac)
@@ -1419,7 +1509,7 @@ contains
 
    end
 
-   add_values_for_spline(points,values,fac) 
+   add_values_for_spline(points,values,fac) ::: always_pure
    ! Add in the spline interpolated "values for the "points".
    ! Optional "fac" may be applied to the values.
    ! WARNING: To used with sqrt type domain mapping.
@@ -1429,7 +1519,7 @@ contains
       values :: VEC{REAL}, INOUT
       fac :: REAL, IN, optional
 
- ! ENSURE(.finalised,"not finalised")
+ ! ENSURE(.finalized,"not finalized")
 
       pt :: VEC{REAL}*
       first,last,p,frac,del1,del6,v1,v2,a,b,s :: REAL
@@ -1446,11 +1536,11 @@ contains
 
       ! Rescale data if required
       if (.domain_is_sqrt_x1x) then
-        pt.create(points.dim)
-        s = .domain_scale_factor; s = s*s
-        pt = points/(s+points)
+         pt.create(points.dim)
+         s = .domain_scale_factor; s = s*s
+         pt = points/(s+points)
       else
-        pt => points
+         pt => points
       end
 
       first = .data_point(1)
@@ -1464,39 +1554,53 @@ contains
          if (.range_is_logarithmic) then
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) cycle
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   v1   = .data_value(f1)
-                  if (frac>f) then ! point lies between spacings
+
+                  ! point lies between spacings
+                  if (frac>f) then 
                      f2 = f1 + 1
                      v2 = .data_value(f2)
                      b  = frac - f
                      a  = ONE - b
                      v1 = a*v1 + b*v2 +(a*(a*a-1)*.y2(f1) + b*(b*b-1)*.y2(f2))*del6
                   end
+
                   values(i) = values(i) + exp(v1)
+
             end
 
          else
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) cycle
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   v1   = .data_value(f1)
-                  if (frac>f) then ! point lies between spacings
+
+                  ! point lies between spacings
+                  if (frac>f) then 
                      f2 = f1 + 1
                      v2 = .data_value(f2)
                      b  = frac - f
                      a  = ONE - b
                      v1 = a*v1 + b*v2 +(a*(a*a-1)*.y2(f1) + b*(b*b-1)*.y2(f2))*del6
                   end
+
                   values(i) = values(i) + v1
+
             end
 
          end
@@ -1506,39 +1610,53 @@ contains
          if (.range_is_logarithmic) then
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) cycle
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   v1   = .data_value(f1)
-                  if (frac>f) then ! point lies between spacings
+
+                  ! point lies between spacings
+                  if (frac>f) then 
                      f2 = f1 + 1
                      v2 = .data_value(f2)
                      b  = frac - f
                      a  = ONE - b
                      v1 = a*v1 + b*v2 +(a*(a*a-1)*.y2(f1) + b*(b*b-1)*.y2(f2))*del6
                   end
+
                   values(i) = values(i) + fac*exp(v1)
+
             end
 
          else
 
             do i = 1,pt.dim
+
                p = pt(i)
+
                if (p<first OR last<p) cycle
+
                   frac = (p-first)*del1
                   f    = floor(frac)
                   f1   = f + 1
                   v1   = .data_value(f1)
-                  if (frac>f) then ! point lies between spacings
+
+                  ! point lies between spacings
+                  if (frac>f) then 
                      f2 = f1 + 1
                      v2 = .data_value(f2)
                      b  = frac - f
                      a  = ONE - b
                      v1 = a*v1 + b*v2 +(a*(a*a-1)*.y2(f1) + b*(b*b-1)*.y2(f2))*del6
                   end
+
                   values(i) = values(i) + fac*v1
+
             end
 
          end
@@ -1559,7 +1677,7 @@ contains
 !      self :: IN
 !      points :: VEC{REAL}, IN
 !      values :: VEC{REAL}(points.dim)
-!   ! ENSURE(.finalised,"not finalised")
+!   ! ENSURE(.finalized,"not finalized")
 !   ! ENSURE(.table_origin.is_zero,"table_origin is not zero")
 !   ! ENSURE(all(points)>ZERO,"the points are not all +ve")
 !      del,frac,res,last :: REAL
@@ -1617,7 +1735,7 @@ contains
       self :: IN
       points :: VEC{REAL}, IN
       res :: BIN
-   ! ENSURE(.finalised,"not finalised")
+   ! ENSURE(.finalized,"not finalized")
    ! ENSURE(.table_origin.is_zero,"table_origin is not zero")
    ! ENSURE(all(points)>ZERO,"the points are not all +ve")
       i,n :: INT
@@ -1651,7 +1769,7 @@ contains
       stdout.dump("n_data",.n_data)
       stdout.dmpp("data_point",.data_point)
       stdout.dmpp("data_value",.data_value)
-      stdout.dump("finalised",.finalised)
+      stdout.dump("finalized",.finalized)
       stdout.dmpp("y2",.y2)
       stdout.dump("y1_initial",.y1_initial)
       stdout.dump("y1_final",.y1_final)
@@ -1672,7 +1790,7 @@ contains
 
    put
    ! Put the list of interpolating data
-   ENSURE(.finalised,"not finalised")
+   ENSURE(.finalized,"not finalized")
       i :: INT
 
       stdout.flush
@@ -1739,7 +1857,7 @@ contains
    ! Put the list of interpolating data in a gnuplot file assuming it
    ! is even spaced
       do_log10,to_angstrom :: BIN, optional
-   ENSURE(.finalised,"not finalised")
+   ENSURE(.finalized,"not finalized")
 
       lg10,angstrom :: BIN
       i :: INT
@@ -1790,8 +1908,8 @@ contains
    ! is even spaced, self - ref.
       ref :: INTERPOLATOR
       do_log10,to_angstrom :: BIN, optional
-   ENSURE(.finalised,"not finalised")
-   ENSURE(ref.finalised,"ref not finalised")
+   ENSURE(.finalized,"not finalized")
+   ENSURE(ref.finalized,"ref not finalized")
 
       lg10,angstrom :: BIN
       i :: INT
@@ -1840,7 +1958,7 @@ contains
 !   put_log_gnuplot
 !   ! Put the list of interpolating data in a gnuplot file assuming it
 !   ! is even spaced and logarithmic
-!   ENSURE(.finalised,"not finalised")
+!   ENSURE(.finalized,"not finalized")
 !   ENSURE(.range_is_logarithmic,"not a log interpolation")
 !
 !      l10 :: REAL 
@@ -1860,9 +1978,9 @@ contains
 !   ! Put the list of interpolating data in a gnuplot file assuming it
 !   ! is even spaced and logarithmic, self - ref.
 !      ref :: INTERPOLATOR
-!   ENSURE(.finalised,"not finalised")
+!   ENSURE(.finalized,"not finalized")
 !   ENSURE(.range_is_logarithmic,"not a log interpolation")
-!   ENSURE(ref.finalised,"ref not finalised")
+!   ENSURE(ref.finalized,"ref not finalized")
 !   ENSURE(ref.range_is_logarithmic,"ref not a log interpolation")
 !
 !      l10 :: REAL 

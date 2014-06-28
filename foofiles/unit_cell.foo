@@ -2,7 +2,7 @@
 !
 ! UNIT_CELL: Data structure for a crystal unit cell
 !
-! $Id: unit_cell.foo 4312 2014-03-22 08:31:20Z dylan_ $
+! $Id: unit_cell.foo 4259 2014-01-21 02:40:50Z dylan_ $
 !
 ! Copyright (C) Dylan Jayatilaka, Daniel Grimwood, 1999
 !
@@ -55,91 +55,36 @@ contains
       res :: BIN
    end
 
-   create_copy(unit_cell) ::: leaky
-   ! Create a copy of "unit_cell"
-      self :: PTR
-      unit_cell :: UNIT_CELL, IN
-      .create
-      .copy(unit_cell)
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
    end
 
-   copy(unit_cell)
-   ! Set self to be "unit_cell"
-      unit_cell :: UNIT_CELL, IN
-      self = unit_cell
+   copy(object) ::: always_pure
+   ! Set self to be "object"
+      object :: UNIT_CELL, IN
+
+      self = object
+
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set_defaults
+   set_defaults ::: always_pure
    ! Set up a default crystal object
-   ! NOTE: all in bohr/radian units
+      self :: OUT
 
-      .angle        = HALF_PI
-      .angle_error  = ZERO
+      .angle  = UNIT_CELL_ANGLES
+      .angle.convert_from("degree")
 
-      .length       = ONE
-      .length_error = ZERO
-
-      .volume       = -ONE
-      .volume_error = ZERO
-
-      .info_made    = FALSE
+      .length = UNIT_CELL_LENGTHS
 
       .make_info
-
-   end
-
-   set_units_to(kind)
-   ! Set theunits of all parameters to the "kind" system
-      kind :: STR, IN
-
-      fd,fa,f1,f3 :: REAL
-
-      fd = STR:conversion_factor("degree")
-      fa = STR:conversion_factor("angstrom")
-      f3 = STR:conversion_factor("angstrom^3")
-      f1 = STR:conversion_factor("angstrom^-1")
-
-      select case (kind)
-
-         case ("cif")
-
-            .angle             = .angle*fd
-            .angle_error       = .angle_error*fd
-
-            .length            = .length*fa
-            .length_error      = .length_error*fa
-
-            .volume            = .volume*f3
-            .volume_error      = .volume_error*f3
-
-            .direct_matrix     = .direct_matrix*fa
-            .inverse_matrix    = .inverse_matrix*f1
-            .reciprocal_matrix = .reciprocal_matrix*f1
-
-         case ("au")
-
-            .angle             = .angle/fd
-            .angle_error       = .angle_error/fd
-
-            .length            = .length/fa
-            .length_error      = .length_error/fa
-
-            .volume            = .volume/f3
-            .volume_error      = .volume_error/f3
-
-            .direct_matrix     = .direct_matrix/fa
-            .inverse_matrix    = .inverse_matrix/f1
-            .reciprocal_matrix = .reciprocal_matrix/f1
-
-         case default
-
-            UNKNOWN(kind)
-
-      end
 
    end
 
@@ -151,27 +96,41 @@ contains
    ! Return the alpha angle, in radians.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .angle(1)
+
    end
 
    beta result (res) ::: pure
    ! Return the beta angle, in radians.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .angle(2)
+
    end
 
    gamma result (res) ::: pure
    ! Return the gamma angle, in radians.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .angle(3)
+
    end
 
    alpha_star result (res) ::: pure
    ! Return the alpha reciprocal lattice angle, in radians.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
 
       tmp,alpha,beta,gamma :: REAL
 
@@ -190,6 +149,8 @@ contains
       self :: IN
       res :: REAL
 
+   ENSURE(.info_made,"cell info not made")
+
       tmp,alpha,beta,gamma :: REAL
 
       alpha = .angle(1)
@@ -207,6 +168,8 @@ contains
       self :: IN
       res :: REAL
 
+   ENSURE(.info_made,"cell info not made")
+
       tmp,alpha,beta,gamma :: REAL
 
       alpha = .angle(1)
@@ -223,51 +186,77 @@ contains
    ! Return the a cell length, in bohr.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .length(1) 
+
    end
 
    b result (res) ::: pure
    ! Return the b cell length, in bohr.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .length(2) 
+
    end
 
    c result (res) ::: pure
    ! Return the c cell length, in bohr.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .length(3) 
+
    end
 
    a_star result (res) ::: pure
    ! Return the a reciprocal lattice length, in bohr.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .length(2) * .length(3) * sin(.angle(1)) / .volume
+
    end
 
    b_star result (res) ::: pure
    ! Return the b reciprocal lattice length, in bohr.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .length(3) * .length(1) * sin(.angle(2)) / .volume
+
    end
 
    c_star result (res) ::: pure
    ! Return the c reciprocal lattice length, in bohr.
       self :: IN
       res :: REAL
+
+   ENSURE(.info_made,"cell info not made")
+
       res = .length(1) * .length(2) * sin(.angle(3)) / .volume
+
    end
 
 !  ==========================
 !  Make cell axis/volume info
 !  ==========================
 
-   make_info ::: pure
+   make_info ::: always_pure
    ! Calculate the various unit cell axis matrices.
       self :: INOUT
+
+      .info_made = FALSE
 
       .make_volume
       .make_direct_matrix
@@ -279,7 +268,7 @@ contains
 
    end
 
-   make_volume ::: pure, private
+   make_volume ::: private,  always_pure
    ! Calculate the cell volume
       self :: INOUT
 
@@ -288,8 +277,8 @@ contains
       a = .length(1)
       b = .length(2)
       c = .length(3)
-
       ca = cos(.angle(1))
+
       cb = cos(.angle(2))
       cg = cos(.angle(3))
 
@@ -297,7 +286,7 @@ contains
 
    end
 
-   make_direct_matrix ::: pure, private
+   make_direct_matrix ::: private, always_pure
    ! Calculate the direct cell matrices (i.e. cell axes) in units of BOHRS.
       self :: INOUT
 
@@ -315,22 +304,21 @@ contains
       v = .volume
 
       ! Direct cell matrix
-      ! From Giacovazzo, C., Fundamentals of Crystallography, p.68
+      ! This version taken from Giacovazzo, C., Fundamentals of Crystallography
+      ! p.68
       .direct_matrix(1,1) = a
       .direct_matrix(1,2) = b*cg
       .direct_matrix(1,3) = c*cb
-
       .direct_matrix(2,1) = ZERO
       .direct_matrix(2,2) = b*sg
       .direct_matrix(2,3) = c*(ca-cb*cg)/sg
-
       .direct_matrix(3,1) = ZERO
       .direct_matrix(3,2) = ZERO
       .direct_matrix(3,3) = v/(a*b*sg)
 
    end
 
-   make_reciprocal_matrix ::: pure, private
+   make_reciprocal_matrix ::: private, always_pure
    ! Calculate the reciprocal cell matrices (i.e. reciprocal cell axes) in units
    ! of 1/BOHRS. Also calculate the inverse direct cell matrix.
       self :: INOUT
@@ -347,26 +335,25 @@ contains
       sg = sin(.angle(3))
 
       v = .volume
+
       ! Reciprocal cell matrix
-      ! From Giacovazzo, C., Fundamentals of Crystallography, p.68
+      ! This version taken from Giacovazzo, C., Fundamentals of Crystallography
+      ! p.68
       .reciprocal_matrix(1,1) = ONE/a
       .reciprocal_matrix(1,2) = ZERO
       .reciprocal_matrix(1,3) = ZERO
-
       .reciprocal_matrix(2,1) = -cg/(a*sg)
       .reciprocal_matrix(2,2) = 1/(b*sg)
       .reciprocal_matrix(2,3) = ZERO
-
       .reciprocal_matrix(3,1) = b*c*(ca*cg-cb)/v/sg
       .reciprocal_matrix(3,2) = a*c*(cb*cg-ca)/v/sg
       .reciprocal_matrix(3,3) = a*b*sg/v
 
-      ! Inverse direct cell matrix
       .inverse_matrix = transpose(.reciprocal_matrix)
 
    end
 
-   make_direct_U_matrix ::: pure, private
+   make_direct_U_matrix ::: private, always_pure
    ! Return the transformation matrix which changes the thermal tensor
    ! from the crystal axis system (the usual U reported in the cif
    ! file) into the cartesian axis system:  
@@ -387,7 +374,7 @@ contains
 
    end
 
-   make_reciprocal_U_matrix ::: pure, private
+   make_reciprocal_U_matrix ::: private, always_pure
    ! Return the transformation matrix which changes the thermal tensor
    ! from the cartesian axis system into the crystal axis system.
    !   U_cif = (D* L^-1)^T U_cart (D* L^-1)
@@ -419,10 +406,11 @@ contains
 !  Geometry altering routines
 !  ==========================
 
-   change_from_fractional(g)
+   change_from_fractional(g) ::: pure
    ! Change the columns of geometry array "g" *from* crystal fractional
    ! coordinates into standard cartesian coordiantes
-      g :: MAT{REAL}
+      self :: IN
+      g :: MAT{REAL}, OUT
 
       W :: MAT{REAL}*
 
@@ -568,35 +556,29 @@ contains
    ! Process command "keyword". Any required data needed by the "keyword" is
    ! inputted from "stdin".
       keyword :: STR
-
       word :: STR
-
       word = keyword
       word.to_lower_case
-
       select case (word)
-         case ("}                ")  ! exit read_loop
-         case ("a=               "); .read_a
-         case ("alpha=           "); .read_alpha
-         case ("angles=          "); .read_angles
-         case ("b=               "); .read_b
-         case ("beta=            "); .read_beta
-         case ("c=               "); .read_c
-         case ("debug_on         "); .read_debug_on
-         case ("debug_off        "); .read_debug_off
-         case ("dimensions=      "); .read_lengths
-         case ("gamma=           "); .read_gamma
-         case ("junk=            "); .read_junk
-         case ("lengths=         "); .read_lengths
-         case ("put              "); .put
-         case ("units=           "); .read_units
-         case default;               UNKNOWN(word)
+        case ("}                ")  ! exit read_loop
+        case ("a=               "); .read_a
+        case ("alpha=           "); .read_alpha
+        case ("angles=          "); .read_angles
+        case ("b=               "); .read_b
+        case ("beta=            "); .read_beta
+        case ("c=               "); .read_c
+        case ("debug_on         "); .read_debug_on
+        case ("debug_off        "); .read_debug_off
+        case ("dimensions=      "); .read_lengths
+        case ("gamma=           "); .read_gamma
+        case ("junk=            "); .read_junk
+        case ("lengths=         "); .read_lengths
+        case ("put              "); .put
+        case ("units=           "); .read_units
+        case default;               UNKNOWN(word)
       end
-
       .update
-
    end
-
 
    read_units ::: get_from(OBJECT), private
    ! Read a string which describes the units to be used
@@ -613,7 +595,7 @@ contains
 
    read_lengths ::: private
    ! Read the unit cell axis lengths
-      stdin.read_quantity(.length,.length_error)
+      stdin.read_quantity(.length)
    end
 
    read_a ::: private
@@ -633,7 +615,7 @@ contains
 
    read_angles ::: private
    ! Read the unit cell angles
-      stdin.read_quantity(.angle,.angle_error)
+      stdin.read_quantity(.angle)
    end
 
    read_alpha ::: private
@@ -654,26 +636,62 @@ contains
    read_CIF(cif) 
    ! Read cell information from a CIF file "cif"
       cif :: CIF
-
+      err :: REAL
       found :: BIN
 
       ! Set defaults
       .set_defaults
-      .set_units_to("cif")
+      .angle(1) = 90 ! Reset defaults (already set in read_CIF)
+      .angle(2) = 90 ! in degrees !
+      .angle(3) = 90
 
       ! Read it in
-      cif.read_item("_cell_angle_alpha",.angle(1),.angle_error(1),found)
-      cif.read_item("_cell_angle_beta" ,.angle(2),.angle_error(2),found)
-      cif.read_item("_cell_angle_gamma",.angle(3),.angle_error(3),found)
-
-      cif.read_item("_cell_length_a",.length(1),.length_error(1),found)
-      cif.read_item("_cell_length_b",.length(2),.length_error(2),found)
-      cif.read_item("_cell_length_c",.length(3),.length_error(3),found)
-
-      cif.read_item("_cell_volume",.volume,.volume_error,found)
+      cif.read_item("_cell_angle_alpha",.angle(1),err,found)
+      cif.read_item("_cell_angle_beta" ,.angle(2),err,found)
+      cif.read_item("_cell_angle_gamma",.angle(3),err,found)
+      cif.read_item("_cell_length_a",.length(1),err)
+      cif.read_item("_cell_length_b",.length(2),err)
+      cif.read_item("_cell_length_c",.length(3),err)
 
       ! Convert to standard units
-      .set_units_to("au")
+      .length.convert_from("angstrom")
+      .angle.convert_from("degree")    ! Now convert to rads
+
+      ! Calculate associated information
+      .update
+
+   end
+
+   read_CIF(cif,sigma) 
+   ! Read cell information from a CIF file "cif"
+   ! Also read the errors into "unit_cell_sigma"
+      cif :: CIF
+      sigma :: UNIT_CELL
+      found :: BIN
+
+      ! Set unit cell defaults
+      .set_defaults
+      .angle(1) = 90 ! Reset defaults (already set in read_CIF)
+      .angle(2) = 90 ! in degrees !
+      .angle(3) = 90
+
+      ! Set error defaults
+      sigma.length = ZERO
+      sigma.angle  = ZERO
+
+      ! Read it in. OK for missing angles, assumed to be 90
+      cif.read_item("_cell_angle_alpha",.angle(1),sigma.angle(1),found)
+      cif.read_item("_cell_angle_beta" ,.angle(2),sigma.angle(2),found)
+      cif.read_item("_cell_angle_gamma",.angle(3),sigma.angle(3),found)
+      cif.read_item("_cell_length_a",.length(1),sigma.length(1))
+      cif.read_item("_cell_length_b",.length(2),sigma.length(2))
+      cif.read_item("_cell_length_c",.length(3),sigma.length(3))
+
+      ! Convert to standard units
+      .length.convert_from("angstrom")
+      .angle.convert_from("degree")    ! Now convert to rads
+      sigma.length.convert_from("angstrom")
+      sigma.angle.convert_from("degree")
 
       ! Calculate associated information
       .update
@@ -694,7 +712,6 @@ contains
    ! Cummins et al (1976), Acta Cryst A32, p. 847
       L2 :: MAT3{REAL}, OUT
       pos :: MAT{REAL}, IN
-
    ENSURE(L2.dim1==3 AND L2.dim2==3,"L2 must be 3x3")
    ENSURE(pos.dim1==3,"pos must have first dimension 3")
 
@@ -1361,157 +1378,91 @@ contains
 
    put
    ! Put unit cell information 
-      self :: INOUT
 
-      fac :: REAL
+      fd,fa,f1,f3 :: REAL
 
-      ! Convert to CIF units
-      .set_units_to("cif")
+      fd = STR:conversion_factor("degree")
+      fa = STR:conversion_factor("angstrom")
+      f3 = STR:conversion_factor("angstrom^3")
+      f1 = STR:conversion_factor("angstrom^-1")
 
-      ! Change defaults
-      stdout.save
-      stdout.set_real_width(14)
-      stdout.set_real_precision(6)
-
-      ! Print
       stdout.flush
       stdout.flush
       stdout.text("=====================")
       stdout.text("Unit cell information")
       stdout.text("=====================")
       stdout.flush
-      stdout.text(". Lengths are in Angstrom")
-      stdout.text(". Angles  are in degrees")
+      stdout.show("a cell parameter (A)     =",.length(1)*fa)
+      stdout.show("b cell parameter (A)     =",.length(2)*fa)
+      stdout.show("c cell parameter (A)     =",.length(3)*fa)
+      stdout.show("Cell volume(A^3)         =",.volume*f3)
+      stdout.flush
+      stdout.show("alpha angle (degree)     =",.angle(1)*fd)
+      stdout.show("beta  angle (degree)     =",.angle(2)*fd)
+      stdout.show("gamma angle (degree)     =",.angle(3)*fd)
+      stdout.flush
+      stdout.show("a* cell parameter (A^-1) =",.a_star*f1)
+      stdout.show("b* cell parameter (A^-1) =",.b_star*f1)
+      stdout.show("c* cell parameter (A^-1) =",.c_star*f1)
+      stdout.flush
+      stdout.show("alpha* angle (degree)    =",.alpha_star*fd)
+      stdout.show("beta*  angle (degree)    =",.beta_star*fd)
+      stdout.show("gamma* angle (degree)    =",.gamma_star*fd)
 
       stdout.flush
-      stdout.show("a cell parameter         =",.length(1),.length_error(1))
-      stdout.show("b cell parameter         =",.length(2),.length_error(2))
-      stdout.show("c cell parameter         =",.length(3),.length_error(3))
-      stdout.show("Cell volume              =",.volume,.volume_error)
+      stdout.text("Direct cell matrix/A")
       stdout.flush
-      stdout.show("alpha angle              =",.angle(1),.angle_error(1))
-      stdout.show("beta  angle              =",.angle(2),.angle_error(2))
-      stdout.show("gamma angle              =",.angle(3),.angle_error(3))
-
-      ! Need to go back to au here
-      .set_units_to("au")
-      fac = STR:conversion_factor("angstrom^-1")
-      stdout.flush
-      stdout.show("a* cell parameter (A^-1) =",.a_star*fac)
-      stdout.show("b* cell parameter (A^-1) =",.b_star*fac)
-      stdout.show("c* cell parameter (A^-1) =",.c_star*fac)
-      fac = STR:conversion_factor("degree")
-      stdout.flush
-      stdout.show("alpha* angle (degree)    =",.alpha_star*fac)
-      stdout.show("beta*  angle (degree)    =",.beta_star*fac)
-      stdout.show("gamma* angle (degree)    =",.gamma_star*fac)
-
-      ! Back to cif units
-      .set_units_to("cif")
-      stdout.flush
-      stdout.text("Direct cell matrix")
-      stdout.flush
-      stdout.put(.direct_matrix,auto_width=TRUE)
+      stdout.put(.direct_matrix*fa,auto_width=TRUE)
 
       stdout.flush
-      stdout.text("Reciprocal cell matrix")
+      stdout.text("Reciprocal cell matrix/Angstrom^{-1}")
       stdout.flush
-      stdout.put(.reciprocal_matrix,auto_width=TRUE)
-
-      ! Put back defaults
-      stdout.unsave
-
-      ! Convert back
-      .set_units_to("au")
+      stdout.put(.reciprocal_matrix*f1,auto_width=TRUE)
 
    end
 
    put_CX(label,formula,spacegroup)
    ! Output some information for the Crystal Explorer program.
-      self :: INOUT
-      label,formula,spacegroup :: STR
+       label,formula,spacegroup :: STR
 
-      ! Convert to CIF units
-      .set_units_to("cif")
-
-      ! Output
-      stdout.flush
-      stdout.text("begin crystalcell " // label.trim)
-      stdout.text("   formula = "//'"'//trim(formula)//'"')
-      stdout.text("   spacegroup = "//'"'//trim(spacegroup)//'"')
-      stdout.show("   a =",.length(1),dots=FALSE)
-      stdout.show("   b =",.length(2),dots=FALSE)
-      stdout.show("   c =",.length(3),dots=FALSE)
-      stdout.show("   alpha =",.angle(1),dots=FALSE)
-      stdout.show("   beta  =",.angle(2),dots=FALSE)
-      stdout.show("   gamma =",.angle(3),dots=FALSE)
-      stdout.text("end crystalcell")
-
-      ! Convert back
-      .set_units_to("au")
+       stdout.flush
+       stdout.text("begin crystalcell " // label.trim)
+       stdout.text("   formula = "//'"'//trim(formula)//'"')
+       stdout.text("   spacegroup = "//'"'//trim(spacegroup)//'"')
+       stdout.show("   a =",.length(1).to_units("angstrom"),dots=FALSE)
+       stdout.show("   b =",.length(2).to_units("angstrom"),dots=FALSE)
+       stdout.show("   c =",.length(3).to_units("angstrom"),dots=FALSE)
+       stdout.show("   alpha =",.angle(1).to_units("degree"),dots=FALSE)
+       stdout.show("   beta  =",.angle(2).to_units("degree"),dots=FALSE)
+       stdout.show("   gamma =",.angle(3).to_units("degree"),dots=FALSE)
+       stdout.text("end crystalcell")
 
    end
 
-   put_CIF(Z)
+   put_CIF
    ! Put unit cell information in CIF format
-      self :: INOUT
-      Z :: REAL, IN
+   ! No errors yet.
 
-      a,b,c,da,db,dc, v,dv :: REAL
-
-      ! Convert to CIF units
-      .set_units_to("cif")
-
-      ! Change defaults
-      stdout.save
-      stdout.set_real_width(14)
-      stdout.set_real_precision(6)
-
-      ! Output
       stdout.flush
       stdout.text("# ---------------------")
       stdout.text("# Unit cell information")
       stdout.text("# ---------------------")
       stdout.flush
 
-      a  = .length(1)
-      b  = .length(2)
-      c  = .length(3)
-      da = .length_error(1)
-      db = .length_error(2)
-      dc = .length_error(3)
+    ! stdout.save
+    ! stdout.set_real_precision(4)
+    ! stdout.set_real_width(9)
 
-      stdout.text("_publ_contact_author_email         'tonto.magnifico@gmail.com'")
-      stdout.show("_cell_length_a                     ",a,da,dots=FALSE)
-      stdout.show("_cell_length_b                     ",b,db,dots=FALSE)
-      stdout.show("_cell_length_c                     ",c,dc,dots=FALSE)
-
-      a  = .angle(1)
-      b  = .angle(2)
-      c  = .angle(3)
-      da = .angle_error(1)
-      db = .angle_error(2)
-      dc = .angle_error(3)
-
-      stdout.show("_cell_angle_alpha                  ",a,da,dots=FALSE)
-      stdout.show("_cell_angle_beta                   ",b,db,dots=FALSE)
-      stdout.show("_cell_angle_gamma                  ",c,dc,dots=FALSE)
-
-      v  = .volume
-      dv = .volume_error
-
-      stdout.show("_volume                            ",v,dv)
-
-      stdout.flush
-      stdout.show("_cell_formula_units_Z              ",Z.to_str("f10.5"))
-
+      stdout.show("_cell_length_a    ",.length(1).to_units("angstrom"),dots=FALSE)
+      stdout.show("_cell_length_b    ",.length(2).to_units("angstrom"),dots=FALSE)
+      stdout.show("_cell_length_c    ",.length(3).to_units("angstrom"),dots=FALSE)
+      stdout.show("_cell_angle_alpha ",.angle(1).to_units("degree"),dots=FALSE)
+      stdout.show("_cell_angle_beta  ",.angle(2).to_units("degree"),dots=FALSE)
+      stdout.show("_cell_angle_gamma ",.angle(3).to_units("degree"),dots=FALSE)
+      stdout.show("_volume           ", .volume.to_units("angstrom^3"),dots=FALSE)
       stdout.flush
 
-      ! Put back defaults
-      stdout.unsave
-
-      ! Convert back
-      .set_units_to("au")
+    ! stdout.unsave
 
    end
 

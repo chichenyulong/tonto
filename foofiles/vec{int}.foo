@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{int}.foo 4402 2014-06-02 13:41:45Z dylan_ $
+! $Id: vec{int}.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{INT}
@@ -28,113 +28,117 @@ module VEC{INT}
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
-   create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   create(dim) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Create space for object
    end
 
-   create(lb,ub) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   create(lb,ub) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Create the vector with lower bound "lb", upper bound "ub"
    end
 
-   create(bounds) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   create(bounds) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Create the vector with "bounds"
    end
 
-   destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   destroy ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Destroy space for object
    end
 
-   create_copy(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create a copy of vector "v".
-   end
-
-   copy(v) ::: get_from(VEC{INTRINSIC}), PURE
-   ! Copy vector "v".
-   end
-
-   created result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   created result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   destroyed result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
    end
 
-! ==================
-! Size-of operations
-! ==================
+!  ============
+!  Copy methods
+!  ============
 
-   size result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   create_copy(v) ::: get_from(VEC{INTRINSIC}), leaky, pure
+   ! Create a copy of vector "v".
+   end
+
+   copy(v) ::: get_from(VEC{INTRINSIC}), pure
+   ! Copy vector "v".
+   end
+
+!  ==================
+!  Size-of operations
+!  ==================
+
+   size result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, always_pure
    ! Return the size of the array
    end
 
-   dim result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   dim result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, always_pure
    ! Return the size of the 1st dimension
    end
 
-! =======================
-! Shrinking and expansion
-! =======================
+!  =======================
+!  Shrinking and expansion
+!  =======================
 
-   shrink(dim,chop_start) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   shrink(dim,chop_start) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Shrink "self" from the last element, to dimension "dim". Contents are
    ! retained.  If "chop_start" is present and TRUE, then "self" is shrunk or
    ! chopped from the start, and the contents from the end are retained.
    end
 
-   expand(dim,grow_start) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   expand(dim,grow_start) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Expand "self" to dimension "dim" from the end. New slots are left undefined.
    ! If "grow_start" is present and TRUE, then "self" is expanded from the
    ! start. Again, the starting slots are undefined.
    end
 
-   append(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   append(v) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Expands self and appends the contents of vector "v".
    end
 
-   append(v1,v2) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   append(v1,v2) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Expands self and appends the contents of vectors "v1" and "v2".
    end
 
-   append(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   append(value) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Expands self by 1, and appends the single scalar "value" onto the end.
    end
 
-   append_only_if_unique(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   append_only_if_unique(value) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Expands self by 1, and appends the single scalar "value" onto the end, but
    ! only if the "value" is unique
    end
 
-   prepend(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   prepend(v) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Prepend the vector "v" to "self". "self" is expanded.
    end
 
-   prepend(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   prepend(value) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Prepend an single "value" to "self". "self" is expanded.
    end
 
-   prune(values) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   prune_values(values) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Removes the scalar "values" from the vector, if they are there.
    ! The order of the elementsis otherwise unchanged.
    end
 
-   prune(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   prune_value(value) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Removes the single scalar "value" from the vector, if it is there.
    ! The order of the elementsis otherwise unchanged.
    end
 
-   prune_element(k) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   prune_element_at_pos(k) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Removes the single element at position "k" from the vector.
    ! The order of the elements is unchanged.
    end
 
-! ====================
-! Comparison functions
-! ====================
+!  ====================
+!  Comparison functions
+!  ====================
 
    equals(v) result (res) ::: get_from(VEC{INTRINSIC}), pure
    ! Return true if "self" is the same as "v".
@@ -197,14 +201,13 @@ contains
       res = (1-self(3)) == 0 AND res
    end
 
-! =============================
-! Repetition related operations
-! =============================
+!  =============================
+!  Repetition related operations
+!  =============================
 
-   remove_repetitions ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Remove repeated elements which come later in the list. 
-   ! NOTE: the vector may shrink. 
-   ! NOTE: this version for bin, str, int
+   remove_repetitions ::: get_from(VEC{INTRINSIC}), leaky, pure
+   ! Sort through the vector and remove repeated elements which come later in
+   ! the list.  NOTE: the vector may shrink
    end
 
    has_repetitions result (res) ::: get_from(VEC{INTRINSIC}), pure
@@ -215,96 +218,97 @@ contains
    ! Return the number of unique elements in the vector.
    end
 
-   unique_elements result(unique) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   unique_elements result(unique) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Sort through the vector and return the unique elements
    end
 
-   make_repetition_count(cnt,n_kind) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create "cnt" where each element cnt(i) is a count of the number
-   ! times that self(i) is repeated in self(:). Later elements of
-   ! "cnt" which are repetitions of earlier ones are assigned a count
-   ! of zero. The number of different kinds is returned in "n_kind".
-   ! NOTE: this version for bin, str, int
+   make_repetition_count(cnt,n_kind) ::: get_from(VEC{INTRINSIC}), leaky, pure
+   ! Create an array "cnt" in which each element cnt(i) is a count of the number
+   ! times that self(i) is repeated in self(:). Later elements of "cnt" which
+   ! are repetitions of earlier ones are assigned a count of zero. The number of
+   ! different kinds is returned in "n_kind".
    end
 
-   indices_of_unique_elements result(unique) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   indices_of_unique_elements result(unique) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Sort through the vector and return the indices of the unique elements
-   ! NOTE: this version for bin, str, int
    end
 
-   make_unique_element_maps(unique_element,unique_element_for) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   make_unique_element_maps(unique_element,unique_element_for) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Make a map of unique_element's, and the inverse map
    ! unique_element_for a given non-unique element in the list.
    end
 
-! ================
-! Sorting routines
-! ================
+!  ================
+!  Sorting routines
+!  ================
 
-   sort(decreasing_order) ::: get_from(VEC{OBJECT}), PURE
+   sort(decreasing_order) ::: get_from(VEC{OBJECT}), pure
    ! Sort array "self" from lowest to highest, using simple insertion sort.  If
    ! "decreasing_order" is present and TRUE sort from highest to lowest instead.
    end
 
-   quick_sort(decreasing_order) ::: get_from(VEC{OBJECT}), PURE
+   quick_sort(decreasing_order) ::: get_from(VEC{OBJECT}), pure
    ! Sort the vector into increasing order.If "decreasing_order" is present and
    ! TRUE, the vector is sorted from largest to smallest
    end
 
-   quick_sort_increasing ::: get_from(VEC{OBJECT}), recursive, private, PURE
+   quick_sort_increasing ::: get_from(VEC{OBJECT}), recursive, private, pure
    ! Sort the vector into order, smallest to largest
    end
 
-   quick_sort_decreasing ::: get_from(VEC{OBJECT}), recursive, private, PURE
+   quick_sort_decreasing ::: get_from(VEC{OBJECT}), recursive, private, pure
    ! Sort the vector into order, largest to smallest
    end
 
-   quick_sort(indices,decreasing_order) ::: get_from(VEC{OBJECT}), PURE
+   quick_sort(indices,decreasing_order) ::: get_from(VEC{OBJECT}), pure
    ! Return the "indices" which sort self from smallest to largest, i.e. on
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
    ! If "decreasing_order" is present and TRUE, the indices are sorted from
    ! largest to smallest
    end
 
-   quick_sort_increasing(indices) ::: get_from(VEC{OBJECT}), recursive, private, PURE
+   quick_sort_increasing(indices) ::: get_from(VEC{OBJECT}), recursive, private, pure
    ! Return the indices which sort vector from smallest to largest, i.e. on
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
    end
 
-   quick_sort_decreasing(indices) ::: get_from(VEC{OBJECT}), recursive, private, PURE
+   quick_sort_decreasing(indices) ::: get_from(VEC{OBJECT}), recursive, private, pure
    ! Return the indices which sort vector from largest to smallest, i.e. on
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
    end
 
-   reverse_order ::: get_from(VEC{INTRINSIC}), PURE
+   reverse_order ::: get_from(VEC{INTRINSIC}), pure
    ! Reverse the order of the elements of self
+      self :: INOUT
    end
 
    swap_elements(e1,e2) ::: get_from(VEC{INTRINSIC}), pure
    ! Swap elements "e1" and "e2" in "self".
+      self :: INOUT
+      e1,e2 :: INT, IN
    end
 
-! ====================
-! Numerical operations
-! ====================
+!  ====================
+!  Numerical operations
+!  ====================
 
-   set_to(v) ::: get_from(VEC{INTRINSIC}, V?=>INT), pure
+   set_to(v) ::: get_from(VEC{INTRINSIC}, V?=>VEC{INT}), pure
    ! Set the vector to "v". See also the "copy" routine.
    end
 
-   plus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>INT), pure
+   plus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>VEC{INT}), pure
    ! Add vector "v" to "self"
    end
 
-   minus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>INT), pure
+   minus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>VEC{INT}), pure
    ! Subtract vector "v" from "self"
    end
 
-   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>INT, FAC?=>INT), pure
+   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{INT}, FAC?=>INT), pure
    ! Set the vector to "v" scaled by "fac"
    end
 
-   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>INT, FAC?=>INT), pure
+   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{INT}, FAC?=>INT), pure
    ! Add a vector "v" scaled by "fac" to "self"
    end
 
@@ -313,7 +317,7 @@ contains
    ! Return the sum of the elements in "self"
    end
 
-   dot(v) result (res) ::: get_from(VEC{INTRINSIC}, V?=>INT, RES?=>INT, CONJG=>), pure
+   dot(v) result (res) ::: get_from(VEC{INTRINSIC}, V?=>VEC{INT}, RES?=>INT, CONJG=>), pure
    ! Return the dot product with "v"
    end
 
@@ -327,34 +331,34 @@ contains
    end
 
 
-   to_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>INT, V?=>INT, VAL?=>INT), PURE
+   to_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{INT}, V?=>VEC{INT}, VAL?=>INT), pure
    ! Set "self" to the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the matrix needs to be transposed.
    end
 
-   plus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>INT, V?=>INT, VAL?=>INT), PURE
+   plus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{INT}, V?=>VEC{INT}, VAL?=>INT), pure
    ! Add to "self" the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the marix needs to be transposed.
    end
 
-   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>INT, V?=>INT, VAL?=>INT, FAC?=>INT), PURE
+   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{INT}, V?=>VEC{INT}, VAL?=>INT, FAC?=>INT), pure
    ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>INT, V?=>INT, VAL?=>INT, FAC?=>INT), PURE
+   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{INT}, V?=>VEC{INT}, VAL?=>INT, FAC?=>INT), pure
    ! Add to self "self" the product of the matrix "a" and vector "v" scaled by
    ! "fac".  If present, "transpose_a" can be set to TRUE if the matrix needs to
    ! be transposed.
    end
 
 
-   rotate_by(a) ::: get_from(VEC{INTRINSIC}), PURE
+   rotate_by(a) ::: get_from(VEC{INTRINSIC}), pure
    ! Rotate self by matrix "a", treating self as a column vector
    end
 
-   translate_by(v) ::: get_from(VEC{INTRINSIC}), PURE
+   translate_by(v) ::: get_from(VEC{INTRINSIC}), pure
    ! Translate self by vector "v".
    end
 
@@ -368,13 +372,13 @@ contains
    ! Return the norm of the vector
    end
 
-   distance_to(a) result (res) ::: get_from(VEC{INTRINSIC}), PURE
+   distance_to(a) result (res) ::: get_from(VEC{INTRINSIC}), pure
    ! Return the distance to "a" if supplied
    end
 
-! ==================
-! Min/max operations
-! ==================
+!  ==================
+!  Min/max operations
+!  ==================
 
    chop_large_absolute_values(val) ::: get_from(VEC{INTRINSIC}), pure
    ! Set all values in the self whose absolute value is larger than "val" to
@@ -397,21 +401,21 @@ contains
 ! Range operations
 ! ================
 
-   all_in_range(range) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   all_in_range(range) result (res) ::: get_from(VEC{INTRINSIC}), always_pure
    ! Return TRUE if all values of self are within the specified "range".
    end
 
-   in_range(range) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   in_range(range) result (res) ::: get_from(VEC{INTRINSIC}), always_pure
    ! Return element i as TRUE if self(i) is within the specified "range".
    end
 
-   range result (res) ::: get_from(VEC{INTRINSIC}), pure
+   range result (res) ::: get_from(VEC{INTRINSIC}), always_pure
    ! Return the range (smallest and largest value) of self.
    end
 
-! ==========================
-! Index returning operations
-! ==========================
+!  ==========================
+!  Index returning operations
+!  ==========================
 
    index_of_maximum result (ind) ::: get_from(VEC{INTRINSIC}), pure
    ! Return the index of the maximum in the vector
@@ -439,10 +443,10 @@ contains
    ! This version uses the == test for strict equality to zero.
    end
 
-   index_of_value(val,last) result (res) ::: get_from(VEC{INTRINSIC}), pure
-   ! Returns the first index in "self" which has the value "val", or 0
-   ! if "val" is not present in the array. If "last" is present and
-   ! TRUE then the last value matching is returned
+   index_of_value(val) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! Returns the first index in "self" which has the value "val", or 0 if "val"
+   ! is not present in the array. This version uses the == test for strict
+   ! equality.
    end
 
    index_of_value_ne_to(val) result (res) ::: get_from(VEC{INTRINSIC}), pure
@@ -451,59 +455,70 @@ contains
    ! uses the == test for strict equality.
    end
 
-! =============
-! String widths
-! =============
+!  =============
+!  String widths
+!  =============
    
    str_lengths result (res) ::: get_from(VEC{INTRINSIC}), pure
    ! Returns the minimal string lengths.
    end 
 
-   get_max_str_length(msl,spaces) ::: get_from(VEC{INTRINSIC}), pure
-   ! Returns "msl", the maximum of the string lengths for "self",
-   ! and with optional extra "spaces". 
+   max_str_length result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! Returns the maximum of the string lengths.
    end
 
-! =====================
-! Conversion to strings
-! =====================
+!  =====================
+!  Conversion to strings
+!  =====================
 
    to_str result (res) ::: get_from(VEC{INTRINSIC}), pure
    ! Change self to a string of minimal length
    end 
 
-   to_str(fmt,left_justify) result (res) ::: get_from(VEC{INTRINSIC}), pure
-   ! Change self to a "string" using the specified fortran "fmt".
+   to_str(format,left_justify) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! Change self to a "string" using the specified fortran "format".
    end
 
    to_str(width,left_justify) result (res) ::: get_from(VEC{INTRINSIC}), pure
    ! Change self to a string with specified "width".
    end
 
-   to_concatenated_str(fmt,separator) result (res) ::: get_from(VEC{INTRINSIC}), pure
-   ! Change self to a string using "fmt" if specified, and with
+   to_concatenated_str(format,separator) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! Change self to a string using "format" if specified, and with
    ! "separator" between each item, if specified.
    end
 
-! ========================
-! Unit conversion routines
-! ========================
+!  ========================
+!  Unit conversion routines
+!  ========================
 
-   convert_to(units) ::: get_from(VEC{INTRINSIC}), PURE
+   convert_to(units) ::: get_from(VEC{INTRINSIC}), pure
    ! Convert the "self" in atomic units or generic units to a new
    ! number in "units".
    end
 
-   convert_from(units) ::: get_from(VEC{INTRINSIC}), PURE
+   convert_from(units) ::: get_from(VEC{INTRINSIC}), pure
    ! Convert the number "self" from "units" system to a new number
    ! in atomic units or generic units.
    end
 
-! ======================
-! Binning and histograms
-! ======================
+!  =======================
+!  Spin-orbital operations
+!  =======================
 
-   to_histogram_from_data(X,X_min,X_max,X_bin) ::: leaky, PURE
+   alpha result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! return the alpha sector of the vector
+   end
+
+   beta result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! return the beta sector of the vector
+   end
+
+!  ======================
+!  Binning and histograms
+!  ======================
+
+   to_histogram_from_data(X,X_min,X_max,X_bin) ::: leaky, pure
    ! Set "self" to a histogram matrix whose i-th element contains
    ! a count of the elements in the i-th bin of data "X", where a bin
    ! is a range of descriptor values in "X" of side length "X_bin"
@@ -544,11 +559,11 @@ contains
 
    end
 
-! ==========
-! Misc stuff
-! ==========
+!  ==========
+!  Misc stuff
+!  ==========
 
-   make_combinations_of_length(k,C) ::: recursive, PURE
+   make_combinations_of_length(k,C) ::: recursive, pure
    ! Make the combination matrix "C" of all p distinct combinations
    ! C(:,p) of the elements in self(:) of length "k"
       self :: IN

@@ -28,35 +28,39 @@ module VEC{UNIT_CELL}
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, pure
    ! Create space for object. This version does not nullify ptr parts.
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
+   destroy ::: get_from(VEC{OBJECT}), leaky, pure
    ! Destroy space for object. This version does not destroy ptr parts
    end
 
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
-   end
-
-   created result (res) ::: inlined_by_foo
+   created result (res) ::: inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: inlined_by_foo
+   destroyed result (res) ::: inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
    end
 
-   set_defaults ::: get_from(VEC{OBJECT})
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Create a replica copy of "v".
+   end
+
+   copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Copy "v".
+   end
+
+   set_defaults ::: get_from(VEC{OBJECT}), pure
    ! Set default values
    end
 

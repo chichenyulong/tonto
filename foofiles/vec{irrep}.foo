@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{irrep}.foo 3049 2007-04-06 14:29:48Z dylan_ $
+! $Id: vec{irrep}.foo 4246 2014-01-12 06:11:20Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{IRREP}
@@ -28,15 +28,19 @@ module VEC{IRREP}
 
 contains
 
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
+!  ==========
+!  Allocation
+!  ==========
+
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, pure
    ! Create space for object. This version does not set defaults.
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
+   destroy ::: get_from(VEC{OBJECT}), leaky, pure
    ! Destroy space for object
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts of an irrepvec
        i :: INT
       do i = 1,size(self)
@@ -44,7 +48,7 @@ contains
       end
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts of an irrepvec
        i :: INT
       do i = 1,size(self)
@@ -52,20 +56,24 @@ contains
       end
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
    end
 
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Create a replica copy of "v".
    end
 
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
+   copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Copy "v".
    end
 
 end

@@ -89,7 +89,7 @@ contains
    ENSURE(.isosurface.created,"no isosurface")
 
       ! Set up
-      .::set_up_for_plot(.isosurface.property)
+      .::set_up_for_plot(.isosurface.iso_kind)
 
       ! Save self for selfless function calls
       .BASE:set_saved_self
@@ -114,7 +114,7 @@ contains
       .saved.isosurface => .isosurface       
 
       ! Set up
-      .saved.::set_up_for_plot(.isosurface.property)
+      .saved.::set_up_for_plot(.isosurface.iso_kind)
 
       ! Set saved_self to be .saved molecule
       .saved.BASE:set_saved_self
@@ -163,12 +163,16 @@ contains
 
       saved_isosurface :: ISOSURFACE*
 
+      has :: BIN
+
       ! Set .saved.isosurface to be current .isosurface
       saved_isosurface  => .saved.isosurface 
       .saved.isosurface => .isosurface      
 
+   has = .BASE:has_all_ANOs_made
+
       ! Set up
-      .saved.::set_up_for_plot(.isosurface.surface_property)
+      .saved.::set_up_for_plot(.isosurface.iso_kind)
 
       ! Save self for selfless function calls
       .saved.BASE:set_saved_self
@@ -281,7 +285,6 @@ contains
          case("b_l_field                           "); do_it = FALSE
          case("b_s_field                           "); do_it = FALSE
          case("binding_function_wang_peng          "); do_it = FALSE
-         case("bond_electron_density               "); do_it = TRUE
          case("bond_weight                         "); do_it = FALSE
          case("crystal_error_map                   "); do_it = FALSE
          case("current_density                     "); do_it = FALSE
@@ -320,8 +323,6 @@ contains
          case("g_kinetic_energy                    "); do_it = FALSE
          case("g_kirzhnits                         "); do_it = FALSE
          case("grad_rho_on_rho                     "); do_it = FALSE
-         case("group_product_electric_field_grid   "); do_it = FALSE
-         case("group_product_esp_grid              "); do_it = FALSE
          case("h_dft_energy                        "); do_it = FALSE
          case("h_kirzhnits                         "); do_it = FALSE
          case("h_from_virial                       "); do_it = FALSE
@@ -344,8 +345,6 @@ contains
          case("orbital                             "); do_it = FALSE
          case("oscillator_orbital                  "); do_it = FALSE
          case("promolecule_density                 "); do_it = FALSE
-         case("product_electric_field_grid         "); do_it = FALSE
-         case("product_esp_grid                    "); do_it = FALSE
          case("reduced_g_kinetic_energy            "); do_it = TRUE 
          case("reduced_h_from_virial               "); do_it = TRUE 
          case("reduced_k_kinetic_energy            "); do_it = TRUE 
@@ -360,7 +359,7 @@ contains
          case("tsirelson_elf                       "); do_it = FALSE
          case("v_kirzhnits                         "); do_it = FALSE
          case("v_from_virial                       "); do_it = FALSE
-         case default;                UNKNOWN(plot_kind)
+         case default;                UNKNOWN(.plot_grid.plot_kind)
       end
 
       if (do_it) .GRID:set_up_becke_grid

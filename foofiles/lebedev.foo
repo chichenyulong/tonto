@@ -76,7 +76,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: lebedev.foo 3648 2012-02-21 01:19:03Z dylan_ $
+! $Id: lebedev.foo 4249 2014-01-12 07:41:46Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module LEBEDEV
@@ -85,73 +85,93 @@ module LEBEDEV
 
 contains
 
-! =========================
-! Create and destroy object
-! =========================
+!  ==========
+!  Allocation
+!  ==========
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(l) ::: leaky
-   ! Copy a becke_grid "b"
-      l :: LEBEDEV
-      self = l
-      .nullify_ptr_part
-      if (l.point.created) .point.create_copy(l.point)
-      if (l.weight.created) .weight.create_copy(l.weight)
-      if (l.n_points_per_shell.created) .n_points_per_shell.create_copy(l.n_points_per_shell)
-   end
-
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the shell parts of self
+      self :: INOUT
+
       nullify(.point)
       nullify(.weight)
       nullify(.n_points_per_shell)
+
    end
 
-   destroy_ptr_part  ::: leaky
+   destroy_ptr_part  ::: leaky, pure
    ! Destroy the shell parts of self
+      self :: INOUT
+
       .point.destroy
       .weight.destroy
       .n_points_per_shell.destroy
+
    end
 
-   set_defaults
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
+   end
+
+   copy(object) ::: leaky, pure
+   ! Copy "object"
+      self :: OUT
+      object :: LEBEDEV, IN
+
+      self = object
+
+      .nullify_ptr_part
+
+      CREATE_COPY_COMPONENT(point)
+      CREATE_COPY_COMPONENT(weight)
+      CREATE_COPY_COMPONENT(n_points_per_shell)
+
+   end
+
+!  ===========
+!  Set methods
+!  ===========
+
+   set_defaults ::: always_pure
    ! Set up a default dftgrid object
+      self :: OUT
+
       .n_points = 0
       .l = 0
       .n = 0
       .s = 0
+
    end
 
-! =================================================================
-! Set the number of points or desired L quantum number to integrate
-! =================================================================
-
-   set_n_points(n_points) ::: leaky
+   set_n_points(n_points) ::: leaky, pure
    ! Set the number of points. If it is not one of the allowed number of points,
    ! it *increases* to the nearest number which is allowed.
       self :: PTR
-      n_points :: INT
+      n_points :: INT, IN
+
    ENSURE(n_points>=1,"n_points must be greater than 6")
    ENSURE(n_points<=5810,"n_points must be less than 5810")
+
       select case (n_points)
          case (1:6);       .ld0006
          case (7:14);      .ld0014
@@ -187,14 +207,16 @@ contains
          case (5295:5810); .ld5810
          case default; DIE("n_points must be between 1 and 5810")
       end
+
    end
 
-   set_l(l) ::: leaky
+   set_l(l) ::: leaky, pure
    ! Set the angular momentum order "l" to integrate.  If the angular momentum
    ! is not allowed the value of "l" used is the next largest one which is
    ! allowed.
       self :: PTR
-      l :: INT
+      l :: INT, IN
+
       select case (l)
          case (1:3);   .ld0006 ! ?
          case (4:5);   .ld0014 
@@ -230,24 +252,30 @@ contains
          case (126:131); .ld5810 ! ?
          case default; DIE("l must be between 1 and 131")
       end
+
    end
 
-   set(n_points,n_shell) ::: private, leaky
+   set(n_points,n_shell) ::: private, leaky, pure
    ! Create the number of points, weights, shells
       self :: PTR
-      n_points,n_shell :: INT, IN
+      n_points :: INT, IN
+      n_shell :: INT, IN
+
       .n_points = n_points
+
       .point.create(n_points,3)
       .weight.create(n_points)
       .n_points_per_shell.create(n_shell)
+
       .l = 0
       .n = 0
       .s = 0
+
    end
 
-! =================================================
-! The rest concerns defining the points and weights
-! =================================================
+!  ===============================
+!  Defining the points and weights
+!  ===============================
 
    gen_oh(code,a,b,w) ::: private
    ! Given a point on a sphere (specified by "a" and "b"), generate all the
@@ -424,7 +452,7 @@ contains
       end
    end
 
-   ld0006 ::: leaky
+   ld0006 ::: leaky, private
    ! Lebedev 6-point angular grid
    ! L=3?
       self  :: PTR
@@ -435,7 +463,7 @@ contains
       .gen_oh(1,a,b,w)
    end
 
-   ld0014 ::: leaky
+   ld0014 ::: leaky, private
    ! Lebedev 14-point angular grid
    ! L=5
       self  :: PTR
@@ -448,7 +476,7 @@ contains
       .gen_oh(3,a,b,w)
    end
 
-   ld0026 ::: leaky
+   ld0026 ::: leaky, private
    ! Lebedev 26-point angular grid
    ! L=7?
       self  :: PTR
@@ -463,7 +491,7 @@ contains
       .gen_oh(3,a,b,w)
    end
 
-   ld0038 ::: leaky
+   ld0038 ::: leaky, private
    ! Lebedev 38-point angular grid
    ! L = 9
       self  :: PTR
@@ -479,7 +507,7 @@ contains
       .gen_oh(5,a,b,w)
    end
 
-   ld0050 ::: leaky
+   ld0050 ::: leaky, private
    ! Lebedev 50-point angular grid
    ! L=11
       self  :: PTR
@@ -497,7 +525,7 @@ contains
       .gen_oh(4,a,b,w)
    end
 
-   ld0074 ::: leaky
+   ld0074 ::: leaky, private
    ! Lebedev 74-point angular grid
    ! L=13?
       self  :: PTR
@@ -518,7 +546,7 @@ contains
       .gen_oh(5,a,b,w)
    end
 
-   ld0086 ::: leaky
+   ld0086 ::: leaky, private
    ! Lebedev 86-point angular grid
    ! L=15
       self  :: PTR
@@ -540,7 +568,7 @@ contains
       .gen_oh(5,a,b,w)
    end
 
-   ld0110 ::: leaky
+   ld0110 ::: leaky, private
    ! Lebedev 110-point angular grid
    ! L=17
       self  :: PTR
@@ -565,7 +593,7 @@ contains
       .gen_oh(5,a,b,w)
    end
 
-   ld0146 ::: leaky
+   ld0146 ::: leaky, private
    ! Lebedev 146-point angular grid
    ! L=19
       self  :: PTR
@@ -593,7 +621,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0170 ::: leaky
+   ld0170 ::: leaky, private
    ! Lebedev 170-point angular grid
    ! L=21?
       self  :: PTR
@@ -624,7 +652,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0194 ::: leaky
+   ld0194 ::: leaky, private
    ! Lebedev 194-point angular grid
    ! L=23
       self  :: PTR
@@ -658,7 +686,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0230 ::: leaky
+   ld0230 ::: leaky, private
    ! Lebedev 230-point angular grid
    ! L=25
       self  :: PTR
@@ -696,7 +724,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0266 ::: leaky
+   ld0266 ::: leaky, private
    ! Lebedev 266-point angular grid
    ! L=27
       self  :: PTR
@@ -737,7 +765,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0302 ::: leaky
+   ld0302 ::: leaky, private
    ! Lebedev 302-point angular grid
    ! L=29
       self  :: PTR
@@ -782,7 +810,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0350 ::: leaky
+   ld0350 ::: leaky, private
    ! Lebedev 350-point angular grid
    ! L=31?
       self  :: PTR
@@ -831,7 +859,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0434 ::: leaky
+   ld0434 ::: leaky, private
    ! Lebedev 434-point angular grid
    ! L=35
       self  :: PTR
@@ -889,7 +917,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ta0434 ::: leaky
+   ta0434 ::: leaky, private
    ! Updated Treutler-Ahlrichs 434-point angular grid
    ! L=35
       self  :: PTR
@@ -947,7 +975,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0590 ::: leaky
+   ld0590 ::: leaky, private
    ! Lebedev 590-point angular grid
    ! L=41
       self  :: PTR
@@ -1020,7 +1048,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0770 ::: leaky
+   ld0770 ::: leaky, private
    ! Lebedev 770-point angular grid
    ! L=47
       self  :: PTR
@@ -1110,7 +1138,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld0974 ::: leaky
+   ld0974 ::: leaky, private
    ! Lebedev 974-point angular grid
    ! L=53
       self  :: PTR
@@ -1219,7 +1247,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld1202 ::: leaky
+   ld1202 ::: leaky, private
    ! Lebedev 1202-point angular grid
    ! L=59
       self  :: PTR
@@ -1349,7 +1377,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld1454 ::: leaky
+   ld1454 ::: leaky, private
    ! Lebedev 1454-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -1501,7 +1529,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld1730 ::: leaky
+   ld1730 ::: leaky, private
    ! Lebedev 1730-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -1678,7 +1706,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld2030 ::: leaky
+   ld2030 ::: leaky, private
    ! Lebedev 2030-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -1882,7 +1910,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld2354 ::: leaky
+   ld2354 ::: leaky, private
    ! Lebedev 2354-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -2115,7 +2143,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld2702 ::: leaky
+   ld2702 ::: leaky, private
    ! Lebedev 2702-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -2379,7 +2407,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld3074 ::: leaky
+   ld3074 ::: leaky, private
    ! Lebedev 3074-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -2676,7 +2704,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld3470 ::: leaky
+   ld3470 ::: leaky, private
    ! Lebedev 3470-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -3008,7 +3036,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld3890 ::: leaky
+   ld3890 ::: leaky, private
    ! Lebedev 3890-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -3377,7 +3405,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld4334 ::: leaky
+   ld4334 ::: leaky, private
    ! Lebedev 4334-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -3785,7 +3813,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld4802 ::: leaky
+   ld4802 ::: leaky, private
    ! Lebedev 4802-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -4234,7 +4262,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld5294 ::: leaky
+   ld5294 ::: leaky, private
    ! Lebedev 5294-point angular grid
       self  :: PTR
       a,b,w :: REAL
@@ -4726,7 +4754,7 @@ contains
       .gen_oh(6,a,b,w)
    end
 
-   ld5810 ::: leaky
+   ld5810 ::: leaky, private
    ! Lebedev 5810-point angular grid
       self  :: PTR
       a,b,w :: REAL

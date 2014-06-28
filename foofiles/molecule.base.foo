@@ -131,12 +131,11 @@ contains
 
       nullify(.roby)
       nullify(.saved)
-      nullify(.localiser)
+      nullify(.localizer)
 
       nullify(.U_electric_dipole)
       nullify(.dipole_polarisability)
       nullify(.dipole_hyperpolarisability)
-      nullify(.U2_electric_dipole)
 
    end
 
@@ -234,14 +233,13 @@ contains
       ! Bond analysis
       .roby.destroy
 
-      ! Localised MO's
-      .localiser.destroy
+      ! Localized MO's
+      .localizer.destroy
 
       ! CPHF and response properties
       .U_electric_dipole.destroy
       .dipole_polarisability.destroy
       .dipole_hyperpolarisability.destroy
-      .U2_electric_dipole.destroy
 
    end
 
@@ -332,78 +330,80 @@ contains
 
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
    ! Create a copy of object
    end
 
-   copy(mol) ::: leaky
+   copy(object) ::: leaky, pure
    ! Set self to be a copy of "mol"
-      mol :: MOLECULE, IN
+      self :: OUT
+      object :: MOLECULE, IN
 
-      ! Copy all non-pointer fields
-      self = mol
+      self = object
 
-      ! Create a copy of all pointer fields
       .::nullify_ptr_part
 
-      if (mol.atom.created)                       .atom.create_copy(mol.atom)
+      CREATE_COPY_COMPONENT(atom)
 
-      if (mol.basis.created)                      .basis.create_copy(mol.basis)
-      if (mol.slaterbasis.created)                .slaterbasis.create_copy(mol.slaterbasis)
-      if (mol.coppensbasis.created)               .coppensbasis.create_copy(mol.coppensbasis)
+      CREATE_COPY_COMPONENT(basis)
+      CREATE_COPY_COMPONENT(slaterbasis)
+      CREATE_COPY_COMPONENT(coppensbasis)
 
-      if (mol.plot_grid.created)                  .plot_grid.create_copy(mol.plot_grid)
-      if (mol.interpolator.created)               .interpolator.create_copy(mol.interpolator)
-      if (mol.isosurface.created)                 .isosurface.create_copy(mol.isosurface)
+      CREATE_COPY_COMPONENT(plot_grid)
+      CREATE_COPY_COMPONENT(interpolator)
+      CREATE_COPY_COMPONENT(isosurface)
 
-      if (mol.becke_grid.created)                 .becke_grid.create_copy(mol.becke_grid)
+      CREATE_COPY_COMPONENT(becke_grid)
 
-      if (mol.crystal.created)                    .crystal.create_copy(mol.crystal)
-      if (mol.cluster.created)                    .cluster.create_copy(mol.cluster)
-      if (mol.cif.created)                        .cif.create_copy(mol.cif)
-      if (mol.pointgroup.created)                 .pointgroup.create_copy(mol.pointgroup)
+      CREATE_COPY_COMPONENT(crystal)
+      CREATE_COPY_COMPONENT(cluster)
+      CREATE_COPY_COMPONENT(cif)
+      CREATE_COPY_COMPONENT(pointgroup)
 
-      if (mol.saved.::created)                    .saved.::create_copy(mol.saved)
+      if (object.saved.::created) .saved.::create_copy(object.saved)
 
-      if (mol.atom_for_shell.created)             .atom_for_shell.create_copy(mol.atom_for_shell)
-      if (mol.atom_shell_for_shell.created)       .atom_shell_for_shell.create_copy(mol.atom_shell_for_shell)
-      if (mol.first_shell_for_atom.created)       .first_shell_for_atom.create_copy(mol.first_shell_for_atom)
-      if (mol.last_shell_for_atom.created)        .last_shell_for_atom.create_copy(mol.last_shell_for_atom)
-      if (mol.first_basis_fn_for_shell.created)   .first_basis_fn_for_shell.create_copy(mol.first_basis_fn_for_shell)
-      if (mol.last_basis_fn_for_shell.created)    .last_basis_fn_for_shell.create_copy(mol.last_basis_fn_for_shell)
-      if (mol.angular_moment_for_shell.created)   .angular_moment_for_shell.create_copy(mol.angular_moment_for_shell)
-      if (mol.overlapping_atoms.created)          .overlapping_atoms.create_copy(mol.overlapping_atoms)
-      if (mol.overlapping_atoms_for_atom.created) .overlapping_atoms_for_atom.create_copy(mol.overlapping_atoms_for_atom)
-      if (mol.first_basis_fn_for_atom.created)    .first_basis_fn_for_atom.create_copy(mol.first_basis_fn_for_atom)
-      if (mol.last_basis_fn_for_atom.created)     .last_basis_fn_for_atom.create_copy(mol.last_basis_fn_for_atom)
+      CREATE_COPY_COMPONENT(atom_for_shell)
+      CREATE_COPY_COMPONENT(atom_shell_for_shell)
+      CREATE_COPY_COMPONENT(first_shell_for_atom)
+      CREATE_COPY_COMPONENT(last_shell_for_atom)
+      CREATE_COPY_COMPONENT(first_basis_fn_for_shell)
+      CREATE_COPY_COMPONENT(last_basis_fn_for_shell)
+      CREATE_COPY_COMPONENT(angular_moment_for_shell)
+      CREATE_COPY_COMPONENT(overlapping_atoms)
+      CREATE_COPY_COMPONENT(overlapping_atoms_for_atom)
+      CREATE_COPY_COMPONENT(first_basis_fn_for_atom)
+      CREATE_COPY_COMPONENT(last_basis_fn_for_atom)
 
-      if (mol.scfdata.created)                    .scfdata.create_copy(mol.scfdata)
+      CREATE_COPY_COMPONENT(scfdata)
 
-      if (mol.orbital_energies.created)           .orbital_energies.create_copy(mol.orbital_energies)
-      if (mol.molecular_orbitals.created)         .molecular_orbitals.create_copy(mol.molecular_orbitals)
-      if (mol.density_matrix.created)             .density_matrix.create_copy(mol.density_matrix)
-      if (mol.old_density_matrix.created)         .old_density_matrix.create_copy(mol.old_density_matrix)
-      if (mol.delta_density_matrix.created)       .delta_density_matrix.create_copy(mol.delta_density_matrix)
-      if (mol.natural_orbitals.created)           .natural_orbitals.create_copy(mol.natural_orbitals)
-      if (mol.occupation_numbers.created)         .occupation_numbers.create_copy(mol.occupation_numbers)
-      if (mol.overlap_matrix.created)             .overlap_matrix.create_copy(mol.overlap_matrix)
-      if (mol.overlap_eigenvectors.created)       .overlap_eigenvectors.create_copy(mol.overlap_eigenvectors)
-      if (mol.overlap_eigenvalues.created)        .overlap_eigenvalues.create_copy(mol.overlap_eigenvalues)
-      if (mol.max_S.created)                      .max_S.create_copy(mol.max_S)
-      if (mol.kinetic_energy_matrix.created)      .kinetic_energy_matrix.create_copy(mol.kinetic_energy_matrix)
-      if (mol.nuclear_attraction_matrix.created)  .nuclear_attraction_matrix.create_copy(mol.nuclear_attraction_matrix)
+      CREATE_COPY_COMPONENT(orbital_energies)
+      CREATE_COPY_COMPONENT(molecular_orbitals)
+      CREATE_COPY_COMPONENT(density_matrix)
+      CREATE_COPY_COMPONENT(old_density_matrix)
+      CREATE_COPY_COMPONENT(delta_density_matrix)
+      CREATE_COPY_COMPONENT(natural_orbitals)
+      CREATE_COPY_COMPONENT(occupation_numbers)
+      CREATE_COPY_COMPONENT(overlap_matrix)
+      CREATE_COPY_COMPONENT(overlap_eigenvectors)
+      CREATE_COPY_COMPONENT(overlap_eigenvalues)
+      CREATE_COPY_COMPONENT(max_S)
+      CREATE_COPY_COMPONENT(kinetic_energy_matrix)
+      CREATE_COPY_COMPONENT(nuclear_attraction_matrix)
 
-      if (mol.core_matrix.created)                .core_matrix.create_copy(mol.core_matrix)
-      if (mol.fock_matrix.created)                .fock_matrix.create_copy(mol.fock_matrix)
-      if (mol.fock_2e_matrix.created)             .fock_2e_matrix.create_copy(mol.fock_2e_matrix)
-      if (mol.constraint_matrix.created)          .constraint_matrix.create_copy(mol.constraint_matrix)
+      CREATE_COPY_COMPONENT(core_matrix)
+      CREATE_COPY_COMPONENT(fock_matrix)
+      CREATE_COPY_COMPONENT(fock_2e_matrix)
+      CREATE_COPY_COMPONENT(constraint_matrix)
 
-      if (mol.atom_group.created)                 .atom_group.create_copy(mol.atom_group)
+      CREATE_COPY_COMPONENT(atom_group)
 
-      if (mol.U_electric_dipole.created)          .U_electric_dipole.create_copy(mol.U_electric_dipole)
-      if (mol.dipole_polarisability.created)      .dipole_polarisability.create_copy(mol.dipole_polarisability)
-      if (mol.dipole_hyperpolarisability.created) .dipole_hyperpolarisability.create_copy(mol.dipole_hyperpolarisability)
-      if (mol.U2_electric_dipole.created)         .U2_electric_dipole.create_copy(mol.U2_electric_dipole)
+      CREATE_COPY_COMPONENT(U_electric_dipole)
+      CREATE_COPY_COMPONENT(dipole_polarisability)
+      CREATE_COPY_COMPONENT(dipole_hyperpolarisability)
 
    end
 
@@ -570,14 +570,6 @@ contains
 
    end
 
-   set_name(val) ::: get_from(OBJECT:set, ARG?=>.name, VAL?=>STR)
-   ! Generic set
-   end
-
-   set_charge(val) ::: get_from(OBJECT:set, ARG?=>.charge, VAL?=>INT)
-   ! Generic set
-   end
-
    set_scf_guess_defaults_from(scfdata) ::: leaky
    ! Set scf  data options for a guess-type SCF defaults
       scfdata :: SCFDATA*
@@ -604,7 +596,7 @@ contains
       ! Nuclear energy
       .scfdata.nuclear_repulsion_energy = .::nuclear_repulsion_energy
 
-      ! Finalise
+      ! Finalize
       .scfdata.finalize
 
    end
@@ -640,7 +632,7 @@ contains
    end
 
    initialize_DFT_grids ::: leaky
-   ! Initialise DFT grids, if not already done so.
+   ! Initialize DFT grids, if not already done so.
    ENSURE(.scfdata.created,"no scfdata")
 
       if (NOT .scfdata.is_DFT_calculation) return
@@ -666,12 +658,19 @@ contains
    ! Set from saved_self
    end
 
+   set_charge(val)
+   ! Set the charge to "val"
+      val :: INT
+      .charge = val
+   end
+
    set_atom_info ::: leaky
-   ! Set the associated atom information
-   ! . Atom tags and kind indices
-   ! . The spin multiplicity
-   ! . The number of alpha and beta electrons. 
+   ! Set the associated atom information, including the number of alpha and beta
+   ! electrons. NOTE: The multiplicity must be right for this to work.  The
+   ! routine tries to reassign the multiplicity so that it will be consistent
+   ! with the charge.
    ENSURE(.atom.created,"no atom info")
+   ENSURE(.atom_group.destroyed,"don't reset atom info after groups are defined!")
 
       if (.atom_info_made) return
 
@@ -725,8 +724,8 @@ contains
       ! Resolve from a library .....
       if (.basis_name/=" ") then
 
-         ! Renormalise basis sets. (The library is in normalised form)
-         if (.basis.created) .basis.renormalise
+         ! Renormalize basis sets. (The library is in normalized form)
+         if (.basis.created) .basis.renormalize
 
          ! Read the basis from the library
          library = .basis.library_file(.basis_name)
@@ -742,8 +741,8 @@ contains
             .atom.resolve_bases(.basis,.basis_name)
             .atom.set_basis_kind("gaussian")
 
-            ! Unnormalise if completely done
-            .basis.unnormalise        
+            ! Unnormalize if completely done
+            .basis.unnormalize        
 
             .::set_basis_info         
 
@@ -756,7 +755,7 @@ contains
             .atom.resolve_bases(.basis)
             .atom.set_basis_kind("gaussian")
 
-            ! Unnormalise if completely done
+            ! Unnormalize if completely done
             if (.atom.bases_are_resolved) .::set_basis_info          
 
       end
@@ -786,8 +785,8 @@ contains
       ! Resolve from a library .....
       if (.slaterbasis_name/=" ") then
 
-         ! Renormalise basis sets. (The library is in normalised form)
-         if (.slaterbasis.created) .slaterbasis.renormalise
+         ! Renormalize basis sets. (The library is in normalized form)
+         if (.slaterbasis.created) .slaterbasis.renormalize
 
          ! Read the basis from the library
          library = .slaterbasis.library_file(.slaterbasis_name)
@@ -800,8 +799,8 @@ contains
             .atom.resolve_bases(.slaterbasis,.slaterbasis_name)
             .atom.set_basis_kind("slater")
 
-            ! Unnormalise if completely done
-            .slaterbasis.unnormalise        
+            ! Unnormalize if completely done
+            .slaterbasis.unnormalize        
          end
 
       ! Resolve from existing .basis .....
@@ -837,8 +836,8 @@ contains
       ! Resolve from a library .....
       if (.coppensbasis_name/=" ") then
 
-         ! Renormalise basis sets. (The library is in normalised form)
-         if (.coppensbasis.created) .coppensbasis.renormalise
+         ! Renormalize basis sets. (The library is in normalized form)
+         if (.coppensbasis.created) .coppensbasis.renormalize
 
          ! Read the basis from the library
          library = .coppensbasis.library_file(.coppensbasis_name)
@@ -851,8 +850,8 @@ contains
             .atom.resolve_bases(.coppensbasis,.coppensbasis_name)
             .atom.set_basis_kind("coppens")
 
-            ! Unnormalise if completely done
-            .coppensbasis.unnormalise        
+            ! Unnormalize if completely done
+            .coppensbasis.unnormalize        
          end
 
       ! Resolve from existing .basis .....
@@ -927,7 +926,7 @@ contains
    ! Set a gaussian *library* basis set name
       name :: STR
 
-   DIE_IF(any(name==non_gaussian),"basis "//trim(name)//"is not a gaussian basis")
+   ENSURE(all(name/=non_gaussian),"basis "//trim(name)//"is not a gaussian basis")
 
       non_gaussian :: VEC{STR}(len=17,4) = &
          ["Clementi-Roetti  ", &
@@ -951,7 +950,7 @@ contains
    ! Set a slater *library* basis set name
       name :: STR
 
-   DIE_IF(all(name/=slater),"basis "//trim(name)//"is not a known slater basis")
+   ENSURE(any(name==slater),"basis "//trim(name)//"is not a known slater basis")
 
       slater :: VEC{STR}(len=17,3) = &
          ["Clementi-Roetti  ",       &
@@ -1037,37 +1036,6 @@ contains
 
    end
 
-!  ===================
-!  Redirect and revert
-!  ===================
-
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   redirect_stdout ::: leaky
-   ! Redirect stdout to the file whose name is the following string
-   ! in the current input file.
-
-      name :: STR
-
-      if (FALSE) self = self
-
-      stdin.read(name)
-      stdout.redirect(name)
-
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
-   end
-
-   revert_stdout ::: leaky
-   ! Revert stdout back to the previously stored input file
-      if (FALSE) self = self
-      stdout.revert
-   end
-
 !  ==================
 !  Read/write archive
 !  ==================
@@ -1146,10 +1114,6 @@ contains
          case ("U_electric_dipole ")
             if (.U_electric_dipole.destroyed) .U_electric_dipole.create(.n_bf,.n_bf,3)
             arch.read(.U_electric_dipole)
-
-         case ("U2_electric_dipole ")
-            if (.U2_electric_dipole.destroyed) .U2_electric_dipole.create(.n_bf,.n_bf,6)
-            arch.read(.U2_electric_dipole)
 
          case default
             UNKNOWN(name)
@@ -1246,36 +1210,32 @@ contains
       select case (name)
 
          case ("molecular_orbitals")
-            DIE_IF(.molecular_orbitals.destroyed,"no molecular_orbitals")
+            ENSURE(.molecular_orbitals.created,"no molecular_orbitals")
             arch.write(.molecular_orbitals)
 
          case ("density_matrix    ")
-            DIE_IF(.density_matrix.destroyed,"no density_matrix")
+            ENSURE(.density_matrix.created,"no density_matrix")
             arch.write(.density_matrix)
 
          case ("natural_orbitals  ")
-            DIE_IF(.natural_orbitals.destroyed,"no natural_orbitals")
+            ENSURE(.natural_orbitals.created,"no natural_orbitals")
             arch.write(.natural_orbitals)
 
          case ("occupation_numbers")
-            DIE_IF(.occupation_numbers.destroyed,"no occupation_numbers")
+            ENSURE(.occupation_numbers.created,"no occupation_numbers")
             arch.write(.occupation_numbers)
 
          case ("fock_matrix       ")
-            DIE_IF(.fock_matrix.destroyed,"no fock_matrix")
+            ENSURE(.fock_matrix.created,"no fock_matrix")
             arch.write(.fock_matrix)
 
          case ("orbital_energies  ")
-            DIE_IF(.orbital_energies.destroyed,"no orbital_energies")
+            ENSURE(.orbital_energies.created,"no orbital_energies")
             arch.write(.orbital_energies)
 
          case ("U_electric_dipole ")
-            DIE_IF(.U_electric_dipole.destroyed,"no U_electric_dipole")
+            ENSURE(.U_electric_dipole.created,"no U_electric_dipole")
             arch.write(.U_electric_dipole)
-
-         case ("U2_electric_dipole ")
-            DIE_IF(.U2_electric_dipole.destroyed,"no U2_electric_dipole")
-            arch.write(.U2_electric_dipole)
 
          case default
             UNKNOWN(name)
@@ -1352,8 +1312,8 @@ contains
 
       ! Find [ATOMS] block
       molden_file.look_for(op//"ATOMS"//cl,found=found)
-      DIE_IF(NOT found, "No ATOMS line")
-      DIE_IF(molden_file.n_line_items/=2, "Expecting two items on ATOMS line")
+      ENSURE(found, "No ATOMS line")
+      ENSURE(molden_file.n_line_items==2, "Expecting two items on ATOMS line")
 
       ! Read units
       molden_file.read(units)
@@ -1369,7 +1329,7 @@ contains
       do
          molden_file.read(item)
          if (item==op//"Molden") exit
-         DIE_IF(molden_file.end_of_file,"file ended unexpectedly")
+         ENSURE(NOT molden_file.end_of_file,"file ended unexpectedly")
          .n_atom = .n_atom + 1
          molden_file.read_line
       end
@@ -1397,7 +1357,7 @@ contains
 
          ! Set
          .atom(a).set_atomic_number(Z)
-         .atom(a).set_atom_data_from_label(label)
+         .atom(a).set_label(label)
 
          ! Read position, change units
          molden_file.read(pos)
@@ -1405,14 +1365,14 @@ contains
          .atom(a).set_position(pos)
 
          ! Set basis label
-         .atom(a).set_basis_label("molden-"//trim(.atom(a).generic_chemical_symbol))
+         .atom(a).set_basis_label("molden-"//trim(.atom(a).chemical_symbol))
 
       end
 
       ! Read basis set
       molden_file.look_for(op//"GTO"//cl,found=found)
-      DIE_IF(NOT found, "No GTO line")
-      DIE_IF(molden_file.n_line_items/=1, "Expecting only one item on GTO line")
+      ENSURE(found, "No GTO line")
+      ENSURE(molden_file.n_line_items==1, "Expecting only one item on GTO line")
       molden_file.read_line
 
       ! Read basis
@@ -1432,8 +1392,8 @@ contains
 
       ! Find [MO] tag
       molden_file.look_for(op//"MO"//cl,found=found)
-      DIE_IF(NOT found, "No MO line")
-      DIE_IF(molden_file.n_line_items/=1, "Expecting only one item on MO line")
+      ENSURE(found, "No MO line")
+      ENSURE(molden_file.n_line_items==1, "Expecting only one item on MO line")
       line = molden_file.line_number + 1
 
       ! Any Beta tag?
@@ -1537,7 +1497,7 @@ contains
 
          ! Increment orbital
          if (spin=="Alpha") i = i + 1
-         DIE_IF(i>.n_bf,"too many orbitals specified")
+         ENSURE(i<=.n_bf,"too many orbitals specified")
 
          ! Assign MO's
          if (is_unrestricted) then
@@ -1625,7 +1585,7 @@ contains
       ! Set crystal data
       if (associated(.crystal)) then
          .::resolve_axis_system
-         .crystal.make_fragment_data(.atom,assign_atom=TRUE)
+         .crystal.set_defaults(.atom,assign_atom=TRUE)
       end
 
       ! Clean
@@ -1666,8 +1626,8 @@ contains
 
       ! Find [ATOMS] block
       molden_file.look_for(op//"ATOMS"//cl,found=found)
-      DIE_IF(NOT found, "No ATOMS line")
-      DIE_IF(molden_file.n_line_items/=2, "Expecting two items on ATOMS line")
+      ENSURE(found, "No ATOMS line")
+      ENSURE(molden_file.n_line_items==2, "Expecting two items on ATOMS line")
 
       ! Read units
       molden_file.read(units)
@@ -1683,7 +1643,7 @@ contains
       do
          molden_file.read(item)
          if (item==op//"Molden") exit
-         DIE_IF(molden_file.end_of_file,"file ended unexpectedly")
+         ENSURE(NOT molden_file.end_of_file,"file ended unexpectedly")
          .n_atom = .n_atom + 1
          molden_file.read_line
       end
@@ -1711,7 +1671,7 @@ contains
 
          ! Set
          .atom(a).set_atomic_number(Z)
-         .atom(a).set_atom_data_from_label(label)
+         .atom(a).set_label(label)
 
          ! Read position, change units
          molden_file.read(pos)
@@ -1719,14 +1679,14 @@ contains
          .atom(a).set_position(pos)
 
          ! Set basis label
-         .atom(a).set_basis_label("molden-"//trim(.atom(a).generic_chemical_symbol))
+         .atom(a).set_basis_label("molden-"//trim(.atom(a).chemical_symbol))
 
       end
 
       ! Read basis set
       molden_file.look_for(op//"GTO"//cl,found=found)
-      DIE_IF(NOT found, "No GTO line")
-      DIE_IF(molden_file.n_line_items/=1, "Expecting only one item on GTO line")
+      ENSURE(found, "No GTO line")
+      ENSURE(molden_file.n_line_items==1, "Expecting only one item on GTO line")
       molden_file.read_line
 
       ! Read basis
@@ -1740,8 +1700,8 @@ contains
 
       ! Find [MO] tag
       molden_file.look_for(op//"MO"//cl,found=found)
-      DIE_IF(NOT found, "No MO line")
-      DIE_IF(molden_file.n_line_items/=1, "Expecting only one item on MO line")
+      ENSURE(found, "No MO line")
+      ENSURE(molden_file.n_line_items==1, "Expecting only one item on MO line")
       line = molden_file.line_number + 1
 
       ! Any Beta tag?
@@ -1831,7 +1791,7 @@ contains
 
          ! Increment orbital
          if (spin=="Alpha") i = i + 1
-         DIE_IF(i>.n_bf,"too many orbitals specified")
+         ENSURE(i<=.n_bf,"too many orbitals specified")
 
          ! Assign MO's
          if (is_unrestricted) then
@@ -1923,7 +1883,7 @@ contains
       ! Set crystal data
       if (associated(.crystal)) then
          .::resolve_axis_system
-         .crystal.make_fragment_data(.atom,assign_atom=TRUE)
+         .crystal.set_defaults(.atom,assign_atom=TRUE)
       end
 
       ! Clean
@@ -2024,12 +1984,11 @@ contains
       .scfdata.create
 
       ! Get FChk file name
-      if (present(name)) then
-         fchk = name
-      else if (NOT stdin.buffer_exhausted) then
-         stdin.read(fchk) ! specified on stdin
+      if (present(name)) then;                 fchk = name
       else
-         fchk = .name
+         if (NOT stdin.buffer_exhausted) then; stdin.read(fchk) ! specified on stdin
+         else;                                 fchk = .name
+         end
       end
 
       ! Open FChk file
@@ -2065,7 +2024,7 @@ contains
       WARN_IF(.n_bf/=n_independent,"No. of basis functions different to no. of independent functions")
       WARN_IF(.n_bf/=n_independent,"The MO's will be wrong but the density matrix is correct")
 
-      ! Read in atoms (basis_labels set later)
+      ! Read in atoms
       chkfile.look_for("Atomic numbers",from=1); chkfile.read_line
       .atom.create(.n_atom)
       do a = 1,.n_atom
@@ -2086,17 +2045,15 @@ contains
       do a = 1,.n_atom
          chkfile.read(.atom(a).position)
       end
-       
-      ! Set a name?
-      if (.name=="unknown") .name = .atom.chemical_formula
 
-      ! Read gaussian shell info.
       chkfile.look_for("Number of contracted shells",from=1)
       chkfile.move_to_line_item(6); chkfile.read(n_shell)
 
       chkfile.look_for("Number of primitive shells",from=1)
       chkfile.move_to_line_item(6); chkfile.read(n_prim_shells)
 
+
+      ! Read gaussian shell info.
       G_shell_type.create(n_shell)
       G_n_prim_for_shell.create(n_shell)
       G_atom_for_shell.create(n_shell)
@@ -2105,7 +2062,7 @@ contains
 
       chkfile.look_for("Shell types",from=1); chkfile.read_line
       chkfile.read(G_shell_type)
-      DIE_IF(any(G_shell_type<-1),"unknown shell types exist")
+      ENSURE(all(G_shell_type>=-1),"unknown shell types exist")
 
       chkfile.look_for("Number of primitives per shell",from=1); chkfile.read_line
       chkfile.read(G_n_prim_for_shell)
@@ -2242,7 +2199,7 @@ contains
       n_prim_for_shell.destroy
       shell_l.destroy
 
-      ! .basis.unnormalise ! NOTE this
+      ! .basis.unnormalize ! NOTE this
       .::set_atom_info
       .::resolve_basis_info
 
@@ -2296,6 +2253,7 @@ contains
       end
 
       ! Read in density matrix.
+      .density_matrix.destroy
       .::read_gX_SCF_dm(chkfile,restricted,.density_matrix)
 
       ! Debug
@@ -2317,13 +2275,13 @@ contains
       end
 
       ! Extract MP2 density matrix to file.  UHF untested
-      .::read_gX_MP2_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_MP2_dm(chkfile,restricted)
 
       ! Extract MP3 density matrix to file.  UHF untested
-      .::read_gX_MP3_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_MP3_dm(chkfile,restricted)
 
       ! Extract CC density matrix to file.  UHF untested
-      .::read_gX_CC_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_CC_dm(chkfile,restricted)
 
       ! Close chkfile
       chkfile.close; chkfile.destroy
@@ -2339,7 +2297,7 @@ contains
 
       if (associated(.crystal)) then
          .::resolve_axis_system
-         .crystal.make_fragment_data(.atom,assign_atom=TRUE)
+         .crystal.set_defaults(.atom,assign_atom=TRUE)
       end
 
    end
@@ -2451,7 +2409,7 @@ contains
 
       chkfile.look_for("Shell types",from=1); chkfile.read_line
       chkfile.read(G_shell_type)
-      DIE_IF(any(G_shell_type<-1),"unknown shell types exist")
+      ENSURE(all(G_shell_type>=-1),"unknown shell types exist")
 
       chkfile.look_for("Number of primitives per shell",from=1); chkfile.read_line
       chkfile.read(G_n_prim_for_shell)
@@ -2638,6 +2596,7 @@ contains
       end
 
       ! Read in density matrix.
+      .density_matrix.destroy
       .::read_gX_SCF_dm(chkfile,restricted,.density_matrix)
 
       ! Debug
@@ -2659,13 +2618,13 @@ contains
       end
 
       ! Extract MP2 density matrix to file.  UHF untested
-      .::read_gX_MP2_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_MP2_dm(chkfile,restricted)
 
       ! Extract MP3 density matrix to file.  UHF untested
-      .::read_gX_MP3_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_MP3_dm(chkfile,restricted)
 
       ! Extract CC density matrix to file.  UHF untested
-      .::read_gX_CC_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_CC_dm(chkfile,restricted)
 
       ! Close chkfile
       chkfile.close; chkfile.destroy
@@ -2681,7 +2640,7 @@ contains
 
       if (associated(.crystal)) then
          .::resolve_axis_system
-         .crystal.make_fragment_data(.atom,assign_atom=TRUE)
+         .crystal.set_defaults(.atom,assign_atom=TRUE)
       end
 
    end
@@ -2785,7 +2744,7 @@ contains
 
       chkfile.look_for("Shell types",from=1); chkfile.read_line
       chkfile.read(G_shell_type)
-      DIE_IF(any(G_shell_type<-1),"unknown shell types exist")
+      ENSURE(all(G_shell_type>=-1),"unknown shell types exist")
 
       chkfile.look_for("Number of primitives per shell",from=1); chkfile.read_line
       chkfile.read(G_n_prim_for_shell)
@@ -2921,7 +2880,7 @@ contains
       n_prim_for_shell.destroy
       shell_l.destroy
 
-      ! .basis.unnormalise ! NOTE this
+      ! .basis.unnormalize ! NOTE this
       .::set_atom_info
       .::resolve_basis_info
 
@@ -2975,6 +2934,7 @@ contains
       end
 
       ! Read in density matrix.
+      .density_matrix.destroy
       .::read_gX_SCF_dm(chkfile,restricted,.density_matrix)
 
       ! Debug
@@ -2996,13 +2956,13 @@ contains
       end
 
       ! Extract MP2 density matrix to file.  UHF untested
-      .::read_gX_MP2_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_MP2_dm(chkfile,restricted)
 
       ! Extract MP3 density matrix to file.  UHF untested
-      .::read_gX_MP3_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_MP3_dm(chkfile,restricted)
 
       ! Extract CC density matrix to file.  UHF untested
-      .::read_gX_CC_dm(chkfile,restricted,.density_matrix)
+      .::read_gX_CC_dm(chkfile,restricted)
 
       ! Close chkfile
       chkfile.close; chkfile.destroy
@@ -3018,14 +2978,14 @@ contains
 
       if (associated(.crystal)) then
          .::resolve_axis_system
-         .crystal.make_fragment_data(.atom,assign_atom=TRUE)
+         .crystal.set_defaults(.atom,assign_atom=TRUE)
       end
 
    end
 
    set_basis_from_gX_data(l_4_shell,n_cc_4_sh,atom_4_sh,ex_4_prim,cc_4_prim) ::: private, leaky
    ! Set the basis from gaussian data "XXX_4_sh" are the shell data
-   ! flattened over all molecular shells. "XXX_4_prim" are (likewise)
+   ! flattened over all molecular shells. "XXX_4_prim" are (likewize)
    ! data flattened over molecular primitives.
       l_4_shell,n_cc_4_sh,atom_4_sh :: VEC{INT}, IN
       ex_4_prim,cc_4_prim :: VEC{REAL}, IN
@@ -3053,7 +3013,7 @@ contains
 
          ! Basis for atom "a"
          basis.create
-         basis.label = trim(.atom(a).generic_chemical_symbol) // ":gaussian"
+         basis.label = trim(.atom(a).chemical_symbol) // ":gaussian"
 
          ! Set basis label and kind
          .atom(a).set_basis_label(basis.label)
@@ -3094,16 +3054,17 @@ contains
          ! Set no. of bf'd and primitives
          basis.n_bf   = basis.no_of_basis_functions
          basis.n_prim = basis.no_of_primitives
-         basis.unnormalise ! Note this
+         basis.unnormalize ! Note this
 
          t = t + n_shell
 
          ! Seen basis before?
          same = FALSE
          do b = 1,n_basis
-            if (NOT .basis(b).same_as(basis)) cycle
-            same = TRUE
-            exit
+            if (.basis(b).same_as(basis)) then
+               same = TRUE
+               exit
+            end
          end
 
          ! Append only new basis to .basis
@@ -3120,8 +3081,8 @@ contains
    end
 
    read_gX_dm(chkfile,restricted,dm) ::: template, private
-   ! Read a gaussian density matrix with TAG? which may be
-   ! "restricted" (or not) from "chkfile". Archive it as NAME?.
+   ! Read a gaussian density matrix with TAG which may be
+   ! "restricted" (or not) from "chkfile". Archive it as NAME.
    ! If "dm" is present it is created to be the density matrix.
       chkfile :: TEXTFILE*
       restricted :: BIN, IN
@@ -3134,14 +3095,14 @@ contains
       archive :: ARCHIVE
 
       ! Extract density matrix
-      if (NOT chkfile.has_string("TAG? Density")) return
+      if (NOT chkfile.has_string("TAG Density")) return
 
       if (restricted) then
 
          ! Read restricted density (triangle) "name" into "D"
          D.create(.n_bf, "restricted")
          D.triangle.create(D.l_compress("restricted"))
-         chkfile.look_for("Total TAG? Density")
+         chkfile.look_for("Total TAG Density")
          chkfile.read_line
          chkfile.read(D.triangle)
          D.uncompress
@@ -3157,16 +3118,16 @@ contains
          total.create(.n_bf, "restricted")
          spin.create(.n_bf, "restricted")
 
-         ! Read total density (triangle) TAG? into "total"
+         ! Read total density (triangle) TAG into "total"
          total.triangle.create(total.l_compress("restricted"))
-         chkfile.look_for("Total TAG? Density")
+         chkfile.look_for("Total TAG Density")
          chkfile.read_line
          chkfile.read(total.triangle)
          total.uncompress
 
          ! Read spin density (triangle) trim(tag) into "spin"
          spin.triangle.create(spin.l_compress("restricted"))
-         chkfile.look_for("Spin TAG? Density")
+         chkfile.look_for("Spin TAG Density")
          chkfile.read_line
          chkfile.read(spin.triangle)
          spin.uncompress
@@ -3189,40 +3150,37 @@ contains
 
       ! Archive the density "D"
       archive.set_defaults
-      archive.set(.name,NAME?)
+      archive.set(.name,NAME)
       archive.write(D)
 
       ! Clean
-      if (present(dm)) then
-         dm.destroy
-         dm => D
-      else
-         D.destroy
+      if (present(dm)) then; dm => D
+      else;                  D.destroy
       end
 
    end
 
-   read_gX_SCF_dm(chkfile,restricted,dm) ::: get_from(read_gX_dm, TAG?=>SCF, NAME?=>"SCF_density_matrix"), private
-   ! Read a gaussian density matrix with TAG? which may be
-   ! "restricted" (or not) from "chkfile". Archive it as NAME?.
+   read_gX_SCF_dm(chkfile,restricted,dm) ::: get_from(read_gX_dm, TAG=>SCF, NAME=>"SCF_density_matrix"), private
+   ! Read a gaussian density matrix with TAG which may be
+   ! "restricted" (or not) from "chkfile". Archive it as NAME.
    ! If "dm" is present it is created to be the density matrix.
    end
 
-   read_gX_MP2_dm(chkfile,restricted,dm) ::: get_from(read_gX_dm, TAG?=>MP2,  NAME?=>"MP2_density_matrix"), private
-   ! Read a gaussian density matrix with TAG? which may be
-   ! "restricted" (or not) from "chkfile". Archive it as NAME?.
+   read_gX_MP2_dm(chkfile,restricted,dm) ::: get_from(read_gX_dm, TAG=>MP2,  NAME=>"MP2_density_matrix"), private
+   ! Read a gaussian density matrix with TAG which may be
+   ! "restricted" (or not) from "chkfile". Archive it as NAME.
    ! If "dm" is present it is created to be the density matrix.
    end
 
-   read_gX_MP3_dm(chkfile,restricted,dm) ::: get_from(read_gX_dm, TAG?=>MP3,  NAME?=>"MP3_density_matrix"), private
-   ! Read a gaussian density matrix with TAG? which may be
-   ! "restricted" (or not) from "chkfile". Archive it as NAME?.
+   read_gX_MP3_dm(chkfile,restricted,dm) ::: get_from(read_gX_dm, TAG=>MP3,  NAME=>"MP3_density_matrix"), private
+   ! Read a gaussian density matrix with TAG which may be
+   ! "restricted" (or not) from "chkfile". Archive it as NAME.
    ! If "dm" is present it is created to be the density matrix.
    end
 
-   read_gX_CC_dm(chkfile,restricted,dm) ::: get_from(read_gX_dm, TAG?=>CC,  NAME?=>"CC_density_matrix"), private
-   ! Read a gaussian density matrix with TAG? which may be
-   ! "restricted" (or not) from "chkfile". Archive it as NAME?.
+   read_gX_CC_dm(chkfile,restricted,dm) ::: get_from(read_gX_dm, TAG=>CC,  NAME=>"CC_density_matrix"), private
+   ! Read a gaussian density matrix with TAG which may be
+   ! "restricted" (or not) from "chkfile". Archive it as NAME.
    ! If "dm" is present it is created to be the density matrix.
    end
 
@@ -3296,9 +3254,9 @@ contains
    write_morphy98_wfn_file ::: leaky
    ! Write a morphy98 .wfn file
 
-   ENSURE(.occupation_numbers.created("restricted"), "No occupation numbers")
-   ENSURE(.orbital_energies.created("restricted"), "No orbital energies")
-   ENSURE(.molecular_orbitals.created("restricted"), "No orbitals")
+   ENSURE(.occupation_numbers.restricted.created, "No occupation numbers")
+   ENSURE(.orbital_energies.restricted.created, "No orbital energies")
+   ENSURE(.molecular_orbitals.restricted.created, "No orbitals")
 
       name :: STR
       wfnfile :: TEXTFILE*
@@ -3407,8 +3365,9 @@ contains
 
    write_aim2000_wfn_file ::: leaky
    ! Writes a proaim2000 .wfn file
-   ENSURE(.orbital_energies.created("restricted"), "No orbital energies")
-   ENSURE(.molecular_orbitals.created("restricted"), "No orbitals")
+   ENSURE(.occupation_numbers.restricted.created, "No occupation numbers")
+   ENSURE(.orbital_energies.restricted.created, "No orbital energies")
+   ENSURE(.molecular_orbitals.restricted.created, "No orbitals")
       name :: STR
       wfnfile :: TEXTFILE*
       lvec :: VEC{INT}*
@@ -3416,8 +3375,7 @@ contains
       dmatrix, cc :: MAT{REAL}*
       sh :: SHELL*
       i, j, pcount, n_orbitals, a, l, atomn, shelln :: INT
-      occ :: REAL
-
+    ! n_vars_format :: STR, parameter = "(A8, 10X, I5, 15X, I5, 15X, I5, 17X)"
       n_vars_format :: STR, parameter = "(A8, 10X, I5,' MOL ORBITALS', I7,' PRIMITIVES', I9,' NUCLEI')"
       atom_format :: STR, parameter = "(A5, I3, '    (CENTRE', 1I3, ') ', 3F12.8, '  CHARGE =', F5.1)"
       c_assignment_format :: STR, parameter = "('CENTRE ASSIGNMENTS  ', 20I3)"
@@ -3493,10 +3451,8 @@ contains
       dmatrix.to_product_of(cc,.molecular_orbitals.restricted)
 
       do i = 1, n_orbitals
-         occ = ZERO 
-         if (i<.n_a) occ = ONE
          write(unit=wfnfile.unit, fmt=mol_title_format) &
-            i, occ, .orbital_energies.restricted(i)
+            i, .occupation_numbers.restricted(i), .orbital_energies.restricted(i)
          write(unit = wfnfile.unit, fmt = coefficient_format) dmatrix(:, i)
       end
 
@@ -3562,10 +3518,9 @@ contains
       n :: INT
       mol :: MOLECULE
 
-   DIE_IF(.atom.destroyed,"no atom info")
-   DIE_IF(.atom_group.destroyed,"no atom_group info")
-   DIE_IF(n>.atom_group.dim,"group number n too big")
-   DIE_IF(n<1,"group number n less than 1!")
+   ENSURE(.atom.created,"no atom info")
+   ENSURE(.atom_group.created,"no atom_group info")
+   ENSURE(n<=.atom_group.dim,"group number n too big")
 
       ! Clear the pointer part
       mol.::nullify_ptr_part
@@ -3784,96 +3739,31 @@ contains
 !  Atom group info
 !  ===============
 
-   finalize_atom_groups ::: leaky
-   ! Finalize the .atom_group information
-   DIE_IF(NOT .atom_group.created,"no atom groups!")
-
-      if      (.atom_group.has_fchk_files)   then; .::make_groups_from_fchk
-      else if (.atom_group.has_atom_indices) then; .::make_groups_from_self
-      else;          DIE("Can't finalize atom groups")
-      end
-
-   end
-
-   make_groups_from_fchk ::: private, leaky
-   ! Make the atom groups by read in Gaussian Fchk files in they are defined for the groups
-   DIE_IF(.atom.created,"atoms already exists!")
-   DIE_IF(.atom_group.destroyed,"no atom groups")
-   DIE_IF(NOT .atom_group.has_fchk_files,"no fchk files")
-
-      mol :: MOLECULE*
-      g :: INT
-
-      do g = 1,.atom_group.dim
-
-         ! Create the mol & define it from FChk file
-         mol.::create
-         mol.::read_g09_FChk_file(.atom_group(g).fchk_file_name)
-
-         ! Rotate and translate it
-         mol.::rotate_by(.atom_group(g).rotation_matrix)
-         mol.atom.translate_by(.atom_group(g).shift)
-         mol.atom.set_group_to(g)
-
-         ! Add it to atom_group
-         .atom_group(g).mol => mol
-
-      end
-
-      ! Define .atom list
-      .::merge_atom_groups
-
-      ! Update group info from self
-      .::update_group_info 
-
-   end
-
-   make_groups_from_self ::: private, leaky
-   ! Make the atom groups from "self"
-   DIE_IF(NOT .atom_group.created,"no atom groups!")
-
-      mol :: MOLECULE*
-      g :: INT
-
-      ! Check is indices are sensible
-      .atom_group.finalize(.atom)
-
-      ! Create each group from "self"
-      do g = 1,.atom_group.dim 
-
-         ! Create mol & define it
-         mol.::create
-         self.::make_molecule_from_atom_group(g,mol)
-         mol.atom.set_group_to(g)
-
-         ! Add it to atom_group
-         .atom_group(g).mol => mol
-
-         ! Read the MOs & make the density
-         ! This won't work until Tonto can read in its own dump
-         if (.atom_group(g).MO_file_name/=" ") then
-             .atom_group(g).mol.::read_archive("molecular_orbitals","restricted")
-             .atom_group(g).mol.::make_scf_density_matrix
-         end
-
-      end
-
-      ! Update group infor from self
-      .::update_group_info 
-
-   end
-
-   update_group_info ::: leaky
-   ! Update .atom_group information (ANOs, crystal, SCF guess ...)
+   make_atom_group_info ::: leaky
+   ! Make the .atom_group information
    ENSURE(.atom.created,"atom groups must be defined after atoms=")
 
       mol :: MOLECULE*
       g :: INT
 
-      if (.scfdata.destroyed) then
-         .::set_scf_defaults
-         .scfdata.set_output(FALSE) 
+      do g = 1,.atom_group.dim 
+
+         mol.::create
+
+         .::make_molecule_from_atom_group(g,mol)
+
+         .atom_group(g).mol => mol
+
       end
+
+   end
+
+   update_atom_group_info ::: leaky
+   ! Make the .atom_group information
+   ENSURE(.atom.created,"atom groups must be defined after atoms=")
+
+      mol :: MOLECULE*
+      g :: INT
 
       do g = 1,.atom_group.dim 
 
@@ -3891,56 +3781,6 @@ contains
          mol.::set_scf_guess_defaults_from(.scfdata)
 
       end
-
-   end
-
-   merge_atom_groups ::: private, leaky
-   ! Delete any existing .atom and .basis and set to the concatenation
-   ! of the molecules in .atom_group
-
-      mol :: MOLECULE*
-      g :: INT
-
-      if (.atom.created)  .atom.destroy
-      if (.basis.created) .basis.destroy
-     
-      ! Append remaining ...
-      do g = 1,.atom_group.dim
-
-         mol => .atom_group(g).mol
-
-         DIE_IF(mol.destroyed,"no mol "//trim(g.to_str))
-         DIE_IF(mol.basis.destroyed,"no basis on mol "//trim(g.to_str))
-         DIE_IF(mol.atom.destroyed,"no atom list in mol "//trim(g.to_str))
-
-         if (g==1) then
-
-            ! Initial atom/basis list
-            .name = .atom_group(g).name
-            .basis.create_copy(mol.basis)
-            .atom.create_copy(mol.atom)
-
-         else
-
-            ! Append basis & atoms
-            .name = trim(.name) // "_" // trim(.atom_group(g).name)
-            .basis.append(mol.basis)
-            .atom.append(mol.atom)
-
-         end
-
-      end
-
-      ! Unresolve atomic bases
-      .atom.nullify_bases
-
-      ! Uniquify basis
-      .basis.remove_repetitions
-
-      ! Finally: set atom info & basis info (leaky)
-      ! NOTE: charge & multiplicity not set
-      .::set_atom_info
-      .::resolve_basis_info
 
    end
 
@@ -4038,12 +3878,8 @@ contains
    ! Move the origin to the center of mass and change to the principal axis
    ! coordinate system, where the symmetric top axis is the z axis and where the
    ! determinant of the axes transformation is 1.
-      self :: INOUT
-
    ENSURE(.atom.created,"atom list required")
-
       .atom.change_to_principal_top_axes
-
    end
 
    molecular_weight result (res)
@@ -4086,7 +3922,7 @@ contains
    ENSURE(stdin.buffer.n_items==4 OR stdin.buffer.n_items==5,"origin shift needed on same line")
       shift :: VEC{REAL}(3)
 
-      stdin.read_quantity(shift)
+      stdin.read(shift)
       .atom.translate_by(shift)
 
       if (.becke_grid.created) .becke_grid.set_grid_data(.atom) ! leaky
@@ -4279,7 +4115,7 @@ contains
 
    no_of_occupied_NOs(genre,tol) result (res)
    ! Returns the number of non-zero occupied natural orbitals. For this purpose,
-   ! zero is defined to be "tol" if present, or TOL(7) otherwise
+   ! zero is defined to be "tol" if present, or TOL(7) otherwize
       genre :: STR, optional
       tol :: REAL, optional
       res :: INT
@@ -4303,18 +4139,6 @@ contains
          AND ( .::has_all_ANO_interpolators &
          OR    .::has_all_interpolators &
          OR    .::has_all_spherical_atom_data ) 
-   end
-
-   guess_scf_method result (res) 
-   ! Guess the scf method in use.
-      self :: INOUT
-      res :: STR
-
-      if      (.scfdata.created) then;            res = .scfdata.scf_kind
-      else if (.molecular_orbitals.created) then; res = .molecular_orbitals.guess_scf_kind
-      else;                                       DIE("no way to  guess!")
-      end
-
    end
 
 !  =================
@@ -4755,30 +4579,6 @@ contains
 !  ===========
 !  Shell pairs
 !  ===========
-
-   get_precomputed_shell_pair(shell,index) ::: leaky
-   ! Get the SHELL2 object "shell" correponding to the pair index "index"
-   ! Also return the basis function start indices "fa", "la", etc ...
-      index :: INT, IN
-      shell :: SHELL2, OUT
-
-      a,b,aa,sa,bb,sb :: INT
-
-      a  = (1+int(sqrt(8.0d0*index-7.0d0)))/2
-      b  = index - a*(a-1)/2
-
-      aa = .atom_for_shell(a)
-      bb = .atom_for_shell(b)
-
-      sa = .basis_shell_for_shell(a)
-      sb = .basis_shell_for_shell(b)
-
-      shell.set_and_precompute_from( &
-         .precomputed_basis_shellpair(sa,sb), & 
-         .atom(aa).position,.atom(bb).position, &
-         aa==bb,skip=FALSE)
-
-   end
 
    get_precomputed_shell_pair(shell,index,fa,la,na,fb,lb,nb) ::: leaky
    ! Get the SHELL2 object "shell" correponding to the pair index "index"
@@ -5224,7 +5024,7 @@ contains
          end
       end
 
-      DIE_IF(res==0,"atom basis label not found")
+   ENSURE(res/=0,"atom basis label not found")
 
    end
 
@@ -5338,17 +5138,17 @@ contains
 
    end
 
-   make_normalised_contraction_mx(cc_mat)
+   make_normalized_contraction_mx(cc_mat)
    ! Returns the matrix of complete contraction coefficients for each
    ! basis set. Size of cc_mat is [.n_prim,.n_bf]. Primitive components
-   ! are properly normalised.
+   ! are properly normalized.
       cc_mat :: MAT{REAL}, OUT
    ENSURE(cc_mat.dim1==.n_prim,"wrong shape, cc_mat")
    ENSURE(cc_mat.dim2==.n_bf,  "wrong shape, cc_mat")
 
       a,b,p,ap,ab :: INT
 
-      .basis.renormalise
+      .basis.renormalize
 
       b = 1
       p = 1
@@ -5356,12 +5156,12 @@ contains
       do a = 1,.n_atom
          ap = .atom(a).basis.n_prim
          ab = .atom(a).basis.n_bf
-         .atom(a).basis.make_normalised_contraction_mx(cc_mat(p:p+ap-1,b:b+ab-1))
+         .atom(a).basis.make_normalized_contraction_mx(cc_mat(p:p+ap-1,b:b+ab-1))
          p = p + ap
          b = b + ab
       end
 
-      .basis.unnormalise
+      .basis.unnormalize
 
    end
 
@@ -5392,7 +5192,7 @@ contains
 
          case ("restricted")
 
-            ENSURE(.natural_orbitals.created("restricted"),"no NO's")
+            ENSURE(.natural_orbitals.restricted.created,"no NO's")
             
             occ.create(.n_bf)
             NO.create(.n_bf,.n_bf)
@@ -5418,20 +5218,12 @@ contains
    end
 
    make_scf_density_matrix(damp,n_a,method) ::: leaky
-   ! Make the density matrix from the molecular orbitals. 
-   ! . If "damp" is present use it to damp the updated density matrix.
-   !   An .old_density_matrix must exist for this to work.
-   ! . If "n_a" is present it is used as the number of alpha electrons
-   !   in embedded scf calculations. 
-   ! . If "method" is present it is used as the kind of density matrix
-   !   to make, otherwise taken from .scfdata.scf_kind, or guessed
-   !   from the spinorbital_kind of the MO's.
-   ! NOTE:
-   ! . If .scfdata.do_delta_build is set and a a .delta_density_matrix
-   !   is created, then a delta density is made.
-   ! . If .scfdata.apply_pFON a finite temperature density matrix is
-   !   made with temperature .scfdata.temperature_for_pFON (untested)
-      self :: INOUT
+   ! Make the density matrix from the molecular orbitals. If "damp" is present
+   ! use it to damp the updated density matrix. If "n_a" is present it is used
+   ! as the number of alpha electrons in embedded scf calculations. If
+   ! "method" is present it is used as the kind of density matrix to make.
+   ! NOTE: the final computed density matrix is written to an archive
+   ! NOTE: if any old density matrix exists, it is saved in an old archive.
       damp :: BIN, optional
       n_a :: INT, optional
       method :: STR, optional
@@ -5488,7 +5280,7 @@ contains
 
          case ("rhf","rks","xray_rks","xray_rhf","noninteracting-group-rhf")
          
-            ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+            ENSURE(.molecular_orbitals.restricted.created,"no MO's")
             ENSURE(.spin_multiplicity==1,"this is not a singlet state")
           
             if (use_pFON) then
@@ -5514,7 +5306,7 @@ contains
          
          case ("progroup")
          
-            ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+            ENSURE(.molecular_orbitals.restricted.created,"no MO's")
             ENSURE(.spin_multiplicity==1,"this is not a singlet state")
             ENSURE(present(n_a),"n_a must be specified")
             
@@ -5524,7 +5316,7 @@ contains
          
          case ("rohf")
          
-            ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+            ENSURE(.molecular_orbitals.restricted.created,"no MO's")
             
             MOa => .molecular_orbitals.restricted(:,1:.n_a)
             MOb => .molecular_orbitals.restricted(:,1:.n_b)
@@ -5535,8 +5327,6 @@ contains
          
          case ("uhf","uks","xray_uhf","xray_uks", &
                "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
-         
-            ENSURE(.molecular_orbitals.created("unrestricted"),"no MO's")
           
             if (use_pFON) then
           
@@ -5563,7 +5353,7 @@ contains
          
          case ("ghf")
          
-            ENSURE(.molecular_orbitals.created("general"),"no MO's")
+            ENSURE(.molecular_orbitals.general.created,"no MO's")
             ENSURE(.spin_multiplicity==1,"this is not a singlet state")
             
             MO => .molecular_orbitals.general(:,1:.n_e)
@@ -5590,7 +5380,7 @@ contains
             CDa.to_product_of(CMOa,CMOa,dagger_b=TRUE)
             CDb.to_product_of(CMOb,CMOb,dagger_b=TRUE)
          
-         case ("gchf","xray_gchf")
+         case ("gchf")
          
             ENSURE(.molecular_orbitals.created("general_complex"),"no MO's")
             
@@ -6267,7 +6057,7 @@ contains
                CDb = ZERO
             end
 
-         case ("gchf","xray_gchf")
+         case ("gchf")
 
             CD =>  .density_matrix.general_complex
 
@@ -6469,17 +6259,15 @@ contains
 !  Expectation value
 !  =================
 
-   expectation(X) result (res) ::: PURE
+   expectation(X) result (res)
    ! Evaluates the expectation value of the matrix of the operator X
    ! with the current density matrix
-      self :: IN
-      X :: MAT{REAL}, IN
+      X :: MAT{REAL}
       res :: REAL
 
    ENSURE(X.is_square,"X operator matrix is not square")
 
       orb_kind :: STR
-      W :: MAT{REAL}@
 
       res = ZERO
 
@@ -6498,9 +6286,7 @@ contains
 
         case ("general_complex")
            ENSURE(X.dim1==2*.n_bf,"wrong size, X")
-           W = RE(.density_matrix.general_complex)
-           res = MAT{REAL}:trace_product_with(W,X)
-           deallocate(W)
+           res = MAT{REAL}:trace_product_with(RE(.density_matrix.general_complex),X)
 
         case default
            DIE("unimplemented kind, "//trim(orb_kind))
@@ -6516,53 +6302,71 @@ contains
    rotate_by(R)
    ! Rotate the whole molecule using matrix "R" which specifies how positions in
    ! space are to be transformed i.e. x' = Rx.
-      self :: INOUT
-      R :: MAT{REAL}, IN
+      R :: MAT{REAL}
 
    ENSURE(R.is_square,"rotation matrix is not square")
    ENSURE(R.dim1==3,"rotation matrix must be 3x3")
 
-      if (R.is_zero) return
-
       .atom.rotate_by(R)
-
-      .::rotate_molecular_orbitals(R)
-      .::rotate_density_matrix(R)
+      .::rotate_MOs_and_density_matrix(R)
 
    end
 
-   rotate_molecular_orbitals(R)
-   ! Rotate the molecular orbital matrix using matrix "R" which
+   rotate_MOs_and_density_matrix(R)
+   ! Rotate the MO's and density matrix using matrix "R" which
    ! specifies how positions in space are to be transformed 
    ! i.e. x' = Rx.
-      self :: INOUT
+      self :: IN
       R :: MAT{REAL}, IN
  
-      genre :: STR
+      mo_kind :: STR
  
       if (.molecular_orbitals.destroyed) return
       if (.molecular_orbitals.all_destroyed) return
  
-      genre = .molecular_orbitals.spinorbital_kind
-
-      select case (genre)
+      mo_kind = .molecular_orbitals.spinorbital_kind
+      select case (mo_kind)
 
          case("restricted")
-            .::rotate_molecular_orbitals_r(.molecular_orbitals.restricted,R)
+                  .::rotate_orbitals(.molecular_orbitals.restricted,R)
+                  .::rotate_density_matrix(.density_matrix.restricted,R)
 
-         case default;   DIE("unknown kind, "//trim(genre))
+         case("unrestricted")
+                  .::rotate_orbitals(.molecular_orbitals.alpha,R)
+                  .::rotate_orbitals(.molecular_orbitals.beta,R)
+                  .::rotate_density_matrix(.density_matrix.alpha,R)
+                  .::rotate_density_matrix(.density_matrix.beta,R)
+
+         case("general")
+                  .::rotate_orbitals(.molecular_orbitals.general.alpha_alpha,R)
+                  .::rotate_orbitals(.molecular_orbitals.general.alpha_beta,R)
+                  .::rotate_orbitals(.molecular_orbitals.general.beta_alpha,R)
+                  .::rotate_orbitals(.molecular_orbitals.general.beta_beta,R)
+                  .::rotate_density_matrix(.density_matrix.general.alpha_alpha,R)
+                  .::rotate_density_matrix(.density_matrix.general.alpha_beta,R)
+                  .::rotate_density_matrix(.density_matrix.general.beta_alpha,R)
+                  .::rotate_density_matrix(.density_matrix.general.beta_beta,R)
+
+         case("restricted_complex")
+                ! .::rotate_orbitals(.molecular_orbitals.restricted_complex,R)
+         case("unrestricted_complex")
+                ! .::rotate_orbitals(.molecular_orbitals.alpha_complex,R)
+                ! .::rotate_orbitals(.molecular_orbitals.beta_complex,R)
+         case("general_complex")
+                ! .::rotate_orbitals(.molecular_orbitals.general_complex.alpha_alpha,R)
+                ! .::rotate_orbitals(.molecular_orbitals.general_complex.alpha_beta,R)
+                ! .::rotate_orbitals(.molecular_orbitals.general_complex.beta_alpha,R)
+                ! .::rotate_orbitals(.molecular_orbitals.general_complex.beta_beta,R)
+         case default;   DIE("unknown kind, "//trim(mo_kind))
 
       end
  
    end
 
-   rotate_molecular_orbitals_r(MO,R)
-   ! Rotate a restricted molecular orbitals "MO" using matrix "R",
-   ! where "R" specifies how positions in space are to be transformed
-   ! i.e. x' = Rx.
-      self :: IN
-      MO :: MAT{REAL}, INOUT
-      R :: MAT{REAL}, IN
+   rotate_orbitals(MO,R)
+   ! Rotate the molecular orbitals "MO" using matrix "R", where "R" specifies
+   ! how positions in space are to be transformed i.e. x' = Rx.
+      MO,R :: MAT{REAL}
 
    ENSURE(MO.dim1==.n_bf,"wrong dim1 for MO orbitals")
    ENSURE(R.is_square,"rotation matrix R is not square")
@@ -6590,39 +6394,10 @@ contains
 
    end
 
-   rotate_density_matrix(R)
-   ! Rotate the resricted density matrix using matrix "R" which
-   ! specifies how positions in space are to be transformed 
-   ! i.e. x' = Rx.
-   ! NOTE: the kind is taken from the MO's.
-      self :: INOUT
-      R :: MAT{REAL}, IN
- 
-      genre :: STR
- 
-      if (.molecular_orbitals.destroyed) return
-      if (.molecular_orbitals.all_destroyed) return
- 
-      genre = .molecular_orbitals.spinorbital_kind
-
-      select case (genre)
-
-         case("restricted")
-            .::rotate_density_matrix_r(.density_matrix.restricted,R)
-
-         case default
-            DIE("unknown kind, "//trim(genre))
-
-      end
- 
-   end
-
-   rotate_density_matrix_r(P,R)
+   rotate_density_matrix(P,R)
    ! Rotate the density matrix "P" using matrix "R", where "R" specifies
    ! how positions in space are to be transformed i.e. x' = Rx.
-      self :: IN
-      P :: MAT{REAL}, INOUT
-      R :: MAT{REAL}, IN
+      P,R :: MAT{REAL}
 
    ENSURE(P.is_square,"wrong shape for density matrix P")
    ENSURE(P.dim1==.n_bf,"wrong dim1 for density matrix P")
@@ -6647,7 +6422,7 @@ contains
          f = .first_basis_fn_for_shell(s)
          l = .last_basis_fn_for_shell(s)
          a = .angular_moment_for_shell(s)
-         P(:,f:l).to_product_of(new(:,f:l),tr(a)[:,:],transpose_b=TRUE)
+         P(:,f:l).to_product_of(new(:,f:l),transpose(tr(a)[:,:]))
       end
 
       tr.destroy
@@ -6701,7 +6476,7 @@ contains
       ! Rotate density
       P.create(mol.n_bf,mol.n_bf)
       .::put_group_density_to(P,g,mol)
-      mol.::rotate_density_matrix_r(P,R)
+      mol.::rotate_density_matrix(P,R)
       .::set_group_density_from(P,g,mol)
       P.destroy
 
@@ -7241,8 +7016,8 @@ contains
    end
 
 
-!   stabilize(mat,orb_kind) ::: get_from(stabilize, symmetrise=>stabilize)
-!   ! Symmetrise an opmatrix matrix "mat" of spinorbital_kind "orb_kind" (if
+!   stabilize(mat,orb_kind) ::: get_from(stabilize, symmetrize=>stabilize)
+!   ! Symmetrize an opmatrix matrix "mat" of spinorbital_kind "orb_kind" (if
 !   ! specified)
 !   end
 
@@ -7558,7 +7333,6 @@ contains
       archive.set(.name,"progroup_molecular_orbitals"); archive.delete_all_genres
 
       archive.set(.name,"U_electric_dipole");           archive.delete_all_genres
-      archive.set(.name,"U2_electric_dipole");          archive.delete_all_genres
 
       archive.set(.name,"j_matrix");                    archive.delete_all_genres
       archive.set(.name,"constraint_matrix");           archive.delete_all_genres
@@ -7655,7 +7429,7 @@ contains
    put
    ! Put all the available molecule information on file
 
-   DIE_IF(tonto.destroyed,"no tonto variable")
+   ENSURE(tonto.created,"no tonto variable")
 
       .::put_basics
 
@@ -7761,7 +7535,7 @@ contains
       .atom.put_pADP_errors_to(dX)
 
       ! Make the CIF ADP errors and reset
-      .crystal.make_CIF_esds(.cif,.atom,esd)
+      .crystal.make_CIF_errors(.cif,esd)
       esd = sqrt(esd)
       .atom.set_pADP_errors_to(esd)
       
@@ -7909,9 +7683,9 @@ contains
       stdout.show("No. of primitives      =",.n_prim)
       stdout.flush
 
-      .basis.renormalise
+      .basis.renormalize
       .basis.put
-      .basis.unnormalise
+      .basis.unnormalize
 
    end
 
@@ -8217,9 +7991,19 @@ contains
 !  Put CIF
 !  =======
 
-   put_CIF_banner ::: private
-   ! Prints out the CIF banner
+   put_CIF
+   ! Prints out a cif file for the crystal asymmetric unit
+   ENSURE(.crystal.created, "No crystal")
+   ENSURE(.atom.created, "No atom")
 
+      scf_type :: STR
+      mass,radius :: REAL
+
+      ! Create the cif file
+      stdout.redirect(trim(.name)//".standard.cif")
+      stdout.open(for="write")
+
+      ! Put the header information
       stdout.text("# ========================")
       stdout.text("# TONTO generated CIF file")
       stdout.text("# ========================")
@@ -8229,182 +8013,36 @@ contains
       stdout.text("_audit_creation_date               "//trim(std_time.current_date_YMD_str))
       stdout.text("_audit_creation_method             'Tonto "//TONTO_VERSION//" v. "//SVN_VERSION)
       stdout.flush 
-
-   end
-
-   wavefunction_descriptor result (psi) ::: private
-   ! Get the wavefunction details. Only call this if an SCF
-   ! calculation was completed!
-      self :: IN
-      psi :: VEC{STR}(5)
-
-   DIE_IF(.scfdata.destroyed,"no wavefunction")
-
-      field :: STR
-      radius :: REAL
-      L :: INT
-
-      psi = " "
-
-      ! QM method
-      psi(1) = "Hartree-Fock"
-      if (.scfdata.is_DFT_calculation) then
-         psi(1) = "Kohn-Sham/"// &
-                  trim(.scfdata.dft_exchange_functional)// &
-                  trim(.scfdata.dft_correlation_functional)
-      end
-
-      if (.scfdata.using_cluster_charges) then
-
-         ! Add crystal field
-         field = "CF"
-         if (.scfdata.using_SC_cluster_charges) field = "SCCF"
-
-         ! Add L
-         if (.scfdata.using_qq_cluster_charges) then
-            field = trim(field)//" L=2"
-         else
-            field = trim(field)//" L=1"
-         end
-
-         ! Radius
-         radius = .scfdata.cluster_radius*ANGSTROM_PER_BOHR
-
-         ! All bits
-         psi(1) = trim(psi(1))//"/"//   &
-                  trim(field) //" R="// &
-                  trim(radius.to_str("f3.1"))//" A"
-      end
-
-      ! AO kind
-      psi(2) = .scfdata.spinorbital_kind
-
-      ! Basis
-      psi(3) = "custom?"
-      if (.basis_name/=" ") psi(3) = trim(.basis_name)
-
-      ! Basis kind
-      psi(4) = "cartesian"
-      if (.use_spherical_basis) psi(4) = "spherical-harmonic"
-
-      ! Basis max L
-      L = .basis.maximum_basis_set_l_value
-      psi(5) = trim(L.to_str)
-
-   end
-
-   put_CIF_basics
-   ! Put basic molecule information
-
-      stdout.flush
-      stdout.text("# ----------------")
-      stdout.text("# Publication info")
-      stdout.text("# ----------------")
-
-      stdout.flush
-      stdout.text("_publ_contact_author")
-      stdout.text(";")
-      stdout.text("    Dr. Tonto Magnifico")
-      stdout.text(";")
-      stdout.text("_publ_contact_author_email         'tonto.magnifico@gmail.com'")
-      stdout.text("_publ_contact_author_fax           'use e-mail in century 21'")
-      stdout.text("_publ_contact_author_phone         '+61 8 6488 3138'")
-      stdout.text("_publ_requested_journal            'IUCrJ'")
-      stdout.text("_publ_section_title")
-      stdout.text(";")
-      stdout.text("                                   HAR for "//trim(.name))
-      stdout.text(";")
-
-      stdout.flush
-      stdout.text("loop_")
-      stdout.text("    _publ_author_name")
-      stdout.text("    'Tonto Magnifico'")
-
-      stdout.flush
-      stdout.text("_publ_author_address")
-      stdout.text(";")
-      stdout.text("    Dr. Tonto Magnifico")
-      stdout.text("    1 El Camino Ciberespacio")
-      stdout.text("    Tierra Austral del Espiritu Santo")
-      stdout.text(";")
-
-      stdout.flush
-      stdout.text("# --------------------")
+      stdout.text("# ==================--")
       stdout.text("# Chemical information")
-      stdout.text("# --------------------")
-
-      stdout.flush
+      stdout.text("# ==================--")
+      stdout.flush 
       stdout.text("_chemical_name_common              "//trim(.name))
-      stdout.text("_chemical_formula_sum              '"//trim(.::chemical_formula(with_spaces=TRUE))//"'")
-      stdout.text("_chemical_formula_moiety           '"//trim(.::chemical_formula(with_spaces=TRUE))//"'")
-      stdout.text("_chemical_formula_weight           "//trim(REAL::to_str(.atom.molecular_weight,"f10.4")))
+      stdout.text("_chemical_formula_moiety           '"//trim(.atom.chemical_formula(with_spaces=TRUE))//"'")
+      stdout.text("_chemical_formula_sum              '"//trim(.atom.chemical_formula(with_spaces=TRUE))//"'")
+      mass = .atom.mass
+      stdout.text("_chemical_formula_weight           "//trim(mass.to_str("f8.2")))
       stdout.text("_chemical_compound_source          'see text'")
       stdout.text("_chemical_absolute_configuration   unk")
 
-      stdout.flush
-      stdout.text("# Tonto specific keys")
-
-      stdout.flush
-      stdout.text("_chemical_formula_spin_mult         "//trim(INT::to_str(.spin_multiplicity)))
-      stdout.text("_chemical_formula_n_electrons       "//trim(INT::to_str(.n_e)))
-      stdout.text("_chemical_formula_n_alpha_electrons "//trim(INT::to_str(.n_a)))
-      stdout.text("_chemical_formula_n_beta_electrons  "//trim(INT::to_str(.n_b)))
-
-   end
-
-   put_asym_unit_CIF
-   ! Prints out a cif file for the crystal asymmetric unit
-   ! Warning: this outputs in the current crystal axis system
-   ENSURE(.crystal.created, "No crystal")
-   ENSURE(.atom.created, "No atom")
-
-      psi :: VEC{STR}(5)
-
-      stdout.redirect(trim(.name)//".asymmetric.cif")
-
-      ! Reset no. of fields per line
-      stdout.set_no_of_fields_per_line(5)
-
-      ! Put the header information
-      .::put_CIF_banner
-      .::put_CIF_basics
-
-      ! Get wavefunction details
-      psi = .::wavefunction_descriptor
-
-      ! Create CIF
-      if (.cif.destroyed) .cif.create
-
       ! Put the crystal information
-      .crystal.put_asymm_unit_CIF(.cif,psi)
-
-      ! Clean up
-      stdout.revert
-
-   end
-
-   put_molecule_CIF
-   ! Prints out an accurate cif file for the actual molecule
-   ! Warning: this outputs in the current crystal axis system
-   ENSURE(.crystal.created, "No crystal")
-   ENSURE(.atom.created, "No atom")
-
-      psi :: VEC{STR}(5)
-
-      stdout.redirect(trim(.name)//".molecule.cif")
-
-      ! Reset no. of fields per line
-      stdout.set_no_of_fields_per_line(5)
-
-      ! Put the header information
-      .::put_CIF_banner
-      .::put_CIF_basics
-
-      ! Get wavefunction details
-      psi = .::wavefunction_descriptor
+      scf_type = " "
+      if (.scfdata.created) then
+         scf_type = .scfdata.scf_kind
+         if (.scfdata.is_DFT_calculation) then
+            scf_type = trim(scf_type)//" "// &
+                       trim(.scfdata.dft_exchange_functional)// &
+                       trim(.scfdata.dft_correlation_functional)
+         end
+         if (.scfdata.using_cluster_charges) then
+            radius = .scfdata.cluster_radius.to_units("angstrom")
+            scf_type = trim(scf_type)//" using cluster charges, radius="// &
+                       trim(radius.to_str("f5.1"))//" angstrom"
+         end
+      end
 
       if (.cif.destroyed) .cif.create
-      .crystal.put_molecule_CIF(.cif,psi,.atom)
+      .crystal.put_CIF(.cif,.basis_name,scf_type)
 
       ! Clean up
       stdout.revert
@@ -8413,28 +8051,121 @@ contains
 
    put_accurate_CIF
    ! Prints out an accurate cif file for the crystal asymmetric unit
-   ! Warning: this outputs in the current crystal axis system
    ENSURE(.crystal.created, "No crystal")
    ENSURE(.atom.created, "No atom")
 
-      psi :: VEC{STR}(5)
+      scf_type :: STR
+      mass,radius :: REAL
 
+      ! Create the cif file
       stdout.redirect(trim(.name)//".accurate.cif")
+      stdout.open(for="write")
+
+      ! Put the header information
+      stdout.text("# ========================")
+      stdout.text("# TONTO generated CIF file")
+      stdout.text("# ========================")
+      stdout.flush 
+      stdout.text("data_"//trim(.name))
+      stdout.flush 
+      stdout.text("_audit_creation_date               "//trim(std_time.current_date_YMD_str))
+      stdout.text("_audit_creation_method             'Tonto "//TONTO_VERSION//" v. "//SVN_VERSION)
+      stdout.flush 
+      stdout.text("# --------------------")
+      stdout.text("# Chemical information")
+      stdout.text("# --------------------")
+      stdout.flush 
+      stdout.text("_chemical_name_common              "//trim(.name))
+      stdout.text("_chemical_formula_moiety           '"//trim(.atom.chemical_formula(with_spaces=TRUE))//"'")
+      stdout.text("_chemical_formula_sum              '"//trim(.atom.chemical_formula(with_spaces=TRUE))//"'")
+      mass = .atom.mass
+      stdout.text("_chemical_formula_weight           "//trim(mass.to_str("f8.2")))
+      stdout.text("_chemical_compound_source          'see text'")
+      stdout.text("_chemical_absolute_configuration   unk")
+
+      ! Put the crystal information
+      scf_type = " "
+      if (.scfdata.created) then
+         scf_type = .scfdata.scf_kind
+         if (.scfdata.is_DFT_calculation) then
+            scf_type = trim(scf_type)//" "// &
+                       trim(.scfdata.dft_exchange_functional)// &
+                       trim(.scfdata.dft_correlation_functional)
+         end
+         if (.scfdata.using_cluster_charges) then
+            radius = .scfdata.cluster_radius.to_units("angstrom")
+            scf_type = trim(scf_type)//" using cluster charges, radius="// &
+                       trim(radius.to_str("f5.1"))//" angstrom"
+         end
+      end
+
+      if (.cif.destroyed) .cif.create
+      .crystal.put_accurate_CIF(.cif,.basis_name,scf_type)
+
+      ! Clean up
+      stdout.revert
+
+   end
+
+   put_molecule_CIF
+   ! Prints out an accurate cif file for the actual molecule
+   ENSURE(.crystal.created, "No crystal")
+   ENSURE(.atom.created, "No atom")
+
+      scf_type :: STR
+      mass,radius :: REAL
+
+      ! Create the cif file
+      stdout.redirect(trim(.name)//".molecule.cif")
+      stdout.open(for="write")
 
       ! Reset no. of fields per line
+      stdout.save
       stdout.set_no_of_fields_per_line(5)
 
       ! Put the header information
-      .::put_CIF_banner
-      .::put_CIF_basics
+      stdout.text("# ========================")
+      stdout.text("# TONTO generated CIF file")
+      stdout.text("# ========================")
+      stdout.flush 
+      stdout.text("data_"//trim(.name))
+      stdout.flush 
+      stdout.text("_audit_creation_date               "//trim(std_time.current_date_YMD_str))
+      stdout.text("_audit_creation_method             'Tonto "//TONTO_VERSION//" v. "//SVN_VERSION)
+      stdout.flush 
+      stdout.text("# ==================--")
+      stdout.text("# Chemical information")
+      stdout.text("# ==================--")
+      stdout.flush 
+      stdout.text("_chemical_name_common              "//trim(.name))
+      stdout.text("_chemical_formula_moiety           '"//trim(.atom.chemical_formula(with_spaces=TRUE))//"'")
+      stdout.text("_chemical_formula_sum              '"//trim(.atom.chemical_formula(with_spaces=TRUE))//"'")
+      mass = .atom.mass
+      stdout.text("_chemical_formula_weight           "//trim(mass.to_str("f8.2")))
+      stdout.text("_chemical_compound_source          'see text'")
+      stdout.text("_chemical_absolute_configuration   unk")
 
-      ! Get wavefunction details
-      psi = .::wavefunction_descriptor
+      ! Put the crystal information
+      scf_type = " "
+      if (.scfdata.created) then
+         scf_type = .scfdata.scf_kind
+         if (.scfdata.is_DFT_calculation) then
+            scf_type = trim(scf_type)//" "// &
+                       trim(.scfdata.dft_exchange_functional)// &
+                       trim(.scfdata.dft_correlation_functional)
+         end
+         if (.scfdata.using_cluster_charges) then
+            radius = .scfdata.cluster_radius.to_units("angstrom")
+            scf_type = trim(scf_type)//" using cluster charges, radius="// &
+                       trim(radius.to_str("f5.1"))//" angstrom"
+         end
+      end
 
       if (.cif.destroyed) .cif.create
-      .crystal.put_accurate_CIF(.cif,psi,.atom)
+      .crystal.put_molecule_CIF(.cif,.atom,.basis_name,scf_type)
 
       ! Clean up
+      stdout.unsave
       stdout.revert
 
    end
@@ -8496,7 +8227,9 @@ contains
    ENSURE(.crystal.created, "No crystal")
    ENSURE(.atom.created, "No atom")
 
+      ! Create the NKA file
       stdout.redirect("stdout.nka_excel")
+      stdout.open(for="write")
 
       ! Reset accuracy
       stdout.save

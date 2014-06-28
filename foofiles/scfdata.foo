@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: scfdata.foo 4411 2014-06-21 09:48:32Z bucinsky $
+! $Id: scfdata.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 module SCFDATA
@@ -52,65 +52,55 @@ contains
       res :: BIN
    end
 
-   nullify_ptr_part 
+   nullify_ptr_part
    ! Nullify the pointer parts of self
-      self :: INOUT
-
       .diis.nullify_ptr_part
-
-      nullify(.cphf_diis)
       nullify(.crystal)
       nullify(.cluster)
       nullify(.cluster_charges)
       nullify(.cluster_charge_positions)
       nullify(.table_info)
       nullify(.table)
-   
    end
 
    destroy_ptr_part ::: leaky
    ! Destroy the pointer parts of self
-
       .diis.destroy_ptr_part
-
-      .cphf_diis.destroy
       nullify(.crystal)
       .cluster.destroy
       .cluster_charges.destroy
       .cluster_charge_positions.destroy
       .table_info.destroy
       .table.destroy
-
    end
 
-   create_copy(scfdata) ::: leaky
-   ! Create a copy of the "scfdata" object
-      self :: PTR
-      scfdata :: SCFDATA
-      .create
-      .copy(scfdata)
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
    end
 
-   copy(scfdata) ::: leaky
-   ! Make a copy of the "scfdata" object
-      scfdata :: SCFDATA
+   copy(object) ::: leaky, pure
+   ! Make a copy of the "object"
+      self :: OUT
+      object :: SCFDATA, IN
 
-      self = scfdata
+      self = object
 
       .nullify_ptr_part
 
-      .diis.copy(scfdata.diis)
+      COPY_COMPONENT(diis)
 
-      if (scfdata.cphf_diis.created)                .cphf_diis.create_copy(scfdata.cphf_diis)
+      if (object.crystal.created)  .crystal => object.crystal
 
-      if (scfdata.crystal.created)                  .crystal => scfdata.crystal
+      CREATE_COPY_COMPONENT(cluster)
+      CREATE_COPY_COMPONENT(cluster_charges)
+      CREATE_COPY_COMPONENT(cluster_charge_positions)
 
-      if (scfdata.cluster.created)                  .cluster.create_copy(scfdata.cluster)
-      if (scfdata.cluster_charges.created)          .cluster_charges.create_copy(scfdata.cluster_charges)
-      if (scfdata.cluster_charge_positions.created) .cluster_charge_positions.create_copy(scfdata.cluster_charge_positions)
-
-      if (scfdata.table_info.created)               .table_info.create_copy(scfdata.table_info)
-      if (scfdata.table.created)                    .table.create_copy(scfdata.table)
+      CREATE_COPY_COMPONENT(table_info)
+      CREATE_COPY_COMPONENT(table)
 
    end
 
@@ -293,22 +283,22 @@ contains
 
       select case (.scf_kind)
 
-         case ("xray_rhf","xray_uhf","xray_gchf")
-            ENSURE(.crystal.xray_data.created,"No diffraction data")
-            .penalty = .crystal.xray_data.F_chi2
+         case ("xray_rhf","xray_uhf")
+            ENSURE(.crystal.xray_F_data.created,"No diffraction data")
+            .penalty = .crystal.xray_F_data.LS_fit.chi2
 
          case ("xray_rks","xray_uks")
-            ENSURE(.crystal.xray_data.created,"No diffraction data")
-            .penalty = .crystal.xray_data.F_chi2
+            ENSURE(.crystal.xray_F_data.created,"No diffraction data")
+            .penalty = .crystal.xray_F_data.LS_fit.chi2
 
          case ("pnd_uhf","pnd_uks")
-            ENSURE(.crystal.pnd_data.created,"No diffraction data")
-            .penalty = .crystal.pnd_data.F_chi2
+            ENSURE(.crystal.pnd_F_data.created,"No diffraction data")
+            .penalty = .crystal.pnd_F_data.LS_fit.chi2
 
          case ("xray_pnd_uhf","xray_pnd_uks") 
-            ENSURE(.crystal.pnd_data.created,"No PND diffraction data")
-            ENSURE(.crystal.xray_data.created,"No X-ray diffraction data")
-            .penalty = log(.crystal.xray_data.F_chi2*.crystal.pnd_data.F_chi2)
+            ENSURE(.crystal.pnd_F_data.created,"No PND diffraction data")
+            ENSURE(.crystal.xray_F_data.created,"No X-ray diffraction data")
+            .penalty = log(.crystal.xray_F_data.LS_fit.chi2*.crystal.pnd_F_data.LS_fit.chi2)
 
          case default
             DIE("this is not a constrained scf")
@@ -798,11 +788,10 @@ contains
          case("uks         ") ! Unrestricted Kohn-Sham
          case("xray_rhf    ") ! X-ray-constrained restricted Hartree-Fock
          case("xray_uhf    ") ! X-ray-constrained unrestricted Hartree-Fock
-         case("xray_gchf   ") ! X-ray-constrained unrestricted Hartree-Fock
          case("xray_rks    ") ! X-ray-constrained restricted Kohn-Sham
          case("xray_uks    ") ! X-ray-constrained unrestricted Kohn-Sham
-         case("pnd_uhf     ") ! polarised neutron diffraction uhf 
-         case("pnd_uks     ") ! polarised neutron diffraction uks 
+         case("pnd_uhf     ") ! polarized neutron diffraction uhf 
+         case("pnd_uks     ") ! polarized neutron diffraction uks 
          case("xray_pnd_uhf") ! joint xray, pnd uhf 
          case("xray_pnd_uks") ! joint xray, pnd uks
          case default;    UNKNOWN(.scf_kind)
@@ -1176,21 +1165,21 @@ contains
    ! Make sure the input satisfies sanity checks and generate
    ! any other missing data
 
-      DIE_IF(.scf_kind==" ","no scf kind specified")
-      DIE_IF(.max_iterations<.min_iterations,"max_it must be greater than min_it!")
+      ENSURE(.scf_kind/=" ","no scf kind specified")
+      ENSURE(.max_iterations>=.min_iterations,"max_it must be greater than min_it!")
 
       if (.using_1e_zora_term)   .using_1e_sl_term = FALSE
       if (.using_1e_sl_term)     .using_1e_zora_term = FALSE
 
-      DIE_IF(.diis.keep           ==0,"diis.keep must be > 0")
-      DIE_IF(.diis.start_iteration==0,"diis.start_iteration must be > 0")
-      DIE_IF(.diis.save_iteration ==0,"diis.save_iteration must be > 0")
+      ENSURE(.diis.keep           >0,"diis.keep must be > 0")
+      ENSURE(.diis.start_iteration>0,"diis.start_iteration must be > 0")
+      ENSURE(.diis.save_iteration >0,"diis.save_iteration must be > 0")
 
       if (.using_SC_cluster_charges OR .using_cluster_charges) then
 
-         DIE_IF(.is_constrained_wavefunction AND NOT .using_SC_cluster_charges,"must use SC_cluster_charges!")
+         ENSURE(NOT .is_constrained_wavefunction OR .using_SC_cluster_charges,"must use SC_cluster_charges!")
 
-         DIE_IF(.initial_density=="core" OR .initial_density=="promolecule","must start from previous density or MO's")
+         ENSURE(.initial_density/="core" AND .initial_density/="promolecule","must start from previous density or MO's")
 
          if (.using_SC_cluster_charges) then
             .using_cluster_charges = TRUE
@@ -1547,7 +1536,6 @@ contains
        case("xray_rks");     res = "restricted"
        case("xray_uhf");     res = "unrestricted"
        case("xray_uks");     res = "unrestricted"
-       case("xray_gchf");    res = "general_complex"
        case("xray_pnd_uhf"); res = "unrestricted"
        case("xray_pnd_uks"); res = "unrestricted"
        case("rdvpt");        res = "restricted"
@@ -1583,7 +1571,6 @@ contains
        case("xray_rks");     res = "restricted"
        case("xray_uhf");     res = "unrestricted"
        case("xray_uks");     res = "unrestricted"
-       case("xray_gchf");    res = "general_complex"
        case("xray_pnd_uhf"); res = "unrestricted"
        case("xray_pnd_uks"); res = "unrestricted"
        case("rdvpt");        res = "restricted"
@@ -1620,7 +1607,6 @@ contains
          case("pnd_uks");      res = "unrestricted"
          case("xray_rhf");     res = "restricted"
          case("xray_uhf");     res = "unrestricted"
-         case("xray_gchf");    res = "general"
          case("xray_pnd_uhf"); res = "unrestricted"
          case("xray_pnd_uks"); res = "unrestricted"
          case("xray_rks");     res = "restricted"
@@ -1635,7 +1621,7 @@ contains
       res :: STR
       select case (.scf_kind)
          case("rhf","rks","rohf","uhf","uks", "ghf"); res = "real"
-         case("rchf","uchf","gchf","xray_gchf");      res = "complex"
+         case("rchf","uchf","gchf");                  res = "complex"
          case("xray_rhf","xray_rks","xray_uks");      res = "real"
          case("xray_uhf","pnd_uhf","xray_pnd_uhf");   res = "real"
          case("pnd_uks","xray_pnd_uks");              res = "real"
@@ -1646,8 +1632,7 @@ contains
 
    is_DFT_calculation(scf_kind) result (res)
    ! Return TRUE if the scf kind is a DFT calculation
-      self :: IN
-      scf_kind :: STR, OUT, optional
+      scf_kind :: STR, optional
       res :: BIN
 
       s_kind :: STR
@@ -1669,7 +1654,6 @@ contains
          case("xray_rhf");     res = FALSE
          case("xray_rks");     res = TRUE
          case("xray_uhf");     res = FALSE
-         case("xray_gchf");    res = FALSE
          case("xray_uks");     res = TRUE
          case("pnd_uhf");      res = FALSE
          case("pnd_uks");      res = TRUE
@@ -1705,7 +1689,6 @@ contains
          case("xray_rhf");     res = TRUE 
          case("xray_rks");     res = TRUE
          case("xray_uhf");     res = TRUE 
-         case("xray_gchf");    res = TRUE 
          case("xray_uks");     res = TRUE
          case("pnd_uhf");      res = TRUE 
          case("pnd_uks");      res = TRUE
@@ -1824,7 +1807,7 @@ contains
    end
 
    using_GGA_functional result (res)
-   ! Return TRUE if a generalised gradient approximation (GGA) functional is
+   ! Return TRUE if a generalized gradient approximation (GGA) functional is
    ! being used in the DFT calculation.
       res :: BIN
       res = .using_GGA_exchange OR .using_GGA_correlation
@@ -1881,7 +1864,6 @@ contains
          case("xray_rks");     res = TRUE
          case("xray_uhf");     res = TRUE
          case("xray_uks");     res = TRUE
-         case("xray_gchf");    res = TRUE
          case("pnd_uhf ");     res = TRUE
          case("pnd_uks ");     res = TRUE
          case("xray_pnd_uhf"); res = TRUE
@@ -2214,29 +2196,29 @@ contains
 
       stdout.show("Penalty in F                   =", .penalty)
 
-      if (.crystal.xray_data.created AND .scf_kind.includes("xray")) then
+      if (.crystal.xray_F_data.created AND .scf_kind.includes("xray")) then
 
          stdout.flush
          stdout.text("==========")
          stdout.text("X-ray data")
          stdout.text("==========")
-         .crystal.xray_data.put_F_statistics
+         .crystal.xray_F_data.put_F_statistics
 
-         if (.crystal.r_free_percentage>0 AND .crystal.xray_r_free_data.created) &
-            .crystal.xray_r_free_data.put_F_free_stats
+         if (.crystal.r_free_percentage>0 AND .crystal.xray_F_free.created) &
+            .crystal.xray_F_free.put_F_free_stats
 
       end
 
-      if (.crystal.pnd_data.created AND .scf_kind.includes("pnd")) then
+      if (.crystal.pnd_F_data.created AND .scf_kind.includes("pnd")) then
 
          stdout.flush
          stdout.text("========")
          stdout.text("PND data")
          stdout.text("========")
-         .crystal.pnd_data.put_F_statistics
+         .crystal.pnd_F_data.put_F_statistics
 
-         if (.crystal.r_free_percentage>0 AND .crystal.pnd_r_free_data.created) &
-            .crystal.pnd_r_free_data.put_F_free_stats
+         if (.crystal.r_free_percentage>0 AND .crystal.pnd_F_free.created) &
+            .crystal.pnd_F_free.put_F_free_stats
 
       end
 
@@ -2252,21 +2234,21 @@ contains
 
       stdout.show("Penalty in F                   =", .penalty)
 
-      if (.crystal.xray_data.created AND .scf_kind.includes("xray")) then
+      if (.crystal.xray_F_data.created AND .scf_kind.includes("xray")) then
 
-         .crystal.xray_data.put_F_statistics
+         .crystal.xray_F_data.put_F_statistics
 
-         if (.crystal.r_free_percentage>0 AND .crystal.xray_r_free_data.created) &
-            .crystal.xray_r_free_data.put_F_free_stats
+         if (.crystal.r_free_percentage>0 AND .crystal.xray_F_free.created) &
+            .crystal.xray_F_free.put_F_free_stats
 
       end
 
-      if (.crystal.pnd_data.created AND .scf_kind.includes("pnd")) then
+      if (.crystal.pnd_F_data.created AND .scf_kind.includes("pnd")) then
 
-         .crystal.pnd_data.put_F_statistics
+         .crystal.pnd_F_data.put_F_statistics
 
-         if (.crystal.r_free_percentage>0 AND .crystal.pnd_r_free_data.created) &
-            .crystal.pnd_r_free_data.put_F_free_stats
+         if (.crystal.r_free_percentage>0 AND .crystal.pnd_F_free.created) &
+            .crystal.pnd_F_free.put_F_free_stats
 
       end
 

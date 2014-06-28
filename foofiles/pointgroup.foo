@@ -25,7 +25,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: pointgroup.foo 4030 2013-05-28 13:08:42Z dylan_ $
+! $Id: pointgroup.foo 4234 2014-01-11 03:28:13Z dylan_ $
 !
 !-------------------------------------------------------------------------------
 
@@ -34,6 +34,10 @@ module POINTGROUP
    implicit none
 
 contains
+
+!  ==========
+!  Allocation
+!  ==========
 
    create ::: get_from(OBJECT), leaky
    ! Create an object. This version does not set defaults.
@@ -91,26 +95,44 @@ contains
       .irrep.destroy
    end
 
-   create_copy(pg)
-   ! Copy the pointgroup "pg"
-      self :: PTR
-      pg :: POINTGROUP
-      .create
-      .copy(pg)
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
    end
 
-   copy(pg) ::: leaky
-   ! Copy the pointgroup "pg"
-      pg :: POINTGROUP
-      self = pg
+   copy(object) ::: leaky, pure
+   ! Copy the "object"
+      self :: OUT
+      object :: POINTGROUP, IN
+
+      self = object
+
       .nullify_ptr_part
-      if (pg.table.created)   .table.create_copy(pg.table)
-      if (pg.mat.created)     .mat.create_copy(pg.mat)
+
+      CREATE_COPY_COMPONENT(table)
+      CREATE_COPY_COMPONENT(mat)
+
       .ptr => .mat
-      if (pg.dtr.created)     .dtr.create_copy(pg.dtr)
-      if (pg.ftr.created)     .ftr.create_copy(pg.ftr)
-      if (pg.inverse.created) .inverse.create_copy(pg.inverse)
-      if (pg.irrep.created)   .irrep.create_copy(pg.irrep)
+
+      CREATE_COPY_COMPONENT(dtr)
+      CREATE_COPY_COMPONENT(ftr)
+      CREATE_COPY_COMPONENT(inverse)
+      CREATE_COPY_COMPONENT(irrep)
+
+   end
+
+!  ===========
+!  Set methods
+!  ===========
+
+   set_defaults
+   ! Set the default pointgroup, "C1"
+      .set_symbol("C1")
+      .use_spherical_basis = FALSE
+      .analyze
    end
 
    set_symbol(symbol)
@@ -119,13 +141,6 @@ contains
       .symbol = symbol
       .ID_symbol = symbol
       .ID_symbol.to_lower_case
-   end
-
-   set_defaults
-   ! Set the default pointgroup, "C1"
-      .set_symbol("C1")
-      .use_spherical_basis = FALSE
-      .analyze
    end
 
 !  =============
@@ -172,6 +187,10 @@ contains
       .analyze
    end
 
+!  ==============
+!  Analyze symbol
+!  ==============
+
    analyze ::: leaky, private
    ! Analyze the pointgroup
       .analyze_symbol
@@ -186,41 +205,38 @@ contains
 
    analyze_symbol ::: private
    ! Analyze the pointgroup symbol
+
       axis :: STR
-       n :: INT
+      n :: INT
       temp_bin :: BIN
+
       select case (.ID_symbol)
-         case ("c1");      .ID_number=1;  .ID_symbol="c1 "
-         case ("cs");      .ID_number=2;  .ID_symbol="cs "
-         case ("ci");      .ID_number=3;  .ID_symbol="ci "
-         case ("c2 ","c3 ","c4 ","c5 ","c6 ","c7 ","c8 ","c9 ","c10 ","c11 ","c12 ")
-                           .ID_number=4;  .ID_symbol="cn "
-         case ("s2 ","s4 ","s6 ","s8 ","s10","s12")
-                           .ID_number=5;  .ID_symbol="s2n"
-         case ("c2h","c3h","c4h","c5h","c6h","c7h","c8h","c9h","c10h","c11h","c12h")
-                           .ID_number=6;  .ID_symbol="cnh"
-         case ("c2v","c3v","c4v","c5v","c6v","c7v","c8v","c9v","c10v","c11v","c12v")
-                           .ID_number=7;  .ID_symbol="cnv"
-         case ("d2 ","d3 ","d4 ","d5 ","d6 ","d7 ","d8 ","d9 ","d10 ","d11 ","d12 ")
-                           .ID_number=8;  .ID_symbol="dn "
-         case ("d2h","d3h","d4h","d5h","d6h","d7h","d8h","d9h","d10h","d11h","d12h")
-                           .ID_number=9;  .ID_symbol="dnh"
-         case ("d2d","d3d","d4d","d5d","d6d","d7d","d8d","d9d","d10d","d11d","d12d")
-                           .ID_number=10; .ID_symbol="dnd"
-         case ("cinfv");   .ID_number=11; .ID_symbol="cinf"
-         case ("dinfh");   .ID_number=12; .ID_symbol="dinf"
-         case ("t ");      .ID_number=13; .ID_symbol="t  "
-         case ("th");      .ID_number=14; .ID_symbol="th "
-         case ("td");      .ID_number=15; .ID_symbol="td "
-         case ("o ");      .ID_number=16; .ID_symbol="o  "
-         case ("oh");      .ID_number=17; .ID_symbol="oh "
-         case ("i ");      .ID_number=18; .ID_symbol="i  "
-         case ("ih");      .ID_number=19; .ID_symbol="ih "
-         case default;     .ID_number=20
+         case ("c1");                                                                .ID_number=1;  .ID_symbol="c1 "
+         case ("cs");                                                                .ID_number=2;  .ID_symbol="cs "
+         case ("ci");                                                                .ID_number=3;  .ID_symbol="ci "
+         case ("c2 ","c3 ","c4 ","c5 ","c6 ","c7 ","c8 ","c9 ","c10 ","c11 ","c12 ") .ID_number=4;  .ID_symbol="cn "
+         case ("s2 ","s4 ","s6 ","s8 ","s10","s12")                                  .ID_number=5;  .ID_symbol="s2n"
+         case ("c2h","c3h","c4h","c5h","c6h","c7h","c8h","c9h","c10h","c11h","c12h") .ID_number=6;  .ID_symbol="cnh"
+         case ("c2v","c3v","c4v","c5v","c6v","c7v","c8v","c9v","c10v","c11v","c12v") .ID_number=7;  .ID_symbol="cnv"
+         case ("d2 ","d3 ","d4 ","d5 ","d6 ","d7 ","d8 ","d9 ","d10 ","d11 ","d12 ") .ID_number=8;  .ID_symbol="dn "
+         case ("d2h","d3h","d4h","d5h","d6h","d7h","d8h","d9h","d10h","d11h","d12h") .ID_number=9;  .ID_symbol="dnh"
+         case ("d2d","d3d","d4d","d5d","d6d","d7d","d8d","d9d","d10d","d11d","d12d") .ID_number=10; .ID_symbol="dnd"
+         case ("cinfv");                                                             .ID_number=11; .ID_symbol="cinf"
+         case ("dinfh");                                                             .ID_number=12; .ID_symbol="dinf"
+         case ("t ");                                                                .ID_number=13; .ID_symbol="t  "
+         case ("th");                                                                .ID_number=14; .ID_symbol="th "
+         case ("td");                                                                .ID_number=15; .ID_symbol="td "
+         case ("o ");                                                                .ID_number=16; .ID_symbol="o  "
+         case ("oh");                                                                .ID_number=17; .ID_symbol="oh "
+         case ("i ");                                                                .ID_number=18; .ID_symbol="i  "
+         case ("ih");                                                                .ID_number=19; .ID_symbol="ih "
+         case default;                                                               .ID_number=20
       end
+
       temp_bin = any(.ID_symbol==(/"i   ","ih  ","cinf","dinf"/))
-      DIE_IF(temp_bin,"Group" // trim(.symbol) // "not implemented")
-      DIE_IF(.ID_number==20,"Unknown group symbol: " // trim(.symbol))
+      ENSURE(NOT temp_bin,"Group" // trim(.symbol) // "not implemented")
+      ENSURE(.ID_number/=20,"Unknown group symbol: " // trim(.symbol))
+
       select case (.ID_number)
          case (1:3)
             .axis_order = 1
@@ -235,6 +251,7 @@ contains
          case (16:17)
             .axis_order = 4
       end
+
       select case (.ID_symbol)
          case ("c1 "); .order = 1
          case ("cs "); .order = 2
@@ -252,6 +269,7 @@ contains
          case ("o  "); .order = 24
          case ("oh "); .order = 48
       end
+
    end
 
    make_rep_matrices ::: leaky, private
@@ -433,17 +451,28 @@ contains
 
    make_inverse ::: leaky, private
    ! Make the inverse operator list
+
       m,n :: INT
       test :: REAL
+
       .inverse.create(.order)
+
       do m = 1,.order
+
          do n = 1,.order
-            test = .mat(:,:,m).trace_product_with( .mat(:,:,n)) - THREE
-            if (abs(test)>0.001d0) cycle
-            .inverse(m) = n
-            exit
+       
+            test = .mat(:,:,m).trace_product_with(.mat(:,:,n)) - THREE
+       
+            ! Is this really a unit matrix
+            if (abs(test)<=0.001d0) then
+               .inverse(m) = n
+               exit
+            end
+       
          end
+
       end
+
    end
 
    make_table ::: leaky, private

@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{vec_{real}}.foo 4047 2013-06-10 08:24:35Z dylan_ $
+! $Id: vec{vec_{real}}.foo 4242 2014-01-12 05:24:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{VEC_{REAL}}
@@ -76,8 +76,16 @@ contains
    ! Returns true if self has *not* been created
    end
 
-   create_copy(vec) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky
-   ! Create a replica copy of "vec".
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Create a replica copy of "v".
+   end
+
+   copy(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Make a copy of "v".
    end
 
 !  ==================
@@ -99,10 +107,6 @@ contains
 !  =======================
 !  Shrinking and expansion
 !  =======================
-
-   copy(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky
-   ! Make a copy of "v".
-   end
 
    shrink(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky
    ! Shrinks self to dimension "dim". Contents are retained.
@@ -232,13 +236,13 @@ contains
 
    end
 
-   schmidt_orthonormalise(S,scales,n_dependent)
-   ! Schmidt orthonormalise the vectors in "self" using "S" as the
+   schmidt_orthonormalize(S,scales,n_dependent)
+   ! Schmidt orthonormalize the vectors in "self" using "S" as the
    ! metric. "scales" is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are orthonormalised. the others are counted (n_dependent) 
-   ! and normalised if the norm is not initially below a certain threshold. 
+   ! tolerance are orthonormalized. the others are counted (n_dependent) 
+   ! and normalized if the norm is not initially below a certain threshold. 
      self :: target
      S :: MAT{REAL}, IN 
      scales :: VEC{REAL}, OUT
@@ -291,7 +295,7 @@ contains
         end
         scales(n) = norm
 
-        ! Normalisation of the orthogonalised vector
+        ! Normalisation of the orthogonalized vector
      !  if(norm>MAT_LINEAR_DEPENDENCE_TOL) then
         if(norm>tol) then
           norm = dsqrt(norm)

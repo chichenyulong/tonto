@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: coppensbasis.foo 4071 2013-06-18 12:59:43Z dylan_ $
+! $Id: coppensbasis.foo 4248 2014-01-12 06:58:59Z dylan_ $
 !
 !-------------------------------------------------------------------------------
 
@@ -31,67 +31,73 @@ module COPPENSBASIS
 
 contains
 
-!============================
-! Create and Destroy Routines
-!============================
+!  ===========================
+!  Create and Destroy Routines
+!  ===========================
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object
       self :: PTR
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts of self
       nullify(.orbital)
       nullify(.interpolator)
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts of self
       .orbital.destroy
       .interpolator.destroy
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
-   create_copy(b) ::: leaky
-   ! Create a copy of the basis "b".
-      b :: COPPENSBASIS, IN
-      self :: PTR
-      .create
-      .copy(b)
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
    end
 
-   copy(b) ::: leaky
-   ! Copy a basis "b" to "self". Make sure pointer parts of self are first
-   ! destroyed or nullified, as you want.
-      b :: COPPENSBASIS, IN
-      self = b
+   copy(object) ::: leaky, pure
+   ! Copy a basis "object" to "self". Make sure pointer parts of self
+   ! are first destroyed or nullified, as you want.
+      self :: OUT
+      object :: COPPENSBASIS, IN
+
+      self = object
+
       .nullify_ptr_part
-      if (b.orbital.created) .orbital.create_copy(b.orbital)
-      if (b.interpolator.created) .interpolator.create_copy(b.interpolator)
+
+      CREATE_COPY_COMPONENT(orbital)
+      CREATE_COPY_COMPONENT(interpolator)
+
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set_defaults
+   set_defaults ::: always_pure
    ! Create and set up a default basis set
+      self :: OUT
 
       .label   = "?"
       .n_orb   = 0
@@ -206,19 +212,19 @@ contains
 !  Inquiry methods
 !  ===============
 
-   is_resolved result (res) ::: get_from(BASIS, shell=>orbital), pure
+   is_resolved result (res) ::: get_from(BASIS, shell=>orbital), always_pure
    ! Return TRUE if self is resolved i.e. has shells
    end
 
-   is_created_and_resolved result (res) ::: get_from(BASIS, shell=>orbital)
+   is_created_and_resolved result (res) ::: get_from(BASIS, shell=>orbital), always_pure
    ! Return TRUE if self is resolved
    end
 
-   is_created_and_has_label result (res) ::: get_from(BASIS)
+   is_created_and_has_label result (res) ::: get_from(BASIS), always_pure
    ! Return TRUE if self has a non-blank label
    end
 
-   same_as(b) result (res)
+   same_as(b) result (res) ::: always_pure
    ! Return TRUE if the basis set "self" is the same as "b". Only the
    ! orbital vector is compared to see if they are "really" the same.
       self :: IN
@@ -227,28 +233,34 @@ contains
       res = .orbital.same_as(b.orbital)
    end
 
-   no_of_orbitals result (res) ::: pure
+   no_of_orbitals result (res) ::: always_pure
    ! Work out and return the number of orbitals in the basis set
       self :: IN
       res :: INT
+
       if (.orbital.created) then; res = size(.orbital)
       else;                       res = 0
       end
+
    end
 
-   no_of_primitives result (res) ::: pure
+   no_of_primitives result (res) ::: always_pure
    ! Work out and return the number of primitive fitting functions in the basis ! set
       self :: IN
       res :: INT
       i :: INT
+
       res = 0
+
       if (.orbital.destroyed) return
+
       do i = 1,.no_of_orbitals
          res = res + .orbital(i).n_fun
       end
+
    end
 
-   maximum_basis_n_value result (res)
+   maximum_basis_n_value result (res) ::: always_pure
    ! Returns the maximum n value over all orbitals in every basis set of the
    ! vector
       self :: IN
@@ -262,14 +274,19 @@ contains
    ! Return the minimum exponent in the basis.
       self :: IN
       res :: REAL
+
    ENSURE(.orbital.created,"no orbitals")
+
       tmp :: REAL
       i :: INT
+
       res = ZERO
+
       do i= 1,.n_orb
-       tmp = minval(.orbital(i).z)
-       if (tmp < res) res = tmp
+         tmp = minval(.orbital(i).z)
+         if (tmp < res) res = tmp
       end
+
    end
 
 !  ==================
@@ -404,7 +421,7 @@ contains
    end
 
 
-   make_interpolated_density(density,pt,pos,occ)
+   make_interpolated_density(density,pt,pos,occ) ::: always_pure
    ! Make the interpolated "density" for the supplied points "pt" from the real
    ! slater atomic orbitals assuming the orbitals are at position "pos".
       self :: IN
@@ -562,16 +579,16 @@ contains
 !  Normalisation
 !  =============
 
-   unnormalise
-   ! Set the value of the orbital coefficients to correspond to un-normalised
-   ! Slater functions -- assuming they are normalised. This saves computation.
-      if (.orbital.created) .orbital.unnormalise
+   unnormalize
+   ! Set the value of the orbital coefficients to correspond to un-normalized
+   ! Slater functions -- assuming they are normalized. This saves computation.
+      if (.orbital.created) .orbital.unnormalize
    end
 
-   renormalise
-   ! Set the value of the orbitals coefficients to correspond to normalised
-   ! Slater functions --- assuming they are w.r.t. unnormalised functions. 
-      if (.orbital.created) .orbital.renormalise
+   renormalize
+   ! Set the value of the orbitals coefficients to correspond to normalized
+   ! Slater functions --- assuming they are w.r.t. unnormalized functions. 
+      if (.orbital.created) .orbital.renormalize
    end
 
 !  ====

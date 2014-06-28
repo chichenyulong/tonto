@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat{str}.foo 4364 2014-05-12 07:41:15Z dylan_ $
+! $Id: mat{str}.foo 4075 2013-06-18 15:46:26Z dylan_ $
 !---------------------------------------------------------------------------
 
 module MAT{STR}
@@ -32,39 +32,39 @@ contains
 ! Memory allocation
 ! =================
 
-   create(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given dimensions
    end
 
-   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the specified "bounds" for each dimension
    end
 
-   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given dimensions
    end
 
-   create(bounds1,bounds2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds1,bounds2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the specified bounds for each dimension
    end
 
-   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given bounds for all dimensions
    end
 
-   create_copy(matrix) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create_copy(matrix) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a replica copy of matrix
    end
 
-   destroy ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   destroy ::: get_from(MAT{INTRINSIC}), leaky
    ! Destroy the object
    end
 
-   created result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   created result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   destroyed result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Returns true if self has *not* been created
    end
 
@@ -72,19 +72,19 @@ contains
 ! Size-of and shape operations 
 ! ============================
 
-   size result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   size result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the array
    end
 
-   dim1 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   dim1 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the 1st dimension
    end
 
-   dim2 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   dim2 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the 2nd dimension
    end
 
-   shape result (res) ::: get_from(MAT{INTRINSIC}), pure
+   shape result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the shape of "self"
    end
 
@@ -104,27 +104,27 @@ contains
 ! Shrinking and expansion
 ! =======================
 
-   shrink(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   shrink(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Shrinks self to dimension dim1xdim2.  Contents are retained.
    end
 
-   expand(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   expand(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Expands self to dimension dim1xdim2.  Contents are retained.
    end
 
-   shrink_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   shrink_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Shrinks columns of self to dimension dim2. Contents are retained.
    end
 
-   expand_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   expand_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Expands the columns self to dim2.  Contents are retained.
    end
 
-   append_columns(cols) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   append_columns(cols) ::: get_from(MAT{INTRINSIC}), leaky
    ! Append the columns "cols" onto the end of self.
    end
 
-   append_column(col) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   append_column(col) ::: get_from(MAT{INTRINSIC}), leaky
    ! Append the column "col" onto the end of self.
    end
 
@@ -132,20 +132,21 @@ contains
 ! Comparison functions
 ! ====================
 
-   equals(b) result (res) ::: get_from(MAT{INTRINSIC}), PURE
-   ! Check if the matrix is the same as "b".
-   end
-
-   same_as(b) result (res) ::: PURE
+   equals(b) result (res)
    ! Check if the matrix is the same as "b".
       self :: IN
       b :: MAT{STR}, IN
       res :: BIN
+      res = .same_as(b)
+   end
 
+   same_as(b) result (res)
+   ! Check if the matrix is the same as "b".
+      self :: IN
+      b :: MAT{STR}, IN
+      res :: BIN
    ENSURE(.is_same_shape_as(b),"incompatible dimensions")
-
       res = all(self == b)
-
    end
 
 ! =============
@@ -161,9 +162,8 @@ contains
       if (present(spaces)) res = res + spaces
    end 
 
-   get_max_str_length(msl,spaces) ::: get_from(MAT{INTRINSIC}), pure
-   ! Return "msl" the maximum of the string lengths, and including
-   ! extra "spaces"
+   max_str_length(spaces) result (res) ::: get_from(MAT{INTRINSIC}), pure
+   ! Returns the maximum of the string lengths, with optional extra "spaces"
    end
 
 end

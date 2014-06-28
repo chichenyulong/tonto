@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat{mat_{real}}.foo 3049 2007-04-06 14:29:48Z dylan_ $
+! $Id: mat{mat_{real}}.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 module MAT{MAT_{REAL}}
@@ -27,6 +27,10 @@ module MAT{MAT_{REAL}}
    implicit none
 
 contains
+
+!  ==========
+!  Allocation
+!  ==========
 
    create(dim1,dim2) ::: get_from(MAT{MAT_{INTRINSIC}}), leaky
    ! Create the object
@@ -52,12 +56,16 @@ contains
    ! Returns true if self has *not* been created
    end
 
-   create_copy(m) ::: get_from(MAT{MAT_{INTRINSIC}}), leaky
-   ! Create a copy of "m"
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(mx) ::: get_from(MAT{MAT_{INTRINSIC}}), leaky, pure
+   ! Create a copy of "mx"
    end
 
-   copy(m) ::: get_from(MAT{MAT_{INTRINSIC}}), leaky
-   ! Make a copy of "m"
+   copy(mx) ::: get_from(MAT{MAT_{INTRINSIC}}), leaky, pure
+   ! Make a copy of "mx"
    end
 
 end

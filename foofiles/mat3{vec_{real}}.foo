@@ -21,7 +21,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat3{vec_{real}}.foo 3026 2007-03-04 10:45:02Z dylan_ $
+! $Id: mat3{vec_{real}}.foo 4250 2014-01-12 08:14:56Z dylan_ $
 !---------------------------------------------------------------------------
 
 module MAT3{VEC_{REAL}}
@@ -30,95 +30,114 @@ module MAT3{VEC_{REAL}}
 
 contains
 
-   create(dim1,dim2,dim3) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+!  ==========
+!  Allocation
+!  ==========
+
+   create(dim1,dim2,dim3) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Create object with desired dimensions, ".element" part nullfied.
    end
 
-   create(dim) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   create(dim) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Create the object with the desired dimensions "dim"
    end
 
-   create(dim1,dim2,dim3,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   create(dim1,dim2,dim3,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Create object with desired dimensions, ".element" part size "dimv".
    end
 
-   create(dim1,dim2,dim3,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   create(dim1,dim2,dim3,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Create object with desired dimensions, ".element" part with bounds "dimv".
    end
 
-   create(dim,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   create(dim,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Create object with desired dimensions, ".element" part size "dimv".
    end
 
-   create(dim,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   create(dim,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Create object with desired dimensions, ".element" part with bounds "dimv".
    end
 
-   create_vec(dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   create_vec(dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Allocate only the the ".element" pointer parts with size "dimv".
    end
 
-   create_vec(dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   create_vec(dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Allocate only the ".element" pointer parts with bounds "dimv".
    end
 
-   create_copy(v) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create a copy of "v"
-   end
-
-   copy(v) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Make a copy of "v"
-   end
-
-   destroy ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   destroy ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
    ! Destroy the object
    end
 
-   nullify_ptr_part ::: get_from(MAT3{VEC_{INTRINSIC}})
+   nullify_ptr_part ::: get_from(MAT3{VEC_{INTRINSIC}}), always_pure
    ! Nullify the "element" pointer parts
    end
 
-   destroy_ptr_part ::: get_from(MAT3{VEC_{INTRINSIC}})
+   destroy_ptr_part ::: get_from(MAT3{VEC_{INTRINSIC}}), pure
    ! Destroy the ".element" pointer parts of an ivecvec
    end
 
-   created result (res) ::: inlined_by_foo
+   created result (res) ::: inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: inlined_by_foo
+   destroyed result (res) ::: inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
    end
 
-   set_to(v) ::: get_from(MAT3{VEC_{INTRINSIC}})
+
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(mx) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   ! Create a copy of "mx"
+   end
+
+   copy(mx) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
+   ! Make a copy of "mx"
+   end
+
+
+!  ===========
+!  Set methods
+!  ===========
+
+   set_to(v) ::: get_from(MAT3{VEC_{INTRINSIC}}), always_pure
    ! Set self to "v". Up to you to make sure they are compatible!
    end
 
-   zero ::: get_from(MAT3{VEC_{INTRINSIC}})
+   zero ::: get_from(MAT3{VEC_{INTRINSIC}}), always_pure
    ! Zero all elements
    end
 
-   size result (res) ::: get_from(MAT3{INTRINSIC}), inlined_by_foo
+
+!  ==================
+!  Size-of operations 
+!  ==================
+
+   size result (res) ::: get_from(MAT3{INTRINSIC}), inlined_by_foo, always_pure
    ! Return the size of the array
    end
 
-   dim1 result (res) ::: get_from(MAT3{INTRINSIC})
+   dim1 result (res) ::: get_from(MAT3{INTRINSIC}), always_pure
    ! Return the size of the 1st dimension
    end
 
-   dim2 result (res) ::: get_from(MAT3{INTRINSIC})
+   dim2 result (res) ::: get_from(MAT3{INTRINSIC}), always_pure
    ! Return the size of the 2nd dimension
    end
 
-   dim3 result (res) ::: get_from(MAT3{INTRINSIC})
+   dim3 result (res) ::: get_from(MAT3{INTRINSIC}), always_pure
    ! Return the size of the 2nd dimension
    end
 
-   shape result (res) ::: get_from(MAT3{INTRINSIC})
+   shape result (res) ::: get_from(MAT3{INTRINSIC}), always_pure
    ! Return the size of the 2nd dimension
    end
 
-   is_same_shape_as(b) result (res) ::: get_from(MAT3{INTRINSIC})
+   is_same_shape_as(b) result (res) ::: get_from(MAT3{INTRINSIC}), always_pure
    ! Returns TRUE if the matrix "b" has the same shape as self
    end
 

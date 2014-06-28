@@ -37,11 +37,11 @@ module FOCK_DIIS
 
 contains
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object
    end
 
-   create(root_name,name,diis_kind,format,keep) ::: leaky
+   create(root_name,name,diis_kind,format,keep) ::: leaky, pure
    ! Create the DIIS object, but no archive name
       self :: PTR
       root_name,name :: STR
@@ -52,88 +52,116 @@ contains
       .set_keep(keep)
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts of self
+      self :: INOUT
+
       .archive.nullify_ptr_part
       .nullify_matrices
+
    end
 
-   nullify_matrices
+   nullify_matrices ::: always_pure
    ! Nullify the matrices which are stored for DIIS. 
+      self :: INOUT
+
       nullify(.oldest)
+
       ! The following should never be destroyed
       nullify(.S) 
       nullify(.F)
       nullify(.D)
       nullify(.J)
       nullify(.energy)
+
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts of self
+      self :: INOUT
+
       .delete_archives
       .oldest.destroy
       .archive.destroy_ptr_part
+
    end
 
-   create_copy(diis) ::: leaky
-   ! Make a copy of the diis object
-      self :: PTR
-      diis :: FOCK_DIIS
-      .create
-      .copy(diis)
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
    end
 
-   copy(diis) ::: leaky
+   copy(object) ::: leaky, pure
    ! Make a copy of the diis object
-      diis :: FOCK_DIIS
-      self = diis
+      self :: INOUT
+      object :: FOCK_DIIS, IN
+
+      self = object
+
       .nullify_ptr_part
-      .archive.copy(diis.archive)
+
+      COPY_COMPONENT(archive)
+
    end
 
-   set_defaults ::: leaky
+!  ===========
+!  Set methods
+!  ===========
+
+   set_defaults ::: leaky, pure
    ! Set up the default settings
+      self :: OUT
+
       .set_genre(DIIS_GENRE)
       .start_iteration = DIIS_START_ITERATION
       .save_iteration = DIIS_SAVE_ITERATION
+
       .iteration = -1 ! The first time called it is iteration 0
+
       .keep = DIIS_KEEP
       .kept = 0
       .new = 0
+
       .oldest.destroy ! Leaky here
       .oldest.create(.keep)
       .oldest = 0
       .error_length = huge(ONE)
+
       .convergence_tolerance = DIIS_CONVERGENCE_TOLERANCE
       .start_tolerance = DIIS_START_TOLERANCE
       .encore_iterations = DIIS_ENCORE_ITERATIONS
       .encore = 0
-      .stage = 0
+      .stage  = 0
+
       .replacement_method = DIIS_REPLACEMENT_METHOD
+
       .par_tag = "fock_matrix"
       .err_tag = "pulay_error"
       .lhs_tag = "lhs,diis,restricted"
-      .F_tag = "fock_matrix"
-      .J_tag = "coulomb_matrix"
-      .D_tag = "density_matrix"
-      .e_tag = "energy"
+      .F_tag   = "fock_matrix"
+      .J_tag   = "coulomb_matrix"
+      .D_tag   = "density_matrix"
+      .e_tag   = "energy"
+
       .force_convexity = DIIS_FORCE_CONVEXITY ! FALSE for DIIS and DDIIS
       .micro_iteration_method = DIIS_MICRO_ITERATION_METHOD
       .micro_convergence_tol = DIIS_MICRO_CONVERGENCE_TOL
@@ -141,6 +169,7 @@ contains
       .micro_damp_factor = DIIS_MICRO_DAMP_FACTOR
       .archive.set_defaults
       .archive.destroy_ptr_part
+
    end
 
    reset_iteration_defaults ::: leaky
@@ -156,10 +185,6 @@ contains
       .archive.set_defaults
       .archive.destroy_ptr_part
    end
-
-! ===========
-! Set methods
-! ===========
 
    set_genre(genre)
    ! Set the DIIS kind
@@ -300,9 +325,9 @@ contains
       .micro_max_iterations = maxit
    end
 
-! ==============================================
-! Define the files where DIIS stores information
-! ==============================================
+!  ==============================================
+!  Define the files where DIIS stores information
+!  ==============================================
 
    set_archive_root_name(root_name)
    ! Set the DIIS archive to have root name "root_name".
@@ -322,9 +347,9 @@ contains
       .archive.set_format(format)
    end
 
-! ======================================
-! Clean up all the DIIS files and object
-! ======================================
+!  ======================================
+!  Clean up all the DIIS files and object
+!  ======================================
 
    cleanup
    ! Cleanup the DIIS files and matrices, and other objects, but don't
@@ -390,9 +415,9 @@ contains
       .error_length = huge(ONE)
    end
 
-! ==============================
-! Read the keywords and settings
-! ==============================
+!  ==============================
+!  Read the keywords and settings
+!  ==============================
 
    read_keywords ::: get_from(OBJECT)
    ! Read data from "stdin" using keyword style input.
@@ -531,9 +556,9 @@ contains
       .set_encore_iterations(encore)
    end
 
-! ==========================================
-! Queries related to the DIIS procedure ....
-! ==========================================
+!  ==========================================
+!  Queries related to the DIIS procedure ....
+!  ==========================================
 
    apply_diis result (res)
    ! Return TRUE if DIIS must be applied this iteration, or has been
@@ -604,9 +629,9 @@ contains
       res = .stage==2 AND .encore==.encore_iterations
    end
 
-! ==========================
-! Iteration information ....
-! ==========================
+!  ==========================
+!  Iteration information ....
+!  ==========================
 
    actual_iteration result (res)
    ! Return the actual DIIS iteration number -- since the DIIS
@@ -642,7 +667,7 @@ contains
       if (.kept<.keep) then; res = .kept+1
       else;                  res = .the_replacement
       end
-      DIE_IF(res>.keep,"next replacement index exceeds DIIS subspace size")
+      ENSURE(res<=.keep,"next replacement index exceeds DIIS subspace size")
 
       ! Append the index of the next replacement to history list
       if (.subspace_saturated) then
@@ -956,9 +981,9 @@ contains
 !      .encore = 0
 !   end
 
-! ==========================
-! Setting the DIIS error ...
-! ==========================
+!  ==========================
+!  Setting the DIIS error ...
+!  ==========================
 
    set_diis_error_length(length)
    ! Set the DIIS error length
@@ -1070,9 +1095,9 @@ contains
 
    end
 
-! ==========================
-! Generic DIIS Extrapolation
-! ==========================
+!  ==========================
+!  Generic DIIS Extrapolation
+!  ==========================
 
 ! Extrapolate without error vectors
 
@@ -1400,9 +1425,9 @@ contains
    ! "e_i" and "e_j" are used as workspace; whatever is in them is trashed.
    end
 
-! ============================================================================
-! DIIS Fock Extrapolation, DDIIS density interpolation and EDIIS interpolation
-! ============================================================================
+!  ============================================================================
+!  DIIS Fock Extrapolation, DDIIS density interpolation and EDIIS interpolation
+!  ============================================================================
 
 ! Main controller
 
@@ -1588,16 +1613,18 @@ contains
    ! matrix which generated ".F". ".S" is the overlap matrix. This assumes that
    ! the DIIS object has been repeatedly called, previously, so that it has all
    ! the previous information on disk. 
+
    ENSURE(.archive.file_name/=" ","no archive name specified")
    ENSURE(.F.created,"no Fock matrix")
    ENSURE(.D.created,"no density matrix")
-   ENSURE(.F.created("restricted"),"no Fock matrix")
-   ENSURE(.D.created("restricted"),"no density matrix")
+   ENSURE(.F.restricted.created,"no Fock matrix")
+   ENSURE(.D.restricted.created,"no density matrix")
    ENSURE(.S.created,"no overlap matrix")
    ENSURE(.energy.created,"no RHF electronic energy")
    ENSURE(.energy.dim==1,"must have 1 RHF energy")
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
+
       C :: OPMATRIX*
       lhs :: MAT{REAL}*
       rhs,coeff :: VEC{REAL}*
@@ -1675,18 +1702,17 @@ contains
    ! coefficients. ".D" is the density matrix which generated ".F". ".S" is the
    ! overlap matrix. This assumes that the DIIS object has been repeatedly
    ! called, previously, so that it has all the previous information on disk. 
+
    ENSURE(.archive.file_name/=" ","no archive name specified")
    ENSURE(.F.created,"no Fock matrix")
    ENSURE(.D.created,"no density matrix")
    ENSURE(.J.created,"no coulomb matrix")
-   ENSURE(.F.created("unrestricted"),"no Fock matrix")
-   ENSURE(.D.created("unrestricted"),"no density matrix")
-   ENSURE(.J.created("unrestricted"),"no coulomb matrix")
    ENSURE(.S.created,"no overlap matrix")
    ENSURE(.energy.dim==2,"no UHF energies")
    ENSURE(.energy.dim==2,"must have two UHF energies")
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
+
       C :: OPMATRIX*
       lhs :: MAT{REAL}*
       rhs,coeff :: VEC{REAL}*
@@ -1772,18 +1798,17 @@ contains
    ! matrix which generated ".F". ".S" is the overlap matrix. This assumes that
    ! the DIIS object has been repeatedly called, previously, so that it has all
    ! the previous information on disk. 
+
    ENSURE(.archive.file_name/=" ","no archive name specified")
    ENSURE(.F.created,"no Fock matrix")
    ENSURE(.D.created,"no density matrix")
    ENSURE(.J.created,"no coulomb matrix")
-   ENSURE(.F.created("unrestricted"),"no Fock matrix")
-   ENSURE(.D.created("unrestricted"),"no density matrix")
-   ENSURE(.J.created("unrestricted"),"no coulomb matrix")
    ENSURE(.S.created,"no overlap matrix")
    ENSURE(.energy.dim==2,"no UHF energies")
    ENSURE(.energy.dim==2,"must have two UHF energies")
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
+
       C :: OPMATRIX*
       lhs :: MAT{REAL}*
       rhs,coeff,coeff_a,coeff_b :: VEC{REAL}*
@@ -2640,14 +2665,16 @@ contains
    ! matrix which generated ".F". ".energy" is the RHF energies. This assumes
    ! that the DIIS object has been repeatedly called, previously, so that it has
    ! all the previous information on disk. 
+
    ENSURE(.archive.file_name/=" ","no archive name specified")
    ENSURE(.F.created,"no Fock matrix")
    ENSURE(.D.created,"no density matrix")
-   ENSURE(.F.created("restricted"),"no Fock matrix")
-   ENSURE(.D.created("restricted"),"no density matrix")
+   ENSURE(.F.restricted.created,"no Fock matrix")
+   ENSURE(.D.restricted.created,"no density matrix")
    ENSURE(.energy.created,"no RHF electronic energy")
    ENSURE(.energy.dim==1,"must have 1 RHF energy")
    ENSURE(.F.n_bf==.D.n_bf,"Incompatible F and D")
+
       C :: OPMATRIX*
       lhs :: MAT{REAL}*
       rhs,coeff :: VEC{REAL}*
@@ -2724,17 +2751,16 @@ contains
    ! are the coulomb matrices, required only for unrestricted EDIIS.  This
    ! assumes that the DIIS object has been repeatedly called, previously, so
    ! that it has all the previous information on disk. 
+
    ENSURE(.archive.file_name/=" ","no archive name specified")
    ENSURE(.F.created,"no Fock matrix")
    ENSURE(.D.created,"no density matrix")
    ENSURE(.J.created,"no coulomb matrix")
-   ENSURE(.F.created("unrestricted"),"no Fock matrix")
-   ENSURE(.D.created("unrestricted"),"no density matrix")
-   ENSURE(.J.created("unrestricted"),"no coulomb matrix")
    ENSURE(.energy.dim==2,"no UHF energies")
    ENSURE(.energy.dim==2,"must have two UHF energies")
    ENSURE(.F.n_bf==.D.n_bf,"Incompatible F and D")
    ENSURE(.J.n_bf==.D.n_bf,"Incompatible J and D")
+
       C :: OPMATRIX*
       lhs, lhs_aa,lhs_bb,lhs_ba,lhs_ab :: MAT{REAL}*
       rhs,coeff,coeff_a,coeff_b, rhs_a,rhs_b :: VEC{REAL}*
@@ -2894,7 +2920,7 @@ contains
       end
       D_old.destroy; F_old.destroy
 
-      ! Set corners and ends and symmetrise
+      ! Set corners and ends and symmetrize
       rhs(dim) = ONE            
       lhs(dim,dim) = ZERO      
       lhs.symmetric_reflect
@@ -2969,7 +2995,7 @@ contains
 
       D_old.destroy; J_old.destroy; F_old.destroy
 
-      ! Set corners and ends and symmetrise
+      ! Set corners and ends and symmetrize
       rhs_a(dim) = ONE     
       rhs_b(dim) = ONE    
       lhs_aa(dim,dim) = ZERO   
@@ -3174,14 +3200,16 @@ contains
    ! assumes that the DIIS object has been repeatedly called, previously, so
    ! that it has all the previous information on disk. 
       self :: target
+
    ENSURE(.archive.file_name/=" ","no archive name specified")
    ENSURE(.F.created,"no Fock matrix")
    ENSURE(.D.created,"no density matrix")
-   ENSURE(.F.created("restricted"),"no Fock matrix")
-   ENSURE(.D.created("restricted"),"no density matrix")
+   ENSURE(.F.restricted.created,"no Fock matrix")
+   ENSURE(.D.restricted.created,"no density matrix")
    ENSURE(.S.created,"no overlap matrix")
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
+
       C :: OPMATRIX*
       lhs :: MAT{REAL}*
       rhs,coeff,old_coeff :: VEC{REAL}*
@@ -3241,7 +3269,7 @@ contains
          if      (.micro_iteration_method=="bfgs") then
             tol = .micro_convergence_tol
             saved_self => self
-            VEC{REAL}:minimise_BFGS_v2(FOCK_DIIS::r_ddiis_length,coeff(1:dim-2),length, &
+            VEC{REAL}:minimize_BFGS_v2(FOCK_DIIS::r_ddiis_length,coeff(1:dim-2),length, &
                tol,tol,step=TOL(2),max_it=.micro_max_iterations)
             nullify(saved_self)
             coeff(dim-1) = ONE - VEC{REAL}:sum(coeff(1:dim-2))
@@ -3249,20 +3277,33 @@ contains
 
          ! Linearisation method for micro-iterations
          else if (.micro_iteration_method=="linearisation") then
+
             .update_kept
+
             old_coeff.create(dim)
+
             iter = 0
             do
+
                iter = iter + 1
+
                old_coeff = coeff
+
                .make_r_ddiis_system(lhs,rhs,coeff)
                .solve_r_diis_equations(lhs,rhs,coeff)
-               lhs.destroy; rhs.destroy
+
+               lhs.destroy
+               rhs.destroy
+
                coeff = .micro_damp_factor*old_coeff + (ONE-.micro_damp_factor)*coeff
-               DIE_IF(iter>.micro_max_iterations,"too many DDIIS iterations") 
+               ENSURE(iter<=.micro_max_iterations,"too many DDIIS iterations") 
+
                if (coeff.same_as(old_coeff,eps=.micro_convergence_tol)) exit
+
             end
+
             old_coeff.destroy
+
          end
 
          ! Construct the interpolation
@@ -3274,8 +3315,11 @@ contains
             .F.restricted = .F.restricted + coeff(old)*C.restricted
          end
          C.destroy
+
       end
+
       coeff.destroy
+
    end
 
    u_ddiis ::: private
@@ -3285,17 +3329,16 @@ contains
    ! This assumes that the DIIS object has been repeatedly called, previously,
    ! so that it has all the previous information on disk. 
       self :: target
+
    ENSURE(.archive.file_name/=" ","no archive name specified")
    ENSURE(.F.created,"no Fock matrix")
    ENSURE(.D.created,"no density matrix")
    ENSURE(.J.created,"no coulomb matrix")
-   ENSURE(.F.created("unrestricted"),"no Fock matrix")
-   ENSURE(.D.created("unrestricted"),"no density matrix")
-   ENSURE(.J.created("unrestricted"),"no coulomb matrix")
    ENSURE(.S.created,"no overlap matrix")
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
    ENSURE(.J.n_bf==.S.dim1,"Incompatible D and S")
+
       C :: OPMATRIX*
       lhs :: MAT{REAL}*
       rhs,coeff,coeff1,old_coeff,coeff_a,coeff_b,c1a,c1b :: VEC{REAL}*
@@ -3372,7 +3415,7 @@ contains
             c1b => coeff1.beta
             c1a = coeff_a(1:dim-2) 
             c1b = coeff_b(1:dim-2) 
-            VEC{REAL}:minimise_BFGS_v2(FOCK_DIIS::u_ddiis_length,coeff1,length, &
+            VEC{REAL}:minimize_BFGS_v2(FOCK_DIIS::u_ddiis_length,coeff1,length, &
                tol,tol,step=TOL(2),max_it=.micro_max_iterations)
             nullify(saved_self)
             coeff_a(1:dim-2) = c1a
@@ -3384,20 +3427,34 @@ contains
 
          ! Linearisation method for the micor-iterations
          else if (.micro_iteration_method=="linearisation") then
+
             .update_kept
+
             old_coeff.create(2*dim)
+
             iter = 0
             do
+
                iter = iter + 1
+
                old_coeff = coeff
+
                .make_u_ddiis_system(lhs,rhs,coeff)
                .solve_u_diis_equations(lhs,rhs,coeff)
-               lhs.destroy; rhs.destroy
+
+               lhs.destroy
+               rhs.destroy
+
                coeff = .micro_damp_factor*old_coeff + (ONE-.micro_damp_factor)*coeff
-               DIE_IF(iter>.micro_max_iterations,"too many DDIIS iterations") 
+
+               ENSURE(iter<=.micro_max_iterations,"too many DDIIS iterations") 
+
                if (coeff.same_as(old_coeff,eps=.micro_convergence_tol)) exit
+
             end
+
             old_coeff.destroy
+
          end
 
          ! Construct the interpolation
@@ -3417,7 +3474,7 @@ contains
    make_r_ddiis_system(lhs,rhs,coeff) ::: private, leaky
    ! Make the current restricted DDIIS left hand side matrix, "lhs", and the
    ! right hand side, "rhs". "coeff" are the previous list of expansion
-   ! coefficients obtained from solving the linearised DDIIS equations. 
+   ! coefficients obtained from solving the linearized DDIIS equations. 
    ! This routine makes only *one* version of the "lhs" which depends on the
    ! "coeff" solution.  Every DDIIS "lhs" matrix is saved to disk but it is NOT
    ! reused.
@@ -3477,7 +3534,7 @@ contains
    make_u_ddiis_system(lhs,rhs,coeff) ::: private, leaky
    ! Make the current unrestricted DDIIS left hand side matrix, "lhs", and the
    ! right hand side, "rhs". "coeff" are the previous list of expansion
-   ! coefficients obtained from solving the linearised DDIIS equations. "S" is
+   ! coefficients obtained from solving the linearized DDIIS equations. "S" is
    ! the overlap matrix which must be consistent with the Fock and Density
    ! matrices stored on disk. "e1" is the intermediate required to reconstruct
    ! the "lhs" from scratch. This routine makes only *one* version of the "lhs"
@@ -3812,9 +3869,9 @@ contains
       lhs.destroy; coeff1.destroy; coeff0.destroy; outside.destroy
    end
 
-! ==========================
-! Solving the DIIS equations
-! ==========================
+!  ==========================
+!  Solving the DIIS equations
+!  ==========================
 
    solve_r_diis_equations(lhs,rhs,solution,emin)
    ! Solve the restricted DIIS equations. This solver can enforce the positivity
@@ -3833,19 +3890,32 @@ contains
       fail :: BIN
 
       if (.force_convexity) then
+
+         ! Solve convex equations
          dim = rhs.dim
-         plist.create(dim-1); plist = [(k,k=1,dim-1)] ! ; plist.prune([.new])
-         keep0.create(1); keep0(1) = .new
+
+         plist.create(dim-1)
+         plist = [(k,k=1,dim-1)] ! ; plist.prune([.new])
+
+         keep0.create(1)
+         keep0(1) = .new
+
          FOCK_DIIS::solve_convex(self,lhs,rhs,solution,plist,keep0,emin,fail) 
-         DIE_IF(fail,"failed to find a convex solution")
+         ENSURE(NOT fail,"failed to find a convex solution")
+
        ! if (fail) then
        ! lhs.solve_convex_linear_equation(rhs,coeff,plist,keep1=[.new],fail=fail) 
-       ! DIE_IF(fail,"failed to find a convex solution")
+       ! ENSURE(NOT fail,"failed to find a convex solution")
        ! end
+
          keep0.destroy
          plist.destroy
+
       else
-         lhs.solve_linear_equation(rhs,solution)  ! Solve diis equations
+
+         ! Solve diis equations
+         lhs.solve_linear_equation(rhs,solution)  
+
       end
 
    end
@@ -3867,90 +3937,33 @@ contains
       fail :: BIN
 
       if (.force_convexity) then
+
+         ! Solve convex equations
          dim = rhs.dim/2
-         plist.create(2*dim); plist = [(k,k=1,2*dim)] 
+
+         plist.create(2*dim)
+         plist = [(k,k=1,2*dim)] 
          plist.prune([dim,2*dim])
+       
        ! lhs.solve_convex_linear_equation(rhs,solution,plist,keep0=[.new,dim+.new],fail=fail) 
          FOCK_DIIS::solve_convex(self,lhs,rhs,solution,plist,keep0=[.new,dim+.new],fail=fail) 
-         DIE_IF(fail,"failed to find a convex solution")
+         ENSURE(NOT fail,"failed to find a convex solution")
+
        ! if (fail) then
        ! lhs.solve_convex_linear_equation(rhs,solution,plist,keep1=[.new,dim+.new],fail=fail) 
-       ! DIE_IF(fail,"failed to find a convex solution")
+       ! ENSURE(NOT fail,"failed to find a convex solution")
        ! end
+
          plist.destroy
+
       else
-         lhs.solve_linear_equation(rhs,solution)  ! Solve diis equations
+
+         ! Solve diis equations
+         lhs.solve_linear_equation(rhs,solution)  
+
       end
 
    end
-
-!   solve_gc_diis_equations(lhs,rhs,solution,emin)
-!   ! Solve the restricted DIIS equations. This solver can enforce the positivity
-!   ! of the coefficients to ensure that the corresponding extrapolated density
-!   ! has eigenvalues between 0 and 1.
-!      lhs :: MAT{CPX}
-!      rhs,solution :: VEC{CPX}
-!   ENSURE(lhs.is_square,"lhs must be square")
-!   ENSURE(lhs.dim1==rhs.dim,"lhs and rhs are incompatible")
-!   ENSURE(lhs.dim1==solution.dim,"lhs and solution are incompatible")
-!      emin :: REAL, optional
-!
-!      i,j,dim :: INT
-!      a,b :: REAL
-!      lhs2 :: MAT{REAL}*
-!      rhs2,solution2 :: VEC{REAL}*
-!  !    coeff :: VEC{CPX}*
-!  !    plist,keep0 :: VEC{INT}*
-!  !    dim,k :: INT
-!  !    fail :: BIN
-!   !   if (.force_convexity) then
-!   !      dim = rhs.dim
-!   !      plist.create(dim-1); plist = [(k,k=1,dim-1)] ! ; plist.prune([.new])
-!   !      keep0.create(1); keep0(1) = .new
-!   !      FOCK_DIIS::solve_convex(self,lhs,rhs,solution,plist,keep0,emin,fail) 
-!   !      DIE_IF(fail,"failed to find a convex solution")
-!   !    ! if (fail) then
-!   !    ! lhs.solve_convex_linear_equation(rhs,coeff,plist,keep1=[.new],fail=fail) 
-!   !    ! DIE_IF(fail,"failed to find a convex solution")
-!   !    ! end
-!   !      keep0.destroy
-!   !      plist.destroy
-!   !   else
-!        dim= lhs.dim1
-!        lhs2.create(2*dim-1,2*dim-1)
-!        rhs2.create(2*dim-1)
-!        solution2.create(2*dim-1)
-!
-!        ! because it seeems the imaginary equation will be numerically
-!        ! dependent I (LBxxx) skip that part
-!        do i=1,dim-1
-!          do j=1,dim-1
-!            lhs2(2*i-1,2*j-1) =  real(lhs(i,j))
-!            lhs2(2*i,2*j)     = -aimag(lhs(i,j))
-!          end do
-!          lhs2(2*dim-1,i)     = real(lhs(dim,i))
-!          lhs2(i,2*dim-1)     = real(lhs(i,dim))
-!    !      rhs2(2*i-1) =  real(lhs(i))
-!    !      rhs2(2*i)   =  aimag(lhs(i))
-!        end do
-!           rhs2=ZERO
-!           rhs2(2*dim-1)=ONE
-!        lhs2.solve_linear_equation(rhs2,solution2)  ! Solve diis equations
-!
-!        do i=1,dim-1
-!           a=solution2(2*i-1)
-!           b=solution2(2*i)
-!           solution(i)=cmplx(a,b) 
-!        end do
-!           a=solution2(2*dim-1)
-!           b=ZERO
-!           solution(dim)=cmplx(a,b) 
-!        
-!        lhs2.destroy
-!        rhs2.destroy
-!        solution2.destroy
-!   !   end
-!   end
 
    solve_convex(lhs,rhs,solution,plist,keep0,fmin,fail) ::: private
    ! This routine solves the quadratic minimisation problem:
@@ -4073,14 +4086,14 @@ contains
          else;                    fail = FALSE
          end
       else
-         DIE_IF(NOT found_one,"acceptable solution was not found")
+         ENSURE(found_one,"acceptable solution was not found")
       end
 
    end
 
-! =========================
-! Getting lhs/rhs from disk
-! =========================
+!  =========================
+!  Getting lhs/rhs from disk
+!  =========================
 
    get_old_lhs(lhs) ::: leaky
    ! Get the old DIIS left hand side matrix in "lhs". The "lhs" is created to be
@@ -4158,45 +4171,6 @@ contains
       end
 
    end
-
-!   get_old_gc_lhs(lhs) ::: leaky
-!   ! Get the old restricted DIIS left hand side matrix in "lhs". The "lhs" is
-!   ! created to be the correct size for the *current* DIIS problem. The new
-!   ! parts required are not set.
-!      lhs :: MAT{CPX}*
-!   ENSURE(lhs.destroyed,"lhs exists")
-!   ENSURE(.lhs_tag/=" ","no lhs_tag specified")
-!      dim,iter :: INT
-!
-!      dim = .dimension
-!      lhs.create(dim,dim)
-!
-!      iter = .kept + 1
-!
-!      if (iter==1) then
-!         ! This is the first item; there is nothing to extrapolate.
-!         ! So, we set the diis lhs matrix to zero.
-!         lhs = (ZERO,ZERO)
-!
-!      else if (iter<=.keep) then
-!         ! We still have not exceeded ".keep" number of vectors.
-!         ! The dimension of "lhs" must now be: iter+1 by iter+1;
-!         ! The dimension of the previous "lhs" was: iter by iter;
-!         ! We are reading that in here ...
-!         .read_item(lhs(1:iter,1:iter),.lhs_tag)
-!         ! The row and column iter will be replaced in the DIIS procedure.
-!         ! This row and column were the previous DIIS auxiliary row and column, 
-!         ! so they can be trashed without loss of information.
-!
-!      else
-!         ! Here iter exceeds .keep; so one of the parameter and error vectors
-!         ! from 1 to .keep must be replaced. The dimension of the matrix is
-!         ! .keep+1 by .keep+1; previously, the dimension of the matrix was also
-!         ! this big, so we read in the whole matrix ...
-!         .read_item(lhs,.lhs_tag)
-!      end
-!
-!   end
 
    get_old_u_lhs(lhs) ::: leaky
    ! Get the old unrestricted DIIS left hand side matrix in "lhs". The "lhs" is
@@ -4290,9 +4264,9 @@ contains
       end
    end
 
-! ==================================
-! Saving and reading items from disk
-! ==================================
+!  ==================================
+!  Saving and reading items from disk
+!  ==================================
 
    save_item(item,name,i,genre) ::: template
    ! Save "item" to disk with identifiers: label "name", and number "i".
@@ -4440,9 +4414,9 @@ contains
       .archive.set_name(old_name)
    end
 
-! ==========
-! Converged?
-! ==========
+!  ==========
+!  Converged?
+!  ==========
 
    is_converged result (res)
    ! Return TRUE if the DIIS procedure is converged
@@ -4450,9 +4424,9 @@ contains
       res = .error_length<.convergence_tolerance
    end
 
-! ======================
-! Output the DIIS object
-! ======================
+!  ======================
+!  Output the DIIS object
+!  ======================
 
    put
    ! Prints out the DIIS data to stdout

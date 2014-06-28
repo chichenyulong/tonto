@@ -33,7 +33,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: cluster.foo 4398 2014-06-01 06:55:30Z dylan_ $
+! $Id: cluster.foo 4248 2014-01-12 06:58:59Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module CLUSTER
@@ -48,15 +48,28 @@ contains
 !  Allocation
 !  ==========
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object. This version does not set defaults.
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   nullify_ptr_part
+   create(crystal) ::: leaky
+   ! Create the object from the supplied "crystal".
+      self :: PTR
+      crystal :: CRYSTAL*
+
+   ENSURE(crystal.created,"no crystal created!")
+   ENSURE(crystal.asymmetric_unit_atom.created,"no crystal asymmetric unit atoms!")
+
+      .create
+      .set_defaults(crystal)
+
+   end
+
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts
 
       nullify(.crystal)
@@ -77,7 +90,7 @@ contains
 
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts
 
       ! Never destroy these, they are always pointer assigned
@@ -99,7 +112,7 @@ contains
 
    end
 
-   destroy_cluster_info_ptr_part ::: leaky
+   destroy_cluster_info_ptr_part ::: leaky, pure
    ! Destroy the non-symop informational ptr parts. These incclude the actual
    ! .geometry of the cluster as wellas information relating to the .symop's
    ! used to generate the cluster.
@@ -116,53 +129,49 @@ contains
       .atom_connection.destroy
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
    ! Create a copy of object
    end
 
-   copy(cluster) ::: leaky
-   ! Copy the contents of "cluster" to self. NOTE: ensure you destroy all the
-   ! parts you need to before calling this.
-      cluster :: CLUSTER, IN
-      self = cluster
+   copy(object) ::: leaky, pure
+   ! Copy the contents of "object" to self. 
+   ! NOTE: destroy all the parts you need to before calling this.
+      self :: INOUT
+      object :: CLUSTER, IN
+
+      self = object
+
       .nullify_ptr_part
-      if (cluster.geometry.created)                .geometry.create_copy(cluster.geometry)
-      if (cluster.crystal.created)                 .crystal.create_copy(cluster.crystal)
-      if (cluster.asymmetric_unit_atom.created)    .asymmetric_unit_atom.create_copy(cluster.asymmetric_unit_atom)
-      if (cluster.shift.created)                   .shift.create_copy(cluster.shift)
-      if (cluster.shift_for_atom.created)          .shift_for_atom.create_copy(cluster.shift_for_atom)
-      if (cluster.is_fragment_atom.created)        .is_fragment_atom.create_copy(cluster.is_fragment_atom)
-      if (cluster.occupation_list.created)         .occupation_list.create_copy(cluster.occupation_list)
-      if (cluster.molecule_for_atom.created)       .molecule_for_atom.create_copy(cluster.molecule_for_atom)
-      if (cluster.molecule.created)                .molecule.create_copy(cluster.molecule)
-      if (cluster.molecule_centroid.created)       .molecule_centroid.create_copy(cluster.molecule_centroid)
-      if (cluster.unique_molecule_for.created)     .unique_molecule_for.create_copy(cluster.unique_molecule_for)
-      if (cluster.unique_symop_for.created)        .unique_symop_for.create_copy(cluster.unique_symop_for)
-      if (cluster.atom_connection.created)         .atom_connection.create_copy(cluster.atom_connection)
-   end
 
-   create(crystal) ::: leaky
-   ! Create the object from the supplied "crystal".
-      self :: PTR
-      crystal :: CRYSTAL*
-
-   ENSURE(crystal.created,"no crystal created!")
-   ENSURE(crystal.asymmetric_unit_atom.created,"no crystal asymmetric unit atoms!")
-
-      .create
-      .set_defaults(crystal)
+      CREATE_COPY_COMPONENT(geometry)
+      CREATE_COPY_COMPONENT(crystal)
+      CREATE_COPY_COMPONENT(asymmetric_unit_atom)
+      CREATE_COPY_COMPONENT(shift)
+      CREATE_COPY_COMPONENT(shift_for_atom)
+      CREATE_COPY_COMPONENT(is_fragment_atom)
+      CREATE_COPY_COMPONENT(occupation_list)
+      CREATE_COPY_COMPONENT(molecule_for_atom)
+      CREATE_COPY_COMPONENT(molecule)
+      CREATE_COPY_COMPONENT(molecule_centroid)
+      CREATE_COPY_COMPONENT(unique_molecule_for)
+      CREATE_COPY_COMPONENT(unique_symop_for)
+      CREATE_COPY_COMPONENT(atom_connection)
 
    end
 
@@ -170,7 +179,7 @@ contains
 !  Set methods
 !  ===========
 
-   set_defaults(crystal) ::: leaky
+   set_defaults(crystal) ::: leaky, pure
    ! Set up defaults. The "crystal" is pointer assigned. The cluster
    ! is essentially a crystal with additional operations based on the
    ! .fragment_geometry. Thus we must keep the crystal.fragment_geometry 
@@ -224,7 +233,7 @@ contains
    ENSURE(.crystal.asymmetric_unit_atom.created,"no crystal asymmetric unit atoms!")
 
       ! Set crystal fragment geometry (must be fractional)
-      .crystal.make_fragment_data(fragment_geometry,cartesian)
+      .crystal.set_defaults(fragment_geometry,cartesian)
 
       ! Point to crystal fragment geometry
       .fragment_geometry => .crystal.fragment_geometry
@@ -241,12 +250,9 @@ contains
    ! fragment, or whether to use the unit cell ad the cluster, or just the
    ! initial starting fragment (i.e. the null cluster) or the initial fragment
    ! and the unit cell.
-      self :: INOUT
-      method :: STR, IN
-
+      method :: STR
       .generation_method = method
       .generation_method.to_lower_case
-
       select case (.generation_method)
          case("for_hirshfeld_surface     ")
          case("fragment                  ")
@@ -258,21 +264,13 @@ contains
          case("within_radius             ")
          case default;   UNKNOWN(.generation_method)
       end
-
    end
 
    set_unit_cell_offset(offset)
    ! Set the unit_cell_offset to use when making an offset unit cell.
       offset :: VEC{REAL}(3)
-
-   DIE_IF(any(offset>HALF) OR any(offset<-HALF),"offset must be between -1/2 and +1/2")
-
+   ENSURE(offset.all_in_range([-HALF,HALF]),"offset must be between -1/2 and +1/2")
       .unit_cell_offset = offset
-
-   end
-
-   set_defragment(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.defragment)
-   ! Generic set
    end
 
 !  =============
@@ -389,6 +387,59 @@ contains
       stdin.read_quantity(.atom_density_cutoff)
    end
 
+!   read_fragment_geometry ::: leaky
+!   ! Read in the fragment geometry, in cartesian atomic units, and
+!   ! convert to fractional coordinates. NOTE: All fragment atom
+!   ! positions must correspond to the positions of actual atoms in the
+!   ! crystal lattice.
+!
+!   ENSURE(.crystal.created,"no crystal defined")
+!
+!      fragment_geometry :: MAT{REAL}*
+!      tmp :: VEC{REAL}*
+!      n :: INT
+!
+!      ! Read coordinates
+!      stdin.read_ptr_quantity(tmp)
+!      ENSURE(mod(tmp.dim,3)==0,"# of elements not divisible by 3")
+!
+!      ! Sety fragment geometry
+!      n = tmp.dim/3
+!      fragment_geometry.create(3,n)
+!      fragment_geometry = reshape(tmp,[3,n])
+!      .set_fragment_geometry(fragment_geometry,cartesian=TRUE)
+!
+!      ! Clean
+!      fragment_geometry.destroy
+!      tmp.destroy
+!
+!   end
+
+!   set_fragment_geometry_from_first_atom_in_asymm_unit
+!   ! Takes the first atom from the asymmetric unit and sets it
+!   ! to be the current fragment geometry
+!
+!   ENSURE(.crystal.created,"no crystal defined")
+!   ENSURE(.crystal.asymmetric_unit_atom.created,"no crystal asymmetric unit atoms!")
+!
+!      fragment_geometry :: MAT{REAL}*
+!      atom :: ATOM*
+!
+!      ! First atom
+!      atom => .crystal.asymmetric_unit_atom(1)
+!
+!      ! Set geometry
+!      fragment_geometry.create(3,1)
+!      fragment_geometry(1,1) = atom.position(1)
+!      fragment_geometry(2,1) = atom.position(2)
+!      fragment_geometry(3,1) = atom.position(3)
+!      .set_fragment_geometry(fragment_geometry,cartesian=TRUE)
+!
+!      ! Clean
+!      fragment_geometry.destroy
+!
+!   end
+
    read_fractional_fragment ::: leaky
    ! Read in the fragment geometry, in fractional coordinates.
    ! NOTE: All fragment atom positions must correspond to the
@@ -413,7 +464,8 @@ contains
 
    read_atoms ::: leaky
    ! Modify the atom list information
-      DIE_IF(.asymmetric_unit_atom.destroyed,"atom list not created!")
+
+   ENSURE(.asymmetric_unit_atom.created,"atom list not created!")
 
       .asymmetric_unit_atom.read_list_keywords
 
@@ -468,7 +520,7 @@ contains
       else;                  .do_connectify
       end
 
-      ! Extract cordinates from occupation list
+      ! Extract cordinatres from occupation list
       .extract_geometry
 
       ! Finished ...
@@ -524,8 +576,7 @@ contains
                ! Shift relative to recentered unit cell
                h = h + .fragment_offset
          
-               DIE_IF(any(h<-CLUSTER_H_MAX),"fragment too wide, h = "//trim(h.to_concatenated_str))
-               DIE_IF(any(h> CLUSTER_H_MAX),"fragment too wide, h = "//trim(h.to_concatenated_str))
+               ENSURE(h.all_in_range([-CLUSTER_H_MAX,CLUSTER_H_MAX]),"fragment too wide, h = "//trim(h.to_concatenated_str))
          
                ! Sanity check
                if (u==0) then
@@ -615,7 +666,7 @@ contains
          
             ! Fractions "b" along cell axes; and complements "t"
             b = radius/.crystal.unit_cell.length
-            DIE_IF(any(b>ONE),"radius around unit cell exceeds at least one cell dimension")
+            ENSURE(all(b<=ONE),"radius around unit cell exceeds at least one cell dimension")
             t = ONE - b
          
             ! Unit cell code
@@ -748,8 +799,7 @@ contains
       n_unit_cell_atoms = .crystal.n_unit_cell_atoms
       radius2           = .radius*.radius
       rcm               = .crystal.unit_cell.direct_matrix
-      has_atoms_to_suppress = .unit_cell_atoms_to_suppress.created
-      if (has_atoms_to_suppress) has_atoms_to_suppress = .unit_cell_atoms_to_suppress.dim > 0
+      has_atoms_to_suppress = .unit_cell_atoms_to_suppress.created AND (.unit_cell_atoms_to_suppress.dim > 0)
 
       ! Cartesian fragment geometry
       frag.create(3,.n_fragment_atoms)                     
@@ -773,8 +823,8 @@ contains
       ! Maximum value of unit cell index
       ! and offset for unit cell coding
       h0 = CLUSTER_H_MAX
-      DIE_IF(any(.h_min<-h0), "search range too low, h_min = "//trim(.h_min.to_concatenated_str))
-      DIE_IF(any(.h_max> h0), "search range too high, h_max = "//trim(.h_max.to_concatenated_str))
+      ENSURE(all(.h_min>=-h0), "search range too low, h_min = "//trim(.h_min.to_concatenated_str))
+      ENSURE(all(.h_max<=h0), "search range too high, h_max = "//trim(.h_max.to_concatenated_str))
 
       ! Get the (0,0,0) unit cell offset by .fragment_offset in cartesians
       geom0.create(3,n_unit_cell_atoms)                    
@@ -825,9 +875,7 @@ contains
                if (uskip(u)) cycle
             end
 
-            if (has_atoms_to_suppress) then
-              if (any(.unit_cell_atoms_to_suppress == u)) cycle
-            end
+            if (has_atoms_to_suppress AND any(.unit_cell_atoms_to_suppress == u)) cycle
 
             pos = geom0(:,u)
             if (not000) pos = pos + off
@@ -845,10 +893,11 @@ contains
          
                ! Don't use square root
                d2 = d(1)*d(1)+d(2)*d(2)+d(3)*d(3)
-               if (d2>radius2) cycle                       
-         
-               within_radius = TRUE
-               exit
+
+               if (d2<=radius2) then
+                  within_radius = TRUE
+                  exit
+               end
          
             end
          
@@ -922,7 +971,7 @@ contains
          ! No connections? next ...
          if (unit_cell_connection(u).element.dim==0) cycle
         
-         ! Get unit cell atom offset for atom "i"
+         ! Get unit cell atom offset for ato "i"
          h1 = CLUSTER_H1_FROM_CODE(code)
          h2 = CLUSTER_H2_FROM_CODE(code)
          h3 = CLUSTER_H3_FROM_CODE(code)
@@ -1386,17 +1435,13 @@ contains
 
    extract_geometry ::: leaky
    ! Extract the .geometry (fractional) from the final .occupation list.
-   ! . Place connected molecules in order
-   ! . Set the .is_fragment_atom flag array
+   ! Also extract the .is_fragment_atom flag array
 
    ENSURE(.occupation_list.created,"no occupation_list")
    ENSURE(.crystal.created,"no crystal")
    ENSURE(.crystal.unit_cell_geometry.created,"no crystal unit cell geometry")
 
-      a,m,i,code,h1,h2,h3,u :: INT
-      atom_connection :: VEC{VEC_{INT}}*
-      new_order :: VEC{INT}*
-      connected :: BIN
+      i,code,h1,h2,h3,u :: INT
 
       ! No of atoms to extract
       .n_atoms = .occupation_list.dim
@@ -1409,62 +1454,27 @@ contains
       .is_fragment_atom.destroy
       .is_fragment_atom.create(.n_atoms)
 
-      ! New ordering
-      new_order.create(.n_atoms)
+      ! Loop over atoms "i"
+      do  i = 1,.n_atoms
 
-      a = 0
-
-      ! Loop over molecules
-      do m = 1,.n_molecules
-
-          ! Loop over atoms "i"
-          do i = 1,.n_atoms
+         ! Get occ code for this atom
+         code = .occupation_list(i)  
         
-             if (.molecule_for_atom(i)/=m) cycle
-
-             ! Atom index
-             a = a + 1
-             new_order(i) = a
-
-             ! Get occ code for this atom
-             code = .occupation_list(i)  
-            
-             ! Get unit cell atom "u" and cell offset "h"
-             h1 = CLUSTER_H1_FROM_CODE(code)
-             h2 = CLUSTER_H2_FROM_CODE(code)
-             h3 = CLUSTER_H3_FROM_CODE(code)
-             u  = CLUSTER_UA_FROM_CODE(code) 
-            
-             ! Get the cluster atom coordinate
-             .geometry(:,i) = .crystal.unit_cell_geometry(:,u) + [h1,h2,h3] + .fragment_offset
-            
-             ! Set flag if fragment atom
-             if (i<=.n_fragment_atoms) then; .is_fragment_atom(i) = TRUE 
-             else;                           .is_fragment_atom(i) = FALSE
-             end
+         ! Get unit cell atom "u" and cell offset "h"
+         h1 = CLUSTER_H1_FROM_CODE(code)
+         h2 = CLUSTER_H2_FROM_CODE(code)
+         h3 = CLUSTER_H3_FROM_CODE(code)
+         u  = CLUSTER_UA_FROM_CODE(code) 
         
-          end
+         ! Get the cluster atom coordinate
+         .geometry(:,i) = .crystal.unit_cell_geometry(:,u) + [h1,h2,h3] + .fragment_offset
+        
+         ! Set flag if fragment atom
+         if (i<=.n_fragment_atoms) then; .is_fragment_atom(i) = TRUE 
+         else;                           .is_fragment_atom(i) = FALSE
+         end
 
       end
-
-      ! Now reorder
-      .occupation_list(new_order)   = .occupation_list
-      .geometry(:,new_order)        = .geometry
-      .molecule_for_atom(new_order) = .molecule_for_atom
-      .is_fragment_atom(new_order)  = .is_fragment_atom
-
-      ! Reorder connection table
-      atom_connection.create(.n_atoms)
-      do i = 1,.n_atoms
-         connected = .atom_connection(i).element.created
-         if (NOT connected) cycle
-         atom_connection(new_order(i)).element.create_copy(new_order(.atom_connection(i)[:]))
-      end
-      .atom_connection.destroy
-      .atom_connection => atom_connection
-
-      ! Clean
-      new_order.destroy
 
    end
 
@@ -1842,7 +1852,6 @@ contains
 
    end
 
-
    fragment_atom_indices result (res) 
    ! Return the indices of the fragment atoms in the cluster.
       res :: VEC{INT}(.n_fragment_atoms)
@@ -1893,69 +1902,6 @@ contains
 
    end
 
-   crystal_asym_unit_atom_indices result (res)
-   ! Return the indices of the crystal asymmetric unit cell atoms
-   ! corresponding to the fragment atoms of the *cluster*.
-      self :: IN
-      res :: VEC{INT}(.n_fragment_atoms)
-
-   ENSURE(.n_fragment_atoms>0,      "no fragment atoms")
-   ENSURE(.is_fragment_atom.created,"no is_fragment_atom")
-   ENSURE(.occupation_list.created, "no occupation_list")
-   ENSURE(.crystal.created        , "no crystal")
-
-      f,i,code,u,a :: INT
-
-      f = 0
-
-      ! Loop over atoms
-      do  i = 1,.n_atoms
-
-         if (NOT .is_fragment_atom(i)) cycle
-
-         code = .occupation_list(i)   
-         u    = CLUSTER_UA_FROM_CODE(code) 
-         a    = .crystal.asym_atom_for_unit_cell_atom(u)
-
-         f      = f + 1
-         res(f) = a
-         
-      end
-
-   end
-
-   crystal_frag_atom_indices result (res)
-   ! Return the *crystal* fragment atom indices of the fragment atoms
-   ! in the *cluster* (the two are not necessarily the same!)
-      self :: IN
-      res :: VEC{INT}(.n_fragment_atoms)
-
-   ENSURE(.n_fragment_atoms>0,      "no fragment atoms")
-   ENSURE(.is_fragment_atom.created,"no is_fragment_atom")
-   ENSURE(.occupation_list.created, "no occupation_list")
-   ENSURE(.crystal.created        , "no crystal")
-
-      f,i,code,u,a :: INT
-
-      f = 0
-
-      ! Loop over atoms
-      do  i = 1,.n_atoms
-
-         if (NOT .is_fragment_atom(i)) cycle
-
-         code = .occupation_list(i)   
-         u    = CLUSTER_UA_FROM_CODE(code) 
-         a    = .crystal.frag_atom_for_unit_cell_atom(u)
-
-         f      = f + 1
-         res(f) = a
-         
-      end
-
-   end
-
-
    create_atom_list(atom) ::: leaky
    ! Create and make a new atom list for the cluster
    ! NOTE: basis sets are pointer copied!
@@ -1987,7 +1933,7 @@ contains
    ENSURE(.crystal.created, "no crystal data")
    ENSURE(.crystal.fragment_info_made,"no crystal fragment info")
    ENSURE(.asymmetric_unit_atom.created, "no asymmetric_cell_atom data")
-   DIE_IF(NOT .asymmetric_unit_atom.has_cartesian_axes, "positions & ADPs must be in cartesian axis system")
+   ENSURE(.asymmetric_unit_atom.has_cartesian_axes, "positions & ADPs must be in cartesian axis system")
 
       ulist :: VEC{INT}*
       seitz :: MAT3{REAL}*
@@ -2032,9 +1978,6 @@ contains
      
       ! Change pos to cartesian
       atom.resolve_axis_system(.crystal.unit_cell)       
-
-      ! Update labels/groups
-      atom.update
 
    end
 
@@ -2100,9 +2043,6 @@ contains
      
       ! Change pos to cartesian
       atom.resolve_axis_system(.crystal.unit_cell)
-
-      ! Update labels/groups
-      atom.update
 
    end
 
@@ -2322,10 +2262,6 @@ contains
 
    end
 
-!  ===========
-!  Add tensors
-!  ===========
-
    add_uc_tensors(tensor) ::: template
    ! For a unit cell, add up a "tensor" property for one molecule, assumed to be
    ! the fragment_geometry.
@@ -2360,23 +2296,19 @@ contains
       do m = 1,.crystal.n_unit_cell_mols
       do a = 1,.n_atoms
 
-         if (.crystal.unit_cell_mol_for_atom(a)/=m) cycle
+         if (.crystal.unit_cell_mol_for_atom(a)==m) then
 
-         ! Get symop for this molecule
-         u = ulist(a)
-         s = .crystal.asym_symop_for_unit_cell_atom(u)
+            ! Get symop for this molecule
+            u = ulist(a)
+            s = .crystal.asym_symop_for_unit_cell_atom(u)
+         
+            ! Use inverse symop  S^T to change U tensor basis
+            tensor0.change_basis_to(tensor1,seitz(:,:,s))   
+            tensor = tensor + tensor1
+         
+            exit
 
-         ! Use inverse symop  S^T to change U tensor basis
-         tensor0.change_basis_to(tensor1,seitz(:,:,s))   
-         tensor = tensor + tensor1
-
-         ! stdout.show("molecule =",m)
-         ! stdout.show("symop    =",s)
-         ! stdout.put(seitz(:,:,s))
-         ! stdout.text("transformed tensor")
-         ! stdout.put(tensor1)
-
-         exit
+         end
 
       end
       end
@@ -2489,7 +2421,7 @@ contains
 !       do s1 = 1,n_shell
 !         f1 = first(s1); l1 = last(s1); n1 = (l1-f1+1)
 !         a1 = atom_for_shell(s1)
-!         c1 = .atom_for_cell_atom(a1,q) ! cluster atom index
+!         c1 = .atom_for_unit_cell_atom(a1,q) ! cluster atom index
 !         f3 = first_fn(c1); l3 = last_fn(c1)
 !         m1 = n1.inverse_triangle_number - 1
 !         tr1  => tr(m1)[:,:,s]
@@ -2499,7 +2431,7 @@ contains
 !         do s2 = 1, n_shell
 !           f2 = first(s2); l2 = last(s2); n2 = (l2-f2+2)
 !           a2 = atom_for_shell(s2)
-!           c2 = .atom_for_cell_atom(a2,q) ! cluster atom index
+!           c2 = .atom_for_unit_cell_atom(a2,q) ! cluster atom index
 !           f4 = first_fn(c2); l4 = last_fn(c2)
 !           m2 = n2.inverse_triangle_number - 1
 !           ! Transform 2nd index of density matrix
@@ -2530,7 +2462,7 @@ contains
 !   ! M. Dupuis and H.F> King, IJQC (1977) 11, 613
 !     n2 :: MAT{REAL}*
 !   ENSURE(.asymmetric_unit_atom.created, "no atom data")
-!   ENSURE(.atom_for_cell_atom.created, "no atom_for_cell_atom data")
+!   ENSURE(.atom_for_unit_cell_atom.created, "no atom_for_unit_cell_atom data")
 !     s1,a1,c1,s2,a2,c2 :: INT
 !     n_shell,q :: INT
 !     atom_for_shell :: VEC{INT}*
@@ -2541,10 +2473,10 @@ contains
 !       ! Transform each shell pair by symop "s"
 !       do s1 = 1,n_shell
 !         a1 = atom_for_shell(s1)
-!         c1 = .atom_for_cell_atom(a1,q)   ! cluster atom index
+!         c1 = .atom_for_unit_cell_atom(a1,q)   ! cluster atom index
 !         do s2 = 1, n_shell
 !           a2 = atom_for_shell(s2)
-!           c2 = .atom_for_cell_atom(a2,q) ! cluster atom index
+!           c2 = .atom_for_unit_cell_atom(a2,q) ! cluster atom index
 !           n2(c1,c2) = n2(c1,c2) + 1
 !         end
 !       end
@@ -2894,9 +2826,12 @@ contains
          nullify(geometry)
 
          do u = 1,.crystal.n_unit_cell_atoms
-            if (.crystal.unit_cell_mol_for_atom(u)/=m) cycle
-            .do_defragment_uc_atom(u,geometry)
-            exit
+
+            if (.crystal.unit_cell_mol_for_atom(u)==m) then
+               .do_defragment_uc_atom(u,geometry)
+               exit
+            end
+
          end
 
          centroid(:,m) = geometry.sum_column_vectors/geometry.dim2
@@ -3286,7 +3221,7 @@ contains
       n_non_H = count(.asymmetric_unit_atom(par).atomic_number>1)
 
       ! No. of non-H hydrogen atoms per molecule
-      DIE_IF(mod(n_non_H,n_mol)/=0,"no of non-Hydrogen atoms wrong")
+      ENSURE(mod(n_non_H,n_mol)==0,"no of non-Hydrogen atoms wrong")
       n_non_H_per_mol = n_non_H/n_mol
 
       ! Molecular polarisabilities
@@ -3418,7 +3353,7 @@ contains
       non_H = pack([(a,a=1,n)],.asymmetric_unit_atom(par).atomic_number>1)
 
       ! No. of non-H hydrogen atoms per molecule
-      DIE_IF(mod(n_non_H,n_mol)/=0,"no of non-Hydrogen atoms wrong")
+      ENSURE(mod(n_non_H,n_mol)==0,"no of non-Hydrogen atoms wrong")
       n_non_H_per_mol = n_non_H/n_mol
 
       ! Get the non-H positions and molecules
@@ -3815,7 +3750,7 @@ contains
 !
 !      ! Get the no of molecules
 !      n_m = maxval(mol) 
-!      DIE_IF(mod(n,n_m)/=0,"no of atoms in a molecule is not integral")
+!      ENSURE(mod(n,n_m)==0,"no of atoms in a molecule is not integral")
 !
 !      ! Get the no of atoms per molecule
 !      n_a = n/n_m
@@ -3943,7 +3878,7 @@ contains
 !      end
 !    
 !      ! Get number of Non-H hydrogen atoms per molecule
-!      DIE_IF(mod(n_H,n_m)/=0,"no of non-Hydrogen atoms wrong")
+!      ENSURE(mod(n_H,n_m)==0,"no of non-Hydrogen atoms wrong")
 !      nH = n_H/n_m        
 !
 !      ! Average alpha over non-H sites
@@ -4065,13 +4000,18 @@ contains
 
       ! Assign electric fields
       do a = 1,.n_fragment_atoms
-         u = frag_atom.index_of_value(a) ! map to unit cell atom
-         DIE_IF(u==0,"fragment atom "//trim(a.to_str)//" not found in cell")
+
+         ! map to unit cell atom
+         u = frag_atom.index_of_value(a) 
+         ENSURE(u/=0,"fragment atom "//trim(a.to_str)//" not found in cell")
+
          lu = 3*(u-1)
          fu = lu + 1
          lu = lu + 3
+
          F(:,a).to_product_of(L0(fu:lu,:),charge)
          F(:,a).plus_product_of(L1(fu:lu,:),dipole)
+
       end
 
       .put_debug(charge,"make_Lorentz_fields: charge")
@@ -4130,13 +4070,18 @@ contains
       ! Assign charge and dipole interactions
       ! Needs a minus sign when combined
       do a = 1,.n_fragment_atoms
-         u = frag_atom.index_of_value(a) ! map to unit cell atom
-         DIE_IF(u==0,"fragment atom "//trim(a.to_str)//" not found in cell")
+
+         ! map to unit cell atom
+         u = frag_atom.index_of_value(a) 
+         ENSURE(u/=0,"fragment atom "//trim(a.to_str)//" not found in cell")
+
          lu = 3*(u-1)
          fu = lu + 1
          lu = lu + 3
+
          I0(a)   = dot_product(L0(:,u),dipole)
          I1(:,a).to_product_of(L1(:,fu:lu),dipole,transpose_a=TRUE)
+
       end
 
       ! Clean up
@@ -4184,7 +4129,7 @@ contains
       mass.create(n_atom)
 
       ! Set n_atom to the # of atoms in one molecule
-      DIE_IF(mod(n_atom,n_mol)/=0,"# of unit cell atoms is not divisible by number of molecules")
+      ENSURE(mod(n_atom,n_mol)==0,"# of unit cell atoms is not divisible by number of molecules")
       n_atom = n_atom/n_mol
 
       n = 0
@@ -4193,16 +4138,18 @@ contains
          ! Find atom "u" on molecule "m", defragment, get the info
          do u = 1,.crystal.n_unit_cell_atoms
 
-            if (.crystal.unit_cell_mol_for_atom(u)/=m) cycle
+            if (.crystal.unit_cell_mol_for_atom(u)==m) then
 
-            mol(n+1:n+n_atom) = m
-            par0     => par(  n+1:n+n_atom)
-            pos0     => pos(:,n+1:n+n_atom)
-            mass0    => mass( n+1:n+n_atom)
+               mol(n+1:n+n_atom) = m
+               par0     => par(  n+1:n+n_atom)
+               pos0     => pos(:,n+1:n+n_atom)
+               mass0    => mass( n+1:n+n_atom)
+            
+               .do_defragment_uc_atom(u,symop(m),par0,pos0,mass0)
+            
+               exit
 
-            .do_defragment_uc_atom(u,symop(m),par0,pos0,mass0)
-
-            exit
+            end
 
          end
 
@@ -4260,7 +4207,7 @@ contains
       dipole.create(3,n_atom)
 
       ! Set n_atom to the # of atoms in one molecule
-      DIE_IF(mod(n_atom,n_mol)/=0,"# of unit cell atoms is not divisible by number of molecules")
+      ENSURE(mod(n_atom,n_mol)==0,"# of unit cell atoms is not divisible by number of molecules")
       n_atom = n_atom/n_mol
 
       n = 0
@@ -4269,21 +4216,23 @@ contains
          ! Find atom "u" on molecule "m", defragment, get the info
          do u = 1,.crystal.n_unit_cell_atoms
 
-            if (.crystal.unit_cell_mol_for_atom(u)/=m) cycle
+            if (.crystal.unit_cell_mol_for_atom(u)==m) then
 
-            mol(n+1:n+n_atom) = m
-            symop0   => symop(:,:,m)
-            par0     => par(n+1:n+n_atom)
-            pos0     => pos(:,n+1:n+n_atom)
-            charge0  => charge(n+1:n+n_atom)
-            mass0    => mass(n+1:n+n_atom)
-            dipole0  => dipole(:,n+1:n+n_atom)
-            alpha_q0 => alpha_q(:,n+1:n+n_atom)
-            alpha_m0 => alpha_m(:,:,n+1:n+n_atom)
+               mol(n+1:n+n_atom) = m
+               symop0   => symop(:,:,m)
+               par0     => par(n+1:n+n_atom)
+               pos0     => pos(:,n+1:n+n_atom)
+               charge0  => charge(n+1:n+n_atom)
+               mass0    => mass(n+1:n+n_atom)
+               dipole0  => dipole(:,n+1:n+n_atom)
+               alpha_q0 => alpha_q(:,n+1:n+n_atom)
+               alpha_m0 => alpha_m(:,:,n+1:n+n_atom)
+           
+               .do_defragment_uc_atom(u,symop0,par0,pos0,charge0,mass0,dipole0,alpha_q0,alpha_m0)
+           
+               exit
 
-            .do_defragment_uc_atom(u,symop0,par0,pos0,charge0,mass0,dipole0,alpha_q0,alpha_m0)
-
-            exit
+            end
 
          end
 
@@ -4364,7 +4313,7 @@ contains
 !
 !
 !      ! Set n_atom to the # of atoms in one molecule
-!      DIE_IF(mod(n_atom,n_mol)/=0,"# of unit cell atoms is not divisible by number of molecules")
+!      ENSURE(mod(n_atom,n_mol)==0,"# of unit cell atoms is not divisible by number of molecules")
 !      n_atom = n_atom/n_mol
 !
 !      n  = 0
@@ -4435,30 +4384,32 @@ contains
          ! Find atom "u" on molecule "m", defragment, get the info
          do u = 1,.crystal.n_unit_cell_atoms
 
-            if (.crystal.unit_cell_mol_for_atom(u)/=m) cycle
+            if (.crystal.unit_cell_mol_for_atom(u)==m) then
 
-            ! Get the occ list for molecule m
-            occupation_list.create(1)
-            occupation_list(1) = CLUSTER_AT_CODE(0,0,0,u)
-            .do_defragment(occupation_list)
+               ! Get the occ list for molecule m
+               occupation_list.create(1)
+               occupation_list(1) = CLUSTER_AT_CODE(0,0,0,u)
+               .do_defragment(occupation_list)
+          
+               ! No of atoms in molecule m
+               n_atom = occupation_list.dim
+          
+               ! Assign
+               mol(n+1:n+n_atom) = m
+               pos0       => pos(:,n+1:n+n_atom)
+               charge0    => charge(n +1:n +  n_atom)
+               dipole0    => dipole(n3+1:n3+3*n_atom)
+               frag_atom0 => frag_atom(n +1:n +  n_atom)
+          
+               ! Get the info
+               .extract_atom_info(occupation_list,pos0,charge0,dipole0,frag_atom0)
+          
+               ! Clean
+               occupation_list.destroy
+          
+               exit
 
-            ! No of atoms in molecule m
-            n_atom = occupation_list.dim
-
-            ! Assign
-            mol(n+1:n+n_atom) = m
-            pos0       => pos(:,n+1:n+n_atom)
-            charge0    => charge(n +1:n +  n_atom)
-            dipole0    => dipole(n3+1:n3+3*n_atom)
-            frag_atom0 => frag_atom(n +1:n +  n_atom)
-
-            ! Get the info
-            .extract_atom_info(occupation_list,pos0,charge0,dipole0,frag_atom0)
-
-            ! Clean
-            occupation_list.destroy
-
-            exit
+            end
 
          end
 
@@ -4605,24 +4556,21 @@ contains
    put
    ! Put the list of vertices for the object
 
-   DIE_IF(NOT .info_made,"call make_info first")
-   DIE_IF(tonto.destroyed,"no tonto variable")
+   ENSURE(.info_made,"call make_info first")
+   ENSURE(tonto.created,"no tonto variable")
 
       stdout.flush
-      stdout.text("==============================")
-      stdout.text("Cluster generation information")
-      stdout.text("==============================")
+      stdout.text("Cluster information:")
       stdout.flush
 
-      stdout.show("Cluster generation method       =",.generation_method)
-      stdout.show("Complete connected fragments    =",.defragment)
-      stdout.show("Radius of cluster               =",.radius)
-      stdout.show("No. of molecules                =",.n_molecules)
-      stdout.show("No. of atoms                    =",.n_atoms)
-      stdout.show("No. of fragment atoms           =",.n_fragment_atoms)
-      stdout.show("Fragment offset                 =",.fragment_offset)
-      stdout.show("Minimum cell shift for search   =",.h_min)
-      stdout.show("Maximum cell shift for search   =",.h_max)
+      stdout.show("Generation method       =",.generation_method)
+      stdout.show("Defragment?             =",.defragment)
+      stdout.show("Radius                  =",.radius)
+      stdout.show("No. of atoms            =",.n_atoms)
+      stdout.show("No. of fragment atoms   =",.n_fragment_atoms)
+      stdout.show("Fragment offset         =",.fragment_offset)
+      stdout.show("h_min                   =",.h_min)
+      stdout.show("h_max                   =",.h_max)
 
       if (tonto.low_verbosity) then
       if (.fragment_geometry.created) then
@@ -4639,116 +4587,84 @@ contains
 
    put_fragment_geometry
    ! Put the initial fragment geometry information
-
-   ENSURE(.crystal.created,"no crystal")
    ENSURE(.fragment_geometry.created,"no fragment_geometry")
 
-      ID :: VEC{STR}*
-      ind :: VEC{INT}@
-      table :: VEC{TABLE_COLUMN}*
+      a :: INT
 
       stdout.flush
-      stdout.text("=======================================")
-      stdout.text("Central fragment fractional coordinates")
-      stdout.text("=======================================")
-
+      stdout.text("Fragment geometry (crystal axis system):")
       stdout.flush
-      stdout.show("No. of fragment atoms           =",.n_fragment_atoms)
+      stdout.dash(int_fields=1,real_fields=3)
+      stdout.put("Atom",int_width=TRUE)
       stdout.flush
-
-      ! Unique ID tags
-      ind = .crystal_frag_atom_indices
-      ID => .crystal.fragment_atom(ind).unique_tags
-
-      ! Table
-      table.create(4)
-      table(1).set_heading("ID");    table(1).set_values(ID)
-      table(3).set_heading("Coord")
-      table(2).set_subhead("- x -"); table(2).set_values(.fragment_geometry(1,:))
-      table(3).set_subhead("- y -"); table(3).set_values(.fragment_geometry(2,:))
-      table(4).set_subhead("- z -"); table(4).set_values(.fragment_geometry(3,:))
-      table(3).set_sb3head("/frac")
-      table.put
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      ID.destroy
-      deallocate(ind)
+      stdout.put("#",int_width=TRUE)
+      stdout.put("x")
+      stdout.put("y")
+      stdout.put("z")
+      stdout.flush
+      stdout.dash(int_fields=1,real_fields=3)
+      stdout.flush
+      do a = 1,.n_fragment_atoms
+         stdout.put(a)
+         stdout.put(.fragment_geometry(1,a))
+         stdout.put(.fragment_geometry(2,a))
+         stdout.put(.fragment_geometry(3,a))
+         stdout.flush
+      end
+      stdout.dash(int_fields=1,real_fields=3)
 
    end
 
    put_occupation_list
    ! Put the .occupation_list table
-      self :: IN
-
    ENSURE(.occupation_list.created,"no occupation_list")
    ENSURE(.crystal.created,"no crystal")
    ENSURE(.crystal.unit_cell_geometry.created,"no crystal unit cell geometry")
 
-      fi :: VEC{INT}*
-      h1,h2,h3,hc,ui :: VEC{INT}@
-      r1,r2,r3 :: VEC{REAL}@
-      table :: VEC{TABLE_COLUMN}*
-      a :: INT
+      a,code,h1,h2,h3,u :: INT
 
       stdout.flush
-      stdout.text("=============")
-      stdout.text("Cluster atoms")
-      stdout.text("=============")
-
+      stdout.text("Occupation list:")
       stdout.flush
-      stdout.show("Cluster generation method       =",.generation_method)
-      stdout.show("Complete connected fragments    =",.defragment)
-      stdout.show("Radius of cluster               =",.radius)
-      stdout.show("No. of molecules                =",.n_molecules)
-      stdout.show("No. of atoms                    =",.n_atoms)
-      stdout.show("No. of fragment atoms           =",.n_fragment_atoms)
-      stdout.show("Fragment offset                 =",.fragment_offset)
-      stdout.show("Minimum cell shift for search   =",.h_min)
-      stdout.show("Maximum cell shift for search   =",.h_max)
+      stdout.dash(int_fields=6,real_fields=3)
+      stdout.tab(int_fields=1)
+      stdout.put("Unit cell",int_width=TRUE)
+      stdout.flush
+      stdout.put("Atom",int_width=TRUE)
+      stdout.put("Atom",int_width=TRUE)
+      stdout.put("Molecule",int_width=TRUE)
+      stdout.put("x")
+      stdout.put("y")
+      stdout.put("z")
+      stdout.put("h",int_width=TRUE)
+      stdout.put("k",int_width=TRUE)
+      stdout.put("l",int_width=TRUE)
+      stdout.flush
+      stdout.dash(int_fields=6,real_fields=3)
 
-      ! Data
-      a = 1
-      fi => a.sequence_up_to(.n_atoms)
-      ui = CLUSTER_UA_FROM_CODE(.occupation_list)
-      h1 = CLUSTER_H1_FROM_CODE(.occupation_list)
-      h2 = CLUSTER_H2_FROM_CODE(.occupation_list)
-      h3 = CLUSTER_H3_FROM_CODE(.occupation_list)
-      r1 = .crystal.unit_cell_geometry(1,ui) + h1
-      r2 = .crystal.unit_cell_geometry(2,ui) + h2
-      r3 = .crystal.unit_cell_geometry(3,ui) + h3
+      do a = 1,.occupation_list.dim
 
-      hc = 1000*      .crystal.asym_symop_for_unit_cell_atom(ui)    
-      hc = 100* (h1+5+.crystal.asym_shift_for_unit_cell_atom(1,ui)) + hc
-      hc = 10*  (h2+5+.crystal.asym_shift_for_unit_cell_atom(2,ui)) + hc
-      hc =      (h3+5+.crystal.asym_shift_for_unit_cell_atom(3,ui)) + hc
+         code = .occupation_list(a)
+         h1 = CLUSTER_H1_FROM_CODE(code)
+         h2 = CLUSTER_H2_FROM_CODE(code)
+         h3 = CLUSTER_H3_FROM_CODE(code)
+         u  = CLUSTER_UA_FROM_CODE(code) 
 
-      ! Table
-      table.create(9)
-      table(1).set_heading("Cell");  table(1).set_values(ui)
-      table(1).set_subhead("atom")
-      table(2).set_heading("Group"); table(2).set_values(.molecule_for_atom)
-      table(2).set_subhead("(Mol)")
-      table(4).set_heading("Coord")
-      table(3).set_subhead("- x -"); table(3).set_values(r1)
-      table(4).set_subhead("- y -"); table(4).set_values(r2)
-      table(5).set_subhead("- z -"); table(5).set_values(r3)
-      table(4).set_sb3head("/frac")
-      table(7).set_heading("UC")
-      table(6).set_subhead("h1");    table(6).set_values(h1)
-      table(7).set_subhead("h2");    table(7).set_values(h2)
-      table(8).set_subhead("h3");    table(8).set_values(h3)
-      table(9).set_subhead("code");  table(9).set_values(hc)
-      table.put
+         stdout.put(a)
+         stdout.put(u)
+         if (.molecule_for_atom.created) then; stdout.put(.molecule_for_atom(a))
+         else;                                 stdout.put(0)
+         end
+         stdout.put(.crystal.unit_cell_geometry(1,u)+h1)
+         stdout.put(.crystal.unit_cell_geometry(2,u)+h2)
+         stdout.put(.crystal.unit_cell_geometry(3,u)+h3)
+         stdout.put(h1)
+         stdout.put(h2)
+         stdout.put(h3)
+         stdout.flush
 
-      ! Clean
-      table.clear_columns
-      table.destroy
-      deallocate(hc)
-      deallocate(r3); deallocate(r2); deallocate(r1)
-      deallocate(h3); deallocate(h2); deallocate(h1)
-      fi.destroy
+      end
+      stdout.dash(int_fields=6,real_fields=3)
 
    end
 
@@ -4819,6 +4735,40 @@ contains
 
    end
 
+!   put_atom_connection_table
+!   ! Put the atom connection table
+!   ENSURE(.atom_connection.created,"no atom_connection")
+!   ENSURE(.molecule_for_atom.created,"no molecule_for_atom")
+!      m,n,a,b :: INT
+!      stdout.save
+!      stdout.set_int_width(5)
+!      stdout.flush
+!      stdout.text("Molecules and atom connections:")
+!      stdout.flush
+!      do m = 1,.n_molecules                   ! Loop over molecules
+!         stdout.flush
+!         stdout.show("Molecule =",m)
+!         stdout.flush
+!         stdout.put("Atom",int_width=TRUE)
+!         stdout.put("Conn",int_width=TRUE)
+!         stdout.flush
+!
+!         n = count(.molecule_for_atom==m)
+!         do a = 1,.n_atoms                    ! Loop over atoms in molecules
+!            if (.molecule_for_atom(a)/=m) cycle
+!            stdout.put(a)
+!            if (.atom_connection(a).element.created) then
+!            do b = 1,.atom_connection(a).element.dim
+!               stdout.put(.atom_connection(a).element(b))
+!            end
+!            end
+!            stdout.flush
+!         end
+!
+!      end
+!      stdout.unsave
+!   end
+
    put_atom_symmetry_table
    ! Put the atom symmetry table i.e. those atoms in the cluste related by
    ! symmetry.
@@ -4828,7 +4778,8 @@ contains
    ENSURE(.crystal.fragment_info_made,"no crystal fragment info")
 
       asym_atom_for_atom,unique :: VEC{INT}*
-      a,u :: INT
+      symop :: MAT3{REAL}*
+      a,u,i :: INT
 
       asym_atom_for_atom.create(.n_atoms)
       do a = 1,.n_atoms
@@ -4864,12 +4815,24 @@ contains
       unique.destroy
       asym_atom_for_atom.destroy
 
+      stdout.flush
+      stdout.text("Symop matrices:")
+      symop => .crystal.xyz_seitz_matrices
+      do i = 1,symop.dim3
+         stdout.flush
+         stdout.text("Symop "//trim(i.to_str))
+         stdout.put(symop(:,:,i),by_row=TRUE)
+         stdout.flush
+      end
+
+      ! Clean
+      symop.destroy
+
    end
 
    put_tonto_input
    ! Outputs the tonto input file for the cluster, given additionally the list
    ! of atoms which was used to generate the fragment_geometry in crystal.
-   ! (See routine make_fragment_data).
    ENSURE(.info_made,"call make_info first")
    ENSURE(.occupation_list.created,"no occupation_list")
    ENSURE(.asymmetric_unit_atom.created,"no atom data")
@@ -4993,9 +4956,8 @@ contains
       stdout.text("end unit_cell")
 
       ! Print symops for unit cell atoms 
-      ! This is printed after unit_cell because CrystalExplorer likes
-      ! to check the number of symops matches the number of unit cell
-      ! atoms given
+      ! This is printed after unit_cell because CrystalExplorer likes to check
+      ! the number of symops matches the number of unit cell atoms given
       stdout.flush
       stdout.show("begin symops_for_unit_cell_atoms ",.crystal.n_unit_cell_atoms,dots=FALSE)
       do n = 1,.crystal.n_unit_cell_atoms
@@ -5003,7 +4965,6 @@ contains
          stdout.flush
       end
       stdout.text("end symops_for_unit_cell_atoms")
-
       ! Print unit_cell
       stdout.flush
       stdout.show("begin asymmetric_unit_atom_indices ",.crystal.n_asymmetric_unit_atoms,dots=FALSE)

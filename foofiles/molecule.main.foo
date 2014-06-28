@@ -191,7 +191,6 @@ contains
         case ("cluster=                      "); .XTAL:read_cluster
         case ("coppensbasis_name=            "); .::read_coppensbasis_name
         case ("create_cluster                "); .XTAL:create_cluster
-        case ("create_hs_cluster             "); .XTAL:create_HS_cluster
         case ("crystal=                      "); .XTAL:read_crystal
 
         case ("debug_on                      "); .BASE:read_debug_on
@@ -210,9 +209,7 @@ contains
         case ("gauge_origin=                 "); .::read_gauge_origin
         case ("get_dedr_iotc                 "); .REL:get_dEdR_IOTC
         case ("get_g_overlap_nuc             "); .REL:get_g_overlap_nuc
-        case ("get_x_negative_laplacian_grid "); .GRID:get_x_negative_laplacian_grid
-        case ("get_x_laplacian_grid          "); .GRID:get_x_laplacian_grid
-        case ("get_x_structure_factors_pce   "); .XTAL:get_x_structure_factors_pce
+        case ("get_x_structure_factors_dkh   "); .XTAL:get_x_structure_factors_dkh
         case ("get_x_structure_factors_test  "); .XTAL:get_x_structure_factors_test
         case ("geminal_mf_scheme_data=       "); .GEM:read_geminal_mf_scheme
         case ("geminal_mf_scheme             "); .GEM:do_geminal_mf_scheme
@@ -227,7 +224,7 @@ contains
 
         case ("keyword_echo_on               "); .MAIN:set_keyword_echo_on
 
-        case ("localise_mos=                 "); .SCF:localize_MOs
+        case ("localize_mos=                 "); .SCF:localize_MOs
         case ("localize_mos=                 "); .SCF:localize_MOs
         case ("locate_memory_leak            "); .MAIN:locate_memory_leak
         case ("low_verbosity_on              "); .MAIN:set_low_verbosity_on
@@ -270,8 +267,8 @@ contains
         case ("name=                         "); .::read_name
         case ("nucleus_model=                "); .::read_nucleus_model
 
-      ! case ("optimise_geometry             "); .::optimise_geometry
-        case ("optimise_orbitals             "); .MISC:optimise_orbitals
+      ! case ("optimize_geometry             "); .::optimize_geometry
+        case ("optimize_orbitals             "); .MISC:optimize_orbitals
         case ("output_style_options=         "); .MAIN:read_output_style_options
 
         case ("plot                          "); .PLOT:plot
@@ -292,7 +289,7 @@ contains
         case ("put_bond_length_with_error    "); .BASE:put_bond_length_with_error
         case ("put_bond_angle_with_error     "); .BASE:put_bond_angle_with_error
         case ("put_torsion_angle_with_error  "); .BASE:put_torsion_angle_with_error
-        case ("put_cif                       "); .BASE:put_molecule_CIF
+        case ("put_cif                       "); .BASE:put_CIF
         case ("put_coppens_interpolators     "); .MISC:put_coppens_interpolators
         case ("put_crystal                   "); .BASE:put_crystal
         case ("put_crystal_f_statistics      "); .BASE:put_crystal_F_statistics
@@ -307,11 +304,6 @@ contains
         case ("put_fock_matrix               "); .BASE:put_fock_matrix
         case ("put_g_tensor_information      "); .MISC:put_g_tensor_information
         case ("put_geminal_mf_scheme         "); .::geminal_mf_scheme.put
-        case ("put_group_12_coulomb_energy   "); .PROP:put_group_12_coulomb_energy_v0
-        case ("put_group_12_energies_v0      "); .PROP:put_group_12_energies_v0
-        case ("put_group_12_energies         "); .PROP:put_group_12_energies_v1
-        case ("put_group_12_spackman1986_ener"); .PROP:put_group_12_Spackman1986_energies
-        case ("put_group_12_grimme2006_energy"); .PROP:put_group_12_grimme2006_energy
         case ("put_hirshfeld_atom_info       "); .PROP:put_Hirshfeld_atom_info
         case ("put_hirshfeld_g_and_k_energy  "); .MISC:put_Hirshfeld_G_and_K_energy
         case ("put_hirshfeld_polarisabilities"); .CP:put_H_polarisabilities
@@ -366,17 +358,16 @@ contains
         case ("read_molden_file              "); .BASE:read_molden_MOs
         case ("read_molden_mos               "); .BASE:read_molden_MOs
         case ("read_molden_nos               "); .BASE:read_molden_NOs
-        case ("redirect                      "); .BASE:redirect
-        case ("redirect_stdout               "); .BASE:redirect_stdout
+        case ("redirect                      "); TEXTFILE:redirect(stdin)
+        case ("redirect_stdout               "); TEXTFILE:redirect(stdout)
         case ("refine_hirshfeld_atoms        "); .TAD:refine_Hirshfeld_atoms
         case ("reset_molecule                "); .::reset_molecule
-        case ("revert                        "); .BASE:revert
-        case ("revert_stdout                 "); .BASE:revert_stdout
+        case ("revert                        "); TEXTFILE:revert(stdin)
+        case ("revert_stdout                 "); TEXTFILE:revert(stdout)
         case ("roby_analysis                 "); .PROP:roby_analysis
         case ("robydata=                     "); .::read_robydata
         case ("rotate                        "); .MAIN:read_rotate
         case ("rotate_group                  "); .MAIN:read_rotate_group
-        case ("rotate_with_matrix            "); .MAIN:read_rotate_matrix
 
         case ("saved_basis_name=             "); .::read_saved_basis_name
         case ("saved_coppensbasis_name=      "); .::read_saved_coppensbasis_name
@@ -414,7 +405,6 @@ contains
         case ("cx_uses_angstrom=             "); .CE:read_CX_uses_angstrom
 
         case ("process_cif                   "); .CE:process_CIF
-        case ("process_cif_cell_and_symmetry "); .CE:process_CIF_cell_and_symmetry
         case ("process_cif_for_cx            "); .CE:process_CIF_for_CX
         case ("put_cx_data                   "); .CE:put_CX_data
 
@@ -439,7 +429,8 @@ contains
 
    read_atoms ::: leaky
    ! Read in the atom list information
-      DIE_IF(.cluster.created,"cluster already defined! swap cluster= and atoms= ?")
+
+      ENSURE(.cluster.destroyed,"cluster already defined! swap cluster= and atoms= ?")
       WARN_IF(.atom.created,"atom list already defined!")
 
       ! Force update
@@ -455,7 +446,7 @@ contains
       ! Finalize crystal
       if (associated(.crystal)) then
          .BASE:resolve_axis_system
-         .crystal.make_fragment_data(.atom,assign_atom=TRUE)
+         .crystal.set_defaults(.atom,assign_atom=TRUE)
       end
 
       ! Destroy stored atoms here
@@ -465,13 +456,15 @@ contains
 
    read_atom_groups ::: leaky
    ! Read in the .atom_group information
+   ENSURE(.atom.created,"atom groups must be defined after atoms=")
 
       ! Read the atom groups
       .atom_group.read_list_keywords
+      .atom_group.finalize(.atom)
 
       ! Make the atom groups
       ! Don't do this until the ANOs are made ...
-      .BASE:finalize_atom_groups
+    ! .BASE:make_atom_group_info
 
    end
 
@@ -484,16 +477,17 @@ contains
 
    read_basis_sets ::: leaky
    ! Read in a list of atomic basis sets for the molecule
-      WARN_IF(.basis.created,"basis sets already defined!")
+
+   WARN_IF(.basis.created,"basis sets already defined!")
 
       ! Copy bases
       if (.atom.created)  .atom.nullify_basis_part 
 
       ! Basis sets are read in normalized, but internally
       ! are used unnormalized.
-      if (.basis.created) .basis.renormalise 
+      if (.basis.created) .basis.renormalize 
       .basis.read_list_keywords
-      if (.basis.created) .basis.unnormalise 
+      if (.basis.created) .basis.unnormalize 
 
       ! Finalize
       .BASE:resolve_basis_info
@@ -608,7 +602,7 @@ contains
    set_keyword_echo_on   
    ! Echo keywords into the stdout file
 
-   DIE_IF(tonto.destroyed,"tonto not created")
+   ENSURE(tonto.created,"tonto not created")
 
       ! Get rid of unused self error
       tonto.keyword_echo = transfer(self,tonto.keyword_echo)
@@ -645,7 +639,7 @@ contains
    set_low_verbosity_on
    ! Set low output verbosity
 
-   DIE_IF(tonto.destroyed,"tonto not created")
+   ENSURE(tonto.created,"tonto not created")
 
       ! Get rid of self error
       tonto.low_verbosity = transfer(self,tonto.low_verbosity)
@@ -705,7 +699,7 @@ contains
       .plot_grid.read_keywords
 
       ! Check
-      DIE_IF(.plot_grid.plot_format==" ","plot_format not specified (try all)")
+      ENSURE(.plot_grid.plot_format==" ","plot_format not specified (try all)")
 
    end
 
@@ -767,24 +761,6 @@ contains
       ENSURE(NOT axis.is_zero,"axis must not be zero")
 
       .BASE:rotate_group(g,axis,angle)
-
-   end
-
-   read_rotate_matrix ::: leaky
-   ! Same as read_rotate except reads the rotation matrix from the stdin
-      R :: MAT{REAL}(3,3)
-
-      ! Read matrix
-      stdin.read(R)
-
-      ! Delete archives
-      .BASE:delete_scf_archives
-
-      ! Rotate
-      .BASE:rotate_by(R)
-
-      ! Remake the Becke grid (leaky)
-      if (.becke_grid.created) .becke_grid.set_grid_data(.atom)
 
    end
 
@@ -853,19 +829,9 @@ contains
 
    read_slaterbasis_name ::: leaky
    ! Read in the *slater* basis type to be used for the atoms.
-      self :: INOUT
-
-      name :: STR
-
-      stdin.read(name)
-      .BASE:set_slaterbasis_name(name)
-
-      ! Finalize crystal - remake basis kinds !
-    ! if (associated(.crystal)) then
-    !    .crystal.destroy_asymmetric_unit
-    !    .crystal.make_fragment_data(.atom,assign_atom=TRUE)
-    ! end
-
+      this :: STR
+      stdin.read(this)
+      .BASE:set_slaterbasis_name(this)
    end
 
    read_saved_basis_name ::: leaky
@@ -901,9 +867,9 @@ contains
 
       if (.atom.created)  .atom.nullify_slaterbasis_part 
 
-      if (.slaterbasis.created) .slaterbasis.renormalise
+      if (.slaterbasis.created) .slaterbasis.renormalize
       .slaterbasis.read_list_keywords
-      if (.slaterbasis.created) .slaterbasis.unnormalise
+      if (.slaterbasis.created) .slaterbasis.unnormalize
 
       .BASE:resolve_basis_info
 
@@ -915,9 +881,9 @@ contains
 
       if (.atom.created)  .atom.nullify_coppensbasis_part 
 
-      if (.coppensbasis.created) .coppensbasis.renormalise
+      if (.coppensbasis.created) .coppensbasis.renormalize
       .coppensbasis.read_list_keywords
-      if (.coppensbasis.created) .coppensbasis.unnormalise
+      if (.coppensbasis.created) .coppensbasis.unnormalize
 
       .BASE:resolve_basis_info
 

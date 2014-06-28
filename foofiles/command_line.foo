@@ -32,31 +32,19 @@ module COMMAND_LINE
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
-   ! Returns true if self has been created
-      self :: PTR
-      res :: BIN
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
-   ! Returns true if self has *not* been created
-      self :: PTR
-      res :: BIN
-   end
-
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts of self
       nullify(.item)
       nullify(.option)
@@ -64,7 +52,7 @@ contains
       nullify(.arg)
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts of self
       .item.destroy
       .option.destroy
@@ -72,31 +60,49 @@ contains
       .arg.destroy
    end
 
-   create_copy(object) ::: get_from(OBJECT)
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
+   ! Returns true if self has been created
+      self :: PTR
+      res :: BIN
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
+   ! Returns true if self has *not* been created
+      self :: PTR
+      res :: BIN
+   end
+
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), pure
    ! Create a copy of object
    end
 
-   copy(object) ::: leaky
+   copy(object) ::: leaky, pure
    ! Copy the "object"
-      object :: COMMAND_LINE
+      self :: INOUT
+      object :: COMMAND_LINE, IN
 
       self = object
 
       .nullify_ptr_part
 
-      if (object.item.created)         .item.create_copy(object.item)
-      if (object.option.created)       .option.create_copy(object.option)
-      if (object.option_value.created) .option_value.create_copy(object.option_value)
-      if (object.arg.created)          .arg.create_copy(object.arg)
+      CREATE_COPY_COMPONENT(item)
+      CREATE_COPY_COMPONENT(option)
+      CREATE_COPY_COMPONENT(option_value)
+      CREATE_COPY_COMPONENT(arg)
 
    end
 
-! ===========
-! Set methods
-! ===========
+!  ===========
+!  Set methods
+!  ===========
 
-   set_defaults 
+   set_defaults ::: always_pure
    ! Set up the default settings
+      self :: OUT
 
       .command   = "?"
       .n_items   = 0 
@@ -105,7 +111,7 @@ contains
 
    end
 
-   process_options
+   process_options ::: impure
    ! Process unix-style options on the command line
 
       value,opt :: STR
@@ -144,7 +150,9 @@ contains
             ! Get option value
             i = i + 1
             call get_command_argument(i,value,length)
-            DIE_IF(length==0,"no option argument for option "//trim(opt))
+            if (length==0) then
+               DIE("no option argument for option "//trim(opt))
+            end
             .option_value.append(value)
  
          else
@@ -161,11 +169,11 @@ contains
 
    end
 
-! ===============
-! Inquiry methods
-! ===============
+!  ===============
+!  Inquiry methods
+!  ===============
 
-   has_items result (res) ::: pure
+   has_items result (res) ::: always_pure
    ! Return TRUE if there are items on the command line
    ! WARNING: do not confuse this with arguments.
       self :: IN
@@ -173,21 +181,21 @@ contains
       res = .n_items>0
    end
 
-   has_arguments result (res) ::: pure
+   has_arguments result (res) ::: always_pure
    ! Return TRUE if there are *non-optional* arguments ...
       self :: IN
       res :: BIN
       res = .n_args>0
    end
 
-   has_options result (res) ::: pure
+   has_options result (res) ::: always_pure
    ! Return TRUE if there are any options ...
       self :: IN
       res :: BIN
       res = .n_options>0
    end
 
-   has_option(opt) result (res) ::: pure
+   has_option(opt) result (res) ::: always_pure
    ! Return TRUE if the command line has *specific* option "opt"
       self :: IN
       opt :: STR, IN
@@ -210,16 +218,19 @@ contains
       i :: INT
 
       do i = 1,.option.dim
-         if (.option(i)/=opt) cycle
-         res = .option_value(i)
-         exit
+
+         if (.option(i)==opt) then
+            res = .option_value(i)
+            exit
+         end
+
       end
 
    end
 
-! ===
-! Put
-! ===
+!  ===
+!  Put
+!  ===
 
    put
    ! Put out the command line info

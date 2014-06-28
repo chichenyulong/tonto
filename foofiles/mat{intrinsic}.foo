@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat{intrinsic}.foo 4366 2014-05-12 08:38:36Z dylan_ $
+! $Id: mat{intrinsic}.foo 4213 2013-12-19 08:51:17Z dylan_ $
 !-------------------------------------------------------------------------------
 
 virtual module MAT{INTRINSIC}
@@ -57,7 +57,7 @@ contains
 !  Memory allocation
 !  =================
 
-   create(dim1,dim2) ::: leaky, PURE
+   create(dim1,dim2) ::: pure, leaky
    ! Create a matrix with the given dimensions
       self :: PTR
       dim1,dim2 :: INT, IN
@@ -76,16 +76,14 @@ contains
 
    end
 
-   create(bounds) ::: leaky, PURE
+   create(bounds) ::: pure, leaky
    ! Create a matrix with the specified "bounds" for each dimension
       self :: PTR
       bounds :: VEC{INT}(2), IN
-
       .create(bounds(1),bounds(2))
-
    end
 
-   create(lb1,ub1,lb2,ub2) ::: leaky, PURE
+   create(lb1,ub1,lb2,ub2) ::: pure, leaky
    ! Create a matrix with the given dimensions
       self :: PTR
       lb1,ub1,lb2,ub2 :: INT, IN
@@ -104,38 +102,30 @@ contains
 
    end
 
-   create(bounds1,bounds2) ::: leaky, PURE
+   create(bounds1,bounds2) ::: pure, leaky
    ! Create a matrix with the specified bounds for each dimension
       self :: PTR
       bounds1,bounds2 :: VEC{INT}, IN
-
       .create(bounds1(1),bounds1(2),bounds2(1),bounds2(2))
-
    end
 
-   create(bounds) ::: leaky, PURE
+   create(bounds) ::: pure, leaky
    ! Create a matrix with the given bounds for all dimensions
       self :: PTR
       bounds :: MAT{INT}(2,2), IN
-
       .create(bounds(1,1),bounds(1,2),bounds(2,1),bounds(2,2))
-
    end
 
-   create_copy(matrix) ::: leaky, PURE
+   create_copy(matrix) ::: pure, leaky
    ! Create a replica copy of matrix
       self :: PTR
       matrix :: MAT{INTRINSIC}, IN
-
       .create(lbound(matrix,1),ubound(matrix,1), &
               lbound(matrix,2),ubound(matrix,2)  )
-
       self = matrix
-
    end
 
-
-   destroy ::: leaky, PURE
+   destroy ::: pure, leaky
    ! Destroy the object
       self :: PTR
 
@@ -153,14 +143,14 @@ contains
 
    end
 
-   created result (res) ::: inlined_by_foo, pure
+   created result (res) ::: inlined_by_foo
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
       result = associated(self)
    end
 
-   destroyed result (res) ::: inlined_by_foo, pure
+   destroyed result (res) ::: inlined_by_foo
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
@@ -172,31 +162,28 @@ contains
 !  Size-of and shape operations 
 !  ============================
 
-   size result (res) ::: inlined_by_foo, pure
+   size result (res) ::: inlined_by_foo
    ! Return the size of the array
       res :: INT
       res = .size
    end
 
-   dim1 result (res) ::: inlined_by_foo, pure
+   dim1 result (res) ::: inlined_by_foo
    ! Return the size of the 1st dimension
       res :: INT
       res = .dim1
    end
 
-   dim2 result (res) ::: inlined_by_foo, pure
+   dim2 result (res) ::: inlined_by_foo
    ! Return the size of the 2nd dimension
       res :: INT
       res = .dim2
    end
 
-   shape result (res) ::: pure
+   shape result (res)
    ! Return the shape of "self"
-      self :: IN
       res :: VEC{INT}(2)
-
       res = [.dim1,.dim2]
-
    end
 
    is_same_shape_as(a) result (res) ::: pure
@@ -204,9 +191,7 @@ contains
       self :: IN
       a :: A?, IN
       res :: BIN
-
       res = .dim1==a.dim1 AND .dim2==a.dim2
-
    end
 
    is_transposed_shape_of(a) result (res) ::: pure
@@ -229,7 +214,7 @@ contains
 !  Shrinking and expansion
 !  =======================
 
-   shrink(dim1,dim2) ::: leaky, PURE
+   shrink(dim1,dim2) ::: leaky
    ! Shrinks self to dimension dim1xdim2.  Contents are retained.
       self :: PTR
       dim1,dim2 :: INT, IN
@@ -256,142 +241,103 @@ contains
 
    end
 
-   shrink_columns(dim2) ::: leaky, PURE
+   shrink_columns(dim2) ::: leaky
    ! Shrinks columns of self to dimension dim2. Contents are retained.
       self :: PTR
       dim2 :: INT, IN
-
    ENSURE(.created,"matrix not allocated")
    ENSURE(dim2<=.dim2, "2nd dimension given is too large.")
-
       old :: MAT{INTRINSIC}*
       dim1 :: INT
-
       if (dim2==.dim2) return
-
       dim1 = .dim1
       old => self
-
       nullify(self)
       self.create(dim1,dim2)
-      self = old(1:dim1,1:dim2)
-
+      self=old(1:dim1,1:dim2)
       old.destroy
-
    end
 
-   expand(dim1,dim2) ::: leaky, PURE
+   expand(dim1,dim2) ::: leaky
    ! Expands self to dimension dim1xdim2.  Contents are retained.
       self :: PTR
       dim1,dim2 :: INT, IN
       old :: MAT{INTRINSIC}*
       old_size1,old_size2 :: INT
-
       if (.destroyed) then
-         .create(0,0)
+       .create(0,0)
       else
-         ENSURE(dim1>=.dim1, "1st dimension given is too small")
-         ENSURE(dim2>=.dim2, "2nd dimension given is too small")
+      ENSURE(dim1>=.dim1, "1st dimension given is too small")
+      ENSURE(dim2>=.dim2, "2nd dimension given is too small")
       end
-
-      old      => self
+      old => self
       old_size1 = old.dim1
       old_size2 = old.dim2
-
       nullify(self)
       self.create(dim1,dim2)
       self(1:old_size1,1:old_size2)=old
-
       old.destroy
-
    end
 
-   expand_columns(dim2) ::: leaky, PURE
+   expand_columns(dim2) ::: leaky
    ! Expands the columns self to dim2.  Contents are retained.
       self :: PTR
       dim2 :: INT, IN
-
    ENSURE( .created, "matrix not allocated")
    ENSURE(dim2>=.dim2, "2nd dimension given is too small")
-
       dim1,old_dim2 :: INT
       old :: MAT{INTRINSIC}*
-
-      dim1     = .dim1
-      old     => self
+      dim1 = .dim1
+      old => self
       old_dim2 = old.dim2
-
       nullify(self)
       self.create(dim1,dim2)
       self(:,1:old_dim2) = old
-
       old.destroy
-
    end
 
-   append_columns(cols) ::: leaky, PURE
+   append_columns(cols) ::: leaky
    ! Append the columns "cols" onto the end of self.
       self :: PTR
-      cols :: MAT{INTRINSIC}, IN
-
+      cols :: MAT{INTRINSIC}
       old_dim2,new_dim2 :: INT
-
       if (.destroyed) then
-
-         .create_copy(cols)
-
+        .create_copy(cols)
       else
-
-         ENSURE(.dim1==cols.dim1, "1st dimension wrong, cols")
-        
-         old_dim2 = .dim2
-         new_dim2 = .dim2 + cols.dim2
-         .expand_columns(new_dim2)
-
-         self(:,old_dim2+1:new_dim2) = cols
-
+        ENSURE(.dim1==cols.dim1, "1st dimension wrong, cols")
+        old_dim2 = .dim2
+        new_dim2 = .dim2 + cols.dim2
+        .expand_columns(new_dim2)
+        self(:,old_dim2+1:new_dim2) = cols
       end
-
    end
 
-   append_column(col) ::: leaky, PURE
+   append_column(col) ::: leaky
    ! Append the column "col" onto the end of self.
       self :: PTR
-      col :: VEC{INTRINSIC}, IN
-
+      col :: VEC{INTRINSIC}
       new_dim2 :: INT
-
       if (.destroyed) then
-
-         .create(col.dim,1)
-         self(:,1) = col
-
+        .create(col.dim,1)
+        self(:,1) = col
       else
-
-         ENSURE(.dim1==col.dim, "2nd dimension given is too small")
-
-         new_dim2 = .dim2 + 1
-         .expand_columns(new_dim2)
-         self(:,new_dim2) = col
-
+        ENSURE(.dim1==col.dim, "2nd dimension given is too small")
+        new_dim2 = .dim2 + 1
+        .expand_columns(new_dim2)
+        self(:,new_dim2) = col
       end
-
    end
 
-   prune_column(col) ::: leaky, PURE
+   prune_column(col) ::: leaky
    ! Prune the column "col".
       self :: PTR
       col :: INT, IN
-
    ENSURE(.created,"self is not created")
    ENSURE(1 <= col AND col<=.dim2, "col is out of range")
-
       dim2 :: INT
-
       dim2 = .dim2 -1
       self(:,col:dim2) =  self(:,col+1:)
       self.shrink_columns(dim2)
-
    end
 
 
@@ -399,7 +345,7 @@ contains
 !  Comparison functions
 !  ====================
 
-   equals(b) result (res) ::: PURE
+   equals(b) result (res)
    ! Check if the matrix is the same as "b".
       self :: IN
       b :: MAT{INTRINSIC}, IN
@@ -407,11 +353,13 @@ contains
       res = .same_as(b)
    end
 
-   same_as(b,eps) result (res) ::: PURE
-   ! Check if the matrix is the same as "b", within "eps".
+   same_as(b,eps,diff) result (res) ::: pure
+   ! Check if the matrix is the same as "b", within "eps", and return the
+   ! actual difference in "diff"
       self :: IN
       b :: MAT{INTRINSIC}, IN
       eps :: REAL, IN, optional
+      diff :: REAL, OUT, optional
       res :: BIN
 
    ENSURE(.is_same_shape_as(b),"incompatible dimensions")
@@ -425,6 +373,7 @@ contains
 
       res = FALSE
       if (del<tolerance) res = TRUE
+      if (present(diff)) diff = del
 
    end
 
@@ -500,7 +449,7 @@ contains
 !  Inquiry functions
 !  =================
 
-   is_diagonal result (res) ::: PURE
+   is_diagonal result (res)
    ! Returns TRUE if the matrix "self" is a diagonal matrix 
      self :: IN
      res :: BIN
@@ -510,20 +459,23 @@ contains
      dim,i,j :: INT
 
      dim = .dim1
+
      res = TRUE
 
      do i = 1,dim
      do j = 1,dim
-        if (i==j) cycle
-        if (self(i,j).is_zero) cycle
-        res = FALSE
-        return
+        if (i/=j) then
+        if (NOT self(i,j).is_zero) then
+           res = FALSE
+           return
+        end
+        end
      end
      end
 
    end
 
-   is_diagonal(eps) result (res) ::: PURE
+   is_diagonal(eps) result (res)
    ! Returns TRUE if the matrix "self" is a diagonal matrix to within
    ! tolerance "eps" (if present).
      self :: IN
@@ -535,38 +487,44 @@ contains
      dim,i,j :: INT
 
      dim = .dim1
+
      res = TRUE
 
      if(present(eps))then
 
-       do i = 1,dim
-       do j = 1,dim
-          if (i==j) cycle
-          if (self(i,j).is_zero(eps)) cycle
-          res = FALSE
-          return
+        do i = 1,dim
+        do j = 1,dim
+           if (i/=j) then
+           if (NOT self(i,j).is_zero(eps)) then
+              res = FALSE
+              return
+           end
+           end
         end
         end
 
      else
 
-       do i = 1,dim
-       do j = 1,dim
-          if (i==j) cycle
-          if (self(i,j).is_zero) cycle
-          res = FALSE
-          return
-       end
-       end
+        do i = 1,dim
+        do j = 1,dim
+           if (i/=j) then
+           if (NOT self(i,j).is_zero) then
+              res = FALSE
+              return
+           end
+           end
+        end
+        end
 
      end
 
    end
 
-   has_unit_diagonal result (res) ::: PURE
+   has_unit_diagonal result (res)
    ! Returns TRUE if the matrix "self" has 1's as diagonal elements
      self :: IN
      res :: BIN
+
    ENSURE(.is_square,"Non-square matrix")
 
      i :: INT
@@ -574,14 +532,15 @@ contains
      res = TRUE
 
      do i = 1,.dim1
-        if (self(i,i).is_one) cycle
-        res = FALSE
-        return
+        if (NOT self(i,i).is_one) then
+           res = FALSE
+           return
+        end
      end
 
    end
 
-   has_unit_diagonal(eps) result (res) ::: PURE
+   has_unit_diagonal(eps) result (res)
    ! Returns TRUE if the matrix "self" has 1's as diagonal elements to within
    ! tolerance "eps" (if present).
      self :: IN
@@ -595,14 +554,15 @@ contains
      res = TRUE
 
      do i = 1,.dim1
-        if (self(i,i).is_one(eps)) cycle
-        res = FALSE
-        return
+        if (NOT self(i,i).is_one(eps)) then
+           res = FALSE
+           return
+        end
      end
 
    end
 
-   has_minus_unit_diagonal result (res) ::: PURE
+   has_minus_unit_diagonal result (res)
    ! Returns TRUE if the matrix "self" has -1's as diagonal elements
       self :: IN
       res :: BIN
@@ -614,55 +574,46 @@ contains
       res = TRUE
 
       do i = 1,.dim1
-         if (self(i,i).is_minus_one) cycle
-         res = FALSE
-         return
+         if (NOT self(i,i).is_minus_one) then
+            res = FALSE
+            return
+         end
       end
 
    end
 
-   is_unit_matrix result (res) ::: PURE
+   is_unit_matrix result (res)
    ! Returns TRUE if the matrix "self" is the unit matrix 
      self :: IN
      res :: BIN
-
-   ENSURE(.is_square,"Non-square matrix")
-
+     ENSURE(.is_square,"Non-square matrix")
      res = .has_unit_diagonal AND .is_diagonal
-
    end
 
-   is_unit_matrix(eps) result (res) ::: PURE
+   is_unit_matrix(eps) result (res)
    ! Returns TRUE if the matrix "self" is the unit matrix to within
    ! tolerance "eps" (if present).
      self :: IN
      eps :: REAL, IN, optional
-
      res :: BIN
-
-   ENSURE(.is_square,"Non-square matrix")
-
+     ENSURE(.is_square,"Non-square matrix")
      if(present(eps)) then
-        res = .has_unit_diagonal(eps) AND .is_diagonal(eps)
+       res = .has_unit_diagonal(eps) AND .is_diagonal(eps)
      else
-        res = .has_unit_diagonal AND .is_diagonal
+       res = .has_unit_diagonal AND .is_diagonal
      end
-
    end
 
-   is_inversion_matrix result (res) ::: PURE
+   is_inversion_matrix result (res)
    ! Returns TRUE if the matrix "self" is an inversion matrix
    ! i.e. minus the unit matrix
       self :: IN
       res :: BIN
-
    ENSURE(.is_square,"Non-square matrix")
-
       res = .has_minus_unit_diagonal AND .is_diagonal
-
    end
 
-   is_symmetric result (res) ::: PURE
+   is_symmetric result (res)
    ! Returns TRUE if the matrix "self" is a symmetric matrix
       self :: IN
       res :: BIN
@@ -672,17 +623,19 @@ contains
       i,j :: INT
 
       res = TRUE
+
       do i = 1,.dim1
       do j = 1,i-1
-         if (self(i,j).equals(self(j,i))) cycle
-         res = FALSE
-         return
+         if (NOT self(i,j).equals(self(j,i))) then
+            res = FALSE
+            return
+         end
       end
       end
 
    end
 
-   is_antisymmetric result (res) ::: PURE
+   is_antisymmetric result (res)
    ! Returns TRUE if the matrix "self" is an antisymmetric matrix
       self :: IN
       res :: BIN
@@ -692,16 +645,17 @@ contains
       dim,i,j :: INT
 
       dim = .dim1
+
       res = TRUE
+
       do i = 1,dim
       do j = 1,i-1
-         if (self(i,j).equals(-self(j,i))) cycle
-         res = FALSE
-         return
+         if (NOT self(i,j).equals(-self(j,i))) then
+            res = FALSE
+            return
+         end
       end
       end
-
-      ! res = .is_square AND .same_as(-transpose(self),tol)
 
    end
 
@@ -718,9 +672,12 @@ contains
 
       do i = 1,.dim1
       do j = 1,.dim2
-         if (self(i,j).is_zero(eps)) cycle
-         res = FALSE
-         exit
+
+         if (NOT self(i,j).is_zero(eps)) then
+            res = FALSE
+            exit
+         end
+
       end
       end
 
@@ -731,48 +688,92 @@ contains
 !  Column operations 
 !  =================
 
-   has_column(c) result (res) ::: PURE
-   ! Returns TRUE if the matrix "self" has a column "c". 
+   has_column(c,col) result (res)
+   ! Returns TRUE if the matrix "self" has a column "c".  If present, the
+   ! matching column index "col" is also returned.
       self :: IN
       c :: VEC{INTRINSIC}, IN
+      col :: INT, optional
       res :: BIN
 
    ENSURE(c.dim==.dim1,"incompatible column size")
 
       n :: INT
+
+      if (present(col)) col = 0
 
       res = FALSE
 
       do n = 1,.dim2
+
          res = self(:,n).same_as(c)
-         if (res) exit
+
+         if (res) then
+            if (present(col)) col = n
+            exit
+         end
+
       end
 
    end
 
-   has_column(c,eps) result (res) ::: PURE
+   has_column(c,col,eps) result (res)
    ! Returns TRUE if the matrix "self" has a column "c", with "eps" tolerance.
+   ! If present, the matching column index "col" is also returned.
       self :: IN
       c :: VEC{INTRINSIC}, IN
-      eps :: REAL, optional, IN
+      col :: INT, optional
+      eps :: REAL, optional
       res :: BIN
 
    ENSURE(c.dim==.dim1,"incompatible column size")
 
       n :: INT
 
+      if (present(col)) col = 0
+
       res = FALSE
+
+      do n = 1,.dim2
+
+         res = self(:,n).same_as(c,eps)
+
+         if (res) then
+            if (present(col)) col = n
+            exit
+         end
+
+      end
+
+   end
+
+   has_columns(c,cols,eps) result (res) ::: leaky
+   ! Returns TRUE if the matrix "self" has any column "c", with "eps"
+   ! tolerance.  If present, *all* the matching columns are returned
+   ! in "cols".
+      self :: IN
+      c :: VEC{INTRINSIC}, IN
+      cols :: VEC{INT}*
+      eps :: REAL, optional
+      res :: BIN
+
+   ENSURE(c.dim==.dim1,"incompatible column size")
+
+      n :: INT
+
+      cols.create(0)
 
       do n = 1,.dim2
          res = self(:,n).same_as(c,eps)
-         if (res) exit
+         if (res) cols.append(n)
       end
+
+      res = cols.dim>1
 
    end
 
-   index_for_column(c) result (res) ::: PURE
-   ! Return the index of the first column in "self" which matches "c",
-   ! or else 0 is returned if there was no match.
+   column_index(c) result (res)
+   ! The matching column index is returned, if the column matches "col".
       self :: IN
       c :: VEC{INTRINSIC}, IN
       res :: INT
@@ -784,21 +785,23 @@ contains
       res = 0
 
       do n = 1,.dim2
+
          if (self(:,n).same_as(c)) then
             res = n
             exit
          end
+
       end
 
    end
 
-   index_for_column(c,eps) result (res) ::: PURE
-   ! Return the index of the first column in "self" which matches "c",
-   ! within tolerance "eps", or else return 0 for no match.
+   column_index(c,eps) result (res)
+   ! The matching column index is returned, if the column matches "col" to
+   ! tolerance "eps", if it is present.
       self :: IN
       c :: VEC{INTRINSIC}, IN
-      eps :: REAL, optional, IN
       res :: INT
+      eps :: REAL, optional
 
    ENSURE(c.dim==.dim1,"incompatible column size")
 
@@ -807,59 +810,17 @@ contains
       res = 0
 
       do n = 1,.dim2
+
          if (self(:,n).same_as(c,eps)) then
             res = n
             exit
          end
+
       end
 
    end
 
-   indices_for_column(c) result (res) ::: leaky, PURE
-   ! Return the indices of columns in "self" matching "c", 
-   ! or else 0 is returned if there was no match.
-      self :: IN
-      c :: VEC{INTRINSIC}, IN
-      res :: VEC{INT}*
-
-   ENSURE(c.dim==.dim1,"incompatible column size")
-
-      n :: INT
-
-      res.create(0)
-
-      do n = 1,.dim2
-         if (self(:,n).same_as(c)) then
-            res.append(n)
-         end
-      end
-
-   end
-
-   indices_for_column(c,eps) result (res) ::: leaky, PURE
-   ! Return the indices of columns in "self" which match "c",
-   ! within tolerance "eps", or else return 0 for no match.
-      self :: IN
-      c :: VEC{INTRINSIC}, IN
-      eps :: REAL, optional, IN
-      res :: VEC{INT}*
-
-   ENSURE(c.dim==.dim1,"incompatible column size")
-
-      n :: INT
-
-      res.create(0)
-
-      do n = 1,.dim2
-         if (self(:,n).same_as(c,eps)) then
-            res.append(n)
-         end
-      end
-
-   end
-
-
-   compare_columns_with(m,col) ::: PURE
+   compare_columns_with(m,col)
    ! Compare the columns of "self" with "m". The elements of array "col" are set
    ! TRUE if the corresponding column appears in "m"
       self :: IN
@@ -874,16 +835,19 @@ contains
       col = 0
 
       do n = 1,.dim2
-         do i = 1,m.dim2
-            if (NOT self(:,n).same_as(m(:,i))) cycle
+      do i = 1,m.dim2
+
+         if (self(:,n).same_as(m(:,i))) then
             col(n) = i
             exit
          end
+
+      end
       end
 
    end
 
-   unique_columns(col) ::: PURE
+   unique_columns(col)
    ! Compare the later columns of "self" with earlier columns to see if they are
    ! unique. The elements of array "col" are set TRUE if the corresponding
    ! column is unique.
@@ -898,46 +862,42 @@ contains
       col = TRUE
 
       do n = 2,.dim2
-         do i = 1,n-1
-            if (NOT self(:,n).same_as(self(:,i))) cycle
+      do i = 1,n-1
+
+         if (self(:,n).same_as(self(:,i))) then
             col(n) = FALSE
             exit
          end
+
+      end
       end
 
    end
 
-   unique_columns(col) ::: leaky, PURE
+   unique_columns(col) ::: leaky
    ! Compare the later columns of "self" with earlier columns to see if they are
    ! unique. The elements of array "col" are set to the indices of the unique
    ! columns.
       self :: IN
       col :: VEC{INT}*
-
    ENSURE(.dim2>0,"must have at least one column")
    ENSURE(col.dim==.dim2,"wrong size for col")
-
       n,i :: INT
       is_unique :: VEC{BIN}*
-
       is_unique.create(.dim2)
       .unique_columns(is_unique)
       col.create(count(is_unique)) ! this is leaky
-
       i = 1
       col(1) = 1
-
       do n = 2,.dim2
          if (NOT is_unique(n)) cycle
          i = i + 1
          col(i) = n
       end 
-
       is_unique.destroy
-
    end
 
-   no_of_unique_columns result (res) ::: PURE
+   no_of_unique_columns result (res)
    ! Compare the later columns of "self" with earlier columns to see if they are
    ! unique. Return the number of unique columns.
       self :: IN
@@ -950,148 +910,104 @@ contains
       res = .dim2
 
       do n = 2,.dim2
-         do i = 1,n-1
-            if (NOT self(:,n).same_as(self(:,i))) cycle
+      do i = 1,n-1
+
+         if (self(:,n).same_as(self(:,i))) then
             res = res - 1
             exit
          end
+
+      end
       end
 
    end
 
-
-   swap_columns(col1,col2) ::: PURE
+   swap_columns(col1,col2)
    ! Swap columns "col1" and "col2" of self
-      self :: INOUT
       col1,col2 :: INT, IN
-
    ENSURE(col1<=.dim2 AND col2<=.dim2,"columns exceed dimesions")
-
       i :: INT
       val :: INTRINSIC
-
       do i = 1,.dim1
          val = self(i,col1)
          self(i,col1) = self(i,col2)
          self(i,col2) = val
       end
-
    end
 
-   swap_columns(list) ::: PURE
+   swap_columns(list)
    ! Sequentially swap all columns in a column "list",
    ! self(:,i)      = self(:,list(i))
    ! self(:,col(i)) = self(:,i)
-      self :: INOUT
       list :: VEC{INT}, IN
-
    ENSURE(maxval(list)<=.dim2,"list value exceed column dimension")
-
       l :: INT
-
       do l = 1,list.dim
          .swap_columns(l,list(l))
       end
-
    end
 
-   reverse_column_order ::: PURE
-   ! Reverse the order of the columns of self.
-      self :: INOUT
-
-      tmp :: VEC{INTRINSIC}*
-      n,n_col :: INT
-
-      n_col = .dim2
-      tmp.create(.dim1)
-
-      do n=1,n_col/2
-         tmp = self(:,n_col-n+1)
-         self(:,n_col-n+1) = self(:,n)
-         self(:,n) = tmp
-      end
-
-      tmp.destroy
-
-   end
-
-
-   column_norms result (res) ::: PURE
+   column_norms result (res)
    ! Return the norms of every column
-      self :: IN
       res :: VEC{REAL}(.dim2)
-
       i :: INT
-
       do i = 1,.dim2
          res(i) = self(:,i).norm
       end
-
    end
 
-   get_column_norms(res) ::: PURE
+   get_column_norms(res)
    ! Return the norms of every column
-      self :: IN
-      res :: VEC{REAL}, OUT
-
+      res :: VEC{REAL}
    ENSURE(res.dim==.dim2,"wrong size, res array")
-
       i :: INT
-
       do i = 1,.dim2
          res(i) = self(:,i).norm
       end
-
    end
 
-   get_column_dot_products(res) ::: PURE
+   get_column_dot_products(res)
    ! Return the dot products of every column with itself.
    ! Good for testing distances without using a sqrt.
-      self :: IN
-      res :: VEC{INTRINSIC}, OUT
-
+      res :: VEC{INTRINSIC}
    ENSURE(res.dim==.dim2,"wrong size, res array")
-
       i :: INT
-
       do i = 1,.dim2
          res(i) = dot_product(self(:,i),self(:,i))
       end
-
    end
 
-   index_of_minimum_column_norm result (res) ::: pure
-   ! Return the column index of the column with the *minimum* norm.
-      self :: IN
+   index_of_minimum_column_norm(offset) result (res)
+   ! Return the column index of the column with the *minimum* norm. If present,
+   ! "offset" is subtracted from every column beforehand, and then added back
+   ! afterwards. This is useful for finding the index of the column with minimum
+   ! distance to "offset", for a list of points held in "self".
+      offset :: VEC{INTRINSIC}(.dim1), optional
       res :: INT
-
       i :: INT
       val,tmp :: REAL
-
+      if (present(offset)) &
+         self = self - spread(offset,dim=2,ncopies=self.dim2)
       res = 1
       val = self(:,1).norm
-
       do i = 2,.dim2
          tmp = self(:,i).norm
          if (tmp>=val) cycle
          val = tmp
          res = i
       end
-
+      if (present(offset)) &
+         self = self + spread(offset,dim=2,ncopies=self.dim2)
    end
 
-   max_abs_column_difference result (res) ::: pure
+   max_abs_column_difference result (res)
    ! Return the maximum of the absolute difference between all the column vector
    ! pairs of the matrix.
-      self :: IN
       res :: VEC{REAL}(.dim1)
-
       diff :: VEC{REAL}(.dim1)
       col_i,col_j :: VEC{INTRINSIC}(.dim1)
       i,j :: INT
-
       diff = ZERO
-
       do i = 1,.dim2
          col_i = self(:,i)
          do j = 1,i-1
@@ -1099,24 +1015,17 @@ contains
             diff = max( real(abs(col_i-col_j),kind=REAL_KIND) , diff)
          end
       end
-
       res = diff
-
    end
 
-
-   mean_column_vector result (res) ::: pure
+   mean_column_vector result (res)
    ! Return the mean of the column vectors.
-      self :: IN
       res :: VEC{INTRINSIC}(.dim1)
-
       res = .sum_column_vectors/.dim2
-
    end
 
-   sum_column_vectors result (res) ::: pure
+   sum_column_vectors result (res)
    ! Sum the column vectors (i.e. rows) in "self".
-      self :: IN
       res :: VEC{INTRINSIC}(.dim1)
 
       i,j :: INT
@@ -1132,33 +1041,18 @@ contains
 
    end
 
-
-   plus_column(col) ::: pure
-   ! Add column "col" to every column of "self".
-      self :: INOUT
-      col :: VEC{INTRINSIC}, optional, IN
-
-      self = self + spread(col,dim=2,ncopies=self.dim2)
-
-   end
-
-   minus_column(col) ::: pure
-   ! Subtract column "col" to every column of "self".
-      self :: INOUT
-      col :: VEC{INTRINSIC}, optional, IN
-
-      self = self - spread(col,dim=2,ncopies=self.dim2)
-
-   end
-
-   plus_scaled_column(col,fac) ::: pure
-   ! Add the "fac" scaled column "col" to every column of "self".
-      self :: INOUT
-      col :: VEC{INTRINSIC}, optional, IN
-      fac :: REAL, IN
-
-      self = self + fac*spread(col,dim=2,ncopies=self.dim2)
-
+   reverse_column_order
+   ! Reverse the order of the columns of self.
+      tmp :: VEC{INTRINSIC}*
+      n,n_col :: INT
+      n_col = .dim2
+      tmp.create(.dim1)
+      do n=1,n_col/2
+        tmp = self(:,n_col-n+1)
+        self(:,n_col-n+1) = self(:,n)
+        self(:,n) = tmp
+      end
+      tmp.destroy
    end
 
 
@@ -1166,7 +1060,7 @@ contains
 !  Row operations
 !  ==============
 
-   unique_rows(row) ::: PURE
+   unique_rows(row)
    ! Compare the later rows of "self" with earlier rows to see if they are
    ! unique. The elements of array "row" are set TRUE if the corresponding
    ! row is unique.
@@ -1182,44 +1076,41 @@ contains
 
       do n = 2,.dim1
       do i = 1,n-1
-         if (NOT self(n,:).same_as(self(i,:))) cycle
-         row(n) = FALSE
-         exit
+
+         if (self(n,:).same_as(self(i,:))) then
+            row(n) = FALSE
+            exit
+         end
+
       end
       end
+
    end
 
-   unique_rows(row) ::: leaky, PURE
+   unique_rows(row) ::: leaky
    ! Compare the later rows of "self" with earlier rows to see if they are
    ! unique. The elements of array "row" are set to the indices of the unique
    ! rows.
       self :: IN
       row :: VEC{INT}*
-
    ENSURE(.dim1>0,"must have at least one row")
    ENSURE(row.dim==.dim1,"wrong size for row")
-
       n,i :: INT
       is_unique :: VEC{BIN}*
-
       is_unique.create(.dim1)
       .unique_rows(is_unique)
       row.create(count(is_unique)) ! this is leaky
-
       i = 1
       row(1) = 1
-
       do n = 2,.dim1
          if (NOT is_unique(n)) cycle
          i = i + 1
          row(i) = n
       end 
-
       is_unique.destroy
-
    end
 
-   no_of_unique_rows result (res) ::: PURE
+   no_of_unique_rows result (res)
    ! Compare the later row of "self" with earlier rows to see if they are
    ! unique. Return the number of unique rows.
       self :: IN
@@ -1233,17 +1124,19 @@ contains
 
       do n = 2,.dim1
       do i = 1,n-1
-         if (NOT self(n,:).same_as(self(i,:))) cycle
-         res = res - 1
-         exit
+
+         if (self(n,:).same_as(self(i,:))) then
+            res = res - 1
+            exit
+         end
+
       end
       end
 
    end
 
-   swap_rows(row1,row2) ::: PURE
+   swap_rows(row1,row2)
    ! Swap columns "row1" and "row2" of self
-      self :: INOUT
       row1,row2 :: INT, IN
 
    ENSURE(row1<=.dim1 AND row2<=.dim1,"columns exceed dimesions")
@@ -1259,10 +1152,9 @@ contains
 
    end
 
-   swap_rows(list) ::: PURE
+   swap_rows(list)
    ! Sequentially swap all rows in a row "list",
    ! self(i,:)       = self(list(i),:)
-      self :: INOUT
       list :: VEC{INT}, IN
 
    ENSURE(maxval(list)<=.dim1,"list value exceed row dimension")
@@ -1275,22 +1167,17 @@ contains
 
    end
 
-   row_norms result (res) ::: pure
+   row_norms result (res)
    ! Return the norms of every row
-      self :: IN
       res :: VEC{REAL}(.dim1)
-
       i :: INT
-
       do i = 1,.dim1
          res(i) = self(i,:).norm
       end
-
    end
 
-   sum_row_vectors result (res) ::: pure
+   sum_row_vectors result (res)
    ! Sum the row vectors (i.e. columns) in "self".
-      self :: IN
       res :: VEC{INTRINSIC}(.dim2)
 
       i,j :: INT
@@ -1311,7 +1198,7 @@ contains
 !  Matrix algebra and vector space operations
 !  ==========================================
 
-   determinant result (res) ::: recursive, PURE
+   determinant result (res) ::: recursive
    ! Return the determinant
       self :: IN
       res :: INTRINSIC
@@ -1347,7 +1234,7 @@ contains
 
    end
 
-   adjugate(i,j) result (res) ::: leaky, PURE
+   adjugate(i,j) result (res) ::: leaky
    ! Return the adjugate of a matrix
       self :: IN
       i,j :: INT, IN
@@ -1384,7 +1271,7 @@ contains
 
    end
 
-   dot(l,r) result (res) ::: PURE
+   dot(l,r) result (res)
    ! Multiply the matrix self by vector "l" on the left and vector "r" on the
    ! right ie:  res = l^dagger self r. Useful for non-unit metric dot_products.
       self :: IN
@@ -1404,21 +1291,15 @@ contains
    end
 
 
-   rotate(v) ::: PURE
+   rotate(v)
    ! Rotate vector "v" by self
-      self :: IN
-
       v :: VEC{INTRINSIC}, INOUT
-
    ENSURE(.is_square,"incompatible arrays sizes")
    ENSURE(.dim2==v.dim, "incompatible arrays sizes")
-
       i,j :: INT
       w :: VEC{INTRINSIC}*
       val :: INTRINSIC
-
       w.create(.dim2)
-
       do i = 1,.dim1
          val = ZERO
          do j = 1,.dim2
@@ -1426,11 +1307,8 @@ contains
          end
          w(i) = val
       end
-
       v = w
-
       w.destroy
-
    end
 
 
@@ -1438,10 +1316,11 @@ contains
    ! Set "self" to the unit matrix
       self :: OUT
 
+   ENSURE(.is_square,"non-square matrix")
+
       i :: INT
 
       self = ZERO
-
       do i = 1,.dim1
          self(i,i) = ONE
       end
@@ -1458,18 +1337,14 @@ contains
    end
 
 
-   set_to(a) ::: PURE
+   set_to(a)
    ! Set self to "a"
-      self :: OUT
       a :: A?, IN
-
    ENSURE(.is_same_shape_as(a),"incompatible shape")
-
       self = a
-
    end
 
-   set_to_transpose_of(a) ::: PURE
+   set_to_transpose_of(a)
    ! Self becomes the transpose of "a"
       self :: OUT
       a :: A?, IN
@@ -1489,9 +1364,8 @@ contains
 
    end
 
-   to_transpose ::: PURE
+   to_transpose
    ! Self becomes its own transpose.
-
       self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
@@ -1501,10 +1375,10 @@ contains
 
       dim = .dim1
 
-      ! Do it element by element, otherwise the intrinsic routine can
-      ! run out of stack space
-      do i = 1,dim
-      do j = 1,i
+      ! do it element by element, otherwise the intrinsic routine can run out
+      ! of stack space
+      do i=1,dim
+      do j=1,i
          tmp       = self(i,j)
          self(i,j) = self(j,i)
          self(j,i) = tmp
@@ -1514,68 +1388,50 @@ contains
    end
 
 
-   plus(a) ::: PURE
+   plus(a)
    ! Add to self the matrix "a"
-      self :: INOUT
       a :: A?, IN
-
    ENSURE(.is_same_shape_as(a),"incompatible shape")
-
       self = self + a
-
    end
 
-   minus(a) ::: PURE
+   minus(a)
    ! Subtract from self the matrix "a"
-      self :: INOUT
       a :: A?, IN
-
    ENSURE(.is_same_shape_as(a),"incompatible shape")
-
       self = self - a
-
    end
 
-   to_scaled(a,fac) ::: PURE
+   to_scaled(a,fac)
    ! Set "self" to matrix "at" scaled by "fac"
-      self :: OUT
       a :: A?, IN
       fac :: FAC?, IN
-
    ENSURE(.is_same_shape_as(a),"different shapes")
-
       self = fac * a
-
    end
 
-   plus_scaled(a,fac) ::: PURE
+   plus_scaled(a,fac)
    ! Add to "self" matrix "a" scaled by "fac"
       self :: INOUT
       a :: A?, IN
       fac :: FAC?, IN
-
    ENSURE(.is_same_shape_as(a),"different shapes")
-
       self = self + fac * a
-
    end
 
-   minus_scaled(a,fac) ::: PURE
+   minus_scaled(a,fac)
    ! Subtract from "self" matrix "a" scaled by "fac"
       self :: INOUT
       a :: A?, IN
       fac :: FAC?, IN
-
    ENSURE(.is_same_shape_as(a),"different shapes")
-
       self = self - fac * a
-
    end
 
 ! The following routines are nearly clones of each other
 ! in groups of four. Compare them to check.
 
-   to_product_of(a,b,transpose_a,transpose_b) ::: PURE
+   to_product_of(a,b,transpose_a,transpose_b) ::: pure
    ! Set "self" to the matrix product of "a" and "b". If present, "transpose_a"
    ! and "transpose_b" can be set to TRUE if "a" and "b" need to be transposed.
       self :: OUT
@@ -1656,7 +1512,7 @@ contains
 
    end
 
-   to_product_of(a,b,dagger_a,dagger_b,transpose_a,transpose_b) ::: PURE
+   to_product_of(a,b,dagger_a,dagger_b,transpose_a,transpose_b) ::: pure
    ! Set "self" to the matrix product of "a" and "b". If present, "transpose_a"
    ! and "transpose_b" can be set to TRUE if "a" and "b" need to be transposed.
    ! Likewise for the dagger operations.
@@ -1819,7 +1675,7 @@ contains
 
    end
 
-   to_product_of(a,b,dagger_a,transpose_b) ::: PURE
+   to_product_of(a,b,dagger_a,transpose_b)
    ! Set "self" to the product of complex matrix "a" and real matrix "b".  If
    ! present, "dagger_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! needs to be daggerred or transposed.
@@ -1902,7 +1758,7 @@ contains
 
    end
 
-   to_product_of(a,b,transpose_a,dagger_b) ::: PURE
+   to_product_of(a,b,transpose_a,dagger_b) ::: pure
    ! Set "self" to the product of real matrix "a" and complex matrix "b".  If
    ! present, "transpose_a" and "dagger_b" can be set to TRUE if "a" and "b"
    ! needs to be daggerred or transposed.
@@ -1986,7 +1842,7 @@ contains
    end
 
 
-   plus_product_of(a,b,transpose_a,transpose_b) ::: PURE
+   plus_product_of(a,b,transpose_a,transpose_b)
    ! Add to "self" the matrix product of "a" and "b". If present, "transpose_a"
    ! and "transpose_b" can be set to TRUE if "a" and "b" need to be transposed.
       self :: INOUT
@@ -2067,7 +1923,7 @@ contains
 
    end
 
-   plus_product_of(a,b,dagger_a,dagger_b,transpose_a,transpose_b) ::: PURE
+   plus_product_of(a,b,dagger_a,dagger_b,transpose_a,transpose_b)
    ! Add to "self" the matrix product of "a" and "b". If present, "transpose_a"
    ! and "transpose_b" can be set to TRUE if "a" and "b" need to be transposed.
    ! Likewise for the dagger operations.
@@ -2230,7 +2086,7 @@ contains
 
    end
 
-   plus_product_of(a,b,dagger_a,transpose_b) ::: PURE
+   plus_product_of(a,b,dagger_a,transpose_b)
    ! Add to "self" the product of complex matrix "a" and real matrix "b".  If
    ! present, "dagger_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! needs to be daggerred or transposed.
@@ -2313,7 +2169,7 @@ contains
 
    end
 
-   plus_product_of(a,b,transpose_a,dagger_b) ::: PURE
+   plus_product_of(a,b,transpose_a,dagger_b)
    ! Add to "self" the product of real matrix "a" and complex matrix "b".  If
    ! present, "transpose_a" and "dagger_b" can be set to TRUE if "a" and "b"
    ! needs to be daggerred or transposed.
@@ -2397,7 +2253,7 @@ contains
    end
 
 
-   to_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: PURE
+   to_scaled_product_of(a,b,fac,transpose_a,transpose_b)
    ! Set "self" to the matrix product of "a" and "b" scaled by "fac". If
    ! present, "transpose_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! need to be transposed.
@@ -2480,7 +2336,7 @@ contains
 
    end
 
-   to_scaled_product_of(a,b,fac,dagger_a,dagger_b,transpose_a,transpose_b) ::: PURE
+   to_scaled_product_of(a,b,fac,dagger_a,dagger_b,transpose_a,transpose_b)
    ! Set "self" to the matrix product of "a" and "b" scaled by "fac". If
    ! present, "transpose_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! need to be transposed.  Likewise for the dagger operations.
@@ -2644,7 +2500,7 @@ contains
 
    end
 
-   to_scaled_product_of(a,b,fac,dagger_a,transpose_b) ::: PURE
+   to_scaled_product_of(a,b,fac,dagger_a,transpose_b)
    ! Set "self" to the product of complex matrix "a" and real matrix "b" scaled
    ! by "fac".  If present, "dagger_a" and "transpose_b" can be set to TRUE if
    ! "a" and "b" needs to be daggerred or transposed.
@@ -2728,7 +2584,7 @@ contains
 
    end
 
-   to_scaled_product_of(a,b,fac,transpose_a,dagger_b) ::: PURE
+   to_scaled_product_of(a,b,fac,transpose_a,dagger_b)
    ! Set "self" to the product of real matrix "a" and complex matrix "b" scaled
    ! by "fac".  If present, "transpose_a" and "dagger_b" can be set to TRUE if
    ! "a" and "b" needs to be daggerred or transposed.
@@ -2813,7 +2669,7 @@ contains
    end
 
 
-   plus_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: PURE
+   plus_scaled_product_of(a,b,fac,transpose_a,transpose_b)
    ! Add to "self" the matrix product of "a" and "b" scaled by "fac". If
    ! present, "transpose_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! neeb to be transposed.
@@ -2896,7 +2752,7 @@ contains
 
    end
 
-   plus_scaled_product_of(a,b,fac,dagger_a,dagger_b,transpose_a,transpose_b) ::: PURE
+   plus_scaled_product_of(a,b,fac,dagger_a,dagger_b,transpose_a,transpose_b)
    ! Add to "self" the matrix product of "a" and "b" scaled by "fac". If
    ! present, "transpose_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! need to be transposed.  Likewise for the dagger operations.
@@ -3060,7 +2916,7 @@ contains
 
    end
 
-   plus_scaled_product_of(a,b,fac,dagger_a,transpose_b) ::: PURE
+   plus_scaled_product_of(a,b,fac,dagger_a,transpose_b)
    ! Add to "self" the product of complex matrix "a" and real matrix "b" scaled
    ! by "fac".  If present, "dagger_a" and "transpose_b" can be set to TRUE if
    ! "a" and "b" needs to be daggerred or transposed.
@@ -3144,7 +3000,7 @@ contains
 
    end
 
-   plus_scaled_product_of(a,b,fac,transpose_a,dagger_b) ::: PURE
+   plus_scaled_product_of(a,b,fac,transpose_a,dagger_b)
    ! Add to "self" the product of real matrix "a" and complex matrix "b" scaled
    ! by "fac".  If present, "transpose_a" and "dagger_b" can be set to TRUE if
    ! "a" and "b" needs to be daggerred or transposed.
@@ -3229,12 +3085,12 @@ contains
    end
 
 
-   to_outer_product_of(a,fac) ::: PURE
+   to_outer_product_of(a,fac)
    ! Set "self" to the outer product of "a" with itself, with an
    ! optional scale factor "fac".
       self :: INOUT
-      a :: VEC{A?}, IN
-      fac :: FAC?, optional, IN
+      a :: VEC{A?}
+      fac :: FAC?, optional
 
    ENSURE(.is_square,"self is not square")
    ENSURE(a.dim==.dim1,"incomptabile a")
@@ -3242,31 +3098,27 @@ contains
       i,j :: INT
 
       if (NOT present(fac)) then
-
           do i = 1,.dim1
           do j = 1,.dim1
             self(i,j) = a(i)*a(j)
           end
           end
-
       else
-
           do i = 1,.dim1
           do j = 1,.dim1
             self(i,j) = fac*a(i)*a(j)
           end
           end
-
       end
 
    end
 
-   plus_outer_product_of(a,fac) ::: PURE
+   plus_outer_product_of(a,fac)
    ! Add to "self" the outer product of "a" with itself, with an
    ! optional scale factor "fac".
       self :: INOUT
-      a :: VEC{A?}, IN
-      fac :: FAC?, optional, IN
+      a :: VEC{A?}
+      fac :: FAC?, optional
 
    ENSURE(.is_square,"self is not square")
    ENSURE(a.dim==.dim1,"incomptabile a")
@@ -3274,26 +3126,22 @@ contains
       i,j :: INT
 
       if (NOT present(fac)) then
-
           do i = 1,.dim1
           do j = 1,.dim1
             self(i,j) = self(i,j) + a(i)*a(j)
           end
           end
-
       else
-
           do i = 1,.dim1
           do j = 1,.dim1
             self(i,j) = self(i,j) + fac*a(i)*a(j)
           end
           end
-
       end
 
    end
 
-   to_outer_product_of(a,b) result (res) ::: pure
+   to_outer_product_of(a,b) result (res)
    ! Set "self" to the outer product of vectors "a" and "b".
       self :: OUT
       a,b :: VEC{INTRINSIC}, IN
@@ -3308,7 +3156,7 @@ contains
 
    end
 
-   plus_outer_product_of(a,b) result (res) ::: pure
+   plus_outer_product_of(a,b) result (res)
    ! Add to "self" the outer product of vectors "a" and "b".
       self :: INOUT
       a,b :: VEC{INTRINSIC}, IN
@@ -3323,7 +3171,7 @@ contains
 
    end
 
-   plus_scaled_outer_product_of(a,b,fac) ::: pure
+   plus_scaled_outer_product_of(a,b,fac)
    ! Add to "self" the outer product of vectors "a" and "b".
       self :: INOUT
       a,b :: VEC{INTRINSIC}, IN
@@ -3340,7 +3188,7 @@ contains
    end
 
 
-   to_product_with_diagonal(a,diag,transpose_a) ::: PURE
+   to_product_with_diagonal(a,diag,transpose_a)
    ! Set "self" to the matrix product of "a" with diagonal matrix "diag" (stored
    ! as a vector).  If present, ""transpose_a" can be set to TRUE if "a" needs
    ! to be transposed.
@@ -3377,7 +3225,7 @@ contains
 
    end
 
-   to_product_with_diagonal(a,diag,dagger_a,transpose_a) ::: PURE
+   to_product_with_diagonal(a,diag,dagger_a,transpose_a)
    ! Set "self" to the matrix product of "a" with diagonal matrix "diag" (stored
    ! as a vector).  If present, "dagger_a" or "transpose_a" can be set to TRUE
    ! if "a" needs to be daggered or transposed.
@@ -3424,7 +3272,7 @@ contains
 
    end
 
-   to_product_with_diagonal(dg,a,transpose_a) ::: PURE
+   to_product_with_diagonal(dg,a,transpose_a)
    ! Set "self" to the matrix product of diagonal matrix "dg" (stored as a
    ! vector) and "a".  If present, "transpose_a" can be set to TRUE if "a" needs
    ! to be transposed.
@@ -3462,7 +3310,7 @@ contains
 
    end
 
-   to_product_with_diagonal(dg,a,dagger_a,transpose_a) ::: PURE
+   to_product_with_diagonal(dg,a,dagger_a,transpose_a)
    ! Set "self" to the matrix product of diagonal matrix "dg" (stored as a
    ! vector) and "a".  If present, "dagger_a" or "transpose_a" can be set to
    ! TRUE if "a" needs to be daggered or transposed.
@@ -3515,10 +3363,12 @@ contains
 !  Trace operations
 !  ================
 
-   trace result (res) ::: pure
+   trace result (res)
    ! Return the trace of self
       self :: IN
       res :: INTRINSIC
+
+   ENSURE(.dim1==.dim2,"non-square matrix")
 
       i :: INT
 
@@ -3529,7 +3379,7 @@ contains
 
    end
 
-   trace_product_with(a,transpose_a) result (res) ::: pure
+   trace_product_with(a,transpose_a) result (res)
    ! Return the trace of the product of "self" with matrix "a",
    ! and if "transpose_a" is present and TRUE, then transpose "a".
       self :: IN
@@ -3565,7 +3415,7 @@ contains
 
    end
 
-   trace_product_with(a,transpose_a,dagger_a) result (res) ::: pure
+   trace_product_with(a,transpose_a,dagger_a) result (res)
    ! Return the trace of the product of "self" with matrix "a",
    ! and if "dagger_a" is present and TRUE, then dagger "a".
       self :: IN
@@ -3613,10 +3463,9 @@ contains
 
    end
 
-   trace_product_with(a,b,c) result (res) ::: PURE
+   trace_product_with(a,b,c) result (res)
    ! Return the trace of the product of "self" with matrices "a", "b" and "c".
-      self :: IN
-      a,b,c :: MAT{INTRINSIC}, IN
+      a,b,c :: MAT{INTRINSIC}
       res :: INTRINSIC
 
       W1,W2 :: MAT{INTRINSIC}*
@@ -3639,10 +3488,9 @@ contains
 
    end
 
-   trace_product_with(a,b,c,d,e) result (res) ::: PURE
+   trace_product_with(a,b,c,d,e) result (res)
    ! Return the trace of the product of "self" with matrices "a", "b" ... "e".
-      self :: IN
-      a,b,c,d,e :: MAT{INTRINSIC}, IN
+      a,b,c,d,e :: MAT{INTRINSIC}
       res :: INTRINSIC
 
       W1,W2 :: MAT{INTRINSIC}*
@@ -3677,7 +3525,7 @@ contains
 !  Change of basis routines
 !  ========================
 
-   change_basis_using(V) ::: PURE
+   change_basis_using(V)
    ! Change the basis of "self" using vectors "V"; self = V^dagger self V
       self :: INOUT
       V :: V?, IN
@@ -3694,7 +3542,7 @@ contains
 
    end
 
-   change_basis_using(V) ::: PURE
+   change_basis_using(V)
    ! Change the basis of "self" using diagonal matrix "V" (stored as a vector).
    ! self = V self V
       self :: INOUT
@@ -3712,7 +3560,7 @@ contains
 
    end
 
-   change_basis_using(L,R) ::: PURE
+   change_basis_using(L,R)
    ! Change the basis of "self" using left and right matrices "L" and "R"
    ! and place the result in "new", new = L^dagger self R
       self :: INOUT
@@ -3732,7 +3580,7 @@ contains
 
    end
 
-   change_basis_using(L,R) ::: PURE
+   change_basis_using(L,R)
    ! Change the basis of "self" using diagonal matrices "L" and "R" (stored as
    ! vectors).  self = L self R
       self :: INOUT
@@ -3749,7 +3597,7 @@ contains
 
    end
 
-   change_basis_to(new,V) ::: PURE
+   change_basis_to(new,V)
    ! Change the basis of "self" using vectors "V", and place the result in
    ! "new".  new = V^dagger self V
       self :: IN
@@ -3770,7 +3618,7 @@ contains
 
    end
 
-   change_basis_to(new,V) ::: PURE
+   change_basis_to(new,V)
    ! Change the basis of "self" using vectors "V", and place the result in
    ! "new" i.e. new = V^dagger self V. This version uses only intrinsic
    ! procedures to avoid circular dependencies.
@@ -3789,7 +3637,7 @@ contains
       val :: CPX
 
       allocate(W(.dim1,V.dim2),STAT=status)
-      DIE_IF(status/=0,"error in allocating memory")
+      ENSURE(status==0,"error in allocating memory")
 
     ! W.to_product_of(self,V)
       do i = 1,.dim1
@@ -3817,7 +3665,7 @@ contains
 
    end
 
-   change_basis_to(new,L,R) ::: PURE
+   change_basis_to(new,L,R)
    ! Change the basis of "self" using left and right matrices "L" and "R"
    ! and place the result in "new", new = L^dagger self R
       self :: IN
@@ -3838,7 +3686,7 @@ contains
 
    end
 
-   back_transform_using(V) ::: PURE
+   back_transform_using(V)
    ! Back transform "self" using vectors "V", and place the result in "self".
    ! self = V self V^dagger
       self :: INOUT
@@ -3855,7 +3703,7 @@ contains
 
    end
 
-   back_transform_to(new,V) ::: PURE
+   back_transform_to(new,V)
    ! Back transform "self" using vectors "V", and place the result in "new".
    ! new = V self V^dagger
       self :: IN
@@ -3876,7 +3724,7 @@ contains
 
    end
 
-   back_transform_to(new,V) ::: PURE
+   back_transform_to(new,V)
    ! Back transform "self" using vectors "V", and place the result in "new".
    ! i.e. new = V self V^dagger. This version uses only intrinsic calls to avoid
    ! circular dependencies.
@@ -3895,7 +3743,7 @@ contains
       val :: CPX
 
       allocate(W(V.dim1,.dim2),STAT=status)
-      DIE_IF(status/=0,"error in allocating memory")
+      ENSURE(status==0,"error in allocating memory")
 
     ! W.to_product_of(V,self)
       do i = 1,new.dim1
@@ -3924,7 +3772,7 @@ contains
 
    end
 
-   back_transform_to(new,L,R) ::: PURE
+   back_transform_to(new,L,R)
    ! Back transform "self" using left and right matrices "L" and "R"
    ! and place the result in "new", new = L self R^dagger
       self :: IN
@@ -3973,7 +3821,7 @@ contains
 !  Operations on the diagonal
 !  ==========================
 
-   set_from_diagonal(d) ::: PURE
+   set_from_diagonal(d)
    ! Converts the diagonal vector "d" to matrix "self".
       self :: OUT
       d :: D?, IN
@@ -3984,17 +3832,15 @@ contains
       i :: INT
 
       self = ZERO
-
       do i = 1,d.dim
          self(i,i) = d(i)
       end
 
    end
 
-   set_diagonal_to(d) ::: PURE
+   set_diagonal_to(d)
    ! Set the diagonal of "self" to vector "d"
-      self :: INOUT
-      d :: D?, IN
+      d :: D?
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(d.dim==.dim1,"incompatibale diagonal length")
@@ -4007,10 +3853,9 @@ contains
 
    end
 
-   set_diagonal_to(val) ::: PURE
+   set_diagonal_to(val)
    ! Set the diagonal of "self" to "val"
-      self :: INOUT
-      val :: VAL?, IN
+      val :: VAL?
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4022,12 +3867,11 @@ contains
 
    end
 
-   put_diagonal_to(d) ::: PURE
+   put_diagonal_to(d)
    ! Get the diagonal elements of "self" in vector "d"
-      self :: IN
-      d :: D?, OUT
+      d :: D?
 
-   ENSURE(d.dim==min(.dim1,.dim2),"d is incompatible")
+   ENSURE(d.dim==min(.dim1,.dim2),"diag vector is incompatible")
 
       i :: INT
 
@@ -4037,10 +3881,9 @@ contains
 
    end
 
-   increment_diagonal_by(val) ::: PURE
+   increment_diagonal_by(val)
    ! Add "val" to the diagonal of "self"
-      self :: INOUT
-      val :: VAL?, IN
+      val :: VAL?
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4052,10 +3895,9 @@ contains
 
    end
 
-   increment_diagonal_by(d) ::: PURE
+   increment_diagonal_by(d)
    ! Add "d" to the diagonal of "self"
-      self :: INOUT
-      d :: D?, IN
+      d :: D?
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4067,9 +3909,8 @@ contains
 
    end
 
-   scale_diagonal_by(fac) ::: PURE
+   scale_diagonal_by(fac)
    ! Weight the diagonal elements of "self" by "fac"
-      self :: INOUT
       fac :: FAC?, IN
 
    ENSURE(.is_square,"non-square matrix")
@@ -4082,9 +3923,8 @@ contains
 
    end
 
-   zero_diagonal ::: PURE
+   zero_diagonal
    ! Zero the diagonal elements of "self"
-      self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4096,9 +3936,8 @@ contains
 
    end
 
-   zero_off_diagonal ::: PURE
+   zero_off_diagonal
    ! Zero the off diagonal elements of "self"
-      self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4113,9 +3952,8 @@ contains
 
    end
 
-   max_diagonal_element result (res) ::: PURE
+   max_diagonal_element result (res)
    ! Get the maximum element on the diagonal of the matrix
-      self :: IN
       res :: INTRINSIC
 
    ENSURE(min(.dim1,.dim2)>0,"cannot have zero sized dimensions")
@@ -4132,9 +3970,8 @@ contains
 
    end
 
-   max_abs_diagonal_element result (res) ::: PURE
+   max_abs_diagonal_element result (res)
    ! Get the maximum absolute value of the diagonal elements of the self matrix
-      self :: IN
       res :: REAL
 
    ENSURE(min(.dim1,.dim2)>0,"cannot have zero sized dimensions")
@@ -4151,10 +3988,9 @@ contains
 
    end
 
-   diagonal_set_to(d) ::: PURE
+   diagonal_set_to(d)
    ! Set the diagonal of "self" to th diagonal vector "d"
-      self :: INOUT
-      d :: D?, IN
+      d :: D?
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(d.dim==.dim1,"incompatibale diagonal length")
@@ -4167,10 +4003,9 @@ contains
 
    end
 
-   diagonal_set_to(val) ::: PURE
+   diagonal_set_to(val)
    ! Set the diagonal of "self" to "val"
-      self :: INOUT
-      val :: VAL?, IN
+      val :: VAL?
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4182,10 +4017,9 @@ contains
 
    end
 
-   diagonal_set_to(d) ::: PURE
+   diagonal_set_to(d)
    ! Get the diagonal elements of "self" in vector "d"
-      self :: IN
-      d :: VEC{INTRINSIC}, OUT
+      d :: VEC{INTRINSIC}
 
    ENSURE(d.dim==min(.dim1,.dim2),"diag vector is incompatible")
 
@@ -4196,10 +4030,9 @@ contains
 
    end
 
-   diagonal_plus(val) ::: PURE
+   diagonal_plus(val)
    ! Add "val" to the diagonal of "self"
-      self :: INOUT
-      val :: VAL?, IN
+      val :: VAL?
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4211,9 +4044,8 @@ contains
 
    end
 
-   diagonal_plus(d) ::: PURE
+   diagonal_plus(d)
    ! Add "d" to the diagonal of "self"
-      self :: INOUT
       d :: VEC{INTRINSIC}
 
    ENSURE(.is_square,"non-square matrix")
@@ -4226,9 +4058,8 @@ contains
 
    end
 
-   diagonal_times(fac) ::: PURE
+   diagonal_times(fac)
    ! Weight the diagonal elements of "self" by "fac"
-      self :: INOUT
       fac :: FAC?, IN
 
    ENSURE(.is_square,"non-square matrix")
@@ -4241,9 +4072,8 @@ contains
 
    end
 
-   diagonal_max result (res) ::: PURE
+   diagonal_max result (res)
    ! Get the maximum element on the diagonal of the matrix
-      self :: IN
       res :: INTRINSIC
 
    ENSURE(min(.dim1,.dim2)>0,"cannot have zero sized dimensions")
@@ -4260,9 +4090,8 @@ contains
 
    end
 
-   diagonal_max_abs result (res) ::: PURE
+   diagonal_max_abs result (res)
    ! Get the maximum absolute value of the diagonal elements of the self matrix
-      self :: IN
       res :: REAL
 
    ENSURE(min(.dim1,.dim2)>0,"cannot have zero sized dimensions")
@@ -4284,10 +4113,9 @@ contains
 !  Symmetrising and folding
 !  ========================
 
-   symmetrize ::: PURE
+   symmetrize
    ! Set self to half of itself plus half its transpose, i.e.
    ! self = 1/2 (self + self^T)
-      self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4304,10 +4132,9 @@ contains
 
    end
 
-   antisymmetrize ::: PURE
+   antisymmetrize
    ! Set self to half of itself minus half its transpose, i.e.
    ! self = 1/2 (self - self^T)
-      self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4324,9 +4151,8 @@ contains
 
    end
 
-   symmetric_fold ::: PURE
+   symmetric_fold
    ! Add the upper triangle of "self" into the lower triangle
-      self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4340,9 +4166,8 @@ contains
 
    end
 
-   antisymmetric_fold ::: PURE
+   antisymmetric_fold
    ! Subtract the upper triangle of "self" into the lower triangle
-      self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4355,9 +4180,8 @@ contains
 
    end
 
-   symmetric_reflect ::: PURE
+   symmetric_reflect
    ! Make the upper triangle of "self" the same as the lower triangle
-      self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4371,10 +4195,9 @@ contains
 
    end
 
-   antisymmetric_reflect ::: PURE
+   antisymmetric_reflect
    ! Make the upper triangle of "self" the negative of the lower triangle and
    ! make the diagonal zero.
-      self :: INOUT
 
    ENSURE(.is_square,"non-square matrix")
 
@@ -4392,11 +4215,10 @@ contains
 
    end
 
-   symmetric_fold_to_triangle(tr) ::: PURE
+   symmetric_fold_to_triangle(tr)
    ! Add the upper triangle of "self" into the lower triangle and return
    ! the lower triangle "tr" as a vector across rows.
-      self :: IN
-      tr :: VEC{INTRINSIC}, OUT
+      tr :: VEC{INTRINSIC}
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(tr.dim>=.tri_size,"triangle array too small")
@@ -4422,14 +4244,15 @@ contains
 !  Compression and uncompression routines
 !  ======================================
 
-   zip_lower_triangle_to(tr) ::: pure
-   ! Converts the lower triangle of "self" to the vector "tr"
+   compress_to_triangle(tr)
+   ! Converts the lower triangle of matrix self to the triangle "tr".
    ! using row order.
-      self :: IN
-      tr :: VEC{INTRINSIC}, OUT
+      tr :: VEC{INTRINSIC}
+
+   ENSURE(.is_square,"non-square matrix")
+   ENSURE(tr.dim>=.tri_size,"triangle array too small")
 
       i,j,ij :: INT
-
       ij = 0
 
       do i = 1,.dim1
@@ -4441,16 +4264,21 @@ contains
 
    end
 
-   symmetric_unzip_triangle(tr) ::: pure
+   uncompress_from_triangle(tr) ::: pure
    ! Converts the triangle "tr" into the symmetric matrix "self".
-      self :: OUT
-      tr :: VEC{INTRINSIC}, IN
+      self :: INOUT
+      tr :: VEC{INTRINSIC}
+
+   ENSURE(.is_square,"non-square matrix")
+   ENSURE(tr.dim>=.tri_size,"triangle array too small")
 
       tmp :: INTRINSIC
-      i,j,ij :: INT
+      dim,i,j,ij :: INT
+
+      dim = .dim1
 
       ij = 0
-      do i = 1,.dim1
+      do i = 1,dim
       do j = 1,i
          ij = ij + 1
          tmp = tr(ij)
@@ -4461,10 +4289,12 @@ contains
 
    end
 
-   antisymmetric_unzip_triangle(tr) ::: pure
+   uncompress_anti_triangle(tr)
    ! Converts the triangle "tr" into the antisymmetric matrix "self".
-      self :: OUT
-      tr :: VEC{INTRINSIC}, IN
+      tr :: VEC{INTRINSIC}
+
+   ENSURE(.is_square,"non-square matrix")
+   ENSURE(tr.dim>=.tri_size,"triangle array too small")
 
       tmp :: INTRINSIC
       dim,i,j,ij :: INT
@@ -4484,50 +4314,48 @@ contains
 
    end
 
-   tri_size result (ltr) ::: pure
+   tri_size result (ltr)
    ! Returns the size of the lower triangle needed to store self.
-      self :: IN
       ltr :: INT
-
+   ENSURE(.is_square,"non-square matrix")
       dim :: INT
-
       dim = .dim1
       ltr = dim*(dim+1)/2
-
    end
 
-   unflatten(vec_mat) ::: pure
-   ! Unflatten the vectors of a vector of vectors into matrices
+   unflatten(vec_mat)
+   ! unflatten the vectors of a vector of vectors into matrices
    ! meant for singlet contraction_wfs at present
-     self :: IN
-     vec_mat :: VEC{MAT_{REAL}}, OUT
+      vec_mat :: VEC{MAT_{REAL}}*
 
-     n,o,p,dim1,dim :: INT
-     counter :: INT
+   ENSURE(vec_mat.created,"vec_mat not created")
+   ENSURE(self.created,"self not created")
 
-     dim  = self.dim2
-     dim1 = int(dsqrt(2*dim+0.25d0)-0.5d0)
-     DIE_IF(vec_mat.dim/=dim1 OR vec_mat(1).element.dim2/=dim,  &
-            "vec_mat does not have the right shape")
-
-     do n = 1,.dim1
-
-        counter=0
-
-        do o = 1, dim1
-           counter = counter + 1
-           vec_mat(n).element(o,o) = self(n,counter)
-        end
-
-        do o = 1, dim1
-        do p = 1,o-1
-           counter = counter + 1
-           vec_mat(n).element(o,p) = self(n,counter)
-           vec_mat(n).element(p,o) = self(n,counter)
-        end
-        end
-
-     end
+      n,o,p,dim1,dim :: INT
+      counter :: INT
+     
+      dim  = self.dim2
+      dim1 = int(dsqrt(2*dim+0.25d0)-0.5d0)
+      ENSURE(vec_mat.dim==dim1 AND vec_mat(1).element.dim2==dim, "vec_mat does not have the right shape")
+     
+      do n = 1,.dim1
+     
+         counter = 0
+         do o = 1, dim1
+            counter = counter + 1
+            vec_mat(n).element(o,o)=self(n,counter)
+         end
+     
+         do o = 1, dim1
+         do p = 1,o-1
+     
+            counter = counter + 1
+            vec_mat(n).element(o,p) = self(n,counter)
+            vec_mat(n).element(p,o) = self(n,counter)
+         end
+         end
+     
+      end
 
    end
 
@@ -4536,12 +4364,12 @@ contains
 !  Orthogonalisation
 !  =================
 
-   schmidt_orthonormalise(S,scales)
-   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
+   schmidt_orthonormalize(S,scales)
+   ! Schmidt orthonormalize the column vectors in "self" using "S" as the
    ! metric. If "scales" is present, it is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are normalised. 
+   ! tolerance are normalized. 
      self :: target
      S :: MAT{REAL}, IN
      scales :: VEC{REAL}
@@ -4625,10 +4453,10 @@ contains
 
    end
 
-   schmidt_orthonormalise(scale)
-   ! Schmidt orthonormalise the column vectors in "self" metric. If
+   schmidt_orthonormalize(scale)
+   ! Schmidt orthonormalize the column vectors in "self" metric. If
    ! "scale" is present, it is set to the product of the normalisation
-   ! factors used to normalise each column after the Schmidt
+   ! factors used to normalize each column after the Schmidt
    ! procedure. 
      self :: target
      scale :: REAL, optional
@@ -4660,10 +4488,10 @@ contains
 
    end
 
-   schmidt_orthonormalise(S,scale)
-   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
+   schmidt_orthonormalize(S,scale)
+   ! Schmidt orthonormalize the column vectors in "self" using "S" as the
    ! metric. If "scale" is present, it is set to the product of the
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure. 
       self :: target
       S :: MAT{REAL}, IN
@@ -4718,10 +4546,10 @@ contains
 !    T.destroy
    end
 
-   schmidt_orthonormalise(S,from,to)
-   ! Schmidt orthonormalise the *column* vectors in "self" using "S" as the
-   ! metric. Only the columns starting from index "from" are orthonormalised,
-   ! and further, those columns are only orthonormalised to first columns, up to
+   schmidt_orthonormalize(S,from,to)
+   ! Schmidt orthonormalize the *column* vectors in "self" using "S" as the
+   ! metric. Only the columns starting from index "from" are orthonormalized,
+   ! and further, those columns are only orthonormalized to first columns, up to
    ! the column with index "to".
       self :: target
       S :: MAT{REAL}, IN
@@ -4754,8 +4582,8 @@ contains
 
    end
 
-   reverse_schmidt_orthonormalise(S)
-   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
+   reverse_schmidt_orthonormalize(S)
+   ! Schmidt orthonormalize the column vectors in "self" using "S" as the
    ! metric.
       self :: target
       S :: MAT{REAL}
@@ -4784,8 +4612,8 @@ contains
 
    end
 
-   reverse_schmidt_orthogonalise
-   ! Schmidt orthonormalise the column vectors in "self" using unit metric.
+   reverse_schmidt_orthogonalize
+   ! Schmidt orthonormalize the column vectors in "self" using unit metric.
       self :: target
 
    ENSURE(.dim1>=.dim2,"more vectors than dimension of vector space")
@@ -4809,8 +4637,8 @@ contains
 
    end
 
-   symmetrically_orthonormalise(S)
-   ! Symmetrically orthonormalise the column vectors in "self" using
+   symmetrically_orthonormalize(S)
+   ! Symmetrically orthonormalize the column vectors in "self" using
    ! "S" as the metric, which must be real and positive definite.
       S :: MAT{REAL}, IN
 
@@ -4879,10 +4707,10 @@ contains
 
    end
 
-   schmidt_orthonormalise(S,scale)
-   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
+   schmidt_orthonormalize(S,scale)
+   ! Schmidt orthonormalize the column vectors in "self" using "S" as the
    ! metric. If "scale" is present, it is set to the product of the
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure.
       self :: target
       S :: MAT{REAL}, IN
@@ -4972,34 +4800,42 @@ contains
       if (present(max_it)) max_iter = max_it
 
       n = S.dim1
+
       perm.create(n)
       d.create(n)
       W.create(n,n)
       X.create(n,n)
+
       W = S
       W.make_diagonally_dominant(perm)
       W.put_diagonal_to(d)
       d = ONE/d
+
       X.to_product_with_diagonal(d,W)
       self.to_unit_matrix
       X = X - self
       W = X
       self = self - W
+
       k = 1
       do
+
          k = k + 1
+
          U.create_copy(W)
          W.to_product_of(X,U)
          U.destroy
+
          if (k.is_odd) then; self = self - W
          else;               self = self + W
          end
+
          if (maxval(abs(W)) < eps) exit
-         DIE_IF(k>max_iter,"power series too long")
-       ! write(*,*) "k = ",k
-       ! write(*,*) "W = ",W
-       ! write(*,*) "s = ",self
+
+         ENSURE(k<=max_iter,"power series too long")
+
       end
+
       X.to_product_with_diagonal(self,d)
       self = X
       self(perm,:) = self
@@ -5067,7 +4903,7 @@ contains
 
          if (maxval(abs(X)) < eps) exit
 
-         DIE_IF(k>max_iter,"power series too long")
+         ENSURE(k<=max_iter,"power series too long")
 
       end
 
@@ -5168,7 +5004,7 @@ contains
       W.create(dim,dim)
       W = self
       U.to_product_of(self,W)   ! U = -self^t*self = self^2, makes U hermitian
-      U.solve_eigenproblem(eval,evec) ! diagonalise U ...
+      U.solve_eigenproblem(eval,evec) ! diagonalize U ...
 
       U = ZERO
       do k = 1,dim            ! do the exponential ... loop over eigenvalues ...
@@ -5199,18 +5035,39 @@ contains
    str_lengths(spaces) result (res) ::: pure
    ! Returns the minimal string lengths, with optional extra "spaces"
       self :: IN
-      spaces :: INT, IN
+      spaces :: INT, IN, optional
       res :: MAT{INT}(.dim1,.dim2)
 
       i,j :: INT
 
       do i = 1,.dim1
       do j = 1,.dim2
-         self(i,j).get_str_length(res(i,j),spaces)
+         res(i,j) = self(i,j).str_length
       end
       end
 
+      if (present(spaces)) res = res + spaces
+
    end 
+
+   max_str_length(spaces) result (res) ::: pure
+   ! Returns the maximum of the string lengths, with optional extra "spaces"
+      self :: IN
+      spaces :: INT, IN, optional
+      res :: INT
+
+      i,j :: INT
+
+      res = 0
+      do i = 1,.dim1
+      do j = 1,.dim2
+         res = max(res,self(i,j).str_length)
+      end
+      end
+
+      if (present(spaces)) res = res + spaces
+
+   end
    
    str_lengths(dp,spaces) result (res) ::: pure
    ! Returns the minimal string lengths, with optional extra "spaces"
@@ -5231,44 +5088,23 @@ contains
 
    end 
 
-   get_max_str_length(msl,spaces) ::: pure
-   ! Return "msl" the maximum of the string lengths, and including
-   ! extra "spaces"
+   max_str_length(dp,spaces) result (res) ::: pure
+   ! Returns the maximum of the string lengths, with optional extra "spaces"
       self :: IN
-      msl :: INT, OUT
-      spaces :: INT, IN
+      dp :: INT, IN
+      spaces :: INT, IN, optional
+      res :: INT
 
-      i,j,sl :: INT
+      i,j :: INT
 
-      msl = 0
-
+      res = 0
       do i = 1,.dim1
       do j = 1,.dim2
-         self(i,j).get_str_length(sl,spaces)
-         msl = max(msl,sl)
+         res= max(res,self(i,j).str_length(dp))
       end
       end
 
-   end
-
-   get_max_str_length(msl,max_dp,spaces) ::: pure
-   ! Return "msl" the maximum of the string lengths, keeping "max_dp"
-   ! decimal places and including extra "spaces"
-      self :: IN
-      msl :: INT, OUT
-      max_dp :: INT, IN
-      spaces :: INT, IN
-
-      i,j,sl :: INT
-
-      msl = 0
-
-      do i = 1,.dim1
-      do j = 1,.dim2
-         self(i,j).get_str_length(sl,max_dp,spaces)
-         msl = max(msl,sl)
-      end
-      end
+      if (present(spaces)) res = res + spaces
 
    end
 

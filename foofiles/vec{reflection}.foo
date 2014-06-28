@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{reflection}.foo 4381 2014-05-21 07:57:40Z dylan_ $
+! $Id: vec{reflection}.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{REFLECTION}
@@ -30,9 +30,9 @@ module VEC{REFLECTION}
 
 contains
 
-!  ===========================
-!  Create and Destroy Routines
-!  ===========================
+!  ===================
+!  Allocation routines
+!  ===================
 
    create(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Create space for object. This version does not nullify ptr parts.
@@ -42,14 +42,6 @@ contains
    ! Destroy space for object. This version does not destroy ptr parts
    end
 
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT})
-   ! Copy "vec".
-   end
-
    created result (res) ::: get_from(OBJECT), inlined_by_foo
    ! Returns true if self has been created
    end
@@ -57,6 +49,20 @@ contains
    destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
    ! Returns true if self has *not* been created
    end
+
+
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Create a replica copy of "v".
+   end
+
+   copy(v) ::: get_from(VEC{OBJECT}), pure
+   ! Copy "v".
+   end
+
 
 !  ============
 !  Set routines
@@ -68,7 +74,7 @@ contains
 
    set_h(h) ::: pure
    ! Set the h indices
-      self :: INOUT
+      self :: OUT
       h :: VEC{INT}, IN
 
       i :: INT
@@ -81,7 +87,7 @@ contains
 
    set_k(k) ::: pure
    ! Set the k indices
-      self :: INOUT
+      self :: OUT
       k :: VEC{INT}, IN
 
       i :: INT
@@ -94,7 +100,7 @@ contains
 
    set_l(l) ::: pure
    ! Set the l indices
-      self :: INOUT
+      self :: OUT
       l :: VEC{INT}, IN
 
       i :: INT
@@ -105,169 +111,176 @@ contains
 
    end
 
+   set_calc_to(v) ::: pure
+   ! Set the complex calculated structure factors to "v"
+      self :: OUT
+      v :: VEC{CPX}, IN
 
-   set_F_calc(F_calc) ::: pure
-   ! Set the calculated structure factors
-   ! Also set calculated intensities.
-      self :: INOUT
-      F_calc :: VEC{CPX}, IN
-
-      n :: INT
-      val :: CPX
-
-      do n = 1,.dim
-         val = F_calc(n)
-         self(n).F_calc = val
-         self(n).I_calc = abs(val)**2
-      end
+      self(:).calc = v
 
    end
 
-   set_F_pred(F_pred) ::: pure
-   ! Set the predicted structure factors
-   ! Also set predicted intensities.
-      self :: INOUT
-      F_pred :: VEC{REAL}, IN
+   set_pred_to(v) ::: pure
+   ! Set the predicted intensities to "v"
+      self :: OUT
+      v :: VEC{REAL}, IN
 
-      n :: INT
-      val :: REAL
-
-      do n = 1,.dim
-         val = F_pred(n)
-         self(n).F_pred = val
-         self(n).I_pred = val * val
-      end
+      self(:).pred = v
 
    end
 
-!magda_beginning
-
-   set_I_pred(I_pred) ::: pure
-   ! Set the predicted predicted intensities.
-   ! Also set structure factorsstructure factors
+   set_cal_to_abs_calc ::: pure
+   ! Set the real calculated observations (i.e. those without
+   ! experimental corrections) to the absolute value of the
+   ! calculated complex values.
       self :: INOUT
-      I_pred :: VEC{REAL}, IN
 
-      n :: INT
-      val :: REAL
-
-      do n = 1,.dim
-         val = I_pred(n)
-         self(n).F_pred = sqrt(val)
-         self(n).I_pred = val
-      end
+      self(:).cal = abs(self(:).calc) 
 
    end
 
-!magda_end
-
-   set_F_exp(F_exp) ::: pure
-   ! Set the experimental structure factors
+   set_cal_to_abs_calc_2 ::: pure
+   ! Set the real calculated observations (i.e. those without
+   ! experimental corrections) to the *square* of the absolute value
+   ! of the calculated complex values.
       self :: INOUT
-      F_exp :: VEC{REAL}, IN
 
-      n :: INT
-
-      do n = 1,.dim
-         self(n).F_exp = F_exp(n)
-      end
+      self(:).cal = real(self(:).calc * conjg(self(:).calc))
 
    end
 
-   set_I_exp(I_exp) ::: pure
-   ! Set the experimental structure factors
+   set_obs_to(v) ::: pure
+   ! Set the observed reflection data to "v"
       self :: INOUT
-      I_exp :: VEC{REAL}, IN
+      v :: VEC{REAL}, IN
 
-      n :: INT
-
-      do n = 1,.dim
-         self(n).I_exp = I_exp(n)
-      end
+      self(:).obs = v
 
    end
 
-   set_F_sigma(F_sigma) ::: pure
-   ! Set the experimental structure factor errors
+   set_sigma_to(v) ::: pure
+   ! Set all the experimental sigma's to "v"
       self :: INOUT
-      F_sigma :: VEC{REAL}, IN
+      v :: VEC{REAL}, IN
 
-      n :: INT
-
-      do n = 1,.dim
-         self(n).F_sigma = F_sigma(n)
-      end
+      self(:).sigma = v
 
    end
 
 
-   set_I_calc(I_calc) ::: pure
-   ! Set the calculated intensities
-      self :: INOUT
-      I_calc :: VEC{REAL}, IN
+!  ===============
+!  Put-to routines
+!  ===============
 
-   ENSURE(I_calc.dim==.dim,"I_calc: wrong size")
+   put_obs_to(v) ::: pure
+   ! Put the experimental observations to "v".
+      self :: IN
+      v :: VEC{REAL}, OUT
 
       n :: INT
 
       do n = 1,.dim
-         self(n).I_calc = I_calc(n)
+         v(n) = self(n).obs
+      end
+
+   end
+
+   put_sigma_to(v) ::: pure
+   ! Put the experimental sigma's to "v".
+      self :: IN
+      v :: VEC{REAL}, OUT
+
+      n :: INT
+
+      do n = 1,.dim
+         v(n) = self(n).sigma
+      end
+
+   end
+
+   put_cal_to(v) ::: pure
+   ! Put the uncorrected calculated real observations to "v".
+      self :: INOUT
+      v :: VEC{REAL}, OUT
+
+      n :: INT
+
+      do n = 1,.dim
+         v(n) = self(n).cal
+      end
+
+   end
+
+   put_pred_to(v) ::: pure
+   ! Put the predicted (i.e corrected) observations to "v".
+      self :: INOUT
+      v :: VEC{REAL}, OUT
+
+      n :: INT
+
+      do n = 1,.dim
+         v(n) = self(n).pred
+      end
+
+   end
+
+   put_calc_to(v) ::: pure
+   ! Put the calculated complex structure factors to "v".
+      self :: INOUT
+      v :: VEC{CPX}, OUT
+
+      n :: INT
+
+      do n = 1,.dim
+         v(n) = self(n).calc
+      end
+
+   end
+
+   put_calc_abs_to(v) ::: pure
+   ! Put the absolute value of the calculated complex structure
+   ! factors to "v".
+      self :: INOUT
+      v :: VEC{REAL}, OUT
+
+      n :: INT
+
+      do n = 1,.dim
+         v(n) = abs(self(n).calc)
       end
 
    end
 
 
+!  ============
+!  Scaling data
+!  ============
 
-   scale_F_exp(fac) ::: pure
-   ! Scale the experimental structure factors
+   scale_obs_and_sigma(fac) ::: pure
+   ! Scale all the experimental data by "fac"
       self :: INOUT
       fac :: REAL, IN
 
-      n :: INT
-
-      do n = 1,.dim
-         self(n).F_exp = self(n).F_exp * fac
-      end
+      self(:).obs   = fac * self(:).obs
+      self(:).sigma = fac * self(:).sigma
    
    end
 
-   scale_F_sigma(fac) ::: pure
-   ! Scale the experimental structure factor errors
+   scale_obs(fac) ::: pure
+   ! Scale all the experimental observations be "fac"
       self :: INOUT
       fac :: REAL, IN
 
-      n :: INT
-
-      do n = 1,.dim
-         self(n).F_sigma = self(n).F_sigma * fac
-      end
-
+      self(:).obs = self(:).obs * fac
+   
    end
 
-
-   scale_I_exp(fac) ::: pure
-   ! Scale the experimental intensities
+   scale_sigma(fac) ::: pure
+   ! Scale all the experimental errors
       self :: INOUT
       fac :: REAL, IN
 
-      n :: INT
-
-      do n = 1,.dim
-         self(n).F_exp = self(n).F_exp * fac
-      end
-
-   end
-
-   scale_I_sigma(fac) ::: pure
-   ! Scale the experimental intensity errors
-      self :: INOUT
-      fac :: REAL, IN
-
-      n :: INT
-
-      do n = 1,size(self)
-         self(n).F_sigma = self(n).F_sigma * fac
-      end
+      self(:).sigma = self(:).sigma * fac
 
    end
 
@@ -280,20 +293,26 @@ contains
    ! The number of reflections
       self :: IN
       res :: INT
-      res = size(self)
+      res = .dim
    end
 
+   no_of_groups result (res)
+   ! Return the number of roby atom groups
+      res :: INT
+      res = maxval(self(:).group)
+   end
    
-   have_F_calc result (res) ::: pure
-   ! Whether we have any calculated structure factors
+   has_calc result (res) ::: pure
+   ! Any non-zero (complex) calculated structure factors?
       self :: IN
       res :: BIN
 
       n :: INT
 
       res = FALSE
+
       do n = 1,.dim
-         if (abs(self(n).F_calc) > TOL(10)) then
+         if (abs(self(n).calc) > TOL(10)) then
             res = TRUE
             exit
          end
@@ -301,16 +320,17 @@ contains
 
    end
 
-   have_F_pred result (res) ::: pure
-   ! Whether we have any predicted structure factors
+   has_pred result (res) ::: pure
+   ! Any non-zero predicted structure factors?
       self :: IN
       res :: BIN
 
       n :: INT
 
       res = FALSE
+
       do n = 1,.dim
-         if (abs(self(n).F_pred) > TOL(10)) then
+         if (abs(self(n).pred) > TOL(10)) then
             res = TRUE
             exit
          end
@@ -318,16 +338,17 @@ contains
 
    end
 
-   have_F_exp result (res) ::: pure
-   ! Whether we have any experimental structure factors
+   has_obs result (res) ::: pure
+   ! Any non-zero observed structure factors
       self :: IN
       res :: BIN
 
       n :: INT
 
       res = FALSE
+
       do n = 1,.dim
-         if (abs(self(n).F_exp) > TOL(10)) then
+         if (abs(self(n).obs) > TOL(10)) then
             res = TRUE
             exit
          end
@@ -335,16 +356,17 @@ contains
 
    end
 
-   have_F_sigma result (res) ::: pure
-   ! Whether we have any errors in the structure factors
+   has_sigma result (res) ::: pure
+   ! Any non-zero errors in the structure factors
       self :: IN
       res :: BIN
 
       n :: INT
 
       res = FALSE
+
       do n = 1,.dim
-         if (abs(self(n).F_sigma) > TOL(10)) then
+         if (abs(self(n).sigma) > TOL(10)) then
             res = TRUE
             exit
          end
@@ -352,84 +374,15 @@ contains
 
    end
 
-
-   have_I_calc result (res) ::: pure
-   ! Whether we have any F2
+   has_indices result (res) ::: pure
+   ! Any non-zero Miller indices
       self :: IN
       res :: BIN
 
       n :: INT
 
       res = FALSE
-      do n = 1,.dim
-         if (abs(self(n).I_calc) > TOL(10)) then
-            res = TRUE
-            exit
-         end
-      end
 
-   end
-
-   have_I_pred result (res) ::: pure
-   ! Whether we have any predicted intensities
-      self :: IN
-      res :: BIN
-
-      n :: INT
-
-      res = FALSE
-      do n = 1,.dim
-         if (abs(self(n).I_pred) > TOL(10)) then
-            res = TRUE
-            exit
-         end
-      end
-
-   end
-
-   have_I_exp result (res) ::: pure
-   ! Whether we have any experimental intensities
-      self :: IN
-      res :: BIN
-
-      n :: INT
-
-      res = FALSE
-      do n = 1,.dim
-         if (abs(self(n).I_exp) > TOL(10)) then
-            res = TRUE
-            exit
-         end
-      end
-
-   end
-
-   have_I_sigma result (res) ::: pure
-   ! Whether we have any errors in the intensities
-      self :: IN
-      res :: BIN
-
-      n :: INT
-
-      res = FALSE
-      do n = 1,.dim
-         if (abs(self(n).I_sigma) > TOL(10)) then
-            res = TRUE
-            exit
-         end
-      end
-
-   end
-
-
-   have_indices result (res) ::: pure
-   ! Whether we have the Miller indices
-      self :: IN
-      res :: BIN
-
-      n :: INT
-
-      res = FALSE
       do n = 1,.dim
          if (self(n).h /= 0 OR self(n).k /= 0 OR self(n).l /= 0) then
             res = TRUE
@@ -439,12 +392,12 @@ contains
 
    end
 
-   indices(n) result (res) ::: pure
-   ! Return the miller indices of reflection n.
+   miller_indices(n) result (res) ::: pure
+   ! Return the Miller indices of reflection n.
       self :: IN
       n :: INT, IN
       res :: VEC{INT}(3)
-      res = (/ self(n).h, self(n).k, self(n).l /)
+      res = [ self(n).h, self(n).k, self(n).l ]
    end
 
    use_multiple_scale_factors result (res)
@@ -454,414 +407,229 @@ contains
    end
 
 
-!  ====================
-!  Statistical Routines
-!  ====================
+!  =======================
+!  Pruning & altering data
+!  =======================
 
-   F_chi2 result (res) ::: pure
-   ! chi2 for the structure factors
-      self :: IN
-      res :: REAL
+   set_free_reflections_from(data,free_percentage) ::: leaky
+   ! Set the free reflections in "self" from "data" using a certain
+   ! "free_percentage".  The original "data" are recreated removing
+   ! those free reflections.
+      self :: PTR
+      data :: VEC{REFLECTION}*
+      free_percentage :: INT, IN
 
-   ENSURE(.have_F_pred,"no predicted structure factors")
-   ENSURE(.have_F_sigma,"no experimental structure factor errors")
-   ENSURE(.have_F_exp,"no experimental structure factors")
+      free_data,keep_data :: VEC{REFLECTION}*
+      harvest :: VEC{REAL}* 
+      free,keep :: VEC{INT}* 
+      percentage :: REAL
+      i,n :: INT
 
-      z :: REAL
+      if (free_percentage<=0) return
+
+      if (data.destroyed)     return
+
+      ! Set the percentage of reflections to reject
+      percentage = free_percentage/REALIFY(100)
+
+      ! Harvest random numbers
+      n = data.dim
+      harvest.create(n)
+
+      if (tonto.is_master_processor) then
+         call random_number(harvest)
+      end
+      PARALLEL_BROADCAST(harvest,0)
+
+      ! Reflections for free have p<free_percentage
+      ! Otherwise, they are kept and used for fitting
+      nullify(free)
+      nullify(keep)
+      do i = 1,n
+         if (harvest(i)<percentage) then; free.append(i)
+         else;                            keep.append(i)
+         end
+      end
+      harvest.destroy
+
+      stdout.show("No. of reflections kept for R free =",free.dim)
+      stdout.flush
+
+      ! Set free_data
+      free_data.create(free.dim)
+      free_data = data(free)
+
+      ! Set kept data
+      keep_data.create(keep.dim)
+      keep_data = data(keep)
+
+      ! Clean
+      free.destroy
+      keep.destroy
+
+      ! Set free and kept data
+      self.destroy
+      data.destroy
+      self => free_data
+      data => keep_data
+
+   end
+
+   prune(list,cutoff,show_stats,show_rejects) ::: template
+   ! This creates "self", which has all the reflections in "list" with
+   ! respect to a rejection test "cutoff" eliminated.
+      self :: PTR
+      list :: VEC{REFLECTION}*
+      cutoff :: REAL, IN
+      show_stats :: BIN, optional
+      show_rejects :: BIN, optional
+
+   ENSURE(.destroyed    "Pruned reflections already exist!")
+   ENSURE(list.created, "No original list of reflection data")
+   ENSURE(list.have_obs,"No experimental observations in list")
+
+      data :: MAT{REAL}*
+      head :: VEC{STR}*
+      keep :: VEC{BIN}*
+      bad :: VEC{REFLECTION}*
+      k,b :: INT
+      title :: STR
+
+      ! Keep mask
+      keep.create(.dim)
+      keep = NOT REFLECTION:is_SIZE?_TEST?(list,cutoff)
+
+      k = count(keep)
+      b = .dim - k
+
+      ! Return if all kepts
+      if (k==.dim) then
+         keep.destroy
+         return
+      end
+
+      ! Copy the non-rejects
+      self.create(k)
+      self = pack(list,mask=keep)
+
+      if (present(show_stats)) then
+      if (show_stats) then
+
+      stdout.flush
+      title = "Reflections pruned"
+      stdout.text(repeat("=",len_trim(title)))
+      stdout.text(trim(title))
+      stdout.text(repeat("=",len_trim(title)))
+
+      stdout.flush
+      stdout.show("Rejection criteria      =","SIZE?_TEST?")
+      stdout.show("Cutoff                  =",cutoff)
+      stdout.flush
+      stdout.show("No. of reflections      =",.dim)
+      stdout.show("No. of rejects          =",b)
+      stdout.show("No. of kept reflections =",k)
+
+      if (present(show_rejects)) then
+      if (show_rejects) then
+
+
+      data.create(b,1)
+      head.create(1)
+
+      ! Copy the rejects
+      bad.create(b)
+      bad = pack(list,mask=NOT keep)
+
+      data(:,1) = REFLECTION:VAL?(bad)
+      head(1)   = "HEAD?"
+
+      ! Destroy rejects
+      bad.destroy
+
+      .put_hkl_table(data,head)
+
+      head.destroy
+      data.destroy
+
+      end
+      end ! show-rejects
+
+      end
+      end ! show-stats
+
+      ! Clean
+      bad.destroy
+      keep.destroy
+
+   end
+
+   prune_weak(list,cutoff,show_stats,show_rejects) ::: get_from(VEC{REFLECTION}:prune, TEST?=>is_weak_obs, VAL?=>obs_on_sigma, HEAD?=>"Obs/sigma"), leaky
+   ! This creates "self", which has all the reflections in "list" with
+   ! respect to a rejection test "cutoff" eliminated.
+   end
+
+   prune_high_angle(list,cutoff,show_stats,show_rejects) ::: get_from(VEC{REFLECTION}:prune, TEST?=>is_high_stl, VAL?=>stl, HEAD?=>"stl"), leaky
+   ! This creates "self", which has all the reflections in "list" with
+   ! respect to a rejection test "cutoff" eliminated.
+   end
+
+   prune_low_angle(list,cutoff,show_stats,show_rejects) ::: get_from(VEC{REFLECTION}:prune, TEST?=>is_low_stl, VAL?=>stl, HEAD?=>"stl"), leaky
+   ! This creates "self", which has all the reflections in "list" with
+   ! respect to a rejection test "cutoff" eliminated.
+   end
+
+   prune_negative(list,cutoff,show_stats,show_rejects) ::: get_from(VEC{REFLECTION}:prune, TEST?=>is_small_obs, VAL?=>obs, HEAD?=>"Obs"), leaky
+   ! This creates "self", which has all the reflections in "list" with
+   ! respect to a rejection test "cutoff" eliminated.
+   end
+
+   simulate_new_obs
+   ! Set the reflection data to be the experimental reflection data plus an
+   ! error.  The errors are normally distributed, with the experimental errors
+   ! being their standard deviations.
+
       n :: INT
+      dF :: REAL
 
-      res = ZERO
-
-      if (NOT .have_F_exp) return
+      stdout.flush
+      stdout.text("Adding normally distributed random error to F_exp ...")
 
       do n = 1,.dim
-         z = self(n).F_z
-         res = res + z*z
+         dF.to_random_normal_deviate ! dF has mean zero, standard deviation one
+         self(n).obs = self(n).obs + dF*self(n).sigma
       end
 
-      res = res / max(.dim - 1,1)
-
    end
 
-   I_chi2 result (res) ::: pure
-   ! chi2 for the intensities
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_I_pred, "no predicted intensities")
-   ENSURE(.have_I_exp,  "no experimental intensities")
-   ENSURE(.have_I_sigma,"no experimental intensity errors")
-
-      z :: REAL
-      n :: INT
-
-      res = ZERO
-      do n = 1,.dim
-         z   = self(n).I_z
-         res = res + z*z
-      end
-
-      res = res / max(.dim - 1,1)
-
-   end
-
-   F_goodness_of_fit result (res) ::: pure
-   ! goodness_of_fit for the structure factors
-      self :: IN
-      res :: REAL
-      res = sqrt(.F_chi2)
-   end
-
-   I_goodness_of_fit result (res) ::: pure
-   ! goodness_of_fit for the intensities
-      self :: IN
-      res :: REAL
-      res = sqrt(.I_chi2)
-   end
-
-   F_r_factor result (res) ::: pure
-   ! r factor for the structure factors
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_F_pred,"no predicted structure factors")
-   ENSURE(.have_F_exp,"no experimental structure factors")
-      top,bot :: REAL
+   add_random_error
+   ! Set the reflection data to be the experimental reflection data plus an
+   ! error.  The errors are normally distributed, with the experimental errors
+   ! being their standard deviations multiplied by a scale factor which is read
+   ! from stdin.
 
       n :: INT
+      dF,scale :: REAL
 
-      top = ZERO
-      bot = ZERO
+      stdout.flush
+      stdout.text("Adding normally distributed random error to F_exp ...")
 
-      do n=1,size(self)
-         top = top + abs(self(n).F_pred - self(n).F_exp)
-         bot = bot + abs(self(n).F_exp)
-      end
-
-      res = top / bot
-
-   end
-
-   F2_r_factor result (res) ::: pure
-   ! r factor for the structure factors *squared*
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_F_pred,"no predicted structure factors")
-   ENSURE(.have_F_exp,"no experimental structure factors")
-
-      top,bot,Fp2,Fe2 :: REAL
-      n :: INT
-
-      top = ZERO
-      bot = ZERO
-
-      do n = 1,.dim
-
-         Fp2 = self(n).F_pred; Fp2 = Fp2*FP2
-         Fe2 = self(n).F_exp;  Fe2 = Fe2*Fe2
-
-         top = top + abs(Fp2 - Fe2)
-         bot = bot + abs(Fe2)
-
-      end
-
-      res = top / bot
-
-   end
-
-   I_r_factor result (res) ::: pure
-   ! R factor for the intensities
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_I_pred,"no predicted structure factors")
-   ENSURE(.have_I_exp,"no experimental structure factors")
-
-      top,bot :: REAL
-      n :: INT
-
-      top = ZERO
-      bot = ZERO
-
-      do n = 1,.dim
-       top = top + abs(self(n).I_pred - self(n).I_exp)
-       bot = bot + abs(self(n).I_exp)
-      end
-
-      res = top / bot
-
-   end
-
-   F_r_sigma result (res) ::: pure
-   ! The R_sigma(F) for the structure factors
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_F_exp,  "no experimental structure factors")
-   ENSURE(.have_F_sigma,"no experimental structure factor errors")
-
-      top,bot :: REAL
-      n :: INT
-
-      top = ZERO
-      bot = ZERO
-
-      do n = 1,.dim
-         top = top + abs(self(n).F_sigma)
-         bot = bot + abs(self(n).F_exp)
-      end
-
-      res = top / bot
-
-   end
-
-   F2_r_sigma result (res) ::: pure
-   ! The R_sigma(F2) for the structure factors
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_F_exp,  "no experimental structure factors")
-   ENSURE(.have_F_sigma,"no experimental structure factor errors")
-
-      top,bot :: REAL
-      n :: INT
-
-      top = ZERO
-      bot = ZERO
-
-      do n = 1,.dim
-         top = top + abs(self(n).F_sigma)**2
-         bot = bot + abs(self(n).F_exp)**2
-      end
-
-      res = top / bot
-
-   end
-
-   I_r_sigma result (res) ::: pure
-   ! The R_sigma(I) for the structure factors
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_I_exp,  "no experimental intensities")
-   ENSURE(.have_I_sigma,"no experimental intensity errors")
-
-      top,bot :: REAL
-      n :: INT
-
-      top = ZERO
-      bot = ZERO
-      do n = 1,.dim
-         top = top + abs(self(n).I_sigma)
-         bot = bot + abs(self(n).I_exp)
-      end
-
-      res = top / bot
-
-   end
-
-   F_weighted_r_factor result (res) ::: pure
-   ! weighted r factor for the structure factors
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_F_exp,  "no experimental structure factors")
-   ENSURE(.have_F_sigma,"no experimental structure factor errors")
-   ENSURE(.have_F_pred, "no predicted structure factors")
-
-      top,bot,z,b :: REAL
-      n :: INT
-
-      top = ZERO
-      bot = ZERO
-      do n = 1,.dim
-         z = self(n).F_z
-         b = self(n).F_exp / self(n).F_sigma
-         top = top + z*z
-         bot = bot + b*b
-      end
-
-      res = sqrt(top / bot)
-
-   end
-
-   F2_weighted_r_factor result (res) ::: pure
-   ! weighted r factor for the structure factors *squared*
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_F_exp,  "no experimental structure factors")
-   ENSURE(.have_F_sigma,"no experimental structure factor errors")
-   ENSURE(.have_F_pred, "no predicted structure factors")
-
-      top,bot,Fe,Fp,sg,z,b :: REAL
-      n :: INT
-
-      top = ZERO
-      bot = ZERO
+      ! Read
+      stdin.read(scale)
+      stdout.show("normal distribution scaled by ",scale)
 
       do n = 1,.dim
 
-         Fp = self(n).F_pred; Fp = Fp*Fp
-         Fe = self(n).F_exp;  Fe = Fe*Fe
-         
-         sg = ONE/self(n).F_sigma
-         sg = sg*sg
+         ! del has mean zero, standard deviation one
+         dF.to_random_normal_deviate 
 
-         z  = (Fe - Fp)*sg
-         b  = Fe*sg
+         dF = dF*scale
 
-         top = top + z*z
-         bot = bot + b*b
+         self(n).obs = self(n).obs + dF*self(n).sigma
 
       end
 
-      res = sqrt(top / bot)
-
    end
 
-   I_weighted_r_factor result (res) ::: pure
-   ! weighted r factor for the intensities
-      self :: IN
-      res :: REAL
-
-   ENSURE(.have_I_exp,  "no experimental intensities")
-   ENSURE(.have_I_sigma,"no experimental intensity errors")
-   ENSURE(.have_I_pred, "no predicted intensities")
-
-      top,bot,z,b :: REAL
-      n :: INT
-
-      top = ZERO
-      bot = ZERO
-      do n = 1,.dim
-         z = self(n).I_z
-         b = self(n).I_exp / self(n).I_sigma
-         top = top + z*z
-         bot = bot + b*b
-      end
-
-      res = sqrt(top / bot)
-
-   end
-
-   F_val_r_factor(core_reflection) result (res) 
-   ! Valence r factor . The set of "core_reflections" must be supplied.
-      self :: IN
-      core_reflection :: VEC{REFLECTION}, IN
-      res :: REAL
-
-   ENSURE(.have_F_pred,"no predicted structure factors")
-   ENSURE(.have_F_exp,"no experimental structure factors")
-
-      top,bot,val :: REAL
-      xi :: VEC{REAL}*
-      phase :: VEC{CPX}*
-      k :: INT
-
-      ! Get the scale factor/extinction correction
-      ! Make the phases too ...
-      xi.create(.dim)
-      phase.create(.dim)
-      do k = 1,.dim
-        val = abs(self(k).F_calc)
-        if (val.is_zero) then
-           xi(k)    = ZERO
-           phase(k) = ZERO
-        else
-           val = ONE/val
-           xi(k)    = self(k).F_pred * val
-           phase(k) = self(k).F_calc * val
-        end
-      end
-
-      ! Make the valence (deformation) R factor
-      top = ZERO
-      bot = ZERO
-      do k = 1,.dim
-       val = abs(self(k).F_exp*phase(k) - xi(k)*core_reflection(k).F_calc)
-       top = top + val - xi(k)*abs(self(k).F_calc - core_reflection(k).F_calc) 
-       bot = bot + val
-      end
-      res = top / bot
-
-      ! Clean up
-      phase.destroy
-      xi.destroy
-
-   end
-
-   F_calc result (res) ::: pure
-   ! return the calculated structure factors
-      self :: IN
-      res :: VEC{CPX}(size(self))
-      res(:) = self(:).F_calc
-   end
-
-   F_pred result (res) ::: pure
-   ! return the predicted structure factors
-      self :: IN
-      res :: VEC{REAL}(size(self))
-      res(:) = self(:).F_pred
-   end
-
-   F_exp result (res) ::: pure
-   ! return the experimental structure factors
-      self :: IN
-      res :: VEC{REAL}(size(self))
-      res(:) = self(:).F_exp
-   end
-
-   I_pred result (res) ::: pure
-   ! return the predicted intensities
-      self :: IN
-      res :: VEC{REAL}(size(self))
-      res(:) = self(:).I_pred
-   end
-
-   F_sigma result (res) ::: pure
-   ! return the errors in the experimental structure factors
-      self :: IN
-      res :: VEC{REAL}(size(self))
-      res(:) = self(:).F_sigma
-   end
- 
-   sigma2_eff result (res) ::: pure
-   ! Return the effective (mean) value of chi2 maybe useful
-   ! for starting and ending constrained fit.
-      self :: IN
-      res :: REAL
-  
-   ENSURE(.have_F_pred,"no predicted structure factors")
-   ENSURE(.have_F_sigma,"no experimental structure factor errors")
-   ENSURE(.have_F_exp,"no experimental structure factors")
-  
-      top,bot,del,sig :: REAL
-      r :: INT
-  
-      res = ZERO
-  
-      if (NOT .have_F_exp) return
-  
-      top = ZERO
-      bot = ZERO
-  
-      do r = 1,.dim
-  
-         sig = self(r).F_sigma
-         sig = sig*sig
-         del = self(r).F_exp - self(r).F_pred
-         del = del*del
-  
-         top = top + del
-         bot = bot + del/sig
-  
-      end
-  
-      res = top/bot
-  
-   end
 
 !  =======================
 !  List-based I/O Routines
@@ -933,14 +701,6 @@ contains
    ! Read a new set of keys
    end
 
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
-   end
-
 
 !  ===========================
 !  Non-list based I/O routines
@@ -954,26 +714,26 @@ contains
    ! Process a normal (non list-type) "keyword".
       self :: PTR
       keyword :: STR
+
       word :: STR
+
       word = keyword
+
       word.to_lower_case
+
       select case (word)
-       case("}") ! do nothing.
-       case("add_random_error         "); .add_random_error
-       case("put                      "); .put
-       case("put_f_exp_data           "); .put_F_exp_data
-       case("put_f_pred_data          "); .put_F_pred_data
-       case("put_f_statistics         "); .put_F_statistics
-       case("put_i_exp_data           "); .put_I_exp_data
-       case("put_i_statistics         "); .put_I_statistics
-       case("put_intensity_data       "); .put_intensity_data
-       case("put_structure_factor_data"); .put_structure_factor_data
-       case("redirect                 "); .redirect
-       case("revert                   "); .revert
-       case("set_hkl_range=           "); .set_hkl_range
-       case("simulate_new_f_exp       "); .simulate_new_F_exp
-       case default;     UNKNOWN(word)
+         case("}") ! do nothing.
+         case("add_random_error         "); .add_random_error
+         case("put                      "); .put
+         case("put_observed             "); .put_observed
+         case("put_predicted            "); .put_predicted
+         case("redirect                 "); TEXTFILE:redirect(stdin)
+         case("revert                   "); TEXTFILE:revert(stdin)
+         case("set_hkl_range=           "); .set_hkl_range
+         case("simulate_new_obs         "); .simulate_new_obs   
+         case default;     UNKNOWN(word)
       end
+
    end
 
    shrink(dim) ::: get_from(VEC{OBJECT}), leaky
@@ -1003,11 +763,11 @@ contains
       stdin.read_ptr(hkl_range)
 
       ! Sanity check
-      DIE_IF(.created,"the reflections are already created")
-      DIE_IF(hkl_range.dim/=3,"hkl range must have three ranges")
-      DIE_IF(hkl_range(1).element.dim/=2,"hkl range 1 must have two limits")
-      DIE_IF(hkl_range(2).element.dim/=2,"hkl range 2 must have two limits")
-      DIE_IF(hkl_range(3).element.dim/=2,"hkl range 3 must have two limits")
+      ENSURE(.destroyed,"the reflections are already created")
+      ENSURE(hkl_range.dim==3,"hkl range must have three ranges")
+      ENSURE(hkl_range(1).element.dim==2,"hkl range 1 must have two limits")
+      ENSURE(hkl_range(2).element.dim==2,"hkl range 2 must have two limits")
+      ENSURE(hkl_range(3).element.dim==2,"hkl range 3 must have two limits")
 
       ! Get limits
       f1 = hkl_range(1).element(1)
@@ -1042,734 +802,218 @@ contains
    end
 
 
-!  ===============
-!  Output routines
-!  ===============
+!  ====================
+!  Statistical Routines
+!  ====================
 
-   put(core_reflection)
-   ! Output the reflection data.
-      core_reflection :: VEC{REFLECTION}*, optional
+   chi2 result (res) ::: pure
+   ! Return the chi2 between the predicted and observed structure
+   ! factors. The sum of squares is divided by max(.dim-1,1)
+      self :: IN
+      res :: REAL
 
-      stdout.flush
-      stdout.show("Number of reflections =",.dim)
+   ENSURE(.have_pred, "no predicted structure factors")
+   ENSURE(.have_obs,  "no experimental structure factors")
+   ENSURE(.have_sigma,"no experimental sigma's")
 
-      ! Structure factors
-      stdout.flush
-      stdout.text("Structure factors:")
-      if (.have_F_pred) then
-         if (.have_F_exp) then; .put_structure_factor_data(core_reflection)
-         else;                  .put_F_pred_data
-         end
-      else
-         if (.have_F_exp) then; .put_F_exp_data
-         else; stdout.text("There are no structure factors yet")
-         end
+      z :: REAL
+      n :: INT
+
+      res = ZERO
+
+      if (NOT .have_obs) return
+
+      do n = 1,.dim
+         z = self(n).z_statistic
+         res = res + z*z
       end
 
-      ! Intensities
-    ! stdout.flush
-    ! stdout.text("Intensities:")
-    ! if (.have_I_pred) then
-    !    if (.have_I_exp) then; .put_intensity_data
-    !    else;                  .put_I_pred_data
-    !    end
-    ! else
-    !    if (.have_I_exp) then; .put_I_exp_data
-    !    else; stdout.text("There are no intensities yet")
-    !    end
-    ! end
+      res = res / max(.dim-1,1)
 
    end
 
+   goodness_of_fit result (res) ::: pure
+   ! Return the goodness-of-fit between the predicted and observed
+   ! structure factors
+      self :: IN
+      res :: REAL
+      res = sqrt(.chi2)
+   end
 
-   put_structure_factor_data(core_reflection)
-   ! Output the structure factor data
-      core_reflection :: VEC{REFLECTION}*, optional
+   r_factor result (res) ::: pure
+   ! Return the r factor between the predicted and observed structure
+   ! factors
+      self :: IN
+      res :: REAL
 
-      .put_F_statistics(core_reflection)
+   ENSURE(.have_pred,"no predicted structure factors")
+   ENSURE(.have_obs, "no experimental structure factors")
 
-      if (.use_multiple_scale_factors) then; .put_SF_group_data
-      else;                                  .put_SF_nogrp_data
+      top,bot :: REAL
+      n :: INT
+
+      top = ZERO
+      bot = ZERO
+
+      do n=1,size(self)
+         top = top + abs(self(n).pred - self(n).obs)
+         bot = bot + abs(self(n).obs)
       end
+
+      res = top / bot
 
    end
 
-   put_F_statistics(core_reflection,show_chi2)
-   ! Output the structure factor statistics 
-      core_reflection :: VEC{REFLECTION}*, optional
+   r_sigma result (res) ::: pure
+   ! The R_sigma(F) for the experimental structure factors.
+   ! This is the sum-total-sigma on sum-total-of-observations.
+      self :: IN
+      res :: REAL
+
+   ENSURE(.have_obs,  "no experimental structure factors")
+   ENSURE(.have_sigma,"no experimental sigma's")
+
+      top,bot :: REAL
+      n :: INT
+
+      top = ZERO
+      bot = ZERO
+
+      do n = 1,.dim
+         top = top + abs(self(n).sigma)
+         bot = bot + abs(self(n).obs)
+      end
+
+      res = top / bot
+
+   end
+
+   weighted_r_factor result (res) ::: pure
+   ! Return the weighted r factor for the structure factors
+      self :: IN
+      res :: REAL
+
+   ENSURE(.have_sigma,"no experimental sigma's")
+   ENSURE(.have_pred, "no predicted structure factors")
+   ENSURE(.have_obs,  "no experimental structure factors")
+
+      top,bot,z,b :: REAL
+      n :: INT
+
+      top = ZERO
+      bot = ZERO
+
+      do n = 1,.dim
+
+         z = self(n).z_statistic
+         b = self(n).obs / self(n).sigma
+
+         top = top + z*z
+         bot = bot + b*b
+
+      end
+
+      res = sqrt(top/bot)
+
+   end
+
+   sigma2_eff result (res) ::: pure
+   ! Return the effective (mean) value of delta^2 relative to sigma^2.
+   ! Maybe useful for guessing starting lambda values for XCW?
+      self :: IN
+      res :: REAL
+  
+   ENSURE(.have_sigma,"no experimental sigma's")
+   ENSURE(.have_obs,  "no experimental structure factors")
+   ENSURE(.have_pred, "no predicted structure factors")
+  
+      top,bot,del,sig :: REAL
+      r :: INT
+  
+      res = ZERO
+  
+      top = ZERO
+      bot = ZERO
+  
+      do r = 1,.dim
+  
+         sig = self(r).sigma
+         sig = sig*sig
+
+         del = self(r).delta
+         del = del*del
+  
+         top = top + del
+         bot = bot + del/sig
+  
+      end
+  
+      res = top/bot
+  
+   end
+
+
+!  ====================
+!  Statistical analysis
+!  ====================
+
+   put_statistics(header,show_chi2)
+   ! Output the structure factor statistics using "header".
+      header :: STR, IN
       show_chi2 :: BIN, optional
 
-   ENSURE(.have_F_exp, "No F_exp data!")
-   ENSURE(.have_F_pred,"No F_pred data!")
+   ENSURE(.have_obs, "No experimental data!")
+   ENSURE(.have_pred,"No predicted structure factors!")
 
       chi2 :: REAL
       show :: BIN
 
       stdout.flush
-
-      stdout.text("Model statistics based on structure factors:")
+      stdout.text("Statistics for "//trim(header)//":")
       stdout.flush
-
-      stdout.show("R_sigma(F)                     =", .F_r_sigma)
-      stdout.show("R_sigma(F2)                    =", .F2_r_sigma)
-      stdout.show("R(F)                           =", .F_r_factor)
-      stdout.show("R(F2)                          =", .F2_r_factor)
-      stdout.show("Rw(F)                          =", .F_weighted_r_factor)
-      stdout.show("Rw(F2)                         =", .F2_weighted_r_factor)
-
-      if (present(core_reflection)) then
-      if (core_reflection.created) then
-      stdout.show("Rval(F)                        =", .F_val_r_factor(core_reflection))
-      end
-      end
+      stdout.show("R_sigma                        =", .r_sigma)
+      stdout.show("R-factor                       =", .r_factor)
+      stdout.show("Weighted R-factor, R_w         =", .weighted_r_factor)
 
       show = TRUE
       if (present(show_chi2)) show = show_chi2
 
       if (show) then
-      chi2 = .F_chi2
-      stdout.show("chi^2(N_p=1)(F)                =", chi2)
-      stdout.show("Goodness of fit(N_p=1)(F)      =", sqrt(chi2))
+      chi2 = .chi2
+      stdout.show("chi^2 (N_p=1)                  =", chi2)
+      stdout.show("Goodness of fit (N_p=1)        =", sqrt(chi2))
       end
 
    end
 
-   put_F_free_stats(core_reflection,show_chi2)
-   ! Output the structure factor statistics 
-      core_reflection :: VEC{REFLECTION}*, optional
+   put_free_statistics(show_chi2)
+   ! Output the "free" structure factor statistics 
+   ! NOTE: it is up to you use the correct reflection vector!
+   ! NOTE: it is up to you to supply the header (F, or F2?)
       show_chi2 :: BIN, optional
 
-   ENSURE(.have_F_exp, "No F_exp data!")
-   ENSURE(.have_F_pred,"No F_pred data!")
+   ENSURE(.have_obs, "No experimental data!")
+   ENSURE(.have_pred,"No predicted structure factors!")
 
       chi2 :: REAL
       show :: BIN
 
-      stdout.flush
-
-      stdout.text("Statistics based on free structure factors:")
-      stdout.flush
-
-      stdout.show("Free R_sigma(F)              =", .F_r_sigma)
-      stdout.show("Free R(F)                    =", .F_r_factor)
-      stdout.show("Free Rw(F)                   =", .F_weighted_r_factor)
-
-      if (present(core_reflection)) then
-      if (core_reflection.created) then
-      stdout.show("Free Rval(F)                 =", .F_val_r_factor(core_reflection))
-      end
-      end
+      stdout.show("Free R_sigma                 =", .r_sigma)
+      stdout.show("Free R-factor                =", .r_factor)
+      stdout.show("Free R_w                     =", .weighted_r_factor)
 
       show = TRUE
       if (present(show_chi2)) show = show_chi2
 
       if (show) then
-      chi2 = .F_chi2
-      stdout.show("Free chi^2(N_p=1)(F)         =", chi2)
-      stdout.show("Free GOF(N_p=1)(F)           =", sqrt(chi2))
+      chi2 = .chi2
+      stdout.show("Free chi^2 (N_p=1)           =", chi2)
+      stdout.show("Free GOF (N_p=1)             =", sqrt(chi2))
       end
 
    end
 
-   put_SF_group_data ::: private
-   ! Output the structure factor data, with multiple scale factor
-   ! groups
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l,g :: VEC{INT}*
-      F_cr,F_ci,F_pred,F_exp,F_sigma,F_z :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);       h       = .h
-      k.create(n_refl);       k       = .k
-      l.create(n_refl);       l       = .l
-      g.create(n_refl);       g       = .group
-      F_cr.create(n_refl);    F_cr    = RE(.F_calc)
-      F_ci.create(n_refl);    F_ci    = IM(.F_calc)
-      F_pred.create(n_refl);  F_pred  = .F_pred
-      F_exp.create(n_refl);   F_exp   = .F_exp
-      F_sigma.create(n_refl); F_sigma = .F_sigma
-      F_z.create(n_refl);     F_z     = REFLECTION:F_z(self)
-
-      ! Make table
-      table.create(10)
-       table(1).set_heading("h");        table(1).set_values(h)
-       table(2).set_heading("k");        table(2).set_values(k)
-       table(3).set_heading("l");        table(3).set_values(l)
-       table(4).set_heading("Scale");    table(4).set_values(g)
-       table(5).set_heading("F_calc");   table(5).set_values(F_cr)
-       table(6).set_heading("F_calc");   table(6).set_values(F_ci)
-       table(7).set_heading("F_pred");   table(7).set_values(F_pred)
-       table(8).set_heading("F_exp");    table(8).set_values(F_exp)
-       table(9).set_heading("F_sigma");  table(9).set_values(F_sigma)
-      table(10).set_heading("F_z");     table(10).set_values(F_z)
-      table.put
-
-      ! Subheadings
-      table(4).set_subhead("group")
-      table(5).set_subhead("Re")
-      table(6).set_subhead("Im")
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      F_z.destroy
-      F_sigma.destroy
-      F_exp.destroy
-      F_pred.destroy
-      F_ci.destroy
-      F_cr.destroy
-      g.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-   put_SF_nogrp_data ::: private
-   ! Output the structure factor data, single scale factor group
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l :: VEC{INT}*
-      F_cr,F_ci,F_pred,F_exp,F_sigma,F_z :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);       h       = .h
-      k.create(n_refl);       k       = .k
-      l.create(n_refl);       l       = .l
-      F_cr.create(n_refl);    F_cr    = RE(.F_calc)
-      F_ci.create(n_refl);    F_ci    = IM(.F_calc)
-      F_pred.create(n_refl);  F_pred  = .F_pred
-      F_exp.create(n_refl);   F_exp   = .F_exp
-      F_sigma.create(n_refl); F_sigma = .F_sigma
-      F_z.create(n_refl);     F_z     = REFLECTION:F_z(self)
-
-      ! Make table
-      table.create(9)
-      table(1).set_heading("h");        table(1).set_values(h)
-      table(2).set_heading("k");        table(2).set_values(k)
-      table(3).set_heading("l");        table(3).set_values(l)
-      table(4).set_heading("F_calc");   table(4).set_values(F_cr)
-      table(5).set_heading("F_calc");   table(5).set_values(F_ci)
-      table(6).set_heading("F_pred");   table(6).set_values(F_pred)
-      table(7).set_heading("F_exp");    table(7).set_values(F_exp)
-      table(8).set_heading("F_sigma");  table(8).set_values(F_sigma)
-      table(9).set_heading("F_z");      table(9).set_values(F_z)
-      table.put
-
-      ! Subheadings
-      table(4).set_subhead("Re")
-      table(5).set_subhead("Im")
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      F_z.destroy
-      F_sigma.destroy
-      F_exp.destroy
-      F_pred.destroy
-      F_ci.destroy
-      F_cr.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-   put_F_pred_data
-   ! Output only the predicted structure factor data
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l :: VEC{INT}*
-      F_cr,F_ci,F_pred :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);      h      = .h
-      k.create(n_refl);      k      = .k
-      l.create(n_refl);      l      = .l
-      F_cr.create(n_refl);   F_cr   = RE(.F_calc)
-      F_ci.create(n_refl);   F_ci   = IM(.F_calc)
-      F_pred.create(n_refl); F_pred = .F_pred
-
-      ! Make table
-      table.create(6)
-      table(1).set_heading("h");      table(1).set_values(h)
-      table(2).set_heading("k");      table(2).set_values(k)
-      table(3).set_heading("l");      table(3).set_values(l)
-      table(4).set_heading("F_calc"); table(4).set_values(F_cr)
-      table(5).set_heading("F_calc"); table(5).set_values(F_ci)
-      table(6).set_heading("F_pred"); table(6).set_values(F_pred)
-
-      ! Subheadings
-      table(4).set_subhead("Re")
-      table(5).set_subhead("Im")
-      table.put
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      F_pred.destroy
-      F_ci.destroy
-      F_cr.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-   put_F_exp_data
-   ! Output only the experimental structure factor data
-      if (.use_multiple_scale_factors) then; .put_F_exp_group_data
-      else;                                  .put_F_exp_nogrp_data
-      end
-   end
-
-   put_F_exp_nogrp_data ::: private
-   ! Output only the experimental structure factor data, where only
-   ! one scale factor (scale group) is used.
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l :: VEC{INT}*
-      F_exp,F_sigma :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);       h       = .h
-      k.create(n_refl);       k       = .k
-      l.create(n_refl);       l       = .l
-      F_exp.create(n_refl);   F_exp   = .F_exp
-      F_sigma.create(n_refl); F_sigma = .F_sigma
-
-      ! Make table
-      table.create(5)
-      table(1).set_heading("h");       table(1).set_values(h)
-      table(2).set_heading("k");       table(2).set_values(k)
-      table(3).set_heading("l");       table(3).set_values(l)
-      table(4).set_heading("F_exp");   table(4).set_values(F_exp)
-      table(5).set_heading("F_sigma"); table(5).set_values(F_sigma)
-      table.put
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      F_sigma.destroy
-      F_exp.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-   put_F_exp_group_data ::: private
-   ! Output only the experimental structure factor data where multiple
-   ! scale factors (scale groups) are used.
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l,g :: VEC{INT}*
-      F_exp,F_sigma :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);       h       = .h
-      k.create(n_refl);       k       = .k
-      l.create(n_refl);       l       = .l
-      g.create(n_refl);       g       = .group
-      F_exp.create(n_refl);   F_exp   = .F_exp
-      F_sigma.create(n_refl); F_sigma = .F_sigma
-
-      ! Make table
-      table.create(6)
-      table(1).set_heading("h");       table(1).set_values(h)
-      table(2).set_heading("k");       table(2).set_values(k)
-      table(3).set_heading("l");       table(3).set_values(l)
-      table(4).set_heading("Scale");   table(4).set_values(g)
-      table(5).set_heading("F_exp");   table(5).set_values(F_exp)
-      table(6).set_heading("F_sigma"); table(6).set_values(F_sigma)
-      table.put
-
-      ! Subheadings
-      table(4).set_subhead("group")
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      F_sigma.destroy
-      F_exp.destroy
-      g.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-
-   put_intensity_data
-   ! Output the intensity data
-
-      .put_I_statistics
-
-      if (.use_multiple_scale_factors) then; .put_I_group_data
-      else;                                  .put_I_nogrp_data
-      end
-
-   end
-
-   put_I_statistics(show_chi2)
-   ! Output the intensity goodness of fit statistics
-      show_chi2 :: BIN, optional
-
-   ENSURE(.have_I_exp, "No I_exp data!")
-   ENSURE(.have_I_pred,"No I_pred data!")
-
-      chi2 :: REAL
-      show :: BIN
-
-      stdout.flush
-      stdout.text("Model statistics based on intensities:")
-      stdout.flush
-      stdout.text("Note: be careful when using these chi^2 values")
-      stdout.text("after a Hirshfeld-atom refinement, the number of")
-      stdout.text("parameters N_p will not be correct.")
-      stdout.flush
-
-      stdout.show("R_sigma(I)                   =", .I_r_sigma)
-      stdout.show("R(I)                         =", .I_r_factor)
-      stdout.show("Rw(I)                        =", .I_weighted_r_factor)
-
-      show = TRUE
-      if (present(show_chi2)) show = show_chi2
-
-      if (show) then
-      chi2 = .I_chi2
-      stdout.show("chi^2(N_p=1)(I)              =", chi2)
-      stdout.show("Goodness of fit(N_p=1)(I)    =", sqrt(chi2))
-      end
-
-   end
-
-   put_I_free_stats(show_chi2)
-   ! Output the intensity goodness of fit statistics
-      show_chi2 :: BIN, optional
-
-   ENSURE(.have_I_exp, "No I_exp data!")
-   ENSURE(.have_I_pred,"No I_pred data!")
-
-      chi2 :: REAL
-      show :: BIN
-
-      stdout.flush
-      stdout.text("Model statistics based on free intensities:")
-      stdout.flush
-      stdout.text("Note: be careful when using these chi^2 values")
-      stdout.text("after a Hirshfeld-atom refinement, the number of")
-      stdout.text("parameters N_p will not be correct.")
-      stdout.flush
-
-      stdout.show("Free R_sigma(I)              =", .I_r_sigma)
-      stdout.show("Free R(I)                    =", .I_r_factor)
-      stdout.show("Free Rw(I)                   =", .I_weighted_r_factor)
-
-      show = TRUE
-      if (present(show_chi2)) show = show_chi2
-
-      if (show) then
-      chi2 = .I_chi2
-      stdout.show("Free chi^2(N_p=1)(I)         =", chi2)
-      stdout.show("Free GOF(N_p=1)(I)           =", sqrt(chi2))
-      end
-
-   end
-
-   put_I_nogrp_data ::: private
-   ! Output the intensity data, with only one scale factor groups
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l :: VEC{INT}*
-      I_calc,I_pred,I_exp,I_sigma,I_z :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);       h       = .h
-      k.create(n_refl);       k       = .k
-      l.create(n_refl);       l       = .l
-      I_calc.create(n_refl);  I_calc  = .I_calc
-      I_pred.create(n_refl);  I_pred  = .I_pred
-      I_exp.create(n_refl);   I_exp   = .I_exp
-      I_sigma.create(n_refl); I_sigma = .I_sigma
-      I_z.create(n_refl);     I_z     = REFLECTION:I_z(self)
-
-      ! Make table
-      table.create(8)
-      table(1).set_heading("h");       table(1).set_values(h)
-      table(2).set_heading("k");       table(2).set_values(k)
-      table(3).set_heading("l");       table(3).set_values(l)
-      table(4).set_heading("I_calc");  table(4).set_values(I_calc)
-      table(5).set_heading("I_pred");  table(5).set_values(I_pred)
-      table(6).set_heading("I_exp");   table(6).set_values(I_exp)
-      table(7).set_heading("I_sigma"); table(7).set_values(I_sigma)
-      table(8).set_heading("I_z");     table(8).set_values(I_z)
-      table.put
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      I_z.destroy
-      I_sigma.destroy
-      I_exp.destroy
-      I_pred.destroy
-      I_calc.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-   put_I_group_data ::: private
-   ! Output the intensity data, with multiple scale factor groups
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l,g :: VEC{INT}*
-      I_calc,I_pred,I_exp,I_sigma,I_z :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);       h       = .h
-      k.create(n_refl);       k       = .k
-      l.create(n_refl);       l       = .l
-      g.create(n_refl);       g       = .group
-      I_calc.create(n_refl);  I_calc  = .I_calc
-      I_pred.create(n_refl);  I_pred  = .I_pred
-      I_exp.create(n_refl);   I_exp   = .I_exp
-      I_sigma.create(n_refl); I_sigma = .I_sigma
-      I_z.create(n_refl);     I_z     = REFLECTION:I_z(self)
-
-      ! Make table
-      table.create(9)
-      table(1).set_heading("h");       table(1).set_values(h)
-      table(2).set_heading("k");       table(2).set_values(k)
-      table(3).set_heading("l");       table(3).set_values(l)
-      table(4).set_heading("Scale");   table(4).set_values(g)
-      table(5).set_heading("I_calc");  table(5).set_values(I_calc)
-      table(6).set_heading("I_pred");  table(6).set_values(I_pred)
-      table(7).set_heading("I_exp");   table(7).set_values(I_exp)
-      table(8).set_heading("I_sigma"); table(8).set_values(I_sigma)
-      table(9).set_heading("I_z");     table(9).set_values(I_z)
-      table.put
-
-      ! Subheadings
-      table(4).set_subhead("group")
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      I_z.destroy
-      I_sigma.destroy
-      I_exp.destroy
-      I_pred.destroy
-      I_calc.destroy
-      g.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-   put_I_pred_data
-   ! Output only the predicted intensity data
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l :: VEC{INT}*
-      I_calc,I_pred :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);      h      = .h
-      k.create(n_refl);      k      = .k
-      l.create(n_refl);      l      = .l
-      I_calc.create(n_refl); I_calc = .I_calc
-      I_pred.create(n_refl); I_pred = .I_pred
-
-      ! Make table
-      table.create(5)
-      table(1).set_heading("h");      table(1).set_values(h)
-      table(2).set_heading("k");      table(2).set_values(k)
-      table(3).set_heading("l");      table(3).set_values(l)
-      table(4).set_heading("I_calc"); table(4).set_values(I_calc)
-      table(5).set_heading("I_pred"); table(5).set_values(I_pred)
-      table.put
-
-      ! Subheadings
-      table(4).set_subhead("Re")
-      table(5).set_subhead("Im")
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      I_pred.destroy
-      I_calc.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-   put_I_exp_data
-   ! Output only the experimental intensity data
-      if (.use_multiple_scale_factors) then; .put_I_exp_group_data
-      else;                                  .put_I_exp_nogrp_data
-      end
-   end
-
-   put_I_exp_nogrp_data ::: private
-   ! Output only the experimental intensity data, where only
-   ! one scale factor (scale group) is used.
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l :: VEC{INT}*
-      I_exp,I_sigma :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);       h       = .h
-      k.create(n_refl);       k       = .k
-      l.create(n_refl);       l       = .l
-      I_exp.create(n_refl);   I_exp   = .I_exp
-      I_sigma.create(n_refl); I_sigma = .I_sigma
-
-      ! Make table
-      table.create(5)
-      table(1).set_heading("h");       table(1).set_values(h)
-      table(2).set_heading("k");       table(2).set_values(k)
-      table(3).set_heading("l");       table(3).set_values(l)
-      table(4).set_heading("I_exp");   table(4).set_values(I_exp)
-      table(5).set_heading("I_sigma"); table(5).set_values(I_sigma)
-      table.put
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      I_sigma.destroy
-      I_exp.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-   put_I_exp_group_data ::: private
-   ! Output only the experimental intensity data where multiple
-   ! scale factors (scale groups) are used.
-
-      table :: VEC{TABLE_COLUMN}*
-      h,k,l,g :: VEC{INT}*
-      I_exp,I_sigma :: VEC{REAL}*
-      n_refl :: INT
-
-      ! Constants
-      n_refl = .dim
-
-      ! Get data
-      h.create(n_refl);       h       = .h
-      k.create(n_refl);       k       = .k
-      l.create(n_refl);       l       = .l
-      g.create(n_refl);       g       = .group
-      I_exp.create(n_refl);   I_exp   = .I_exp
-      I_sigma.create(n_refl); I_sigma = .I_sigma
-
-      ! Make table
-      table.create(6)
-      table(1).set_heading("h");       table(1).set_values(h)
-      table(2).set_heading("k");       table(2).set_values(k)
-      table(3).set_heading("l");       table(3).set_values(l)
-      table(4).set_heading("Scale");   table(4).set_values(g)
-      table(5).set_heading("I_exp");   table(5).set_values(I_exp)
-      table(6).set_heading("I_sigma"); table(6).set_values(I_sigma)
-      table.put
-
-      ! Subheadings
-      table(4).set_subhead("group")
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-      I_sigma.destroy
-      I_exp.destroy
-      g.destroy
-      l.destroy
-      k.destroy
-      h.destroy
-
-   end
-
-
-   put_CIF
-   ! Put reflection information in CIF format
-      i :: INT
-
-      stdout.flush
-      stdout.text("# Standard CIF keys and data")
-
-      stdout.flush
-      stdout.text("# ---------------")
-      stdout.text("# Reflection data")
-      stdout.text("# ---------------")
-      stdout.flush
-      stdout.text("loop_")
-      stdout.text("    _diffrn_refln_index_h")
-      stdout.text("    _diffrn_refln_index_k")
-      stdout.text("    _diffrn_refln_index_l")
-      stdout.text("    _diffrn_refln_F_calc")
-      stdout.text("    _diffrn_refln_F_meas")
-      stdout.text("    _diffrn_refln_F_sigma")
-
-      do i = 1,self.dim
-         stdout.put(self(i).h)
-         stdout.put(self(i).k)
-         stdout.put(self(i).l)
-         stdout.put(self(i).F_pred)
-         stdout.put(self(i).F_exp)
-         stdout.put(self(i).F_sigma)
-         stdout.flush
-      end
-
-   end
-
-
-!  ========
-!  QQ plots
-!  ========
-
-   put_F_qq_plot
+   put_qq_plot
    ! Output a qq plot to the text file.
    ! It is a plot of the experimental quantile vs expected quantile.
 
@@ -1777,7 +1021,7 @@ contains
 
       grid.create(.n_refl,2)
 
-      .make_F_qq_plot_grid(grid)
+      .make_qq_plot_grid(grid)
 
       stdout.flush
       stdout.text("Unlabelled QQ plot:")
@@ -1788,7 +1032,7 @@ contains
 
    end
 
-   put_labelled_F_qq_plot
+   put_labelled_qq_plot
    ! Output a qq plot to the text file.
    ! It is a plot of the experimental quantile vs expected quantile.
 
@@ -1798,12 +1042,12 @@ contains
 
       hkl.create(.n_refl,3)
       do n = 1,.dim
-         hkl(n,:) = .indices(n)
+         hkl(n,:) = .miller_indices(n)
       end
 
       grid.create(.n_refl,2)
 
-      .make_F_qq_plot_grid(grid,hkl)
+      .make_qq_plot_grid(grid,hkl)
 
       stdout.flush
       stdout.text("Labelled QQ plot:")
@@ -1817,12 +1061,13 @@ contains
          stdout.flush
       end
 
+      ! Clean
       grid.destroy
       hkl.destroy
 
    end
 
-   make_F_qq_plot_grid(grid,hkl)
+   make_qq_plot_grid(grid,hkl)
    ! Make the grid for the Q-Q plot, which is a plot of the deviations X-Y
    ! versus the expected deviations, assuming that the expected devaitions
    ! are normally distributed. grid(1,:) contains the expected deviation d0j,
@@ -1846,13 +1091,13 @@ contains
 
       do i = 1,n_refl
          ref => self(i)
-         d(i) = ref.F_z * sign(ONE,real(ref.F_calc))
+         d(i) = ref.z_statistic * sign(ONE,real(ref.calc))
       end
 
       ! Sort array from lowest z to highest
       if (present(hkl)) then
-         ENSURE(size(hkl,1)==n_refl, "size of index array incorrect")
-         ENSURE(size(hkl,2)==3,      "size of index array incorrect")
+         ENSURE(hkl.dim1==n_refl, "size of index array incorrect")
+         ENSURE(hkl.dim2==3,      "size of index array incorrect")
          do i=1,n_refl-1
          do j=i+1,n_refl
             if (d(j) < d(i)) then
@@ -1867,50 +1112,290 @@ contains
 
       do j = 1,n_refl                          ! expected quantile, d0j
          p = (TWO*(n_refl-j)+ONE)/(TWO*n_refl) ! cumulative probability
-         e(n_refl-j+1) = p.z_from_p
+         e(n_refl-j+1) = p.z_stat_from_tail_probability
       end
 
    end
 
-   simulate_new_F_exp
-   ! Set the reflection data to be the experimental reflection data plus an
-   ! error.  The errors are normally distributed, with the experimental errors
-   ! being their standard deviations.
 
-      n :: INT
-      dF :: REAL
+!  ===============
+!  Output routines
+!  ===============
 
-      stdout.flush
-      stdout.text("Adding normally distributed random error to F_exp ...")
-
-      do n = 1,.dim
-         dF.to_random_normal ! dF has mean zero, standard deviation one
-         self(n).F_exp = self(n).F_exp + dF*self(n).F_sigma
+   put
+   ! Output all the factor info
+      if (.use_multiple_scale_factors) then; .put_group_info
+      else;                                  .put_nogrp_info
       end
+   end
+
+   put_group_data ::: private
+   ! Output the structure factor data with group index
+
+      table :: VEC{TABLE_COLUMN}*
+      h,k,l,g :: VEC{INT}*
+      F_cr,F_ci,F_pred,F_exp,F_sigma,F_z :: VEC{REAL}*
+      n_refl :: INT
+
+      ! Constants
+      n_refl = .dim
+
+      ! Get data
+      h.create(n_refl);       h       = .h
+      k.create(n_refl);       k       = .k
+      l.create(n_refl);       l       = .l
+      g.create(n_refl);       g       = .group
+      F_cr.create(n_refl);    F_cr    = RE(.calc)
+      F_ci.create(n_refl);    F_ci    = IM(.calc)
+      F_pred.create(n_refl);  F_pred  = .pred
+      F_exp.create(n_refl);   F_exp   = .obs
+      F_sigma.create(n_refl); F_sigma = .sigma
+      F_z.create(n_refl);     F_z     = REFLECTION:z_statistic(self)
+
+      ! Make table
+      table.create(10)
+       table(1).set_heading("h");        table(1).set_values(h)
+       table(2).set_heading("k");        table(2).set_values(k)
+       table(3).set_heading("l");        table(3).set_values(l)
+       table(4).set_heading("Scale");    table(4).set_values(g)
+       table(5).set_heading("Calc");     table(5).set_values(F_cr)
+       table(6).set_heading("Calc");     table(6).set_values(F_ci)
+       table(7).set_heading("Pred");     table(7).set_values(F_pred)
+       table(8).set_heading("Obs.");     table(8).set_values(F_exp)
+       table(9).set_heading("Sigma");    table(9).set_values(F_sigma)
+      table(10).set_heading("Z stat");  table(10).set_values(F_z)
+      table.put
+
+      ! Subheadings
+      table(4).set_subhead("Group")
+      table(5).set_subhead("Real")
+      table(6).set_subhead("Imag")
+
+      ! Clean
+      table.clear_columns
+      table.destroy
+      F_z.destroy
+      F_sigma.destroy
+      F_exp.destroy
+      F_pred.destroy
+      F_ci.destroy
+      F_cr.destroy
+      g.destroy
+      l.destroy
+      k.destroy
+      h.destroy
 
    end
 
-   add_random_error
-   ! Set the reflection data to be the experimental reflection data plus an
-   ! error.  The errors are normally distributed, with the experimental errors
-   ! being their standard deviations multiplied by a scale factor which is read
-   ! from stdin.
+   put_nogrp_data ::: private
+   ! Output the structure factor data, single scale factor group
 
-      n :: INT
-      dF,scale :: REAL
+      table :: VEC{TABLE_COLUMN}*
+      h,k,l :: VEC{INT}*
+      F_cr,F_ci,F_pred,F_exp,F_sigma,F_z :: VEC{REAL}*
+      n_refl :: INT
 
-      stdout.flush
-      stdout.text("Adding normally distributed random error to F_exp ...")
+      ! Constants
+      n_refl = .dim
 
-      ! Read
-      stdin.read(scale)
-      stdout.show("normal distribution scaled by ",scale)
+      ! Get data
+      h.create(n_refl);       h       = .h
+      k.create(n_refl);       k       = .k
+      l.create(n_refl);       l       = .l
+      F_cr.create(n_refl);    F_cr    = RE(.calc)
+      F_ci.create(n_refl);    F_ci    = IM(.calc)
+      F_pred.create(n_refl);  F_pred  = .pred
+      F_exp.create(n_refl);   F_exp   = .obs
+      F_sigma.create(n_refl); F_sigma = .sigma
+      F_z.create(n_refl);     F_z     = REFLECTION:z_statistic(self)
 
-      do n = 1,.dim
-         dF.to_random_normal ! dF has mean zero, standard deviation one
-         dF = dF*scale
-         self(n).F_exp = self(n).F_exp + dF*self(n).F_sigma
+      ! Make table
+      table.create(9)
+      table(1).set_heading("h");        table(1).set_values(h)
+      table(2).set_heading("k");        table(2).set_values(k)
+      table(3).set_heading("l");        table(3).set_values(l)
+      table(4).set_heading("Calc");     table(4).set_values(F_cr)
+      table(5).set_heading("Calc");     table(5).set_values(F_ci)
+      table(6).set_heading("Pred");     table(6).set_values(F_pred)
+      table(7).set_heading("Obs.");     table(7).set_values(F_exp)
+      table(8).set_heading("Sigma");    table(8).set_values(F_sigma)
+      table(9).set_heading("Z stat");   table(9).set_values(F_z)
+      table.put
+
+      ! Subheadings
+      table(4).set_subhead("Real")
+      table(5).set_subhead("Imag")
+
+      ! Clean
+      table.clear_columns
+      table.destroy
+      F_z.destroy
+      F_sigma.destroy
+      F_exp.destroy
+      F_pred.destroy
+      F_ci.destroy
+      F_cr.destroy
+      l.destroy
+      k.destroy
+      h.destroy
+
+   end
+
+   put_observed
+   ! Output only the experimental structure factor data
+      if (.use_multiple_scale_factors) then; .put_obs_group
+      else;                                  .put_obs_nogrp
       end
+   end
+
+   put_obs_nogrp ::: private
+   ! Output only the experimental structure factor data, where only
+   ! one scale factor (scale group) is used.
+
+      data :: MAT{REAL}*
+      head,subh :: VEC{STR}*
+
+      ! Set data, headings, subheadings
+      data.create(.dim,2)
+      head.create(2)
+      subh.create(2)
+
+      data(:,1) = .obs;   head(1) = "Obs. "
+      data(:,2) = .sigma; head(2) = "Sigma"
+
+      ! Clean
+      subh.destroy
+      head.destroy
+      data.destroy
+
+   end
+
+   put_obs_group ::: private
+   ! Output only the experimental structure factor data where multiple
+   ! scale factors (scale groups) are used.
+
+      table :: VEC{TABLE_COLUMN}*
+      h,k,l,g :: VEC{INT}*
+      obs,sigma :: VEC{REAL}*
+      n_refl :: INT
+
+      ! Constants
+      n_refl = .dim
+
+      ! Get data
+      h.create(n_refl);     h     = .h
+      k.create(n_refl);     k     = .k
+      l.create(n_refl);     l     = .l
+      g.create(n_refl);     g     = .group
+      obs.create(n_refl);   obs   = .obs
+      sigma.create(n_refl); sigma = .sigma
+
+      ! Make table
+      table.create(6)
+      table(1).set_heading("h");       table(1).set_values(h)
+      table(2).set_heading("k");       table(2).set_values(k)
+      table(3).set_heading("l");       table(3).set_values(l)
+      table(4).set_heading("Scale");   table(4).set_values(g)
+      table(5).set_heading("Obs.");    table(5).set_values(obs)
+      table(6).set_heading("Sigma");   table(6).set_values(sigma)
+      table.put
+
+      ! Subheadings
+      table(4).set_subhead("Group")
+
+      ! Clean
+      table.clear_columns
+      table.destroy
+      sigma.destroy
+      obs.destroy
+      g.destroy
+      l.destroy
+      k.destroy
+      h.destroy
+
+   end
+
+   put_predicted
+   ! Output only the predicted structure factor data
+
+      data :: MAT{REAL}*
+      head,subh :: VEC{STR}*
+
+      ! Set data, headings, subheadings
+      data.create(.dim,3)
+      head.create(3)
+      subh.create(3)
+
+      data(:,1) = RE(.calc); head(1) = "Calc"; subh(1) = "Real"
+      data(:,2) = IM(.calc); head(2) = "Calc"; subh(2) = "Imag"
+      data(:,3) = .pred;     head(3) = "Pred"; subh(3) = " "
+
+      ! Make table
+      .put_hkl_table(data,head,subh)
+
+      ! Clean
+      subh.destroy
+      head.destroy
+      data.destroy
+
+   end
+
+   put_hkl_table(data,heading,subhead)
+   ! Output column "data" along with in a table with indices.
+      data :: MAT{REAL}, IN
+      heading :: VEC{STR}, IN
+      subhead :: VEC{STR}, optional, IN
+
+   ENSURE(data.dim1==.dim,       "wrong number of rows in column data")
+   ENSURE(data.dim2==heading.dim,"wrong number headings")
+
+      table :: VEC{TABLE_COLUMN}*
+      h,k,l :: VEC{INT}*
+      n_refl,n_head,n_cols,n_data,i :: INT
+      subheading :: BIN
+
+      subheading = FALSE
+      if (present(subhead)) subheading = any(subhead/=" ")
+
+      ! Constants
+      n_refl = .dim
+      n_data = heading.dim
+      n_cols = n_refl + n_data + 3
+
+      ! Get data
+      h.create(n_refl); h = .h
+      k.create(n_refl); k = .k
+      l.create(n_refl); l = .l
+
+      ! Make table
+      table.create(n_cols)
+
+      table(1).set_heading("h1"); table(1).set_values(h)
+      table(2).set_heading("h2"); table(2).set_values(k)
+      table(3).set_heading("h3"); table(3).set_values(l)
+
+      do i = 1,n_data
+
+         table(i+3).set_heading(heading(i))
+         table(i+3).set_values(data(:,i))
+
+         if (subheading) then
+         if (subhead(i)/=" ") then
+         table(i+3).set_subhead(subhead(i))
+         end
+         end
+
+      end
+
+      ! Put table
+      table.put
+
+      ! Clean
+      table.clear_columns
+      table.destroy
+      l.destroy
+      k.destroy
+      h.destroy
 
    end
 

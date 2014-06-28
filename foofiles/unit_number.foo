@@ -25,7 +25,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: unit_number.foo 3648 2012-02-21 01:19:03Z dylan_ $
+! $Id: unit_number.foo 4179 2013-12-12 07:17:52Z dylan_ $
 !
 !---------------------------------------------------------------------------
 
@@ -96,9 +96,10 @@ contains
       ! Find the position of the unit in the list
       position = 0           
       do i = 1,length
-        if (unit/=used_unit_list(i)) cycle
-        position = i
-        exit
+        if (unit==used_unit_list(i)) then
+           position = i
+           exit
+        end
       end
 
       ! Make sure the position exists

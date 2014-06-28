@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{object}.foo 4373 2014-05-16 04:06:51Z dylan_ $
+! $Id: vec{object}.foo 4246 2014-01-12 06:11:20Z dylan_ $
 !---------------------------------------------------------------------------
 
 virtual module VEC{OBJECT}
@@ -28,11 +28,11 @@ virtual module VEC{OBJECT}
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
-   create(dim) ::: leaky
+   create(dim) ::: leaky, pure
    ! Create space for object
       self :: PTR
       dim :: INT, IN
@@ -54,7 +54,7 @@ contains
 
    end
 
-   create(dim) ::: leaky
+   create(dim) ::: leaky, pure
    ! Create space for object. This version does not set defaults.
       self :: PTR
       dim :: INT, IN
@@ -74,7 +74,7 @@ contains
 
    end
 
-   create(dim) ::: leaky
+   create(dim) ::: leaky, pure
    ! Create space for object. This version does not nullify ptr parts.
       self :: PTR
       dim :: INT, IN
@@ -94,7 +94,7 @@ contains
 
    end
 
-   create(lb,ub) ::: leaky
+   create(lb,ub) ::: leaky, pure
    ! Create the vector with lower bound "lb", upper bound "ub"
       self :: PTR
       lb,ub :: INT, IN
@@ -116,7 +116,7 @@ contains
 
    end
 
-   create(lb,ub) ::: leaky
+   create(lb,ub) ::: leaky, pure
    ! Create the vector with lower bound "lb", upper bound "ub". This
    ! version does not set defaults.
       self :: PTR
@@ -137,7 +137,7 @@ contains
 
    end
 
-   create(bounds) ::: leaky
+   create(bounds) ::: leaky, pure
    ! Create the vector with "bounds"
       self :: PTR
       bounds :: VEC{INT}(2), IN
@@ -147,7 +147,7 @@ contains
 
    end
 
-   destroy ::: leaky
+   destroy ::: leaky, pure
    ! Destroy space for object
       self :: PTR
 
@@ -167,7 +167,7 @@ contains
 
    end
 
-   destroy ::: leaky
+   destroy ::: leaky, pure
    ! Destroy space for object. This version does not destroy ptr parts
       self :: PTR
 
@@ -185,7 +185,7 @@ contains
 
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts of self
 
       a :: INT
@@ -196,7 +196,7 @@ contains
 
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts of self
 
       a :: INT
@@ -207,88 +207,100 @@ contains
 
    end
 
-   created result (res) ::: inlined_by_foo
+   created result (res) ::: inlined_by_foo, pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
       result = associated(self)
    end
 
-   destroyed result (res) ::: inlined_by_foo
+   destroyed result (res) ::: inlined_by_foo, pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
       result = NOT associated(self)
    end
 
-! ====
-! Copy
-! ====
+!  ============
+!  Copy methods
+!  ============
 
-   create_copy(vec) ::: leaky
-   ! Create a replica copy of "vec".
+   create_copy(v) ::: leaky, pure
+   ! Create a replica copy of "v".
       self :: PTR
-      vec :: VEC{OBJECT}, IN
+      v :: VEC{OBJECT}, IN
 
       nullify(self)
-      .create(vec.dim)
-      .copy(vec)
+      .create(v.dim)
+      .copy(v)
 
    end
 
-   create_copy(vec,list) ::: leaky
-   ! Create a copy of "vec" for the elements in "list".
+   create_copy(v,list) ::: leaky, pure
+   ! Create a copy of "v" for the elements in "list".
       self :: PTR
-      vec  :: VEC{OBJECT}, IN
+      v  :: VEC{OBJECT}, IN
       list :: VEC{INT}, IN
 
       nullify(self)
       .create(list.dim)
-      .copy(vec,list)
+      .copy(v,list)
 
    end
 
-   copy(vec) ::: leaky
-   ! Copy "vec".
-      vec :: VEC{OBJECT}, IN
+   copy(v) ::: leaky, pure
+   ! Copy "v".
+      self :: INOUT
+      v :: VEC{OBJECT}, IN
 
-   ENSURE(.dim==vec.dim,"vec size does not match")
+   ENSURE(v.dim<=.dim,"v size is too large")
 
       a :: INT
 
       ! Copy element-by-element
-      do a = 1,.dim
-         self(a).copy(vec(a))
+      do a = 1,v.dim
+         self(a).copy(v(a))
       end
 
    end
 
-   copy(vec,list) ::: leaky
-   ! Copy "vec" for the elements in "list".
-      vec  :: VEC{OBJECT}, IN
+   copy(v,list) ::: leaky, pure
+   ! Copy "v" for the elements in "list".
+      self :: INOUT
+      v  :: VEC{OBJECT}, IN
       list :: VEC{INT}, IN
 
-   ENSURE(.dim==list.dim,"wrong size, list")
+   ENSURE(list.dim<=.dim,       "list is too large")
+   ENSURE(list.dim<=v.dim,    "list is too large")
+   ENSURE(minval(list)>=1,      "list has non-positive indices")
+   ENSURE(maxval(list)<=v.dim,"list has too large indices")
+
+      a,b :: INT
+
+      ! Copy listed elements
+      do a = 1,list.dim
+         b = list(a)
+         self(a).copy(v(b))
+      end
+
+   end
+
+   copy(v,mask) ::: leaky, pure
+   ! Copy "v" for the TRUE elements in "mask".
+      self :: INOUT
+      v  :: VEC{OBJECT}, IN
+      mask :: VEC{BIN}, IN
+
+   ENSURE(.dim==mask.dim,"wrong size, list")
 
       a,b :: INT
 
       ! Copy element-by-element
       do a = 1,list.dim
-         b = list(a)
-         self(a).copy(vec(b))
-      end
-
-   end
-
-   copy(object) ::: leaky
-   ! Copy "object" multiple times.
-      object :: OBJECT, IN
-
-      a :: INT
-
-      ! Copy element-by-element
-      do a = 1,.dim
-         self(a).copy(object)
+         if (mask(a)) then
+            b = list(a)
+            self(a).copy(v(b))
+         end
       end
 
    end
@@ -297,7 +309,7 @@ contains
 !  Set methods
 !  ===========
 
-   set_defaults
+   set_defaults ::: pure
    ! Set default values
 
       n :: INT
@@ -320,11 +332,11 @@ contains
       VAL = val
    end
 
-! =======================
-! Shrinking and expansion
-! =======================
+!  =======================
+!  Shrinking and expansion
+!  =======================
 
-   shrink(dim) ::: leaky
+   shrink(dim) ::: leaky, pure
    ! Shrink self to dimension dim.  Contents are retained.
       self :: PTR
       dim :: INT, IN
@@ -355,7 +367,7 @@ contains
 
    end
 
-   expand(dim) ::: leaky
+   expand(dim) ::: leaky, pure
    ! Expand the vector "self" to "dim". New slots are left undefined.
       self :: PTR
       dim :: INT, IN
@@ -390,7 +402,7 @@ contains
 
    end
 
-   append(v) ::: leaky
+   append(v) ::: leaky, pure
    ! Expands self and appends the contents of vector "v".
       self :: PTR
       v :: VEC{OBJECT}, IN
@@ -410,7 +422,7 @@ contains
 
    end
 
-   append(value) ::: leaky
+   append(value) ::: leaky, pure
    ! Expands self by 1, and appends the single scalar "value" onto the end.
       self :: PTR
       value :: OBJECT, IN
@@ -430,9 +442,10 @@ contains
 
    end
 
-   join(v) result (res) ::: leaky
+   join(v) result (res) ::: leaky, pure
    ! Yield a vector which is the concatenation of "self" and "v"
-      v :: VEC{OBJECT}
+      self :: IN
+      v :: VEC{OBJECT}, IN
       res :: VEC{OBJECT}*
 
       dim, dim_v :: INT
@@ -450,9 +463,10 @@ contains
 
    end
 
-   join(v1,v2) result (res) ::: leaky
+   join(v1,v2) result (res) ::: leaky, pure
    ! Yield a vector which is the concatenation of "self" and "v1" and "v2"
-      v1,v2 :: VEC{OBJECT}
+      self :: IN
+      v1,v2 :: VEC{OBJECT}, IN
       res :: VEC{OBJECT}*
 
       dim, dim_v1, dim_v2 :: INT
@@ -472,7 +486,7 @@ contains
 
    end
 
-   prune_element(k) ::: leaky
+   prune_element(k) ::: leaky, pure
    ! Removes the single element at position "k" from the vector.
    ! The order of the elements is unchanged.
       self :: PTR
@@ -496,11 +510,11 @@ contains
 
    end
 
-! ================
-! Sorting routines
-! ================
+!  ================
+!  Sorting routines
+!  ================
 
-   sort(decreasing_order) ::: PURE
+   sort(decreasing_order) ::: pure
    ! Sort array "self" from lowest to highest, using simple insertion sort.  If
    ! "decreasing_order" is present and TRUE sort from highest to lowest instead.
       self :: INOUT
@@ -535,7 +549,7 @@ contains
 
    end
 
-   quick_sort(decreasing_order) ::: PURE
+   quick_sort(decreasing_order) ::: pure
    ! Sort the vector into increasing order.If "decreasing_order" is present and
    ! TRUE, the vector is sorted from largest to smallest
       self :: INOUT
@@ -552,9 +566,12 @@ contains
 
    end
 
-   quick_sort_increasing ::: recursive, private, PURE
+!  These two can be replaced with a template on LT and GT
+
+   quick_sort_increasing ::: recursive, private, pure
    ! Sort the vector into order, smallest to largest
-      self :: INOUT
+      self :: INT
+
       smaller,larger :: VEC{OBJECT}(len=len(self(1)))*
       n,ns,ne,nl :: INT
       chosen :: OBJECT(len=len(self(1)))
@@ -585,9 +602,10 @@ contains
 
    end
 
-   quick_sort_decreasing ::: recursive, private, PURE
+   quick_sort_decreasing ::: recursive, private, pure
    ! Sort the vector into order, largest to smallest
       self :: INOUT
+
       smaller,larger :: VEC{OBJECT}(len=len(self(1)))*
       n,ns,ne,nl :: INT
       chosen :: OBJECT(len=len(self(1)))
@@ -627,10 +645,12 @@ contains
       indices :: VEC{INT}, INOUT
       decreasing_order :: BIN, optional, IN
 
+   ENSURE(indices.dim==.dim,"wrong size, indices")
+
       decreasing :: BIN
       i :: INT
 
-      ! Initialise indices
+      ! Initialize indices
       i = 0
       indices = [(i,i=1,.dim)] 
 
@@ -645,11 +665,14 @@ contains
 
    end
 
-   quick_sort_increasing(indices) ::: recursive, private, PURE
+!  These two can be replaced with a template on LT and GT
+
+   quick_sort_increasing(indices) ::: recursive, private, pure
    ! Return the indices which sort vector from smallest to largest, i.e. on
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
       self :: IN
       indices :: VEC{INT}, INOUT
+
       list,small,equal,large,small_indices,equal_indices,large_indices :: VEC{INT}*
       n,i,ns,ne,nl :: INT
       chosen :: OBJECT(len=len(self(1)))
@@ -670,9 +693,13 @@ contains
       ne = n - ns - nl
 
       ! Indices of small/equal/large elements
-      small.create(ns); small_indices.create(ns); small = pack(list,self <chosen); small_indices = indices(small)
-      equal.create(ne); equal_indices.create(ne); equal = pack(list,self==chosen); equal_indices = indices(equal)
-      large.create(nl); large_indices.create(nl); large = pack(list,self >chosen); large_indices = indices(large)
+      small.create(ns); small_indices.create(ns)
+      equal.create(ne); equal_indices.create(ne)
+      large.create(nl); large_indices.create(nl)
+
+      small = pack(list,self <chosen); small_indices = indices(small)
+      equal = pack(list,self==chosen); equal_indices = indices(equal)
+      large = pack(list,self >chosen); large_indices = indices(large)
 
       ! Sort
       if (ns>1) self(small).quick_sort_increasing(small_indices)
@@ -691,11 +718,12 @@ contains
 
    end
 
-   quick_sort_decreasing(indices) ::: recursive, private, PURE
+   quick_sort_decreasing(indices) ::: recursive, private, pure
    ! Return the indices which sort vector from largest to smallest, i.e. on
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
       self :: IN
       indices :: VEC{INT}, INOUT
+
       list,small,equal,large,small_indices,equal_indices,large_indices :: VEC{INT}*
       n,i,ns,ne,nl :: INT
       chosen :: OBJECT(len=len(self(1)))
@@ -715,9 +743,13 @@ contains
       ne = n - ns - nl
 
       ! Indices of small/equal/large elements
-      small.create(ns); small_indices.create(ns); small = pack(list,self >chosen); small_indices = indices(small)
-      equal.create(ne); equal_indices.create(ne); equal = pack(list,self==chosen); equal_indices = indices(equal)
-      large.create(nl); large_indices.create(nl); large = pack(list,self <chosen); large_indices = indices(large)
+      small.create(ns); small_indices.create(ns)
+      equal.create(ne); equal_indices.create(ne)
+      large.create(nl); large_indices.create(nl)
+
+      small = pack(list,self >chosen); small_indices = indices(small)
+      equal = pack(list,self==chosen); equal_indices = indices(equal)
+      large = pack(list,self <chosen); large_indices = indices(large)
 
       ! Sort
       if (ns>1) self(small).quick_sort_decreasing(small_indices)
@@ -748,45 +780,48 @@ contains
 
    end
 
-! =============================
-! Repetition related operations
-! =============================
+!  =============================
+!  Repetition related operations
+!  =============================
 
-   remove_repetitions ::: leaky
-   ! Sort through the vector and remove repeated elements which come
-   ! later in the list.  NOTE: the vector may shrink
+   remove_repetitions ::: leaky, pure
+   ! Sort through the vector and remove repeated elements which come later in
+   ! the list.  NOTE: the vector may shrink
       self :: PTR
 
    ENSURE(.created,"no vector")
 
-      unique :: VEC{OBJECT}*
-      i,j :: INT
+      unique :: VEC{OBJECT}(len=len(self(1)))*
+      i,j,n :: INT
       found :: BIN
 
       if (.dim==1) return
 
-      unique.create(1)
+      unique.create(.dim)
 
-      ! First is unique ...
-      unique.create_copy(self(1:1))
+      n = 1
+      unique(1) = self(1)
 
-      ! Loop over the rest ...
       do i = 2,.dim
 
          found = FALSE
-         do j = 1,unique.dim
+         do j = 1,n
             if (NOT self(i).same_as(unique(j))) cycle
             found = TRUE
          end
 
          if (found) cycle
 
-         unique.append(self(i))
+         n = n + 1
+         unique(n) = self(i)
 
       end
 
-      .destroy
-      self => unique
+      self.destroy
+      self.create(n)
+      self = unique(1:n)
+
+      unique.destroy
 
    end
 
@@ -803,9 +838,10 @@ contains
 
       do i = 2,.dim
       do j = 1,i-1
-         if (NOT self(i).same_as(self(j))) cycle
-         res = TRUE
-         return
+         if (self(i).same_as(self(j))) then
+            res = TRUE
+            return
+         end
       end
       end
 
@@ -825,13 +861,11 @@ contains
 
       do i = 2,.dim
       do j = 1,i-1
-
-         if (NOT self(i).same_as(self(j))) cycle
-
-         fi  = i
-         fj  = j
-         return
-
+         if (self(i).same_as(self(j))) then
+            fi  = i
+            fj  = j
+            return
+         end
       end
       end
 
@@ -850,10 +884,12 @@ contains
       do n = 2,.dim
 
          same = FALSE
+
          do i = 1,n-1
-            if (NOT self(n).same_as(self(i))) cycle
-            same = TRUE
-            exit
+            if (self(n).same_as(self(i))) then
+               same = TRUE
+               exit
+            end
          end
 
          if (NOT same) res = res + 1
@@ -862,11 +898,11 @@ contains
 
    end
 
-! =======================
-! List-based I/O Routines
-! =======================
+!  =======================
+!  List-based I/O Routines
+!  =======================
 
-   read_keywords ::: recursive, leaky
+   read_keywords ::: recursive, leaky, impure
    ! Read in and process normal (non list-type) keywords from "stdin".
       self :: PTR
 
@@ -889,7 +925,7 @@ contains
          stdin.read(word)
          
          ! Unexpected end of file?
-         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+         ENSURE(NOT stdin.reverted,"unexpected end of file while reading list keywords")
          
          ! Lower case word
          word.to_lower_case
@@ -918,7 +954,7 @@ contains
 
    end
 
-   read_list_keywords ::: recursive, leaky
+   read_list_keywords ::: recursive, leaky, impure
    ! Read in and process list-based keywords from "stdin". List-based keywords
    ! are those that are intended to apply to each individual element of the list
    ! through a list of "keys" stored in the associated list-element type module.
@@ -944,7 +980,7 @@ contains
          stdin.read(word)
         
          ! Unexpected end of file?
-         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+         ENSURE(NOT stdin.reverted,"unexpected end of file while reading list keywords")
         
          ! Lower case the word
          word.to_lower_case
@@ -973,7 +1009,7 @@ contains
 
    end
 
-   process_list_keyword(keyword) ::: leaky
+   process_list_keyword(keyword) ::: leaky, impure
    ! Process a list-type "keyword", common to all list-type objects.
       self :: PTR
       keyword :: STR, IN
@@ -994,8 +1030,8 @@ contains
          case("new_data=        "); .destroy; .read_data
          case("process_keys     "); .process_keys
          case("process_keys_once"); .process_keys_once
-         case("redirect         "); .redirect
-         case("revert           "); .revert
+         case("redirect         "); TEXTFILE:redirect(stdin)
+         case("revert           "); TEXTFILE:revert(stdin)
 
          ! Backtrack & assume data= sans braces
          case default 
@@ -1006,7 +1042,7 @@ contains
 
    end
 
-   read_data ::: leaky
+   read_data ::: leaky, impure
    ! Repeatedly process the "keys" to read in the data list. 
    ! Opening and closing braces are needed.
       self :: PTR
@@ -1026,7 +1062,7 @@ contains
 
    end
 
-   read_data_sans_braces ::: leaky
+   read_data_sans_braces ::: leaky, impure
    ! Repeatedly process the "keys" to read in the data list. 
    ! Opening and closing braces are not needed.
       self :: PTR
@@ -1049,7 +1085,7 @@ contains
 
    end
 
-   read_data_BL_terminated ::: leaky
+   read_data_BL_terminated ::: leaky, impure
    ! Repeatedly process the "keys" to read in the data list. Opening
    ! braces are not needed, but a blank line (BL) is used as an
    ! end-of-list terminator.
@@ -1077,7 +1113,7 @@ contains
 
    end
 
-   data_length result (length)
+   data_length result (length) ::: impure
    ! Read ahead in stdin to get the "length" of the data list, i.e. the number
    ! of data items in the list. The data must begin with the first data item,
    ! *not* a "{" symbol.  The order of data items comprising the list is given
@@ -1129,7 +1165,7 @@ contains
 
    end
 
-   data_length_BL_terminated result (length)
+   data_length_BL_terminated result (length) ::: impure
    ! Read ahead in stdin to get the "length" of the data list. The
    ! data list begins with the first data item, *not* a "{" symbol.
    ! The data list must be terminated by a blank line (BL).
@@ -1182,7 +1218,7 @@ contains
 
    end
 
-   read_altered_data ::: leaky
+   read_altered_data ::: leaky, impure
    ! Read in a sublist of the complete list, and alter the data for that
    ! sublist.  The order of the data items in the sublist is given by the "keys"
    ! defined in the associated list-element type module.
@@ -1218,7 +1254,7 @@ contains
 
    end
 
-   read_append_data ::: leaky
+   read_append_data ::: leaky, impure
    ! Read in a set of data to append to an existing set.
       self :: PTR
 
@@ -1239,7 +1275,7 @@ contains
 
    end
 
-   process_keys ::: leaky
+   process_keys ::: leaky, impure
    ! Process the "keys" on each element of the list.
       self :: PTR
 
@@ -1257,7 +1293,7 @@ contains
 
    end
 
-   process_keys_once 
+   process_keys_once ::: impure
    ! Process the "keys" just once on an anonymous object. This is useful if the
    ! "keys" set global variables in the list module (e.g. the default order of
    ! lists *within* the list data) as opposed to being keys pertaining to each
@@ -1273,7 +1309,7 @@ contains
 
    end
 
-   keys_created result (res)
+   keys_created result (res) ::: pure
    ! Return TRUE if the list-element keys are created.
       self :: PTR
       res :: BIN
@@ -1287,7 +1323,7 @@ contains
 
    end
 
-   set_keys(the_keys)
+   set_keys(the_keys) ::: impure
    ! This is for setting the "keys" externally.
       self :: PTR
       the_keys :: VEC{STR}
@@ -1301,9 +1337,8 @@ contains
 
    end
 
-   clear_keys ::: leaky
+   clear_keys ::: leaky, impure
    ! This is for destroying the "keys" externally.
-
       tmp :: OBJECT*
 
       if (FALSE) self = self
@@ -1313,10 +1348,9 @@ contains
 
    end
 
-   read_keys ::: leaky
+   read_keys ::: leaky, impure
    ! Read a new set of keys
       self :: PTR
-
       tmp :: OBJECT*
 
       if (FALSE) self = self
@@ -1326,11 +1360,11 @@ contains
 
    end
 
-! ======
-! Output
-! ======
+!  ======
+!  Output
+!  ======
 
-   dump(object_name)
+   dump(object_name) ::: impure
    ! Dump a vector object
       self :: IN
       object_name :: STR, IN
@@ -1362,7 +1396,7 @@ contains
 
    end
 
-   dmpp(object_name)
+   dmpp(object_name) ::: impure
    ! Dump a vector pointer object
       self :: PTR
       object_name :: STR, IN
@@ -1403,7 +1437,7 @@ contains
 
    end
 
-   put
+   put ::: impure
    ! Output the list information
 
      i :: INT

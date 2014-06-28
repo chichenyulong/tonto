@@ -19,14 +19,12 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{shell}.foo 4071 2013-06-18 12:59:43Z dylan_ $
+! $Id: vec{shell}.foo 4241 2014-01-12 04:52:41Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{SHELL}
 
    implicit none
-
-   saved_self :: VEC{SHELL}*, private  DEFAULT_NULL
 
 contains
 
@@ -58,17 +56,21 @@ contains
    ! Returns true if self has *not* been created
    end
 
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Create a replica copy of "v".
    end
 
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
+   copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Copy "v".
    end
 
-! =======================
-! Shrinking and expansion 
-! =======================
+!  =======================
+!  Shrinking and expansion 
+!  =======================
 
    shrink(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Shrink self to dimension dim.  Contents are retained.
@@ -86,9 +88,9 @@ contains
    ! Expands self by 1, and appends the single scalar "value" onto the end.
    end
 
-! ============
-! Set routines
-! ============
+!  ============
+!  Set routines
+!  ============
 
    set_spherical(val)
    ! Set sphericals to "val"
@@ -99,9 +101,9 @@ contains
       end
    end
 
-! =======================
-! List-based I/O Routines
-! =======================
+!  =======================
+!  List-based I/O Routines
+!  =======================
 
    read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
    ! Read in and process list-based keywords from "stdin". List-based keywords
@@ -254,17 +256,9 @@ contains
    ! Read a new set of keys
    end
 
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
-   end
-
-! ===========================
-! Non-list based I/O routines
-! ===========================
+!  ===========================
+!  Non-list based I/O routines
+!  ===========================
 
    read_keywords ::: get_from(VEC{OBJECT}), leaky
    ! Read in and process normal (non list-type) keywords from "stdin".
@@ -283,32 +277,32 @@ contains
       select case (word)
          case("}           ") ! do nothing.
          case("put         "); .put
-         case("redirect    "); .redirect
-         case("revert      "); .revert
+         case("redirect    "); TEXTFILE:redirect(stdin)
+         case("revert      "); TEXTFILE:revert(stdin)
          case default;       UNKNOWN(word)
       end
 
    end
 
-! =======
-! Methods
-! =======
+!  =======
+!  Methods
+!  =======
 
-   unnormalise
+   unnormalize
    ! Take the normalisation factors out of the primitives, assuming
-   ! that the contraction coeff's refer to normalised basis functions
+   ! that the contraction coeff's refer to normalized basis functions
        i :: INT
       do i= 1,.dim
-         self(i).unnormalise
+         self(i).unnormalize
       end
    end
 
-   renormalise
+   renormalize
    ! Put back in the normalisation factors of the primitives, assuming
-   ! that the contraction coeff's refer to unnormalised basis functions
+   ! that the contraction coeff's refer to unnormalized basis functions
        i :: INT
       do i= 1,.dim
-         self(i).renormalise
+         self(i).renormalize
       end
    end
 
@@ -452,9 +446,9 @@ contains
       end
    end
 
-! ======
-! Output
-! ======
+!  ======
+!  Output
+!  ======
 
    dump(object_name) ::: get_from(VEC{OBJECT})
    ! Dump a vector object

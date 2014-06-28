@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{mat_{real}}.foo 4053 2013-06-13 20:04:03Z dylan_ $
+! $Id: vec{mat_{real}}.foo 4246 2014-01-12 06:11:20Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{MAT_{REAL}}
@@ -27,6 +27,10 @@ module VEC{MAT_{REAL}}
    implicit none
 
 contains
+
+!  ==========
+!  Allocation
+!  ==========
 
    create(dim) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
    ! Create the object
@@ -40,11 +44,11 @@ contains
    ! Create space for a vector of matrices
    end
 
-   create_mat(dim1,dim2) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
+   create_mat(dim1,dim2) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky, pure
    ! Allocate the pointer parts
    end
 
-   destroy ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
+   destroy ::: get_from(VEC{MAT_{INTRINSIC}}), leaky, pure
    ! Destroy the object
    end
 
@@ -52,39 +56,55 @@ contains
    ! Nullify the pointer parts of a matvec
    end
 
-   destroy_ptr_part ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
+   destroy_ptr_part ::: get_from(VEC{MAT_{INTRINSIC}}), leaky, pure
    ! Destroy the pointer parts of a matvec
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
    end
 
-   create_copy(m) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Create a copy of "m"
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky, pure
+   ! Create a copy of "v"
    end
 
-   copy(m) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Make a copy of "m"
+   copy(v) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky, pure
+   ! Make a copy of "v"
    end
 
-   lb result(res) ::: pure
+!  ==================
+!  Size-of operations 
+!  ==================
+
+   lb result(res) ::: always_pure
    ! Returns the lower bound of self
       self :: IN
       res :: INT
+
       res = lbound(self,1)
+
    end
 
-   ub result(res) ::: pure
+   ub result(res) ::: always_pure
    ! Returns the upper bound of self
       self :: IN
       res :: INT
+
       res = ubound(self,1)
+
    end
+
+!  ===============
+!  General methods
+!  ===============
 
    make_gaussian_xyz_matrices(ptr) ::: leaky
    ! Return representation matrices for the s, p, d, f, and g (l = 0
@@ -128,39 +148,41 @@ contains
 
       if (trans_a) then
 
-        DIE_IF(a.dim2/=.dim,"array dimensions do not agree")
-        DIE_IF(a.dim1/=v.dim,"array dimensions do not agree")
-        do i = 1,.dim
-          self(i).element = ZERO
-          do j = 1,a.dim1
-            self(i).element = self(i).element + a(j,i) * v(j).element
-          end
-        end
+         ENSURE(a.dim2==.dim,"array dimensions do not agree")
+         ENSURE(a.dim1==v.dim,"array dimensions do not agree")
+         
+         do i = 1,.dim
+            self(i).element = ZERO
+            do j = 1,a.dim1
+               self(i).element = self(i).element + a(j,i) * v(j).element
+            end
+         end
 
       else
 
-        DIE_IF(a.dim1/=.dim,"array dimensions do not agree")
-        DIE_IF(a.dim2/=v.dim,"array dimensions do not agree")
-        do i = 1,.dim
-          self(i).element = ZERO
-          do j = 1,a.dim2
-            self(i).element = self(i).element + a(i,j) * v(j).element
-          end
-        end
+         ENSURE(a.dim1==.dim,"array dimensions do not agree")
+         ENSURE(a.dim2==v.dim,"array dimensions do not agree")
+         
+         do i = 1,.dim
+            self(i).element = ZERO
+            do j = 1,a.dim2
+               self(i).element = self(i).element + a(i,j) * v(j).element
+            end
+         end
 
       end
 
    end
 
-   weak_two_orthonormalise(vec)
-   ! two orthogonalise also with respect to the set of unit vectors
+   weak_two_orthonormalize(vec)
+   ! two orthogonalize also with respect to the set of unit vectors
    ! collinear to those in vec. 
      self :: target
      vec :: VEC{MAT_{REAL}}, IN
 
-   DIE_IF(vec.dim==0,"size of vec is zero")
-   DIE_IF(self(1).element.dim1/=vec(1).element.dim1,"geminals not of the same shape")
-   DIE_IF(self(1).element.dim2/=vec(1).element.dim2,"geminals not of the same shape")
+   ENSURE(vec.dim>0,"size of vec is zero")
+   ENSURE(self(1).element.dim1==vec(1).element.dim1,"geminals not of the same shape")
+   ENSURE(self(1).element.dim2==vec(1).element.dim2,"geminals not of the same shape")
 
      old,new :: MAT{REAL}*
      fac,norm :: REAL
@@ -180,7 +202,6 @@ contains
        do n = 1,self.dim
          new => self(n)[:,:]
          fac = MAT{REAL}:sum(old*new)
-      !  if(n==1) write(6,*) "spectator number, fac for first state in the vector",p,fac
          new = new - fac*old
        end
 
@@ -191,7 +212,7 @@ contains
 
    end
 
-   two_orthonormalise(eigenvectors)
+   two_orthonormalize(eigenvectors)
    ! project singlet geminals on the orthogonal complement of the 
    !2_internal space (spanned by the
    ! vectors in the argument "eigenvectors") of the exterior product 
@@ -252,7 +273,7 @@ contains
 
    end
 
-   strong_two_orthonormalise(eigenvectors)
+   strong_two_orthonormalize(eigenvectors)
    ! project singlet geminals on the 2_external space (spanned by the
    ! vectors in the argument "eigenvectors") of the exterior product 
    ! of spectator geminals
@@ -313,13 +334,13 @@ contains
 
    end
 
-   schmidt_orthonormalise(S,scales,n_dependent,ld_tol)
-   ! Schmidt orthonormalise the vectors in "self" using "S" as the
+   schmidt_orthonormalize(S,scales,n_dependent,ld_tol)
+   ! Schmidt orthonormalize the vectors in "self" using "S" as the
    ! metric. "scales" is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are orthonormalised. the others are counted (n_dependent) 
-   ! and normalised if the norm is not initially below a certain threshold. 
+   ! tolerance are orthonormalized. the others are counted (n_dependent) 
+   ! and normalized if the norm is not initially below a certain threshold. 
      S :: MAT{REAL} 
      scales :: VEC{REAL}, OUT
      n_dependent :: INT, OUT
@@ -330,24 +351,24 @@ contains
      unorthovec.create(.dim,.dim)
      unorthovec.to_unit_matrix !first index will run other the orthonormal vectors 
      if(present(ld_tol)) then
-       unorthovec.schmidt_orthonormalise(S,scales,n_dependent,ld_tol)
+       unorthovec.schmidt_orthonormalize(S,scales,n_dependent,ld_tol)
      else
-       unorthovec.schmidt_orthonormalise(S,scales,n_dependent)
+       unorthovec.schmidt_orthonormalize(S,scales,n_dependent)
      end  
      .change_basis_using(unorthovec)
      unorthovec.destroy
    end
 
-   schmidt_orthonormalise(S,keep,scales,n_dependent,ld_tol)
-   ! Schmidt orthonormalise the vectors in "self" using "S" as the
+   schmidt_orthonormalize(S,keep,scales,n_dependent,ld_tol)
+   ! Schmidt orthonormalize the vectors in "self" using "S" as the
    ! metric. "scales" is set to the
    ! keep contains original vectors to restore: if the norm of a vector
-   ! to orthogonalise is less than ld_tol the corresponding vector in
+   ! to orthogonalize is less than ld_tol the corresponding vector in
    ! keep is restored.
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are orthonormalised. the others are counted (n_dependent) 
-   ! and normalised if the norm is not initially below a certain threshold. 
+   ! tolerance are orthonormalized. the others are counted (n_dependent) 
+   ! and normalized if the norm is not initially below a certain threshold. 
      self :: PTR
      keep :: VEC{MAT_{REAL}}
      S :: MAT{REAL} 
@@ -356,73 +377,89 @@ contains
      ld_tol :: REAL, optional
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(S.is_square,"S matrix is not square")
-   ENSURE(.dim==keep.dim,"number of stored vectors different from number of vectors to orthonormalise")
+   ENSURE(.dim==keep.dim,"number of stored vectors different from number of vectors to orthonormalize")
      unorthovec :: MAT{REAL}*
      indices :: VEC{INT}*
      i :: INT
      unorthovec.create(.dim,.dim)
      unorthovec.to_unit_matrix !first index will run other the orthonormal vectors 
      if(present(ld_tol)) then
-       unorthovec.schmidt_orthonormalise(S,indices,scales,n_dependent,ld_tol)
+       unorthovec.schmidt_orthonormalize(S,indices,scales,n_dependent,ld_tol)
      else
-       unorthovec.schmidt_orthonormalise(S,indices,scales,n_dependent)
+       unorthovec.schmidt_orthonormalize(S,indices,scales,n_dependent)
      end  
      .change_basis_using(unorthovec)
      do i=.dim-n_dependent+1,.dim
        self(i).element=keep(indices(i)).element
      end  
-     indices.destroy !create in schmidt_orthonormalise
+     indices.destroy !create in schmidt_orthonormalize
      unorthovec.destroy
    end
 
    flatten(vec_vec)
    ! flatten the matrices of a vector of matrices into vectors
    ! meant for singlet contraction_wfs at present
-     vec_vec :: VEC{VEC_{REAL}}*
-     ENSURE(vec_vec.created,"vec_vec not created")
-     n,o,p,dim1 :: INT
-     counter :: INT
-     dim1= self(1).element.dim1
-     do n = .lb,.ub
-       counter=0
-       do o = 1, dim1
-         counter=counter+1
-         vec_vec(n).element(counter)=self(n).element(o,o)
-       end
-       do o = 1, dim1
-         do p = 1,o-1
-           counter=counter+1
-           vec_vec(n).element(counter)=self(n).element(o,p)
-           DIE_IF(self(n).element(o,p)/=self(n).element(p,o),"not singlet")
+      vec_vec :: VEC{VEC_{REAL}}*
+
+   ENSURE(vec_vec.created,"vec_vec not created")
+
+      n,o,p,dim1 :: INT
+      counter :: INT
+     
+      dim1 = self(1).element.dim1
+     
+      do n = .lb,.ub
+
+         counter = 0
+
+         do o = 1, dim1
+            counter = counter + 1
+            vec_vec(n).element(counter) = self(n).element(o,o)
          end
-       end
-     end
+
+         do o = 1, dim1
+         do p = 1,o-1
+            counter = counter + 1
+            vec_vec(n).element(counter) = self(n).element(o,p)
+            ENSURE(self(n).element(o,p)==self(n).element(p,o),"not singlet")
+         end
+         end
+      end
+
    end
 
    flatten(mat)
    ! flatten the matrices of a vector of matrices into vectors
    ! meant for singlet contraction_wfs at present
-     mat :: MAT{REAL}*
-     ENSURE(mat.created,"mat not created")
-     n,o,p,dim1 :: INT
-     counter :: INT
-     dim1= self(1).element.dim1
-     DIE_IF(mat.dim1/=self.dim ,"mat.dim1/=self.dim")
-     DIE_IF(mat.dim2/=dim1*(dim1+1)/2,"mat.dim2/=dim")
-     do n = .lb,.ub
-       counter=0
-       do o = 1, dim1
-         counter=counter+1
-         mat(n,counter)=self(n).element(o,o)
-       end
-       do o = 2, dim1
-         do p = 1,o-1
-           counter=counter+1
-           mat(n,counter)=self(n).element(o,p)
-           DIE_IF(self(n).element(o,p)/=self(n).element(p,o),"not singlet")
+      mat :: MAT{REAL}*
+
+   ENSURE(mat.created,"mat not created")
+
+      n,o,p,dim1 :: INT
+      counter :: INT
+      
+      dim1 = self(1).element.dim1
+      ENSURE(mat.dim1==self.dim ,"mat.dim1/=self.dim")
+      ENSURE(mat.dim2==dim1*(dim1+1)/2,"mat.dim2/=dim")
+      
+      do n = .lb,.ub
+      
+         counter = 0
+         do o = 1, dim1
+            counter = counter + 1
+            mat(n,counter)=self(n).element(o,o)
          end
-       end
-     end
+         
+         do o = 2, dim1
+         do p = 1,o-1
+            counter=counter+1
+            mat(n,counter)=self(n).element(o,p)
+            ENSURE(self(n).element(o,p)==self(n).element(p,o),"not singlet")
+         end
+         end
+      
+      end
+
    end
 
    change_basis_using(mat,use_transpose)

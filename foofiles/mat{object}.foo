@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat{object}.foo 4008 2013-05-23 13:00:11Z dylan_ $
+! $Id: mat{object}.foo 4232 2014-01-11 03:19:35Z dylan_ $
 !---------------------------------------------------------------------------
 
 virtual module MAT{OBJECT}
@@ -176,39 +176,44 @@ contains
 
    end
 
-! ====
-! Copy
-! ====
+!  ============
+!  Copy methods
+!  ============
 
-   create_copy(matrix) ::: leaky
-   ! Create a copy of matrix
+   create_copy(mx) ::: leaky, pure
+   ! Create a copy of "mx"
       self :: PTR
-      matrix :: MAT{OBJECT}, IN
+      mx :: MAT{OBJECT}, IN
 
-      nullify(self)
-      .create(matrix.dim1,matrix.dim2)
-      .copy(matrix)
+      .create(mx.dim1,mx.dim2)
+      .copy(mx)
 
    end
 
-   copy(matrix) ::: leaky
-   ! Copy the "matrix".
-      matrix :: MAT{OBJECT}, IN
+   copy(mx) ::: leaky, pure
+   ! Copy the "mx".
+      self :: OUT
+      mx :: MAT{OBJECT}, IN
 
-   ENSURE(.is_same_shape_as(matrix),"matrix shapes do not match")
+   ENSURE(.is_same_shape_as(mx),"shapes do not match")
 
       i,j :: INT
 
-      do i = 1,matrix.dim1
-      do j = 1,matrix.dim2
-         self(i,j).copy(matrix(i,j))
+      do i = 1,mx.dim1
+      do j = 1,mx.dim2
+         self(i,j).copy(mx(i,j))
       end
       end
 
    end
 
-   set_defaults
+!  ===========
+!  Set methods
+!  ===========
+
+   set_defaults ::: always_pure
    ! Set default values
+      self :: OUT
 
       i,j :: INT
 
@@ -248,20 +253,24 @@ contains
       res = [.dim1,.dim2]
    end
 
-   is_same_shape_as(a) result (res) ::: pure
-   ! Returns TRUE if the matrix "a" has the same shape as "self"
+   is_same_shape_as(mx) result (res) ::: pure
+   ! Returns TRUE if "mx" has the same shape as "self"
       self :: IN
-      a :: MAT{OBJECT}, IN
+      mx :: MAT{OBJECT}, IN
       res :: BIN
-      res = .dim1==a.dim1 AND .dim2==a.dim2
+
+      res = .dim1==mx.dim1 AND .dim2==mx.dim2
+
    end
 
-   is_transposed_shape_of(a) result (res) ::: pure
-   ! Returns TRUE if the matrix "a" is the transposed shape of self
+   is_transposed_shape_of(mx) result (res) ::: pure
+   ! Returns TRUE if "mx" is the transposed shape of "self"
       self :: IN
-      a :: MAT{OBJECT}, IN
+      mx :: MAT{OBJECT}, IN
       res :: BIN
-      res = .dim1==a.dim2 AND .dim2==a.dim1
+
+      res = .dim1==mx.dim2 AND .dim2==mx.dim1
+
    end
 
    is_square result (res) ::: pure

@@ -21,7 +21,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{vec_{vec_{intrinsic}}}.foo 4008 2013-05-23 13:00:11Z dylan_ $
+! $Id: vec{vec_{vec_{intrinsic}}}.foo 4262 2014-01-22 03:22:21Z dylan_ $
 !---------------------------------------------------------------------------
 
 virtual module VEC{VEC_{VEC_{INTRINSIC}}}
@@ -29,6 +29,10 @@ virtual module VEC{VEC_{VEC_{INTRINSIC}}}
    implicit none
 
 contains
+
+!  ==========
+!  Allocation
+!  ==========
 
    create(dim) ::: leaky
    ! Create space for object
@@ -118,24 +122,39 @@ contains
       end
    end
 
-   create_copy(vec) ::: leaky
-   ! Create a replica copy of "vec".
-      vec :: VEC{VEC_{VEC_{INTRINSIC}}}, IN
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: leaky, pure
+   ! Create a replica copy of "v".
       self :: PTR
-      .create(vec.dim)
-      .copy(vec)
+      v :: VEC{VEC_{VEC_{INTRINSIC}}}, IN
+
+      .create(v.dim)
+      .copy(v)
+
    end
 
-   copy(v) ::: leaky
+   copy(v) ::: leaky, pure
    ! Make a copy of "v".
-      v :: VEC{VEC_{VEC_{INTRINSIC}}}
+      self :: OUT
+      v :: VEC{VEC_{VEC_{INTRINSIC}}}, IN
+
    ENSURE(.dim==v.dim,"v has incompatible size")
+
       i :: INT
+
       .nullify_ptr_part
+
       do i = 1,v.dim
+
          if (v(i).element.destroyed) cycle
+
          self(i).element.create_copy(v(i).element)
+
       end
+
    end
 
 end

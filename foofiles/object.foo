@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: object.foo 4349 2014-05-06 02:01:54Z dylan_ $
+! $Id: object.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 virtual module OBJECT
@@ -34,7 +34,7 @@ contains
 !  Memory allocation
 !  =================
 
-   create ::: leaky
+   create ::: leaky, pure
    ! Create an object
       self :: PTR
 
@@ -49,11 +49,12 @@ contains
       ADD_MEMORY(SELF_TYPE_SIZE)
 
       .::nullify_ptr_part
+
       .::set_defaults
 
    end
 
-   create ::: leaky
+   create ::: leaky, pure
    ! Create an object. This version does not set defaults.
       self :: PTR
 
@@ -71,7 +72,7 @@ contains
 
    end
 
-   create ::: leaky
+   create ::: leaky, pure
    ! Create an object. This version does not nullify point parts.
       self :: PTR
 
@@ -89,7 +90,7 @@ contains
 
    end
 
-   create ::: leaky
+   create ::: leaky, pure
    ! Create an object. This does not nullify point parts or set
    ! defaults.
       self :: PTR
@@ -106,17 +107,7 @@ contains
 
    end
 
-   create_copy(object) ::: leaky
-   ! Create a copy of object
-      self :: PTR
-      object :: OBJECT, IN
-
-      .::create
-      .::copy(object)
-
-   end
-
-   destroy ::: leaky
+   destroy ::: leaky, pure
    ! Destroy an object
       self :: PTR
 
@@ -136,7 +127,7 @@ contains
 
    end
 
-   destroy ::: leaky
+   destroy ::: leaky, pure
    ! Destroy an object. This version does not destroy pointer parts.
       self :: PTR
 
@@ -154,37 +145,51 @@ contains
 
    end
 
-   created result (res) ::: inlined_by_foo
+   created result (res) ::: inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
       result = associated(self)
    end
 
-   destroyed result (res) ::: inlined_by_foo
+   destroyed result (res) ::: inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
       result = NOT associated(self)
    end
 
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: leaky, pure
+   ! Create a copy of object
+      self :: PTR
+      object :: OBJECT, IN
+
+      .::create
+      .::copy(object)
+
+   end
+
 !  ==========
 !  Saved self
 !  ==========
 
-   set_saved_self 
+   set_saved_self ::: impure
    ! Set saved_self
       self :: PTR
       saved_self => self
    end
 
-   set_saved_self 
+   set_saved_self ::: impure
    ! Set saved_self. This version has self a target.
       self :: target
       saved_self => self
    end
 
-   set_from_saved_self
+   set_from_saved_self ::: impure
    ! Set from saved_self
       self :: PTR
       self => saved_self
@@ -194,29 +199,25 @@ contains
 !  Set routines
 !  ============
 
-   set(object) ::: pure
+   set(object) ::: always_pure
    ! Set the object. Pointer parts are assigned not copied.
-      self   :: OUT
+      self :: OUT
       object :: OBJECT, IN
-
       self = object
-
    end
 
-   set(val) ::: pure
+   set(val) ::: always_pure
    ! Generic set
       self :: INOUT
-      val  :: VAL?, IN
-
+      val :: VAL?
       ARG? = val
-
    end
 
 !  ============
 !  I/O routines
 !  ============
 
-   redirect ::: leaky
+   redirect ::: leaky, impure
    ! Redirect input
       self :: PTR
 
@@ -230,17 +231,7 @@ contains
 
    end
 
-   revert ::: leaky
-   ! Revert back to previous stdin file
-      self :: PTR
-
-      if (FALSE) self = self
-
-      stdin.revert
-
-   end
-
-   redirect ::: leaky
+   redirect ::: leaky, impure
    ! Redirect input. (This code is for non-pointer self objects).
 
       filename :: STR
@@ -253,7 +244,17 @@ contains
 
    end
 
-   revert ::: leaky
+   revert ::: leaky, impure
+   ! Revert back to previous stdin file
+      self :: PTR
+
+      if (FALSE) self = self
+
+      stdin.revert
+
+   end
+
+   revert ::: leaky, impure
    ! Revert back to previous stdin file. (This code is for non-pointer self
    ! objects).
 
@@ -263,7 +264,7 @@ contains
 
    end
 
-   read_keywords ::: recursive, leaky
+   read_keywords ::: recursive, leaky, impure
    ! Read data from "stdin" using keyword style input.
    ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
 
@@ -282,7 +283,7 @@ contains
 
          ! Read the keyword
          stdin.read(word)
-         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+         ENSURE(NOT stdin.reverted,"unexpected end of file while reading list keywords")
          word.to_lower_case
 
          ! Append any lonely = sign
@@ -309,7 +310,7 @@ contains
 
    end
 
-   read_keywords ::: recursive, leaky
+   read_keywords ::: recursive, leaky, impure
    ! Read data from "stdin" using keyword style input.
       self :: PTR
    ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
@@ -329,7 +330,7 @@ contains
 
          ! Read the keyword
          stdin.read(word)
-         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+         ENSURE(NOT stdin.reverted,"unexpected end of file while reading list keywords")
          word.to_lower_case
 
          ! Append any lonely = sign
@@ -356,7 +357,7 @@ contains
 
    end
 
-   read_units
+   read_units ::: impure
    ! Read a string which describes the units to be used
 
       if (FALSE) self = self
@@ -365,7 +366,7 @@ contains
 
    end
 
-   read_junk
+   read_junk ::: impure
    ! Read in a junk string, useful for ignoring a field
 
       if (FALSE) self = self
@@ -374,7 +375,7 @@ contains
 
    end
 
-   read_and_set
+   read_and_set ::: impure
    ! Generic read and set
       val :: VAL?
 
@@ -384,7 +385,7 @@ contains
 
    end
 
-   read_and_set
+   read_and_set ::: impure
    ! Generic read and set a quantity with units
       val :: VAL?
 
@@ -398,7 +399,7 @@ contains
 !  Input key related routines
 !  ==========================
 
-   read_keys ::: leaky
+   read_keys ::: leaky, impure
    ! Read the "keys".
       if (FALSE) self = self
 
@@ -409,8 +410,9 @@ contains
 
    end
 
-   process_keys ::: leaky
+   process_keys ::: leaky, impure
    ! Process each of the words in the "keys" list.
+
    ENSURE(keys.created,"no keys")
 
       k,l,n_key :: INT
@@ -441,7 +443,7 @@ contains
 
             ! Find closing brace of embedded section
             l = keys(k:).index_of_matching_bracket("{")
-            DIE_IF(l==0,"no matching closing brace in embedded keyword")
+            ENSURE(l/=0,"no matching closing brace in embedded keyword")
 
             ! Set internal array
             internal => keys(k:k+l-1)
@@ -471,7 +473,7 @@ contains
 
    end
 
-   keys_created result (res)
+   keys_created result (res) ::: always_pure
    ! Return TRUE if the list-element keys are created.
       res :: BIN
 
@@ -482,7 +484,7 @@ contains
 
    end
 
-   set_keys(the_keys) ::: leaky
+   set_keys(the_keys) ::: leaky, impure
    ! This is for setting the "keys" externally.
       the_keys :: VEC{STR}
 
@@ -495,7 +497,7 @@ contains
 
    end
 
-   clear_keys ::: leaky
+   clear_keys ::: leaky, impure
    ! This is for destroying the "keys" externally.
 
       if (FALSE) self = self
@@ -511,9 +513,10 @@ contains
 !  Output
 !  ======
 
-   dump(object_name,ptr) 
+   dump(object_name,ptr) ::: impure
    ! Dump object data as text
-      object_name :: STR
+      self :: IN
+      object_name :: STR, IN
       ptr :: BIN, optional
 
       is_ptr :: BIN
@@ -538,7 +541,7 @@ contains
 
    end
 
-   dmpp(object_name)
+   dmpp(object_name) ::: impure
    ! Dump pointer object data as text
       self :: PTR
       object_name :: STR, IN

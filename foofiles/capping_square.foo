@@ -116,53 +116,55 @@ module CAPPING_SQUARE
 
 contains
 
-   create ::: get_from(OBJECT), leaky
+!  ==========
+!  Allocation
+!  ==========
+
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object. This version does not nullify point parts.
    end
 
-   create_copy(s) ::: leaky
-   ! Create self as a duplicate of "s".
-      self :: PTR
-      s :: CAPPING_SQUARE, IN
-      .create
-      .copy(s)
-   end
-
-   copy(s) ::: leaky
-   ! Copy the contents of "s" to self.
-      s :: CAPPING_SQUARE, IN
-      self = s
-   end
-
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object. This version does not destroy pointer parts.
    end
 
-!   nullify_ptr_part
-!   ! Nullify the pointer parts 
-!   end
-
-!   destroy_ptr_part
-!   ! Destroy the pointer parts 
-!   end
-
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky
+   ! Create a copy of object
+   end
+
+   copy(object) ::: leaky, always_pure
+   ! Copy the contents of "object" to self.
+      self :: INOUT
+      object :: CAPPING_SQUARE, IN
+
+      self = s
+
+   end
+
+!  ===============
+!  Set/get methods
+!  ===============
+
    set_defaults ::: leaky
    ! Set up default information.
       .face_number            = 0
       .iso_value              = ONE
-      .skip_bit_string        = 0
       .vertex_positions       = ZERO
       .value_at_vertex        = ZERO
       .cap_vertex_flag        = FALSE
@@ -186,7 +188,6 @@ contains
    ! But at present everything is reset
       .face_number            = 0
       .iso_value              = ONE
-      .skip_bit_string        = 0
       .vertex_positions       = ZERO
       .value_at_vertex        = ZERO
       .cap_vertex_flag        = FALSE
@@ -203,14 +204,6 @@ contains
       .new_vertex_index       = 0
       .no_new_vertex          = 0
    end
-
-!  =============
-!  Input methods
-!  =============
-
-!  ===============
-!  Set/get methods
-!  ===============
 
    set_iso_value(iso_value)
    ! Set the iso_value for the capping square
@@ -416,14 +409,6 @@ contains
       do v=1,3
 
          e = .triangle_edge_index(v,n)
-
-         if (BIT_SET_AT_POS_IN(.skip_bit_string,e)) then
-            ! Edge vertex info exists, so use it
-            .triangle_vertex_index(v,n) = .edge_vertex_index(e)
-            DIE_IF(.edge_vertex_index(e)==0,"zero edge vertex index, edge:"//e.to_str.trim)
-            cycle
-         end
-
          ! This is a real edge i.e. a vertex already determined from the marching cube
          ! Previously we shared the edge but this results in having to share the normals
          ! which in turn introduces a graphics artifacts when OpenGL color blending is used.
@@ -470,89 +455,6 @@ contains
       end
 
       .no_new_vertex = i
-
-   end
-
-   set_bottom_info(info, flip)
-   ! Set the .skip_bit_string based on when there is information from the
-   ! adjoining capping square.
-      info :: VEC{INT}(0:7)
-      flip :: BIN
-      ind :: INT
-
-      if (flip) then
-
-         ! set top of square to bottom of info
-         ind = info(4)
-         if (ind > 0) then
-            .edge_vertex_index(7) = ind
-            .skip_bit_string = SET_BIT_AT_POS_IN(.skip_bit_string,7)
-         end
-
-         ind = info(5)
-         if (ind > 0) then
-            .edge_vertex_index(6) = ind
-            .skip_bit_string = SET_BIT_AT_POS_IN(.skip_bit_string,6)
-         end
-
-      else
-
-         ! set bottom of square to top of info
-         ind = info(7)
-         if (ind > 0) then
-            .edge_vertex_index(4) = ind
-            .skip_bit_string = SET_BIT_AT_POS_IN(.skip_bit_string,4)
-         end
-
-         ind = info(6)
-         if (ind > 0) then
-            .edge_vertex_index(5) = ind
-            .skip_bit_string = SET_BIT_AT_POS_IN(.skip_bit_string,5)
-         end
-
-      end
-
-   end
-
-   set_left_info(info, flip)
-   ! Set the .skip_bit_string based on when there is information from the
-   ! adjoining capping square.
-      info :: VEC{INT}(0:7)
-      flip :: BIN
-      ind :: INT
-
-
-      if (flip) then
-
-         ! set right side of square to left of info
-         ind = info(4)
-         if (ind > 0) then
-            .edge_vertex_index(5) = ind
-            .skip_bit_string = SET_BIT_AT_POS_IN(.skip_bit_string,5)
-         end
-
-         ind = info(7)
-         if (ind > 0) then
-            .edge_vertex_index(6) = ind
-            .skip_bit_string = SET_BIT_AT_POS_IN(.skip_bit_string,6)
-         end
-
-      else
-
-         ! set left side of square to right of info
-         ind = info(5)
-         if (ind > 0) then
-            .edge_vertex_index(4) = ind
-            .skip_bit_string = SET_BIT_AT_POS_IN(.skip_bit_string,4)
-         end
-
-         ind = info(6)
-         if (ind > 0) then
-            .edge_vertex_index(7) = ind
-            .skip_bit_string = SET_BIT_AT_POS_IN(.skip_bit_string,7)
-         end
-
-      end
 
    end
 

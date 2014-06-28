@@ -21,7 +21,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat3{vec_{int}}.foo 3026 2007-03-04 10:45:02Z dylan_ $
+! $Id: mat3{vec_{int}}.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 module MAT3{VEC_{INT}}
@@ -29,6 +29,10 @@ module MAT3{VEC_{INT}}
    implicit none
 
 contains
+
+!  ==========
+!  Allocation
+!  ==========
 
    create(dim1,dim2,dim3) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
    ! Create object with desired dimensions, ".element" part nullfied.
@@ -62,14 +66,6 @@ contains
    ! Allocate only the ".element" pointer parts with bounds "dimv".
    end
 
-   create_copy(v) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create a copy of "v"
-   end
-
-   copy(v) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Make a copy of "v"
-   end
-
    destroy ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
    ! Destroy the object
    end
@@ -89,6 +85,22 @@ contains
    destroyed result (res) ::: inlined_by_foo
    ! Returns true if self has *not* been created
    end
+
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(mx) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   ! Create a copy of "mx"
+   end
+
+   copy(mx) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, pure
+   ! Make a copy of "mx"
+   end
+
+!  ===============
+!  General methods
+!  ===============
 
    set_to(v) ::: get_from(MAT3{VEC_{INTRINSIC}})
    ! Set self to "v". Up to you to make sure they are compatible!

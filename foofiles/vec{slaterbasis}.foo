@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{slaterbasis}.foo 4071 2013-06-18 12:59:43Z dylan_ $
+! $Id: vec{slaterbasis}.foo 4247 2014-01-12 06:19:57Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{SLATERBASIS}
@@ -32,40 +32,44 @@ module VEC{SLATERBASIS}
 
 contains
 
-! ==================
-! Allocation methods
-! ==================
+!  ==================
+!  Allocation methods
+!  ==================
 
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, pure
    ! Create space for object
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
+   destroy ::: get_from(VEC{OBJECT}), leaky, pure
    ! Destroy space for object
    end
 
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
-   end
-
-   nullify_ptr_part ::: get_from(VEC{OBJECT})
+   nullify_ptr_part ::: get_from(VEC{OBJECT}), always_pure
    ! Nullify the pointer parts of self
    end
 
-   destroy_ptr_part ::: get_from(VEC{OBJECT}), leaky
+   destroy_ptr_part ::: get_from(VEC{OBJECT}), leaky, pure
    ! Destroy the pointer parts of self
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
+   end
+
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Create a replica copy of "v".
+   end
+
+   copy(v) ::: get_from(VEC{OBJECT}), leaky, pure
+   ! Copy "v".
    end
 
 !  ===========
@@ -84,9 +88,9 @@ contains
    ! Return the basis set library file for a particular "basis_kind".
    end
 
-! =======================
-! List-based I/O Routines
-! =======================
+!  =======================
+!  List-based I/O Routines
+!  =======================
 
    read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
    ! Read in and process list-based keywords from "stdin". List-based keywords
@@ -162,9 +166,9 @@ contains
    ! Revert back to previous stdin file
    end
 
-! ===========================
-! Non-list based I/O routines
-! ===========================
+!  ===========================
+!  Non-list based I/O routines
+!  ===========================
 
    read_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
    ! Read in and process normal (non list-type) keywords from "stdin".
@@ -186,9 +190,9 @@ contains
    ! labels in "labels" -- those which cannot be found already in "self".
    end
 
-! ===============================
-! Shrinking, expanding, appending
-! ===============================
+!  ===============================
+!  Shrinking, expanding, appending
+!  ===============================
 
    shrink(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Shrink self to dimension dim.  Contents are retained.
@@ -206,31 +210,31 @@ contains
    ! Expands self by 1, and appends the single scalar "value" onto the end.
    end
 
-! =============
-! Normalisation
-! =============
+!  =============
+!  Normalisation
+!  =============
 
-   unnormalise
-   ! Set the value of the orbital coefficients to correspond to un-normalised
-   ! Slater functions -- assuming they are normalised. This saves computation.
+   unnormalize
+   ! Set the value of the orbital coefficients to correspond to un-normalized
+   ! Slater functions -- assuming they are normalized. This saves computation.
       i :: INT
       do i = 1,.dim
-         self(i).unnormalise
+         self(i).unnormalize
       end
    end
 
-   renormalise
-   ! Set the value of the orbitals coefficients to correspond to normalised
-   ! Slater functions --- assuming they are w.r.t. unnormalised functions. 
+   renormalize
+   ! Set the value of the orbitals coefficients to correspond to normalized
+   ! Slater functions --- assuming they are w.r.t. unnormalized functions. 
       i :: INT
       do i = 1,.dim
-         self(i).renormalise
+         self(i).renormalize
       end
    end
 
-! ======
-! Output
-! ======
+!  ======
+!  Output
+!  ======
 
    dump(object_name) ::: get_from(VEC{OBJECT})
    ! Dump a vector object

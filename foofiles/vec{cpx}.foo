@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{cpx}.foo 4364 2014-05-12 07:41:15Z dylan_ $
+! $Id: vec{cpx}.foo 4246 2014-01-12 06:11:20Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{CPX}
@@ -32,36 +32,41 @@ contains
 !  Memory allocation
 !  =================
 
-   create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   create(dim) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Create space for object
    end
 
-   create(lb,ub) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   create(lb,ub) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Create the vector with lower bound "lb", upper bound "ub"
    end
 
-   create(bounds) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   create(bounds) ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Create the vector with "bounds"
    end
 
-   destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   destroy ::: get_from(VEC{INTRINSIC}), leaky, pure
    ! Destroy space for object
    end
 
-   create_copy(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create a copy of vector "v".
-   end
-
-   copy(v) ::: get_from(VEC{INTRINSIC}), PURE
-   ! Copy vector "v".
-   end
-
-   created result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   created result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   destroyed result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
+   end
+
+
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{INTRINSIC}), leaky, pure
+   ! Create a copy of vector "v".
+   end
+
+   copy(v) ::: get_from(VEC{INTRINSIC}), pure
+   ! Copy vector "v".
    end
 
 
@@ -69,11 +74,11 @@ contains
 !  Size-of operations
 !  ==================
 
-   size result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   size result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, always_pure
    ! Return the size of the array
    end
 
-   dim result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   dim result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, always_pure
    ! Return the size of the 1st dimension
    end
 
@@ -82,32 +87,32 @@ contains
 !  Shrinking and expansion
 !  =======================
 
-   shrink(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   shrink(dim) ::: get_from(VEC{INTRINSIC}), leaky
    ! Shrink self to dimension dim.  Contents are retained.
    end
 
-   expand(dim,init) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   expand(dim,init) ::: get_from(VEC{INTRINSIC}), leaky
    ! Expand self to dimension dim. New slots are left undefined
    ! unless "init" is supplied.
    end
 
-   append(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   append(v) ::: get_from(VEC{INTRINSIC}), leaky
    ! Expands self and appends the contents of vector "v".
    end
 
-   append(v1,v2) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   append(v1,v2) ::: get_from(VEC{INTRINSIC}), leaky
    ! Expands self and appends the contents of vectors "v1" and "v2".
    end
 
-   append(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   append(value) ::: get_from(VEC{INTRINSIC}), leaky
    ! Expands self by 1, and appends the single scalar "value" onto the end.
    end
 
-   prepend(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   prepend(v) ::: get_from(VEC{INTRINSIC}), leaky
    ! Prepend the vector "v" to "self". "self" is expanded.
    end
 
-   prepend(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   prepend(value) ::: get_from(VEC{INTRINSIC}), leaky
    ! Prepend an single "value" to "self". "self" is expanded.
    end
 
@@ -124,7 +129,7 @@ contains
    ! Return true if "self" is the same as "v", within range "eps" if supplied
    end
 
-   has_all_equal(eps) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   are_all_equal(eps) result (res) ::: get_from(VEC{INTRINSIC})
    ! Return TRUE if "self" contains all the same elements, to within precision
    ! "eps", if supplied.
    end
@@ -138,13 +143,12 @@ contains
 !  Repetition related operations
 !  =============================
 
-   remove_repetitions ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Remove repeated elements which come later in the list. 
-   ! NOTE: the vector may shrink. 
-   ! NOTE: this version for reals & complex
+   remove_repetitions ::: get_from(VEC{OBJECT}), leaky
+   ! Sort through the vector and remove repeated elements which come later in
+   ! the list.  NOTE: the vector may shrink
    end
 
-   has_repetitions result (res) ::: get_from(VEC{OBJECT}), pure
+   has_repetitions result (res) ::: get_from(VEC{OBJECT})
    ! Return TRUE if self has at least one repeated element.
    end
 
@@ -170,59 +174,59 @@ contains
 !  Numerical operations
 !  ====================
 
-   set_to(v) ::: get_from(VEC{INTRINSIC}, V?=>CPX), pure
+   set_to(v) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}), pure
    ! Set the vector to "v". See also the "copy" routine.
    end
 
-   set_to(v) ::: get_from(VEC{INTRINSIC}, V?=>REAL), pure
+   set_to(v) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}), pure
    ! Set the vector to "v". See also the "copy" routine.
    end
 
-   plus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>CPX), pure
+   plus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}), pure
    ! Add vector "v" to "self"
    end
 
-   plus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>REAL), pure
+   plus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}), pure
    ! Add vector "v" to "self"
    end
 
-   minus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>CPX), pure
+   minus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}), pure
    ! Subtract vector "v" from "self"
    end
 
-   minus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>REAL), pure
+   minus(v,mask) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}), pure
    ! Subtract vector "v" from "self"
    end
 
-   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>CPX, FAC?=>CPX), pure
+   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, FAC?=>CPX), pure
    ! Set the vector to "v" scaled by "fac"
    end
 
-   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>CPX, FAC?=>REAL), pure
+   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, FAC?=>REAL), pure
    ! Set the vector to "v" scaled by "fac"
    end
 
-   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>REAL, FAC?=>CPX), pure
+   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, FAC?=>CPX), pure
    ! Set the vector to "v" scaled by "fac"
    end
 
-   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>REAL, FAC?=>REAL), pure
+   to_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, FAC?=>REAL), pure
    ! Set the vector to "v" scaled by "fac"
    end
 
-   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>CPX, FAC?=>CPX), pure
+   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, FAC?=>CPX), pure
    ! Add a vector "v" scaled by "fac" to "self"
    end
 
-   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>CPX, FAC?=>REAL), pure
+   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, FAC?=>REAL), pure
    ! Add a vector "v" scaled by "fac" to "self"
    end
 
-   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>REAL, FAC?=>CPX), pure
+   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, FAC?=>CPX), pure
    ! Add a vector "v" scaled by "fac" to "self"
    end
 
-   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>REAL, FAC?=>REAL), pure
+   plus_scaled(v,fac) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, FAC?=>REAL), pure
    ! Add a vector "v" scaled by "fac" to "self"
    end
 
@@ -231,11 +235,11 @@ contains
    ! Return the sum of the elements in "self"
    end
 
-   dot(v) result (res) ::: get_from(VEC{INTRINSIC}, V?=>CPX, RES?=>CPX), pure
+   dot(v) result (res) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, RES?=>CPX), pure
    ! Return the dot product with "v"
    end
 
-   dot(v) result (res) ::: get_from(VEC{INTRINSIC}, V?=>REAL, RES?=>CPX), pure
+   dot(v) result (res) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, RES?=>CPX), pure
    ! Return the dot product with "v"
    end
 
@@ -249,183 +253,183 @@ contains
    end
 
 
-   to_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>CPX), PURE
+   to_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX})
    ! Set "self" to the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the matrix needs to be transposed.
    end
 
-   to_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>REAL), PURE
+   to_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL})
    ! Set "self" to the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the matrix needs to be transposed.
    end
 
-   to_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>CPX, VAL?=>CPX), PURE
+   to_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{CPX}, VAL?=>CPX)
    ! Set "self" to the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the matrix needs to be transposed.
    end
 
-   to_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>REAL, VAL?=>REAL), PURE
+   to_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{REAL}, VAL?=>REAL)
    ! Set "self" to the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the matrix needs to be transposed.
    end
 
 
-   plus_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>CPX), PURE
+   plus_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX})
    ! Add to "self" the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the matrix needs to be transposed.
    end
 
-   plus_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>REAL), PURE
+   plus_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL})
    ! Add to "self" the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the matrix needs to be transposed.
    end
 
-   plus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>CPX, VAL?=>CPX), PURE
-   ! Add to "self" the product of the matrix "a" and vector "v". If present,
-   ! "transpose_a" can be set to TRUE if the marix needs to be transposed.
-   end
-
-   plus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>REAL, VAL?=>REAL)
+   plus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{CPX}, VAL?=>CPX)
    ! Add to "self" the product of the matrix "a" and vector "v". If present,
    ! "transpose_a" can be set to TRUE if the marix needs to be transposed.
    end
 
+   plus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{REAL}, VAL?=>REAL)
+   ! Add to "self" the product of the matrix "a" and vector "v". If present,
+   ! "transpose_a" can be set to TRUE if the marix needs to be transposed.
+   end
 
-   minus_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>CPX), PURE
+
+   minus_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX})
    ! Subtract from "self" the product of the matrix "a" and vector "v". If
    ! present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   minus_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>REAL), PURE
+   minus_product_of(a,v,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL})
    ! Subtract from "self" the product of the matrix "a" and vector "v". If
    ! present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   minus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>CPX, VAL?=>CPX), PURE
+   minus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{CPX}, VAL?=>CPX)
    ! Subtract from "self" the product of the matrix "a" and vector "v". If
    ! present, "transpose_a" can be set to TRUE if the marix needs to be
    ! transposed.
    end
 
-   minus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>REAL, VAL?=>REAL), PURE
+   minus_product_of(a,v,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{REAL}, VAL?=>REAL)
    ! Subtract from "self" the product of the matrix "a" and vector "v". If
    ! present, "transpose_a" can be set to TRUE if the marix needs to be
    ! transposed.
    end
 
 
-   to_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>CPX, FAC?=>CPX), PURE
+   to_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, FAC?=>CPX)
    ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   to_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>CPX, FAC?=>REAL), PURE
+   to_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, FAC?=>REAL)
    ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   to_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>REAL, FAC?=>CPX), PURE
+   to_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, FAC?=>CPX)
    ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   to_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>REAL, FAC?=>REAL), PURE
-   ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
-   ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
-   ! transposed.
-   end
-
-
-   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>CPX, VAL?=>CPX, FAC?=>CPX), PURE
-   ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
-   ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
-   ! transposed.
-   end
-
-   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>CPX, VAL?=>CPX, FAC?=>REAL), PURE
-   ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
-   ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
-   ! transposed.
-   end
-
-   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>REAL, VAL?=>REAL, FAC?=>CPX), PURE
-   ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
-   ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
-   ! transposed.
-   end
-
-   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>REAL, VAL?=>REAL, FAC?=>REAL), PURE
+   to_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, FAC?=>REAL)
    ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
 
-   plus_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>CPX, FAC?=>CPX), PURE
+   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{CPX}, VAL?=>CPX, FAC?=>CPX)
+   ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
+   ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
+   ! transposed.
+   end
+
+   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{CPX}, VAL?=>CPX, FAC?=>REAL)
+   ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
+   ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
+   ! transposed.
+   end
+
+   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{REAL}, VAL?=>REAL, FAC?=>CPX)
+   ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
+   ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
+   ! transposed.
+   end
+
+   to_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{REAL}, VAL?=>REAL, FAC?=>REAL)
+   ! Set "self" to the product of the matrix "a" and vector "v" scaled by "fac".
+   ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
+   ! transposed.
+   end
+
+
+   plus_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, FAC?=>CPX)
    ! Add to "self" the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   plus_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>CPX, FAC?=>REAL), PURE
+   plus_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{CPX}, FAC?=>REAL)
    ! Add to "self" the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   plus_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>REAL, FAC?=>CPX), PURE
+   plus_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, FAC?=>CPX)
    ! Add to "self" the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
-   plus_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>REAL, FAC?=>REAL), PURE
+   plus_scaled_product_of(a,v,fac,dagger_a,transpose_a) ::: get_from(VEC{INTRINSIC}, V?=>VEC{REAL}, FAC?=>REAL)
    ! Add to "self" the product of the matrix "a" and vector "v" scaled by "fac".
    ! If present, "transpose_a" can be set to TRUE if the matrix needs to be
    ! transposed.
    end
 
 
-   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>CPX, VAL?=>CPX, FAC?=>CPX), PURE
+   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{CPX}, VAL?=>CPX, FAC?=>CPX)
    ! Add to self "self" the product of the matrix "a" and vector "v" scaled by
    ! "fac".  If present, "transpose_a" can be set to TRUE if the matrix needs to
    ! be transposed.
    end
 
-   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>CPX, VAL?=>CPX, FAC?=>REAL), PURE
+   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{CPX}, VAL?=>CPX, FAC?=>REAL)
    ! Add to self "self" the product of the matrix "a" and vector "v" scaled by
    ! "fac".  If present, "transpose_a" can be set to TRUE if the matrix needs to
    ! be transposed.
    end
 
-   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>REAL, VAL?=>REAL, FAC?=>CPX), PURE
+   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{REAL}, VAL?=>REAL, FAC?=>CPX)
    ! Add to self "self" the product of the matrix "a" and vector "v" scaled by
    ! "fac".  If present, "transpose_a" can be set to TRUE if the matrix needs to
    ! be transposed.
    end
 
-   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>REAL, V?=>REAL, VAL?=>REAL, FAC?=>REAL), PURE
+   plus_scaled_product_of(a,v,fac,transpose_a) ::: get_from(VEC{INTRINSIC}, A?=>MAT{REAL}, V?=>VEC{REAL}, VAL?=>REAL, FAC?=>REAL)
    ! Add to self "self" the product of the matrix "a" and vector "v" scaled by
    ! "fac".  If present, "transpose_a" can be set to TRUE if the matrix needs to
    ! be transposed.
    end
 
 
-   rotate_by(a) ::: get_from(VEC{INTRINSIC}), PURE
+   rotate_by(a) ::: get_from(VEC{INTRINSIC})
    ! Rotate self by matrix "a", treating self as a column vector
    end
 
-   translate_by(v) ::: get_from(VEC{INTRINSIC}), PURE
+   translate_by(v) ::: get_from(VEC{INTRINSIC})
    ! Translate self by vector "v".
    end
 
 
-   outer_product_with(v) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   outer_product_with(v) result (res) ::: get_from(VEC{INTRINSIC})
    ! Returns the outer product of "self" with vector "v".
    end
 
@@ -434,8 +438,8 @@ contains
    ! Return the norm of the vector
    end
 
-   normalise ::: get_from(VEC{INTRINSIC}), pure
-   ! Normalise the vector
+   normalize ::: get_from(VEC{INTRINSIC})
+   ! Normalize the vector
    end
 
    distance_to(a) result (res) ::: get_from(VEC{INTRINSIC}), pure
@@ -502,19 +506,17 @@ contains
    str_lengths result (res) ::: get_from(VEC{INTRINSIC}), pure
    ! Returns the minimal string lengths.
    end 
+
+   max_str_length result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! Returns the maximum of the string lengths.
+   end
    
    str_lengths(dp) result (res) ::: get_from(VEC{INTRINSIC}), pure
    ! Returns the minimal string lengths.
    end 
 
-   get_max_str_length(msl,spaces) ::: get_from(VEC{INTRINSIC}), pure
-   ! Returns "msl", the maximum of the string lengths for "self",
-   ! and with optional extra "spaces". 
-   end
-
-   get_max_str_length(msl,max_dp,spaces) ::: get_from(VEC{INTRINSIC}), pure
-   ! Returns "msl", the maximum of the string lengths for "self", with
-   ! certain precision "max_dp", and with optional extra "spaces". 
+   max_str_length(dp) result (res) ::: get_from(VEC{INTRINSIC}), pure 
+   ! Returns the maximum of the string lengths.
    end
 
 !  =====================
@@ -525,8 +527,8 @@ contains
    ! Change self to a string of minimal length
    end 
 
-   to_str(fmt,left_justify) result (res) ::: get_from(VEC{INTRINSIC}), pure
-   ! Change self to a "string" using the specified fortran "fmt".
+   to_str(format,left_justify) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! Change self to a "string" using the specified fortran "format".
    end
 
    to_str(style,width,precision,left_justify) result (res) ::: get_from(VEC{INTRINSIC}), pure
@@ -534,8 +536,8 @@ contains
    ! "precision" as defined in the fortran standard 
    end
 
-   to_concatenated_str(fmt,separator) result (res) ::: get_from(VEC{INTRINSIC}), pure
-   ! Change self to a string using "fmt" if specified, and with
+   to_concatenated_str(format,separator) result (res) ::: get_from(VEC{INTRINSIC}), pure
+   ! Change self to a string using "format" if specified, and with
    ! "separator" between each item, if specified.
    end
 
@@ -543,50 +545,40 @@ contains
 !  Spin-orbital operations
 !  =======================
 
-!   alpha result (res) ::: get_from(VEC{INTRINSIC})
-!   ! return the alpha sector of the vector
-!   end
+   alpha result (res) ::: get_from(VEC{INTRINSIC})
+   ! return the alpha sector of the vector
+   end
 
-!   beta result (res) ::: get_from(VEC{INTRINSIC})
-!   ! return the beta sector of the vector
-!   end
+   beta result (res) ::: get_from(VEC{INTRINSIC})
+   ! return the beta sector of the vector
+   end
 
-   alpha_set_to(X) ::: get_from(VEC{INTRINSIC}), PURE
+   alpha_set_to(X) ::: get_from(VEC{INTRINSIC})
    ! Set the alpha sector of the vector
    end
 
-   beta_set_to(X) ::: get_from(VEC{INTRINSIC}), PURE
+   beta_set_to(X) ::: get_from(VEC{INTRINSIC})
    ! Set the beta sector of the vector
    end
 
-   alpha_set_to(X) ::: PURE
+   alpha_set_to(X)
    ! Set the alpha sector of the vector
-      self :: OUT
-      X :: VEC{REAL}, IN
-
+      X :: VEC{REAL}
    ENSURE(.dim.is_even,"self is not even-dimensioned")
    ENSURE(X.dim==.dim/2,"wrong size, X")
-
       n :: INT
-
       n = size(self)/2
       self(1:n) = X
-
    end
 
-   beta_set_to(X) ::: PURE
+   beta_set_to(X)
    ! Set the beta sector of the vector
-       self :: OUT
-       X :: VEC{REAL}, IN
-
+       X :: VEC{REAL}
    ENSURE(.dim.is_even,"self is not even-dimensioned")
    ENSURE(X.dim==.dim/2,"wrong size, X")
-
       n :: INT
-
       n = size(self)/2
       self(n+1:2*n) = X
-
    end
 
 end

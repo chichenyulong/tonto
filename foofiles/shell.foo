@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: shell.foo 4299 2014-03-18 08:48:41Z dylan_ $
+! $Id: shell.foo 4238 2014-01-11 06:17:19Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module SHELL
@@ -70,33 +70,37 @@ contains
       res :: BIN
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
    ! Create a copy of object
    end
 
-   copy(shell) ::: leaky
-   ! Copy a shell object. Make sure pointer parts are nullified or
-   ! destroyed, as you like, before using this.
+   copy(object) ::: leaky, pure
+   ! Copy the SHELL "object". 
       self :: OUT
-      shell :: SHELL, IN
+      object :: SHELL, IN
 
-      self = shell
+      self = object
 
       .nullify_ptr_part
-      if (shell.exponent.created)      .exponent.create_copy(shell.exponent)
-      if (shell.contraction.created)   .contraction.create_copy(shell.contraction)
-      if (shell.contraction_s.created) .contraction_s.create_copy(shell.contraction_s)
-      if (shell.contraction_p.created) .contraction_p.create_copy(shell.contraction_p)
 
-   end
+      CREATE_COPY_COMPONENT(exponent)
+      CREATE_COPY_COMPONENT(contraction)
+      CREATE_COPY_COMPONENT(contraction_s)
+      CREATE_COPY_COMPONENT(contraction_p)
 
-   set(object) ::: get_from(OBJECT)
-   ! Set the object. Pointer parts are assigned not copied.
    end
 
 !  ===========
 !  Set methods
 !  ===========
+
+   set(object) ::: get_from(OBJECT)
+   ! Set the object. Pointer parts are assigned not copied.
+   end
 
    set_defaults
    ! Set defaults
@@ -222,7 +226,7 @@ contains
       l :: INT
 
       stdin.read(word)
-      DIE_IF(len_trim(word)/=1,"unknown L symbol")
+      ENSURE(len_trim(word)==1,"unknown L symbol")
 
       .l_chr = word(1:1)
       if (.l_chr/="L") .l_chr.to_lower_case
@@ -266,61 +270,42 @@ contains
 
    read_contractions ::: leaky
    ! Read in the contraction coefficients
-
    ENSURE(.n_cc>0,"n_cc must be entered first")
    ENSURE(.contraction.destroyed,"cc already entered")
-
       if (.l_chr/="L") then
-
          .contraction.create(.n_cc)
          stdin.read(.contraction)
-
       else 
-
-         ! Read l-shell as alternating columns
-         .contraction_s.create(.n_cc)     
-         .contraction_p.create(.n_cc)     
-         stdin.read_pair(.contraction_s,.contraction_p)
-
+         .contraction_s.create(.n_cc)     ! Read l-shell as alternating 
+         .contraction_p.create(.n_cc)     ! columns
+         stdin.read(.contraction_s,.contraction_p)
       end
-
    end
 
    read_ex_cc ::: leaky
    ! Read in the exponents and contractions
-
    ENSURE(.n_cc>0,"n_cc must be entered first")
    ENSURE(.exponent.destroyed,"ex already entered")
    ENSURE(.contraction.destroyed,"ex already entered")
-
       if (.l_chr/="L") then
-
          .exponent.create(.n_cc)
          .contraction.create(.n_cc)
-         stdin.read_pair(.exponent,.contraction)
-
+         stdin.read(.exponent,.contraction)
       else
-
          .exponent.create(.n_cc)
          .contraction_s.create(.n_cc)
          .contraction_p.create(.n_cc)
-         stdin.read_triple(.exponent,.contraction_s,.contraction_p)
-
+         stdin.read(.exponent,.contraction_s,.contraction_p)
       end
-
    end
 
    read_junk_ex_cc ::: leaky
    ! Read in the exponents and contractions preceded by a junk string
-
    ENSURE(.n_cc>0,"n_cc must be entered first")
    ENSURE(.exponent.destroyed,"ex already entered")
    ENSURE(.contraction.destroyed,"ex already entered")
-
       i :: INT
-
       if (.l_chr/="L") then
-
          .exponent.create(.n_cc)
          .contraction.create(.n_cc)
          do i = 1,.n_cc
@@ -328,9 +313,7 @@ contains
             stdin.read(.exponent(i))
             stdin.read(.contraction(i))
          end
-
       else
-
          .exponent.create(.n_cc)
          .contraction_s.create(.n_cc)
          .contraction_p.create(.n_cc)
@@ -340,9 +323,7 @@ contains
             stdin.read(.contraction_s(i))
             stdin.read(.contraction_p(i))
          end
-
       end
-
    end
 
 !  ====================
@@ -376,8 +357,9 @@ contains
    l_chr(l) result (res) ::: selfless, private
    ! Return a character representation for angular mtm "l"
    ! Of course, "L" shells are never returned: they have mixed mtm.
+      l :: INT, IN
       res :: STR(len=1)
-      l :: INT
+
       select case (l)
          case (0); res="s"
          case (1); res="p"
@@ -385,9 +367,10 @@ contains
          case (3); res="f"
          case (4); res="g"
          case default;
-            DIE_IF(l>23,"angular momentum too large:"// trim(l.to_str))
+            ENSURE(l<=23,"angular momentum too large:"// trim(l.to_str))
             res = achar(l-4+iachar("g"))
-      end select
+      end
+
    end
 
    same_as(sh) result(same) ::: pure
@@ -425,7 +408,7 @@ contains
    make_contraction_matrix(ccm,ccp)
    ! Return the contraction coefficient matrix "ccm" which converts
    ! primitives to basis functions. It is with respect to uniform
-   ! normalisation i.e. all components are normalised to the first
+   ! normalisation i.e. all components are normalized to the first
    ! component, x^l. If this is an "L" shell, "ccp" may also be
    ! returned, the contraction matrix for the "p" shell. size "ccm" is
    ! normally (.n_prim,.n_comp).
@@ -483,9 +466,9 @@ contains
       end
    end
 
-   make_normalised_contraction_mx(ccm,ccp,sph)
+   make_normalized_contraction_mx(ccm,ccp,sph)
    ! Return the contraction coefficient matrix "ccm". All the
-   ! primitives are assumed correctly normalised.
+   ! primitives are assumed correctly normalized.
       ccm :: MAT{REAL}, OUT
       ccp :: MAT{REAL}, OUT
       sph :: BIN, IN, optional
@@ -538,9 +521,9 @@ contains
       end
    end
 
-   make_normalised_contraction_mx(ccm,sph)
+   make_normalized_contraction_mx(ccm,sph)
    ! Return the contraction coefficient matrix "ccm". All the
-   ! primitives are assumed correctly normalised.
+   ! primitives are assumed correctly normalized.
       ccm :: MAT{REAL}, OUT
       sph :: BIN, IN, optional
    ENSURE(.n_cc>0,"no contraction coefficients")
@@ -601,7 +584,7 @@ contains
 
          end
 
-         ! This is the normalised diagonal term
+         ! This is the normalized diagonal term
          sm = sm + .contraction(i)*.contraction(i) 
 
       end
@@ -610,7 +593,7 @@ contains
 
    end
 
-   unnormalise
+   unnormalize
    ! Assuming the existing contraction coefficients are initially with respect
    ! to NORMALISED primitive gaussians, take out this normalisation factor of
    ! each primitive and put it in the contraction coefficient. The normalisation
@@ -625,15 +608,15 @@ contains
                 * (ONE/(.norm*sqrt(.l.double_factorial)))
    end
 
-   renormalise
+   renormalize
    ! Assuming the existing contraction coefficients are with respect to raw
    ! UNNORMALISED primitive gaussians, put back this normalisation factor for
    ! each primitive gaussian, by removing this factor from from the contraction
    ! coefficients. The result will be contraction coefficients relative to
-   ! normalised primitive gausian. This will undo routine "unnormalise" routine
+   ! normalized primitive gausian. This will undo routine "unnormalize" routine
    ! above.  The ((TWO*PI)**(THREE/FOUR)) / .norm factor is supposed to make the
    ! contraction coefficient equal to 1 for a shell with one primitive i.e. the
-   ! shell is not *really* normalised. This seems to be the usual convention.
+   ! shell is not *really* normalized. This seems to be the usual convention.
       .contraction(:) = .contraction(:) / ((FOUR*.exponent(:))**(HALF*.l+HALF+QUARTER)) 
       .contraction(:) = .contraction(:) * ((TWO*PI)**(THREE/FOUR)) / .norm
    end

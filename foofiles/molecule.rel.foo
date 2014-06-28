@@ -34,9 +34,9 @@ contains
 
    make_primitive_overlap_matrix(S)
    ! Calculate the primitive overlap matrix "S"
-   ! NOTE: if the contraction coefficients have been unnormalised (as
+   ! NOTE: if the contraction coefficients have been unnormalized (as
    ! is usually the case) then this overlap matrix will not have one's
-   ! on the diagonal. The make normalised overlap integrals refers to
+   ! on the diagonal. The make normalized overlap integrals refers to
    ! the fact that the l > d shell type factors have been inlcuded and
    ! not the overall normalisation of the primitive.
       self :: IN
@@ -76,7 +76,7 @@ contains
            lb = last(b)
 
            ! Do it
-           G.make_normalised_overlap_ints(S(fa:la,fb:lb),.use_spherical_basis)
+           G.make_normalized_overlap_ints(S(fa:la,fb:lb),.use_spherical_basis)
 
         end
 
@@ -136,7 +136,7 @@ contains
            lb = last(b)
 
            ! Do it
-           G.make_normalised_kinetic_ints(T(fa:la,fb:lb),.use_spherical_basis)
+           G.make_normalized_kinetic_ints(T(fa:la,fb:lb),.use_spherical_basis)
 
         end
 
@@ -155,7 +155,7 @@ contains
       ! Test
    ! ccm.create(.n_prim,.n_bf)
    ! Tb.create(.n_bf,.n_bf)
-   ! .BASE:make_normalised_contraction_mx(ccm)
+   ! .BASE:make_normalized_contraction_mx(ccm)
    ! T.change_basis_to(Tb,ccm)
    ! .BASE:put_debug(Tb,"basis fn overlap matrix")
    ! Tb.destroy
@@ -219,14 +219,14 @@ contains
               end if
               select case (.nucleus_model)
                 case ("point")
-           G.make_normalised_NA_ints(Zc,atom.position,.use_spherical_basis)                
+           G.make_normalized_NA_ints(Zc,atom.position,.use_spherical_basis)                
                 case ("finite","gaussian")
                 neta= atom.atomic_number 
-           G.make_normalised_finite_NA_ints(Zc,atom.position,neta,n,.use_spherical_basis)   
+           G.make_normalized_finite_NA_ints(Zc,atom.position,neta,n,.use_spherical_basis)   
                 case default
            DIE("Unknown model of nucleus")     
               end
-          !    G.make_normalised_NA_ints(Zc,atom.position,.use_spherical_basis)
+          !    G.make_normalized_NA_ints(Zc,atom.position,.use_spherical_basis)
               Z(fa:la,fb:lb) = Z(fa:la,fb:lb) - atom.nuclear_charge * Zc
            end
 
@@ -252,7 +252,7 @@ contains
       ! Test
     ! ccm.create(.n_prim,.n_bf)
     ! Zb.create(.n_bf,.n_bf)
-    ! .BASE:make_normalised_contraction_mx(ccm)
+    ! .BASE:make_normalized_contraction_mx(ccm)
     ! Z.change_basis_to(Zb,ccm)
     ! .BASE:put_debug(Zb,"basis fn NA matrix")
     ! Zb.destroy
@@ -333,10 +333,10 @@ contains
               end if
               select case (.nucleus_model)
                 case ("point")
-           G.make_normalised_DKH_ints(Tc,SOxc,SOyc,SOzc,atom.position,.use_spherical_basis)                
+           G.make_normalized_DKH_ints(Tc,SOxc,SOyc,SOzc,atom.position,.use_spherical_basis)                
                 case ("finite","gaussian")
                 neta= atom.atomic_number 
-    G.make_normalised_finite_DKH_ints(Tc,SOxc,SOyc,SOzc,atom.position,neta,n,.use_spherical_basis)
+    G.make_normalized_finite_DKH_ints(Tc,SOxc,SOyc,SOzc,atom.position,neta,n,.use_spherical_basis)
                 case default
            DIE("Unknown model of nucleus")     
               end
@@ -432,7 +432,7 @@ contains
            Tc.create(na,nb)
            do c = 1,.n_atom
               atom => .atom(c)
-              G.make_normalised_DK3_ppZpp_ints(Tc,atom.position,.use_spherical_basis)
+              G.make_normalized_DK3_ppZpp_ints(Tc,atom.position,.use_spherical_basis)
               Z = atom.nuclear_charge
               ppZpp(fa:la,fb:lb) =  ppZpp(fa:la,fb:lb) - Z * Tc
            end
@@ -528,7 +528,7 @@ contains
               Zc.create(na,nb)
               do c = 1,.n_atom
                  atom => .atom(c)
-                 G.make_normalised_NA_ints(Zc,atom.position,.use_spherical_basis)
+                 G.make_normalized_NA_ints(Zc,atom.position,.use_spherical_basis)
                  Zpq(fa:la,fb:lb,p,q) = Zpq(fa:la,fb:lb,p,q) - i*j*atom.nuclear_charge*Zc*step2
               end
               Zc.destroy
@@ -1293,7 +1293,7 @@ contains
 
       ! moving back to contracted basis sets 
       M.create(.n_prim,.n_bf)
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
       buco.create(.n_bf,.n_prim)
       buco.to_product_of(M,R,transpose_a=TRUE)
       R.destroy
@@ -1536,7 +1536,7 @@ contains
 
       ! Moving back to contracted basis sets 
       M.create(.n_prim,.n_bf)
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
 
       ! Change back into contracted basis
       F.change_basis_to(H,M)
@@ -1756,7 +1756,7 @@ contains
       M.create(.n_prim,.n_bf)
       buco.create(.n_bf,.n_prim)
 
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
       buco.to_product_of(M,R,transpose_a=TRUE)
       A.to_product_of(buco,M)
       
@@ -2055,7 +2055,7 @@ contains
  
       !!! moving back to contracted basis sets 
       M.create(.n_prim,.n_bf)
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
 
       M2.create(2*.n_prim,2*.n_prim)
       M2=(ZERO,ZERO)
@@ -2446,7 +2446,7 @@ contains
       B.destroy
  
       M.create(.n_prim,.n_bf)
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
  
       buco.create(.n_bf,.n_prim)
       buco.to_product_of(M,F,transpose_a=TRUE)
@@ -2495,7 +2495,7 @@ contains
 
         case ("rhf","rks","xray_rks","xray_rhf","noninteracting-group-rhf")
 
-           ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+           ENSURE(.molecular_orbitals.restricted.created,"no MO's")
            ENSURE(.spin_multiplicity==1,"this is not a singlet state")
 
            MO => .molecular_orbitals.restricted(:,1:.n_a)
@@ -2516,7 +2516,7 @@ contains
         case ("uhf","uks","xray_uhf","xray_uks", &
               "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
 
-           ENSURE(.molecular_orbitals.created("unrestricted"),"no MO's")
+           ENSURE(.molecular_orbitals.alpha.created,"no MO's")
 
            MOa => .molecular_orbitals.alpha(:,1:.n_a)
            MOb => .molecular_orbitals.beta(:,1:.n_b)
@@ -2562,8 +2562,8 @@ contains
    ! constant which is false becasue the wave function is
    ! normalized to the number of electrons and not to unity
    ! in the moment it is so or so not used, but actually
-   ! it might be necessary to renormalised due to the dkh transformation
-   ! of the density which has to be normalised
+   ! it might be necessary to renormalized due to the dkh transformation
+   ! of the density which has to be normalized
       self :: IN
       g,norm :: REAL, OUT
       D :: MAT{REAL}, IN
@@ -2876,7 +2876,7 @@ contains
 
      !!! moving back to contracted basis sets 
      M.create(.n_prim,.n_bf)
-     .BASE:make_normalised_contraction_mx(M)
+     .BASE:make_normalized_contraction_mx(M)
 
      buco.create(.n_bf,.n_prim)
      buco.to_product_of(M,R,transpose_a=TRUE)
@@ -3480,7 +3480,7 @@ contains
 
       if (.scfdata.using_ppzpp) then
 
-         DIE_IF(NOT present(ppApp),"wtf?")
+         ENSURE(present(ppApp),"wtf?")
 
          do i = 1,n_gcm
          do j = 1,n_gcm
@@ -3556,7 +3556,7 @@ contains
 
       if( .scfdata.using_ppzpp)then
 
-         DIE_IF(NOT present(ppApp),"wtf?")
+         ENSURE(present(ppApp),"wtf?")
 
          do i = 1,dim
          do j = 1,dim
@@ -3651,7 +3651,7 @@ contains
             fb = frst(b)
             lb = last(b)
 
-            G.make_normalised_density_gg(D(fa:la,fb:lb),x,y,z,.use_spherical_basis)
+            G.make_normalized_density_gg(D(fa:la,fb:lb),x,y,z,.use_spherical_basis)
 
          end
 
@@ -3708,7 +3708,7 @@ contains
             fb = frst(b)
             lb = last(b)
 
-            G.make_normalised_pDp_gg(T(fa:la,fb:lb),x,y,z,.use_spherical_basis)
+            G.make_normalized_pDp_gg(T(fa:la,fb:lb),x,y,z,.use_spherical_basis)
 
          end
 
@@ -3767,7 +3767,7 @@ contains
             fb = frst(b)
             lb = last(b)
 
-            G.make_normalised_ppDpp_gg(T(fa:la,fb:lb),x,y,z,.use_spherical_basis)
+            G.make_normalized_ppDpp_gg(T(fa:la,fb:lb),x,y,z,.use_spherical_basis)
 
          end
 
@@ -3785,250 +3785,6 @@ contains
       T.symmetric_reflect
 
       .BASE:put_debug(T,"make_primitive_ppDpp_matrix: T")
-
-   end
-
-   make_primitive_pppDp_matrix(T,x,y,z)
-   ! Calculate the primitive pDp (or pGGp) matrix "T" at x,y,z coors
-     T :: MAT{REAL}, OUT
-     x,y,z :: REAL, IN
-   ENSURE(.atom.created,  "no atom list")
-   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(T.is_square, "T must be square")
-   ENSURE(T.dim1==.n_prim, "wrong size, T")
-
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     nps,a,b,fa,la,fb,lb :: INT
-     G :: GAUSSIAN2
-   ! ccm,Tb :: MAT{REAL}*
-
-     ! Make the indexing arrays
-     .atom.make_primitive_limits(frst,last,at,l,ex)
-
-     ! Calculate the primitive integrals
-     nps = frst.dim
-     do a = 1,nps
-        G.a.set_l(l(a))
-        G.a.set_position(.atom(at(a)).position)
-        G.a.set_exponent(ex(a))
-        fa = frst(a); la = last(a)
-        do b = 1,a
-           G.b.set_l(l(b))
-           G.b.set_position(.atom(at(b)).position)
-           G.b.set_exponent(ex(b))
-           fb = frst(b); lb = last(b)
-           G.make_normalised_pppDp_gg(T(fa:la,fb:lb),x,y,z,.use_spherical_basis)
-        end
-     end
-
-     ! Clean up indexing arrays
-     ex.destroy; l.destroy; at.destroy
-     last.destroy; frst.destroy
-
-     ! Make a symmetric matrix
-     T.symmetric_reflect
-     .BASE:put_debug(T,"make_primitive_ppDpp_matrix: T")
-
-   end
-
-   make_primitive_pDppp_matrix(T,x,y,z)
-   ! Calculate the primitive pDp (or pGGp) matrix "T" at x,y,z coors
-     T :: MAT{REAL}, OUT
-     x,y,z :: REAL, IN
-   ENSURE(.atom.created,  "no atom list")
-   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(T.is_square, "T must be square")
-   ENSURE(T.dim1==.n_prim, "wrong size, T")
-
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     nps,a,b,fa,la,fb,lb :: INT
-     G :: GAUSSIAN2
-   ! ccm,Tb :: MAT{REAL}*
-
-     ! Make the indexing arrays
-     .atom.make_primitive_limits(frst,last,at,l,ex)
-
-     ! Calculate the primitive integrals
-     nps = frst.dim
-     do a = 1,nps
-        G.a.set_l(l(a))
-        G.a.set_position(.atom(at(a)).position)
-        G.a.set_exponent(ex(a))
-        fa = frst(a); la = last(a)
-        do b = 1,a
-           G.b.set_l(l(b))
-           G.b.set_position(.atom(at(b)).position)
-           G.b.set_exponent(ex(b))
-           fb = frst(b); lb = last(b)
-           G.make_normalised_pDppp_gg(T(fa:la,fb:lb),x,y,z,.use_spherical_basis)
-        end
-     end
-
-     ! Clean up indexing arrays
-     ex.destroy; l.destroy; at.destroy
-     last.destroy; frst.destroy
-
-     ! Make a symmetric matrix
-     T.symmetric_reflect
-     .BASE:put_debug(T,"make_primitive_ppDpp_matrix: T")
-
-   end
-
-   make_primitive_ppDpp_SO_matrix(Dx,Dy,Dz,x,y,z)
-   ! Calculate the primitive pDp (or pGGp) matrix "T" at x,y,z coors
-     Dx,Dy,Dz :: MAT{REAL}, OUT
-     x,y,z :: REAL, IN
-   ENSURE(.atom.created,  "no atom list")
-   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(Dx.is_square, "density SOx must be square")
-   ENSURE(Dx.dim1==.n_prim, "wrong size, density SOx")
-   ENSURE(Dy.is_square, "density SOy must be square")
-   ENSURE(Dy.dim1==.n_prim, "wrong size, density SOy")
-   ENSURE(Dz.is_square, "density SOz must be square")
-   ENSURE(Dz.dim1==.n_prim, "wrong size, density SOz")
-
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     nps,a,b,fa,la,fb,lb :: INT
-     G :: GAUSSIAN2
-   ! ccm,Tb :: MAT{REAL}*
-
-     ! Make the indexing arrays
-     .atom.make_primitive_limits(frst,last,at,l,ex)
-
-     ! Calculate the primitive integrals
-     nps = frst.dim
-     do a = 1,nps
-        G.a.set_l(l(a))
-        G.a.set_position(.atom(at(a)).position)
-        G.a.set_exponent(ex(a))
-        fa = frst(a); la = last(a)
-        do b = 1,a
-           G.b.set_l(l(b))
-           G.b.set_position(.atom(at(b)).position)
-           G.b.set_exponent(ex(b))
-           fb = frst(b); lb = last(b)
-           G.make_normalised_ppDpp_SO_gg(Dx(fa:la,fb:lb),Dy(fa:la,fb:lb),Dz(fa:la,fb:lb),x,y,z,.use_spherical_basis)
-        end
-     end
-
-     ! Clean up indexing arrays
-     ex.destroy; l.destroy; at.destroy
-     last.destroy; frst.destroy
-
-     ! Make a symmetric matrix
-     Dx.antisymmetric_reflect
-     Dy.antisymmetric_reflect
-     Dz.antisymmetric_reflect
-     .BASE:put_debug(Dx,"make_primitive_pDp_SO_matrix: Dx")
-     .BASE:put_debug(Dy,"make_primitive_pDp_SO_matrix: Dy")
-     .BASE:put_debug(Dz,"make_primitive_pDp_SO_matrix: Dz")
-
-   end
-
-   make_primitive_pppDp_SO_matrix(Dx,Dy,Dz,x,y,z)
-   ! Calculate the primitive pDp (or pGGp) matrix "T" at x,y,z coors
-     Dx,Dy,Dz :: MAT{REAL}, OUT
-     x,y,z :: REAL, IN
-   ENSURE(.atom.created,  "no atom list")
-   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(Dx.is_square, "density SOx must be square")
-   ENSURE(Dx.dim1==.n_prim, "wrong size, density SOx")
-   ENSURE(Dy.is_square, "density SOy must be square")
-   ENSURE(Dy.dim1==.n_prim, "wrong size, density SOy")
-   ENSURE(Dz.is_square, "density SOz must be square")
-   ENSURE(Dz.dim1==.n_prim, "wrong size, density SOz")
-
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     nps,a,b,fa,la,fb,lb :: INT
-     G :: GAUSSIAN2
-   ! ccm,Tb :: MAT{REAL}*
-
-     ! Make the indexing arrays
-     .atom.make_primitive_limits(frst,last,at,l,ex)
-
-     ! Calculate the primitive integrals
-     nps = frst.dim
-     do a = 1,nps
-        G.a.set_l(l(a))
-        G.a.set_position(.atom(at(a)).position)
-        G.a.set_exponent(ex(a))
-        fa = frst(a); la = last(a)
-        do b = 1,a
-           G.b.set_l(l(b))
-           G.b.set_position(.atom(at(b)).position)
-           G.b.set_exponent(ex(b))
-           fb = frst(b); lb = last(b)
-           G.make_normalised_pppDp_SO_gg(Dx(fa:la,fb:lb),Dy(fa:la,fb:lb),Dz(fa:la,fb:lb),x,y,z,.use_spherical_basis)
-        end
-     end
-
-     ! Clean up indexing arrays
-     ex.destroy; l.destroy; at.destroy
-     last.destroy; frst.destroy
-
-     ! Make a symmetric matrix
-     Dx.antisymmetric_reflect
-     Dy.antisymmetric_reflect
-     Dz.antisymmetric_reflect
-     .BASE:put_debug(Dx,"make_primitive_pDp_SO_matrix: Dx")
-     .BASE:put_debug(Dy,"make_primitive_pDp_SO_matrix: Dy")
-     .BASE:put_debug(Dz,"make_primitive_pDp_SO_matrix: Dz")
-
-   end
-
-   make_primitive_pDppp_SO_matrix(Dx,Dy,Dz,x,y,z)
-   ! Calculate the primitive pDp (or pGGp) matrix "T" at x,y,z coors
-     Dx,Dy,Dz :: MAT{REAL}, OUT
-     x,y,z :: REAL, IN
-   ENSURE(.atom.created,  "no atom list")
-   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(Dx.is_square, "density SOx must be square")
-   ENSURE(Dx.dim1==.n_prim, "wrong size, density SOx")
-   ENSURE(Dy.is_square, "density SOy must be square")
-   ENSURE(Dy.dim1==.n_prim, "wrong size, density SOy")
-   ENSURE(Dz.is_square, "density SOz must be square")
-   ENSURE(Dz.dim1==.n_prim, "wrong size, density SOz")
-
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     nps,a,b,fa,la,fb,lb :: INT
-     G :: GAUSSIAN2
-   ! ccm,Tb :: MAT{REAL}*
-
-     ! Make the indexing arrays
-     .atom.make_primitive_limits(frst,last,at,l,ex)
-
-     ! Calculate the primitive integrals
-     nps = frst.dim
-     do a = 1,nps
-        G.a.set_l(l(a))
-        G.a.set_position(.atom(at(a)).position)
-        G.a.set_exponent(ex(a))
-        fa = frst(a); la = last(a)
-        do b = 1,a
-           G.b.set_l(l(b))
-           G.b.set_position(.atom(at(b)).position)
-           G.b.set_exponent(ex(b))
-           fb = frst(b); lb = last(b)
-           G.make_normalised_pDppp_SO_gg(Dx(fa:la,fb:lb),Dy(fa:la,fb:lb),Dz(fa:la,fb:lb),x,y,z,.use_spherical_basis)
-        end
-     end
-
-     ! Clean up indexing arrays
-     ex.destroy; l.destroy; at.destroy
-     last.destroy; frst.destroy
-
-     ! Make a symmetric matrix
-     Dx.antisymmetric_reflect
-     Dy.antisymmetric_reflect
-     Dz.antisymmetric_reflect
-     .BASE:put_debug(Dx,"make_primitive_pDp_SO_matrix: Dx")
-     .BASE:put_debug(Dy,"make_primitive_pDp_SO_matrix: Dy")
-     .BASE:put_debug(Dz,"make_primitive_pDp_SO_matrix: Dz")
 
    end
 
@@ -4075,7 +3831,7 @@ contains
             fb = frst(b)
             lb = last(b)
 
-            G.make_normalised_pDp_SO_gg(Dx(fa:la,fb:lb),Dy(fa:la,fb:lb),Dz(fa:la,fb:lb),x,y,z,.use_spherical_basis)
+            G.make_normalized_pDp_SO_gg(Dx(fa:la,fb:lb),Dy(fa:la,fb:lb),Dz(fa:la,fb:lb),x,y,z,.use_spherical_basis)
 
          end
       
@@ -4096,210 +3852,6 @@ contains
       .BASE:put_debug(Dx,"make_primitive_pDp_SO_matrix: Dx")
       .BASE:put_debug(Dy,"make_primitive_pDp_SO_matrix: Dy")
       .BASE:put_debug(Dz,"make_primitive_pDp_SO_matrix: Dz")
-
-   end
-
-   make_primitive_pgpg_matrix(grid,x,y,z)
-   ! Calculate the primitive ft matrix for a given hkl
-      grid :: MAT{REAL}
-      x,y,z :: REAL, IN 
-!   ENSURE(.atom.created,  "no atom list")
-!   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(grid.is_square, "ft must be square")
-   ENSURE(grid.dim1==.n_prim, "wrong size, ft")
-     
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     grid_ab :: MAT{REAL}*
-     nps,a,b,fa,la,fb,lb :: INT
-     G :: GAUSSIAN2
-     ! Make the indexing arrays
-     .atom.make_primitive_limits(frst,last,at,l,ex)
-
-  !   ! Calculate the primitive integrals
-     nps = frst.dim
-     grid = ZERO
-     do a = 1,nps
-        G.a.set_l(l(a))
-        G.a.set_position(.atom(at(a)).position)
-        G.a.set_exponent(ex(a))
-        fa = frst(a); la = last(a)
-        do b = 1,a
-           G.b.set_l(l(b))
-           G.b.set_position(.atom(at(b)).position)
-           G.b.set_exponent(ex(b))
-           fb = frst(b); lb = last(b)
-           
-            grid_ab.create(la-fa+1,lb-fb+1)
-            grid_ab=ZERO
-            
-            G.make_normalised_pDp_gg(grid_ab,x,y,z,.use_spherical_basis) ! cleaner newer version
-
-            !perhaps the thermal smearing should come after building
-            !the whole sf-matrix
-            grid(fa:la,fb:lb)=grid_ab
-           
-            grid_ab.destroy
-           
-        end
-     end
-
-     ! Clean up indexing arrays
-     ex.destroy; l.destroy; at.destroy
-     last.destroy; frst.destroy
-
-     ! Make a symmetric matrix
-      grid.symmetric_reflect
-!    do a = 1,nps
-!      p=real(ft(a,a))
-!      ft(a,a)=(ZERO,ZERO)
-!      ft(a,a)=p
-!    end do 
-
-     ! Make a hermitian matrix
- !     ft.make_hermitian
-
-     ! Debug, turn on with debug_on "key"
-     .BASE:put_debug(grid,  "make_primitive_pgpg_matrix: grid")
-
-     ! Test
-   ! .make_fd_DKH_matrix(T,SOx,SOy,SOz)
-
-   end
-
-   make_primitive_p2gg_matrix(grid,x,y,z)
-   ! Calculate the primitive ft matrix for a given hkl
-      grid :: MAT{REAL}
-      x,y,z :: REAL, IN 
-!   ENSURE(.atom.created,  "no atom list")
-!   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(grid.is_square, "ft must be square")
-   ENSURE(grid.dim1==.n_prim, "wrong size, ft")
-     
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     grid_ab :: MAT{REAL}*
-     nps,a,b,fa,la,fb,lb :: INT
-     G :: GAUSSIAN2
-     ! Make the indexing arrays
-     .atom.make_primitive_limits(frst,last,at,l,ex)
-
-  !   ! Calculate the primitive integrals
-     nps = frst.dim
-     grid = ZERO
-     do a = 1,nps
-        G.a.set_l(l(a))
-        G.a.set_position(.atom(at(a)).position)
-        G.a.set_exponent(ex(a))
-        fa = frst(a); la = last(a)
-        do b = 1,a
-           G.b.set_l(l(b))
-           G.b.set_position(.atom(at(b)).position)
-           G.b.set_exponent(ex(b))
-           fb = frst(b); lb = last(b)
-           
-            grid_ab.create(la-fa+1,lb-fb+1)
-            grid_ab=ZERO
-            
-            G.make_normalised_ppD_gg(grid_ab,x,y,z,.use_spherical_basis) ! cleaner newer version
-
-            !perhaps the thermal smearing should come after building
-            !the whole sf-matrix
-            grid(fa:la,fb:lb)=grid_ab
-           
-            grid_ab.destroy
-           
-        end
-     end
-
-     ! Clean up indexing arrays
-     ex.destroy; l.destroy; at.destroy
-     last.destroy; frst.destroy
-
-     ! Make a symmetric matrix
-      grid.symmetric_reflect
-!    do a = 1,nps
-!      p=real(ft(a,a))
-!      ft(a,a)=(ZERO,ZERO)
-!      ft(a,a)=p
-!    end do 
-
-     ! Make a hermitian matrix
- !     ft.make_hermitian
-
-     ! Debug, turn on with debug_on "key"
-     .BASE:put_debug(grid,  "make_primitive_p2gg_matrix: grid")
-
-     ! Test
-   ! .make_fd_DKH_matrix(T,SOx,SOy,SOz)
-
-   end
-
-   make_primitive_gp2g_matrix(grid,x,y,z)
-   ! Calculate the primitive ft matrix for a given hkl
-      grid :: MAT{REAL}
-      x,y,z :: REAL, IN 
-!   ENSURE(.atom.created,  "no atom list")
-!   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(grid.is_square, "ft must be square")
-   ENSURE(grid.dim1==.n_prim, "wrong size, ft")
-     
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     grid_ab :: MAT{REAL}*
-     nps,a,b,fa,la,fb,lb :: INT
-     G :: GAUSSIAN2
-     ! Make the indexing arrays
-     .atom.make_primitive_limits(frst,last,at,l,ex)
-
-  !   ! Calculate the primitive integrals
-     nps = frst.dim
-     grid = ZERO
-     do a = 1,nps
-        G.a.set_l(l(a))
-        G.a.set_position(.atom(at(a)).position)
-        G.a.set_exponent(ex(a))
-        fa = frst(a); la = last(a)
-        do b = 1,a
-           G.b.set_l(l(b))
-           G.b.set_position(.atom(at(b)).position)
-           G.b.set_exponent(ex(b))
-           fb = frst(b); lb = last(b)
-           
-            grid_ab.create(la-fa+1,lb-fb+1)
-            grid_ab=ZERO
-            
-            G.make_normalised_Dpp_gg(grid_ab,x,y,z,.use_spherical_basis) ! cleaner newer version
-
-            !perhaps the thermal smearing should come after building
-            !the whole sf-matrix
-            grid(fa:la,fb:lb)=grid_ab
-           
-            grid_ab.destroy
-           
-        end
-     end
-
-     ! Clean up indexing arrays
-     ex.destroy; l.destroy; at.destroy
-     last.destroy; frst.destroy
-
-     ! Make a symmetric matrix
-      grid.symmetric_reflect
-!    do a = 1,nps
-!      p=real(ft(a,a))
-!      ft(a,a)=(ZERO,ZERO)
-!      ft(a,a)=p
-!    end do 
-
-     ! Make a hermitian matrix
- !     ft.make_hermitian
-
-     ! Debug, turn on with debug_on "key"
-     .BASE:put_debug(grid,  "make_primitive_p2gg_matrix: grid")
-
-     ! Test
-   ! .make_fd_DKH_matrix(T,SOx,SOy,SOz)
 
    end
 
@@ -4344,7 +3896,7 @@ contains
            G.b.set_position(.atom(at(b)).position)
            G.b.set_exponent(ex(b))
            fb = frst(b); lb = last(b); nb = lb - fb + 1
-           G.make_normalised_G_overlap_ints(Zb(fa:la,fb:lb),atom.position,neta,.use_spherical_basis)   
+           G.make_normalized_G_overlap_ints(Zb(fa:la,fb:lb),atom.position,neta,.use_spherical_basis)   
            end
         end
 
@@ -4405,7 +3957,7 @@ contains
            fb = frst(b); lb = last(b); nb = lb - fb + 1
            d.create(na,nb);dx.create(na,nb);dy.create(na,nb);dz.create(na,nb)
            d=ZERO;dx=ZERO;dy=ZERO;dz=ZERO
-            G.make_normalised_pGp_overlap_ints(d,dx,dy,dz,ap,neta,usb)   
+            G.make_normalized_pGp_overlap_ints(d,dx,dy,dz,ap,neta,usb)   
             gg(fa:la,fb:lb)=d
             ggx(fa:la,fb:lb)=dx
             ggy(fa:la,fb:lb)=dy
@@ -4430,12 +3982,9 @@ contains
       ap.destroy
    end
 
-   make_primitive_dEdR_NA_matrix(NAI,cn)
-   ! Calculate the primitive dEdR integrals for num diff,
-   ! i.e. the diferentiation of nuclear potential with respect to
-   ! the size of the nucleus
+   make_primitive_dEdR_NA_matrix(NAI)
+   ! Calculate the primitive dEdR integrals for num diff
       NAI :: MAT{REAL}
-      cn :: INT
     ENSURE(.atom.created,  "no atom list")
     ENSURE(.basis_info_made, "no basis info")
     ENSURE(NAI.is_square, "T must be square")
@@ -4467,18 +4016,17 @@ contains
            fb = frst(b); lb = last(b); nb = lb - fb + 1
             NAc.create(na,nb,4)
 !           do c = 1,.n_atom
-          !  c=1 ! works only for nucleus numero uno
-            c=cn ! works for nucleus numero cn
+            c=1 ! works only for nucleus numero uno
             NAc=ZERO
             atom => .atom(c)
               select case (.nucleus_model)
                 case ("finite","gaussian")
                 neta= atom.atomic_number
     !       if (c==1) then
- G.make_normalised_finite_NA_ints(NAc(:,:,1),atom.position,neta,-2,.use_spherical_basis)
- G.make_normalised_finite_NA_ints(NAc(:,:,2),atom.position,neta,-1,.use_spherical_basis)
- G.make_normalised_finite_NA_ints(NAc(:,:,3),atom.position,neta, 1,.use_spherical_basis)
- G.make_normalised_finite_NA_ints(NAc(:,:,4),atom.position,neta, 2,.use_spherical_basis)
+ G.make_normalized_finite_NA_ints(NAc(:,:,1),atom.position,neta,-2,.use_spherical_basis)
+ G.make_normalized_finite_NA_ints(NAc(:,:,2),atom.position,neta,-1,.use_spherical_basis)
+ G.make_normalized_finite_NA_ints(NAc(:,:,3),atom.position,neta, 1,.use_spherical_basis)
+ G.make_normalized_finite_NA_ints(NAc(:,:,4),atom.position,neta, 2,.use_spherical_basis)
     !       end if
                 case default
            DIE("Unknown model of nucleus")     
@@ -4505,12 +4053,9 @@ contains
 
    end
 
-   make_primitive_dEdR_DKH_matrices(T,SOx,SOy,SOz,cn)
-   ! Calculate the primitive Douglas-Kroll-Hess type integrals
-   ! on the diferentiation of nuclear potential with respect to
-   ! the size of the nucleus
+   make_primitive_dEdR_DKH_matrices(T,SOx,SOy,SOz)
+   ! Calculate the primitive Douglas-Kroll-Hess integrals
       T,SOx,SOy,SOz :: MAT{REAL}
-      cn :: INT
    ENSURE(.atom.created,  "no atom list")
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(T.is_square, "T must be square")
@@ -4550,17 +4095,16 @@ contains
            SOzc.create(na,nb,4)
 !           do c = 1,.n_atom
            c = 1 ! works only for nucleus numero uno
-           c = cn ! works for nucleus numero cn
            Tc=ZERO;SOxc=ZERO;SOyc=ZERO;SOzc=ZERO
               atom => .atom(c)
               select case (.nucleus_model)
                 case ("finite","gaussian")
                 neta= atom.atomic_number
   !                 if (c==1) then
-  G.make_normalised_finite_DKH_ints(Tc(:,:,1),SOxc(:,:,1),SOyc(:,:,1),SOzc(:,:,1),atom.position,neta,-2,.use_spherical_basis)
-  G.make_normalised_finite_DKH_ints(Tc(:,:,2),SOxc(:,:,2),SOyc(:,:,2),SOzc(:,:,2),atom.position,neta,-1,.use_spherical_basis)
-  G.make_normalised_finite_DKH_ints(Tc(:,:,3),SOxc(:,:,3),SOyc(:,:,3),SOzc(:,:,3),atom.position,neta, 1,.use_spherical_basis)
-  G.make_normalised_finite_DKH_ints(Tc(:,:,4),SOxc(:,:,4),SOyc(:,:,4),SOzc(:,:,4),atom.position,neta, 2,.use_spherical_basis)
+  G.make_normalized_finite_DKH_ints(Tc(:,:,1),SOxc(:,:,1),SOyc(:,:,1),SOzc(:,:,1),atom.position,neta,-2,.use_spherical_basis)
+  G.make_normalized_finite_DKH_ints(Tc(:,:,2),SOxc(:,:,2),SOyc(:,:,2),SOzc(:,:,2),atom.position,neta,-1,.use_spherical_basis)
+  G.make_normalized_finite_DKH_ints(Tc(:,:,3),SOxc(:,:,3),SOyc(:,:,3),SOzc(:,:,3),atom.position,neta, 1,.use_spherical_basis)
+  G.make_normalized_finite_DKH_ints(Tc(:,:,4),SOxc(:,:,4),SOyc(:,:,4),SOzc(:,:,4),atom.position,neta, 2,.use_spherical_basis)
    !                end if
                 case default
            DIE("Unknown model of nucleus")     
@@ -4704,67 +4248,81 @@ contains
 
    get_G_overlap_nuc 
    ! The evaluation of electron density over the Gaussian nucleus 
-   !
-  MO,MOa,MOb :: MAT{REAL}*
-  CMO :: MAT{CPX}*
-  D,Da,Db :: MAT{REAL}*
-  CD :: MAT{CPX}*
-      stdout.text("routine: get_G_overlap_nuc")
+
+      MO,MOa,MOb :: MAT{REAL}*
+      CMO :: MAT{CPX}*
+      D,Da,Db :: MAT{REAL}*
+      CD :: MAT{CPX}*
+
       select case (.scfdata.scf_kind)
+
         case ("rhf","rks","xray_rks","xray_rhf","noninteracting-group-rhf")
-           ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+
+           ENSURE(.molecular_orbitals.restricted.created,"no MO's")
            ENSURE(.spin_multiplicity==1,"this is not a singlet state")
-             MO => .molecular_orbitals.restricted(:,1:.n_a)
-             D  => .density_matrix.restricted
-             D.to_scaled_product_of(MO,MO,fac=TWO,transpose_b=TRUE)
-            if (.scfdata.PCE_CORR) then
-               stdout.flush
-               stdout.text("The integrated rhf electron density (PCE corrected) at each nucleus:")
-               .::get_PCEc_G_overlap_on_nuc(D)
-            else
-               stdout.flush
-               stdout.text("The integrated rhf electron density (PCE contaminated) at each nucleus:")
-               .::get_G_overlap_on_nuc(D)
-            end if
-          case ("uhf","uks","xray_uhf","xray_uks", &
-             "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
-          ENSURE(.molecular_orbitals.created("unrestricted"),"no MO's")
-            MOa => .molecular_orbitals.alpha(:,1:.n_a)
-            MOb => .molecular_orbitals.beta(:,1:.n_b)
-            Da => .density_matrix.alpha
-            Db => .density_matrix.beta
-            Da.to_product_of(MOa,MOa,transpose_b=TRUE)
-            Db.to_product_of(MOb,MOb,transpose_b=TRUE)
-            if (.scfdata.PCE_CORR) then
-               stdout.flush
-               stdout.text("The integrated uhf ele and spin density (PCE corrected) at each nucleus:")
-               .::get_PCEc_G_overlap_on_nuc(Da,Db)
-            else
-               stdout.flush
-               stdout.text("The integrated uhf ele and spin density (PCE contaminated) at each nucleus:")
-               .::get_G_overlap_on_nuc(Da,Db)
-            end if
-      case ("gchf","xray_gchf")
-        ENSURE(.molecular_orbitals.created("general_complex"),"no MO's")
-        CMO => .molecular_orbitals.general_complex(:,1:.n_e)
-        CD => .density_matrix.general_complex
-        CD.to_product_of(CMO,CMO,dagger_b=TRUE)
-            if (.scfdata.PCE_CORR) then
-               stdout.flush
-               stdout.text("The integrated gchf electron density (PCE corrected) at each nucleus:")
-               .::get_PCEc_2cG_overlap_on_nuc(CD)
-            else
-               D.create(.n_bf,.n_bf)
-               D = CD(1:.n_bf,1:.n_bf) + CD(.n_bf+1:2*.n_bf,1:.n_bf)  
-               D = D + CD(1:.n_bf,1+.n_bf:2*.n_bf) + CD(.n_bf+1:2*.n_bf,1+.n_bf:2*.n_bf)  
-               stdout.flush
-               stdout.text("The integrated gchf electron density (PCE contaminated) at each nucleus:")
-               .::get_G_overlap_on_nuc(D)
-               D.destroy
-            end if
+
+           MO => .molecular_orbitals.restricted(:,1:.n_a)
+           D  => .density_matrix.restricted
+           D.to_scaled_product_of(MO,MO,fac=TWO,transpose_b=TRUE)
+
+           if (.scfdata.PCE_CORR) then
+              stdout.flush
+              stdout.text("The integrated rhf electron density (PCE corrected) at each nucleus:")
+              .::get_PCEc_G_overlap_on_nuc(D)
+           else
+              stdout.flush
+              stdout.text("The integrated rhf electron density (PCE contaminated) at each nucleus:")
+              .::get_G_overlap_on_nuc(D)
+           end if
+
+        case ("uhf","uks","xray_uhf","xray_uks", &
+              "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
+
+           ENSURE(.molecular_orbitals.alpha.created,"no MO's")
+           
+           MOa => .molecular_orbitals.alpha(:,1:.n_a)
+           MOb => .molecular_orbitals.beta(:,1:.n_b)
+           Da => .density_matrix.alpha
+           Db => .density_matrix.beta
+           Da.to_product_of(MOa,MOa,transpose_b=TRUE)
+           Db.to_product_of(MOb,MOb,transpose_b=TRUE)
+           if (.scfdata.PCE_CORR) then
+              stdout.flush
+              stdout.text("The integrated uhf ele and spin density (PCE corrected) at each nucleus:")
+              .::get_PCEc_G_overlap_on_nuc(Da,Db)
+           else
+              stdout.flush
+              stdout.text("The integrated uhf ele and spin density (PCE contaminated) at each nucleus:")
+              .::get_G_overlap_on_nuc(Da,Db)
+           end if
+
+        case ("gchf")
+
+           ENSURE(.molecular_orbitals.created("general_complex"),"no MO's")
+
+           CMO => .molecular_orbitals.general_complex(:,1:.n_e)
+           CD => .density_matrix.general_complex
+           CD.to_product_of(CMO,CMO,dagger_b=TRUE)
+
+           if (.scfdata.PCE_CORR) then
+              stdout.flush
+              stdout.text("The integrated gchf electron density (PCE corrected) at each nucleus:")
+              .::get_PCEc_2cG_overlap_on_nuc(CD)
+           else
+              D.create(.n_bf,.n_bf)
+              D = CD(1:.n_bf,1:.n_bf) + CD(.n_bf+1:2*.n_bf,1:.n_bf)  
+              D = D + CD(1:.n_bf,1+.n_bf:2*.n_bf) + CD(.n_bf+1:2*.n_bf,1+.n_bf:2*.n_bf)  
+              stdout.flush
+              stdout.text("The integrated gchf electron density (PCE contaminated) at each nucleus:")
+              .::get_G_overlap_on_nuc(D)
+              D.destroy
+           end if
+
         case default
-           DIE("unknown or not implemented SCF kind, "//trim(.scfdata.scf_kind))
-        end
+              DIE("unknown or not implemented SCF kind, "//trim(.scfdata.scf_kind))
+
+     end
+
    end
 
    get_G_overlap_on_nuc(D)
@@ -4781,55 +4339,41 @@ contains
 
       ! Calculate the primitive integrals
     !  n=.scfdata.nhf ! for numerical diff of energy by the change of the size of the nucleus
-
       select case (.nucleus_model)
          case ("finite","gaussian")
+      do c = 1,.n_atom
+         atom => .atom(c)
+         neta= atom.atomic_number 
+         Zb.create(.n_prim,.n_prim)
+         Zb = ZERO
 
-        stdout.flush
-        !stdout.text(" Weighted electron density in the Gaussian nucleus")
-        stdout.dash(int_fields=1,real_fields=1)
-        stdout.put("Atom" , int_width = TRUE)
-        stdout.put("rho_e")
-        stdout.flush
-        stdout.dash(int_fields=1,real_fields=1)
+         .::make_primitive_G_overlap_on_nuc(Zb,c)
 
-        do c = 1,.n_atom
-           atom => .atom(c)
-           neta= atom.atomic_number 
-           Zb.create(.n_prim,.n_prim)
-           Zb = ZERO
-
-           .::make_primitive_G_overlap_on_nuc(Zb,c)
-
-           ccm.create(.n_prim,.n_bf)
-           ccm=ZERO
-           Zc.create(.n_bf,.n_bf)
-           Zc=ZERO
-           .BASE:make_normalised_contraction_mx(ccm)
-           buco.create(.n_bf,.n_prim)
-           buco=ZERO
-           buco.to_product_of(ccm,Zb,transpose_a=TRUE)
-           Zb.destroy
-           Zc.to_product_of(buco,ccm)
-           buco.destroy
-           ccm.destroy
+     ccm.create(.n_prim,.n_bf)
+     ccm=ZERO
+     Zc.create(.n_bf,.n_bf)
+     Zc=ZERO
+     .BASE:make_normalized_contraction_mx(ccm)
+     buco.create(.n_bf,.n_prim)
+     buco=ZERO
+     buco.to_product_of(ccm,Zb,transpose_a=TRUE)
+     Zb.destroy
+     Zc.to_product_of(buco,ccm)
+     buco.destroy
+     ccm.destroy
        
-           gg=ZERO
-           do i=1,.n_bf
-           do j=1,.n_bf
-              gg = gg + D(j,i)*Zc(i,j)
-           end            
-           end            
-           stdout.put(c)
-           stdout.put(gg)
-           stdout.flush
+       gg=ZERO
+       do i=1,.n_bf
+         do j=1,.n_bf
+           gg = gg + D(j,i)*Zc(i,j)
+         end            
+       end            
+       stdout.put(c)
+       stdout.put(gg)
+       stdout.flush
 
-           Zc.destroy
-        end
-
-        stdout.dash(int_fields=1,real_fields=1)
-        stdout.flush
-
+     Zc.destroy
+      end
       case default
          DIE("Works only for the Gaussian nucleus model!")     
       end
@@ -4851,56 +4395,42 @@ contains
       ! Calculate the primitive integrals
       select case (.nucleus_model)
          case ("finite","gaussian")
+      do c = 1,.n_atom
+         atom => .atom(c)
+         neta= atom.atomic_number 
+         Zb.create(.n_prim,.n_prim)
+         Zb = ZERO
 
-        stdout.flush
-        !stdout.text(" Weighted electron density in the Gaussian nucleus")
-        stdout.dash(int_fields=1,real_fields=2)
-        stdout.put("Atom", int_width = TRUE)
-        stdout.put("rho_e")
-        stdout.put("rho_s")
-        stdout.flush
-        stdout.dash(int_fields=1,real_fields=2)
+         .::make_primitive_G_overlap_on_nuc(Zb,c)
 
-        do c = 1,.n_atom
-          atom => .atom(c)
-          neta= atom.atomic_number 
-          Zb.create(.n_prim,.n_prim)
-          Zb = ZERO
-
-           .::make_primitive_G_overlap_on_nuc(Zb,c)
-
-          ccm.create(.n_prim,.n_bf)
-          ccm=ZERO
-          Zc.create(.n_bf,.n_bf)
-          Zc=ZERO
-          .BASE:make_normalised_contraction_mx(ccm)
-          buco.create(.n_bf,.n_prim)
-          buco=ZERO
-          buco.to_product_of(ccm,Zb,transpose_a=TRUE)
-          Zb.destroy
-          Zc.to_product_of(buco,ccm)
-          buco.destroy
-          ccm.destroy
+     ccm.create(.n_prim,.n_bf)
+     ccm=ZERO
+     Zc.create(.n_bf,.n_bf)
+     Zc=ZERO
+     .BASE:make_normalized_contraction_mx(ccm)
+     buco.create(.n_bf,.n_prim)
+     buco=ZERO
+     buco.to_product_of(ccm,Zb,transpose_a=TRUE)
+     Zb.destroy
+     Zc.to_product_of(buco,ccm)
+     buco.destroy
+     ccm.destroy
        
-          gga=ZERO
-          ggb=ZERO
-          do i=1,.n_bf
-          do j=1,.n_bf
-            gga = gga + Da(j,i)*Zc(i,j)
-            ggb = ggb + Db(j,i)*Zc(i,j)
-          end            
-          end           
-          stdout.put(c)
-          stdout.put(gga+ggb)
-          stdout.put(gga-ggb)
-          stdout.flush
+       gga=ZERO
+       ggb=ZERO
+       do i=1,.n_bf
+         do j=1,.n_bf
+           gga = gga + Da(j,i)*Zc(i,j)
+           ggb = ggb + Db(j,i)*Zc(i,j)
+         end            
+       end           
+       stdout.put(c)
+       stdout.put(gga+ggb)
+       stdout.put(gga-ggb)
+       stdout.flush
 
-          Zc.destroy
-        end
-
-        stdout.dash(int_fields=1,real_fields=2)
-        stdout.flush
-
+     Zc.destroy
+      end
       case default
          DIE("Works only for the Gaussian nucleus model!")     
       end
@@ -4922,35 +4452,22 @@ contains
       Zb.create(.n_bf,.n_bf)
       select case (.nucleus_model)
          case ("finite","gaussian")
-
-        stdout.flush
-        !stdout.text(" Weighted electron density in the Gaussian nucleus")
-        stdout.dash(int_fields=1,real_fields=1)
-        stdout.put("Atom", int_width = TRUE)
-        stdout.put("rho_e")
-        stdout.flush
-        stdout.dash(int_fields=1,real_fields=1)
-
-        do c = 1,.n_atom
-          Zb = ZERO
+      do c = 1,.n_atom
+         Zb = ZERO
         
-          .::make_1c_PCEc_G_overlap_on_nuc(Zb,c)
+         .::make_1c_PCEc_G_overlap_on_nuc(Zb,c)
 
-          gg=ZERO
-          do i=1,.n_bf
-          do j=1,.n_bf
-            gg = gg + D(j,i)*Zb(i,j)
-          end            
-          end            
-          stdout.put(c)
-          stdout.put(gg)
-          stdout.flush
+       gg=ZERO
+       do i=1,.n_bf
+         do j=1,.n_bf
+           gg = gg + D(j,i)*Zb(i,j)
+         end            
+       end            
+       stdout.put(c)
+       stdout.put(gg)
+       stdout.flush
 
-        end
-
-        stdout.dash(int_fields=1,real_fields=1)
-        stdout.flush
-
+      end
       case default
          DIE("Works only for the Gaussian nucleus model!")     
       end
@@ -4972,40 +4489,26 @@ contains
       ! Calculate the primitive integrals
       Zb.create(.n_bf,.n_bf)
       select case (.nucleus_model)
-        case ("finite","gaussian")
-
-        stdout.flush
-        !stdout.text(" Weighted electron density in the Gaussian nucleus")
-        stdout.dash(int_fields=1,real_fields=2)
-        stdout.put("Atom" , int_width = TRUE)
-        stdout.put("rho_e")
-        stdout.put("rho_s")
-        stdout.flush
-        stdout.dash(int_fields=1,real_fields=2)
-
-        do c = 1,.n_atom
-          Zb = ZERO
+         case ("finite","gaussian")
+      do c = 1,.n_atom
+         Zb = ZERO
         
-          .::make_1c_PCEc_G_overlap_on_nuc(Zb,c)
+         .::make_1c_PCEc_G_overlap_on_nuc(Zb,c)
 
-          gga=ZERO
-          ggb=ZERO
-          do i=1,.n_bf
-          do j=1,.n_bf
-            gga = gga + Da(j,i)*Zb(i,j)
-            ggb = ggb + Db(j,i)*Zb(i,j)
-          end            
-          end            
-          stdout.put(c)
-          stdout.put(gga+ggb)
-          stdout.put(gga-ggb)
-          stdout.flush
+       gga=ZERO
+       ggb=ZERO
+       do i=1,.n_bf
+         do j=1,.n_bf
+           gga = gga + Da(j,i)*Zb(i,j)
+           ggb = ggb + Db(j,i)*Zb(i,j)
+         end            
+       end            
+       stdout.put(c)
+       stdout.put(gga+ggb)
+       stdout.put(gga-ggb)
+       stdout.flush
 
-        end
-
-        stdout.dash(int_fields=1,real_fields=2)
-        stdout.flush
-
+      end
       case default
          DIE("Works only for the Gaussian nucleus model!")     
       end
@@ -5029,36 +4532,23 @@ contains
       Zc.create(2*.n_bf,2*.n_bf)
       select case (.nucleus_model)
          case ("finite","gaussian")
-        do c = 1,.n_atom
-          Zc = (ZERO,ZERO)
-
-          stdout.flush
-          !stdout.text(" Weighted electron density in the Gaussian nucleus")
-          stdout.dash(int_fields=1,real_fields=2)
-          stdout.put("Atom" , int_width = TRUE)
-          stdout.put("rho_e")
-          stdout.put("rho_s")
-          stdout.flush
-          stdout.dash(int_fields=1,real_fields=2)
+      do c = 1,.n_atom
+         Zc = (ZERO,ZERO)
         
-          .::make_2c_PCEc_G_overlap_on_nuc(Zc,c)
+         .::make_2c_PCEc_G_overlap_on_nuc(Zc,c)
 
-          ggc=(ZERO,ZERO)
-          do i=1,2*.n_bf
-          do j=1,2*.n_bf
-            ggc = ggc + CD(j,i)*Zc(i,j)
-          end            
-          end
-          gg=real(ggc)
-          stdout.put(c)
-          stdout.put(ggc)
-          stdout.flush
+       ggc=(ZERO,ZERO)
+       do i=1,2*.n_bf
+         do j=1,2*.n_bf
+           ggc = ggc + CD(j,i)*Zc(i,j)
+         end            
+       end
+       gg=real(ggc)
+       stdout.put(c)
+       stdout.put(ggc)
+       stdout.flush
 
-        end
-
-        stdout.dash(int_fields=1,real_fields=2)
-        stdout.flush
-
+      end
       case default
          DIE("Works only for the Gaussian nucleus model!")     
       end
@@ -5555,7 +5045,7 @@ contains
 
 !!! moving back to contracted basis sets 
      M.create(.n_prim,.n_bf)
-     .BASE:make_normalised_contraction_mx(M)
+     .BASE:make_normalized_contraction_mx(M)
      buco.create(.n_bf,.n_prim)
      buco.to_product_of(M,R,transpose_a=TRUE)
      R.destroy
@@ -5704,7 +5194,7 @@ contains
 !!! moving back to contracted basis sets 
      M.create(.n_prim,.n_bf)
      M=ZERO
-    .BASE:make_normalised_contraction_mx(M)
+    .BASE:make_normalized_contraction_mx(M)
     .BASE:put_debug(M,"M matrix")
      M2.create(2*.n_prim,2*.n_prim)
      M2=(ZERO,ZERO)
@@ -5731,55 +5221,64 @@ contains
    ! this is kevin
    ! here begins the PCE correction of density
    ! welcome
-   !
-  MO,MOa,MOb :: MAT{REAL}*
-  CMO :: MAT{CPX}*
-  D,Da,Db :: MAT{REAL}*
-  CD :: MAT{CPX}*
-     select case (.scfdata.scf_kind)
-       case ("rhf","rks","xray_rks","xray_rhf","noninteracting-group-rhf")
-           ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
-           ENSURE(.spin_multiplicity==1,"this is not a singlet state")
+      MO,MOa,MOb :: MAT{REAL}*
+      CMO :: MAT{CPX}*
+      D,Da,Db :: MAT{REAL}*
+      CD :: MAT{CPX}*
+
+      select case (.scfdata.scf_kind)
+
+         case ("rhf","rks","xray_rks","xray_rhf","noninteracting-group-rhf")
+         
+            ENSURE(.molecular_orbitals.restricted.created,"no MO's")
+            ENSURE(.spin_multiplicity==1,"this is not a singlet state")
+         
             MO => .molecular_orbitals.restricted(:,1:.n_a)
             D  => .density_matrix.restricted
+         
             D.to_scaled_product_of(MO,MO,fac=TWO,transpose_b=TRUE)
-            stdout.flush
-            stdout.flush
-            stdout.text("Effective electron density via get_dEdR_IOTC")
+         
             .::get_dEdR_IOTC(D)
-          case ("uhf","uks","xray_uhf","xray_uks", &
-             "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
-            ENSURE(.molecular_orbitals.created("unrestricted"),"no MO's")
-            MOa => .molecular_orbitals.alpha(:,1:.n_a)
-            MOb => .molecular_orbitals.beta(:,1:.n_b)
-            Da => .density_matrix.alpha
-            Db => .density_matrix.beta
-            Da.to_product_of(MOa,MOa,transpose_b=TRUE)
-            Db.to_product_of(MOb,MOb,transpose_b=TRUE)
-            D.create(.n_bf,.n_bf)
-            D=Da+Db
-            stdout.flush
-            stdout.flush
-            stdout.text("Effective electron density via get_dEdR_IOTC")
-            .::get_dEdR_IOTC(D)
-            D=Da-Db
-            stdout.flush
-            stdout.flush
-            stdout.text("Effective spin density via get_dEdR_IOTC")
-            .::get_dEdR_IOTC(D)
-            D.destroy
-      case ("gchf","xray_gchf")
+         
+         case ("uhf","uks","xray_uhf","xray_uks", &
+               "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
+         
+             ENSURE(.molecular_orbitals.alpha.created,"no MO's")
+         
+             MOa => .molecular_orbitals.alpha(:,1:.n_a)
+             MOb => .molecular_orbitals.beta(:,1:.n_b)
+             Da => .density_matrix.alpha
+             Db => .density_matrix.beta
+         
+             Da.to_product_of(MOa,MOa,transpose_b=TRUE)
+             Db.to_product_of(MOb,MOb,transpose_b=TRUE)
+         
+             D.create(.n_bf,.n_bf)
+         
+             D = Da + Db
+             stdout.text("electron density")
+             .::get_dEdR_IOTC(D)
+             D= Da - Db
+             stdout.text("spin density")
+             .::get_dEdR_IOTC(D)
+             D.destroy
+
+         case ("gchf")
+
             ENSURE(.molecular_orbitals.created("general_complex"),"no MO's")
+            
             CMO => .molecular_orbitals.general_complex(:,1:.n_e)
-            CD => .density_matrix.general_complex
+            CD  => .density_matrix.general_complex
+
             CD.to_product_of(CMO,CMO,dagger_b=TRUE)
-            stdout.flush
-            stdout.flush
-            stdout.text("Effective electron density via get_dEdR_IOTC")
+
             .::get_dEdR_IOTC(CD)
-       case default
-          DIE("unknown or not implemented SCF kind, "//trim(.scfdata.scf_kind))
-       end
+
+         case default
+            DIE("unknown or not implemented SCF kind, "//trim(.scfdata.scf_kind))
+
+      end
+
    end
 
    get_dEdR_IOTC(D)
@@ -5790,6 +5289,7 @@ contains
    ENSURE(.scfdata.relativity_kind=="iotc", "works only with iotc")
 
       c,i,j,nc :: INT
+      G :: GAUSSIAN2
       atom :: ATOM*
       gg,eta :: REAL
       Zb :: MAT{REAL}*
@@ -5798,30 +5298,28 @@ contains
       Zb.create(.n_bf,.n_bf)
       select case (.nucleus_model)
          case ("finite","gaussian")
-
-         do c = 1,.atom.dim
-           Zb = ZERO
+         Zb = ZERO
         
-           .::make_1c_dEdR_IOTC(Zb,c)
+         .::make_1c_dEdR_IOTC(Zb)
 
-           gg=ZERO
-           do i=1,.n_bf
-           do j=1,.n_bf
-             gg = gg + D(j,i)*Zb(i,j)
-           end            
-           end
+       gg=ZERO
+       do i=1,.n_bf
+         do j=1,.n_bf
+           gg = gg + D(j,i)*Zb(i,j)
+         end            
+       end 
+       stdout.text("dE/dR =")
+       stdout.put(gg)
+       stdout.flush
 
-           stdout.show("nucleus =",c)
-           stdout.show("dE/dR =",gg)
-
-        !   c=1 
-           atom => .atom(c)
-           nc=atom.atomic_number
-           eta = GAUSSIAN2::nucleus_eta(nc)
-           gg=gg*THREE/FOUR/PI/nc/sqrt(THREE/TWO/eta)
-           stdout.show("rho =",gg)
-           stdout.flush
-        end
+       c=1 
+       atom => .atom(c)
+       nc=atom.atomic_number
+       G.get_nucleus_eta(eta,nc)
+       gg=gg*THREE/FOUR/PI/nc/sqrt(THREE/TWO/eta)
+       stdout.text("rho =")
+       stdout.put(gg)
+       stdout.flush
       case default
          DIE("Works only for the Gaussian nucleus model!")     
       end
@@ -5837,43 +5335,40 @@ contains
    ENSURE(.scfdata.relativity_kind=="iotc", "works only with iotc")
 
       c,i,j,nc :: INT
+      G :: GAUSSIAN2
       atom :: ATOM*
       gg :: CPX
       eta :: REAL
       Zb :: MAT{CPX}* ! ????
 
-      ! info
-      ! stdout.text("  real & imaginary parts are shown,")
-      ! stdout.text("  imaginary part should be zero !!!")
-      ! stdout.flush
-
       ! Calculate the primitive integrals
       Zb.create(2*.n_bf,2*.n_bf)
       select case (.nucleus_model)
          case ("finite","gaussian")
-
-         do c = 1,.atom.dim
-         Zb = (ZERO,ZERO)
+        Zb = (ZERO,ZERO)
         
-         .::make_2c_dEdR_IOTC(Zb,c)
+       .::make_2c_dEdR_IOTC(Zb)
 
-         gg=ZERO
-         do i=1,.n_bf*2
+       gg=ZERO
+       do i=1,.n_bf*2
          do j=1,.n_bf*2
            gg = gg + CD(j,i)*Zb(i,j)
          end            
-         end 
-         stdout.show("nucleus =",c)
-         stdout.show("dE/dR =",real(gg))
+       end 
+       stdout.text("dE/dR =")
+       stdout.put(gg)
+       stdout.text("  real & imaginary part")
+       stdout.text("  imaginary part should be zero !!!")
+       stdout.flush
 
-         !c=1 
-         atom => .atom(c)
-         nc=atom.atomic_number
-         eta = GAUSSIAN2::nucleus_eta(nc)
-         gg=gg*THREE/FOUR/PI/nc/sqrt(THREE/TWO/eta)
-         stdout.show("rho =",real(gg))
-         stdout.flush
-         end do
+       c=1 
+       atom => .atom(c)
+       nc=atom.atomic_number
+       G.get_nucleus_eta(eta,nc)
+       gg=gg*THREE/FOUR/PI/nc/sqrt(THREE/TWO/eta)
+       stdout.text("rho =")
+       stdout.put(real(gg))
+       stdout.flush
       case default
          DIE("Works only for the Gaussian nucleus model!")     
       end
@@ -5881,11 +5376,10 @@ contains
 
    end
 
-   make_1c_dEdR_IOTC(Zb,cn)
-   ! the matrix representation of the differentiation V(nuc-ele)
-   ! with respect to the size of the nucleus
+   make_1c_dEdR_IOTC(Zb)
+   ! the density_grid will be filled with the values of density
+   ! given by the coordinates in the pt matrix
     Zb :: MAT{REAL} , OUT
-    cn :: INT , IN
     n_gcm :: INT
     i,j,k :: INT
     c,alpha,alpha2 :: REAL
@@ -6023,7 +5517,7 @@ contains
 ! point for point the density will be on and on calculated
 ! I am sincerely sorry, but the code comparing to it's non-relativistic
 ! counter part really not effective :(
-     .::make_dEdR_IOTC_PCE_off(GG,Yr,YU,Ap,bp,p,m_out,n_gcm,S,O,cn)
+     .::make_dEdR_IOTC_PCE_off(GG,Yr,YU,Ap,bp,p,m_out,n_gcm,S,O)
 
     Zb=GG
 
@@ -6041,11 +5535,10 @@ contains
 
    end
 
-   make_2c_dEdR_IOTC(Zb,cn)
-   ! the matrix representation of the differentiation V(nuc-ele)
-   ! with respect to the size of the nucleus
+   make_2c_dEdR_IOTC(Zb)
+   ! the density_grid will be filled with the values of density
+   ! given by the coordinates in the pt matrix
     Zb :: MAT{CPX} , OUT
-    cn :: INT , IN
     n_gcm :: INT
     i,j :: INT
     fac,c,alpha,alpha2,eps :: REAL
@@ -6256,7 +5749,7 @@ contains
 ! I am sincerely sorry, but the code is comparing to it's non-relativistic
 ! counter part really not effective :(
 
-     .::make_dEdR_IOTC_PCE_SO_off(GG22,Yr,YU,Ap,bp,p,n_gcm,S,O,cn)
+     .::make_dEdR_IOTC_PCE_SO_off(GG22,Yr,YU,Ap,bp,p,n_gcm,S,O)
 
      Zb=GG22
     
@@ -6273,16 +5766,16 @@ contains
      m_out.destroy
    end
   
-   make_dEdR_IOTC_PCE_off(GG,Yr,YU,Ap,bp,p,m_out,n_gcm,S,O,cn)
-   ! correct the  picture change for the differentiation of V(nuc-ele) 
-   ! with respect to the size of the nucleus 
+   make_dEdR_IOTC_PCE_off(GG,Yr,YU,Ap,bp,p,m_out,n_gcm,S,O)
+   ! correct the picture change
+   ! g is the electron density in a given point with nucleus nc 
+   ! this routine is based on the make_r_DKH_matrix(H) routine
         GG :: MAT{REAL} , OUT
         Yr,YU :: MAT{REAL} , IN
         Ap,bp,p :: VEC{REAL} , IN
         m_out :: MAT{INT} , IN
         n_gcm :: INT , IN
         S,O :: MAT{REAL} , IN
-        cn :: INT , IN
 
         i,j :: INT   
         R :: MAT{REAL}*  
@@ -6295,7 +5788,7 @@ contains
      R.create(.n_prim,.n_prim)
      R=ZERO
 ! it do not exist in the moment
-     .::make_primitive_dEdR_NA_matrix(R,cn)
+     .::make_primitive_dEdR_NA_matrix(R)
      D.create(n_gcm,n_gcm)
      D=ZERO
 ! put the potential energy matrix into the n_gcm non-redundant space
@@ -6308,7 +5801,7 @@ contains
 !!!  PDP MATRIX  !!!
       R=ZERO
      Rx.create(.n_prim,.n_prim);Ry.create(.n_prim,.n_prim);Rz.create(.n_prim,.n_prim)
-    .::make_primitive_dEdR_DKH_matrices(R,Rx,Ry,Rz,cn)
+    .::make_primitive_dEdR_DKH_matrices(R,Rx,Ry,Rz)
      Rx.destroy;Ry.destroy;Rz.destroy
 
      PDP.create(n_gcm,n_gcm)
@@ -6370,7 +5863,7 @@ contains
 
 !!! moving back to contracted basis sets 
      M.create(.n_prim,.n_bf)
-     .BASE:make_normalised_contraction_mx(M)
+     .BASE:make_normalized_contraction_mx(M)
      buco.create(.n_bf,.n_prim)
      buco.to_product_of(M,R,transpose_a=TRUE)
      R.destroy
@@ -6381,16 +5874,17 @@ contains
      buco.destroy
    end   
   
-   make_dEdR_IOTC_PCE_SO_off(GG,Yr,YU,Ap,bp,p,n_gcm,S,O,cn)
-   ! correct the  picture change for the differentiation of V(nuc-ele)
-   ! with respect to the size of the nucleus 
+   make_dEdR_IOTC_PCE_SO_off(GG,Yr,YU,Ap,bp,p,n_gcm,S,O)
+   ! correct the  picture change
+   ! g is the electron density in a given point with coordinates x=xx, y=yy, z=zz
+   ! this routine is based on the make_r_DKH_matrix(H) routine
+   
         GG,Yr :: MAT{CPX} 
         YU :: MAT{REAL} , IN
         Ap,bp,p :: VEC{REAL} , IN
         n_gcm :: INT , IN
         S :: MAT{REAL} , IN
         O :: MAT{CPX} 
-        cn :: INT , IN
 
         II :: CPX
         c,fac :: REAL  
@@ -6402,7 +5896,7 @@ contains
 !!!  the density X operator !!!
      D.create(n_gcm,n_gcm)
      D=ZERO
-     .::make_primitive_dEdR_NA_matrix(D,cn)
+     .::make_primitive_dEdR_NA_matrix(D)
      A.create(n_gcm,n_gcm)
      A=ZERO
      A.to_product_of(YU,D,transpose_a=TRUE)
@@ -6416,7 +5910,7 @@ contains
      SOy.create(n_gcm,n_gcm)
      SOz.create(n_gcm,n_gcm)
      SOx=ZERO; SOy=ZERO; SOz=ZERO
-     .::make_primitive_dEdR_DKH_matrices(PDP,SOx,SOy,SOz,cn)
+     .::make_primitive_dEdR_DKH_matrices(PDP,SOx,SOy,SOz)
      A=ZERO
      A.to_product_of(YU,PDP,transpose_a=TRUE)
      PDP.to_product_of(A,YU)
@@ -6505,7 +5999,7 @@ contains
 !!! moving back to contracted basis sets 
      M.create(.n_prim,.n_bf)
      M=ZERO
-    .BASE:make_normalised_contraction_mx(M)
+    .BASE:make_normalized_contraction_mx(M)
     .BASE:put_debug(M,"M matrix")
      M2.create(2*.n_prim,2*.n_prim)
      M2=(ZERO,ZERO)
@@ -6529,5 +6023,4 @@ contains
    end   
 
 end
-
 

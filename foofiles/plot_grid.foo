@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: plot_grid.foo 4398 2014-06-01 06:55:30Z dylan_ $
+! $Id: plot_grid.foo 4249 2014-01-12 07:41:46Z dylan_ $
 !
 !---------------------------------------------------------------------
 
@@ -45,23 +45,6 @@ contains
       atom :: VEC{ATOM}*
       .create
       .set_atom_defaults(atom)
-   end
-
-   create_copy(grid) ::: leaky
-   ! Create a grid object which is a duplicate of grid.
-      self :: PTR
-      grid :: PLOT_GRID, IN
-      .create
-      .copy(grid)
-   end
-
-   copy(grid)
-   ! Copy the contents of grid to self.
-      grid :: PLOT_GRID, IN
-      self = grid
-      .nullify_ptr_part
-      if (grid.atom.created)              .atom.copy(grid.atom)
-      if (grid.bond_density_atom.created) .bond_density_atom.copy(grid.bond_density_atom)
    end
 
    destroy ::: get_from(OBJECT), leaky
@@ -105,12 +88,35 @@ contains
    end
 
 !  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
+   end
+
+   copy(object) ::: pure
+   ! Copy the "object"
+      self :: OUT
+      object :: PLOT_GRID, IN
+
+      self = object
+
+      .nullify_ptr_part
+
+      if (object.atom.created) .atom. => object.atom
+
+      CREATE_COPY_COMPONENT(bond_density_atom)
+
+   end
+
+!  ============
 !  Set routines
 !  ============
 
-   set_defaults
+   set_defaults ::: always_pure
    ! Set up a default grid. 
-      self :: INOUT
+      self :: OUT
 
       .plot_kind      = " "
 
@@ -161,7 +167,7 @@ contains
       .z_axis_defined     = FALSE
 
       .desired_separation = ZERO
-      .points_filename = "no_made-up_points"
+      .points_filename    = "no_made-up_points"
 
       .plot_units         = " "
       .plot_format        = " "
@@ -193,7 +199,7 @@ contains
 
    end
 
-   set_defaults(atom)
+   set_defaults(atom) ::: pure
    ! Set up atom defaults. "atom" is used to define an xyz bounding
    ! box for the molecule. 
       self :: INOUT
@@ -297,9 +303,10 @@ contains
 
    end
 
-   set_atom_defaults(atom)
+   set_atom_defaults(atom) ::: pure
    ! Set up atom defaults. "atom" is used to define an xyz bounding
    ! box for the molecule. 
+      self :: INOUT
       atom :: VEC{ATOM}*
 
       if (associated(atom)) then
@@ -548,18 +555,18 @@ contains
    ! Set the x,y,z axes of the grid given a new x_axis vector. Also set the
    ! origin since that is dependent on the axes.
 
-      .x_axis.normalise
+      .x_axis.normalize
 
       if (.z_axis_defined) then
 
          WARN_IF(.x_axis_defined,"orthonormalizing x axis to z, but x_axis was defined!")
          WARN_IF(.y_axis_defined,"orthonormalizing y axis to z, but y_axis was defined!")
-         .orthonormalise_x_y_to_z_axis
+         .orthonormalize_x_y_to_z_axis
 
       else
       
          WARN_IF(.y_axis_defined,"orthonormalizing y axis to x, but y_axis was defined!")
-         .orthonormalise_y_z_to_x_axis
+         .orthonormalize_y_z_to_x_axis
 
       end
 
@@ -571,13 +578,13 @@ contains
    ! Set the x,y,z axes of the grid given a new y_axis vector. Also set the
    ! origin since that is dependent on the axes.
 
-      .y_axis.normalise
+      .y_axis.normalize
 
-      DIE_IF(.y_axis.same_as(.x_axis),"y_axis is the same as x_axis")
+      ENSURE(NOT .y_axis.same_as(.x_axis),"y_axis is the same as x_axis")
 
       WARN_IF(.y_axis_defined,"orthonormalizing y axis to x, but y_axis was defined!")
       WARN_IF(.z_axis_defined,"orthonormalizing z axis to x, but z_axis was defined!")
-      .orthonormalise_y_z_to_x_axis
+      .orthonormalize_y_z_to_x_axis
 
       .set_origin
 
@@ -587,14 +594,14 @@ contains
    ! Set the x,y,z axes of the grid given a new z_axis vector. Also set the
    ! origin since that is dependent on the axes.
    ENSURE(NOT .z_axis_defined,"z_axis already explicitly defined")
-   WARN_IF(.x_or_y_axes_defined,"inputted x_axis, y_axis to be orthonormalised to inputted z_axis")
-      .z_axis.normalise
-      .orthonormalise_x_y_to_z_axis
+   WARN_IF(.x_or_y_axes_defined,"inputted x_axis, y_axis to be orthonormalized to inputted z_axis")
+      .z_axis.normalize
+      .orthonormalize_x_y_to_z_axis
       .set_origin
    end
 
-   orthonormalise_x_y_to_z_axis ::: private
-   ! Orthonormalise the x and y axes to the z axis.
+   orthonormalize_x_y_to_z_axis ::: private
+   ! Orthonormalize the x and y axes to the z axis.
 
       dot :: REAL
 
@@ -604,44 +611,44 @@ contains
       ! Orthonormalize x_axis to z_axis
       dot = dot_product(.z_axis,.x_axis)     
       .x_axis = .x_axis - dot*.z_axis
-      .x_axis.normalise
-      DIE_IF(.x_axis.is_zero,"x_axis is same as z_axis!")
+      .x_axis.normalize
+      ENSURE(NOT .x_axis.is_zero,"x_axis is same as z_axis!")
 
       ! Now define y axis
       .y_axis.to_cross_product_of(.z_axis,.x_axis)
 
    end
 
-   orthonormalise_y_z_to_x_axis ::: private
-   ! Orthonormalise the x and y axes to the z axis.
+   orthonormalize_y_z_to_x_axis ::: private
+   ! Orthonormalize the x and y axes to the z axis.
       dot :: REAL
 
       ! Make sure y and x are different
       if (.y_axis.same_as(.x_axis)) .y_axis = .z_axis                   
 
-      ! Orthogonalise y_axis to x_axis
+      ! Orthogonalize y_axis to x_axis
       dot = dot_product(.x_axis,.y_axis)     
       .y_axis = .y_axis - dot*.x_axis
-      .y_axis.normalise
-      DIE_IF(.y_axis.is_zero,"y_axis is same as x_axis!")
+      .y_axis.normalize
+      ENSURE(NOT .y_axis.is_zero,"y_axis is same as x_axis!")
 
       ! Now define z axis
       .z_axis.to_cross_product_of(.x_axis,.y_axis)
 
    end
 
-   orthonormalise_z_x_to_y_axis ::: private
+   orthonormalize_z_x_to_y_axis ::: private
    ! Orthonormalize the z and x axes to the y axis.
       dot :: REAL
 
       ! Make sure z and y are different
       if (.z_axis.same_as(.y_axis)) .z_axis = .x_axis                   
 
-      ! Orthogonalise y_axis to x_axis
+      ! Orthogonalize y_axis to x_axis
       dot = dot_product(.y_axis,.z_axis)     
       .z_axis = .z_axis - dot*.y_axis
-      .z_axis.normalise
-      DIE_IF(.z_axis.is_zero,"z_axis is same as y_axis!")
+      .z_axis.normalize
+      ENSURE(NOT .z_axis.is_zero,"z_axis is same as y_axis!")
 
       ! Now define z axis
       .x_axis.to_cross_product_of(.y_axis,.x_axis)
@@ -664,7 +671,7 @@ contains
       .width(2) = .box_axes(:,2).norm
       .width(3) = .box_axes(:,3).norm      
 
-      ! Normalise the box axes
+      ! Normalize the box axes
       .box_axes(:,1) = .box_axes(:,1)/.width(1)
       .box_axes(:,2) = .box_axes(:,2)/.width(2)
       .box_axes(:,3) = .box_axes(:,3)/.width(3)
@@ -875,12 +882,12 @@ contains
 
       ! Get the plot axes. First make the z axis
       .z_axis = .atom(b).position - .atom(a).position
-      .z_axis.normalise
+      .z_axis.normalize
 
       ! Make the x axis orthogonal to z axis
       .x_axis = .atom(.x_atom_2).position - .atom(.x_atom_1).position
       .x_axis = .x_axis - dot_product(.x_axis,.z_axis)*.z_axis
-      .x_axis.normalise
+      .x_axis.normalize
 
       ! Now make the y axis
       .y_axis = .z_axis.cross(.x_axis)
@@ -925,7 +932,7 @@ contains
       if (n>0) then
          do i = 1,n
             v = .atom(na(i)).position - .atom(a).position
-            v.normalise
+            v.normalize
             x = dot_product(v,.x_axis)
             y = dot_product(v,.y_axis)
             theta(i) = atan2(y,x)*DEGREE_PER_RADIAN
@@ -1034,11 +1041,12 @@ contains
       ! numbers Z to match the reference ones in Z0
       found = FALSE
       do s = 0,n-3
-         if (any(cshift(Z(3:),s)/=Z0(3:))) cycle
-         found = TRUE
-         exit
+         if (all(cshift(Z(3:),s)==Z0(3:))) then
+            found = TRUE
+            exit
+         end
       end
-      DIE_IF(NOT found,"a matching shift was not found!")
+      ENSURE(found,"a matching shift was not found!")
       stdout.show("shift left/up      =",s)
 
       Z(3:)     = cshift(Z(3:),s)
@@ -1258,6 +1266,7 @@ contains
       math_pos :: MAT{REAL}*
       z_range :: REAL, IN
       valid :: VEC{INT}*
+
    ENSURE(.atom.created,"no atoms!")
    ENSURE(z_range>ZERO,"z_range must be non-negative")
    ENSURE(valid.destroyed,"valid array already allocated")
@@ -1659,7 +1668,9 @@ contains
 
    read_center_atoms ::: leaky
    ! Make the center of the plot to be the center of the list of atom indices.
+
    ENSURE(.atom.created,"atom list not present")
+
       i,n :: INT
 
       ! Read the center atoms list (leaky)
@@ -1690,7 +1701,7 @@ contains
    ! Read the x axis vector of the plot. Normally, the y and z axes are defined
    ! to be orthogonal to the inputted axes, based on the defualt axis settings.
    ! However, if the z axis has been explicitly defined before hand, then the x
-   ! and y axes are orthogonalised to it.
+   ! and y axes are orthogonalized to it.
       stdin.read(.x_axis)
       .x_axis_defined = TRUE
       .set_xyz_axes_from_x_axis
@@ -1698,13 +1709,16 @@ contains
 
    read_x_axis_atoms
    ! Read the atoms which define the x axis vector of the plot. If the z axis
-   ! has been defined, then the x_axis is orthogonalised to it. Otherwise the y
-   ! and z axes are orthogonalised to this vector.
+   ! has been defined, then the x_axis is orthogonalized to it. Otherwise the y
+   ! and z axes are orthogonalized to this vector.
+
       stdin.read(.x_atom_1)
       stdin.read(.x_atom_2)
-      DIE_IF(.x_atom_1==.x_atom_2,"cannot specify same x axis atoms")
+      ENSURE(.x_atom_1/=.x_atom_2,"cannot specify same x axis atoms")
+
       .x_axis_defined = TRUE
       .set_x_axis_from_atom_list(.atom)
+
    end
 
    read_x_axis_atom_list
@@ -1765,16 +1779,21 @@ contains
    ! to use this command if the .z_axis has already been inputted, because the
    ! .y_axis is made orthogonal to the x_axis and z_axis. Even if the z_axis has
    ! not been
+
       stdin.read(.y_atom_1)
       stdin.read(.y_atom_2)
-      DIE_IF(.y_atom_1==.y_atom_2,"cannot specify same y axis atoms")
+      ENSURE(.y_atom_1/=.y_atom_2,"cannot specify same y axis atoms")
+
       .y_axis_defined = TRUE
       .set_y_axis_from_atom_list(.atom)
+
    end
 
    read_y_axis_atom_list
    ! Make the y-axis along the mean of two lists of atoms.
+
    ENSURE(.atom.created,"atom list not present")
+
       atom_list :: VEC{INT}*
       pos1,pos2 :: VEC{REAL}(3)
       i :: INT
@@ -1783,7 +1802,7 @@ contains
       ENSURE(atom_list.dim>0,"no atoms specified in input")
 
       pos1 = ZERO
-      do i=1,atom_list.dim
+      do i = 1,atom_list.dim
          pos1 = pos1 + .atom(atom_list(i)).position
       end
       pos1 = pos1/atom_list.dim
@@ -1793,7 +1812,7 @@ contains
       ENSURE(atom_list.dim>0,"no atoms specified in input")
 
       pos2 = ZERO
-      do i=1,atom_list.dim
+      do i = 1,atom_list.dim
          pos2 = pos2 + .atom(atom_list(i)).position
       end
       pos2 = pos2/atom_list.dim
@@ -1822,11 +1841,14 @@ contains
 
    read_z_axis_atoms
    ! Read the atoms which define the z axis vector of the plot. 
+
       stdin.read(.z_atom_1)
       stdin.read(.z_atom_2)
-      DIE_IF(.z_atom_1==.z_atom_2,"cannot specify same z axis atoms")
+      ENSURE(.z_atom_1/=.z_atom_2,"cannot specify same z axis atoms")
+
       .z_axis_defined = TRUE
       .set_z_axis_from_atom_list(.atom)
+
    end
 
    read_x_width
@@ -1893,7 +1915,7 @@ contains
    read_projection_direction
    ! Read the directionb to prject the vectors onto
       stdin.read(.projection_direction)
-      .projection_direction.normalise
+      .projection_direction.normalize
    end
 
    read_points_filename
@@ -2095,12 +2117,12 @@ contains
 !     unit_cell :: UNIT_CELL, IN
 !     in.read( .z_axis )
 !     .z_axis.rotate(unit_cell.cell_matrix)
-!     .z_axis.normalise
-!     .x_axis.normalise
+!     .z_axis.normalize
+!     .x_axis.normalize
 !     .y_axis.to_cross_product_of( .z_axis, .x_axis)
-!     .y_axis.normalise
+!     .y_axis.normalize
 !     .x_axis.to_cross_product_of( .y_axis, .z_axis)
-!     .x_axis.normalise
+!     .x_axis.normalize
 !   end
 
 !  ================
@@ -2380,23 +2402,16 @@ contains
 !  Output
 !  ======
 
-   put(title)
+   put
    ! Put the grid data to "stdout"
-      self :: IN
-      title :: STR, optional, IN
 
       axes :: MAT{REAL}(3,3)
-      length,wid :: INT
-      heading :: STR
-
-      heading = "Plot grid data"
-      if (present(title)) heading = title
-      length = len_trim(heading)
+      wid :: INT
 
       stdout.flush
-      stdout.text(repeat("=",length))
-      stdout.text(trim(heading))
-      stdout.text(repeat("=",length))
+      stdout.text("================")
+      stdout.text("Plot information")
+      stdout.text("================")
       stdout.flush
       stdout.text("All coordinates are in au.")
       stdout.flush
@@ -2481,5 +2496,38 @@ contains
    ! Return TRUE if the debug switch "name" has been set.
    end
 
+   put_debug_list ::: get_from(DEBUG)
+   ! Put of the list of debug switches
+   end
+
+   put_debug(X,name) ::: get_from(DEBUG, X?=>REAL)
+   ! Put *number* "X" to output, with descriptor "name", if the debug switch for
+   ! it has been set.
+   end
+
+   put_debug(X,name) ::: get_from(DEBUG, X?=>VEC{INT})
+   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
+   ! it has been set.
+   end
+
+   put_debug(X,name) ::: get_from(DEBUG, X?=>VEC{REAL})
+   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
+   ! it has been set.
+   end
+
+   put_debug(X,name) ::: get_from(DEBUG, X?=>MAT{REAL})
+   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
+   ! it has been set.
+   end
+
+   put_debug(X,name) ::: get_from(DEBUG, X?=>MAT{CPX})
+   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
+   ! it has been set.
+   end
+
+   put_debug(X,name) ::: get_from(DEBUG, X?=>MAT3{REAL})
+   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
+   ! it has been set.
+   end
 
 end

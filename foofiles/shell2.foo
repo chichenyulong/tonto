@@ -35,29 +35,20 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: shell2.foo 4354 2014-05-06 18:22:09Z bucinsky $
+! $Id: shell2.foo 4261 2014-01-21 09:03:37Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module SHELL2
 
    implicit none
 
-   ! List of cartesian powers for gaussian functions in a certain angular
-   ! momentum range
-!  nx, ny, nz :: VEC{INT}*, private  DEFAULT_NULL
-!  gaussian_indices :: MAT{GAUSSIAN_INDICES}*, private  DEFAULT_NULL
-
-   ! These are indexing arrays used for the horizontal recursion relation.
-   ! They are set using the set_hrr_indexing_arrays routine.
-
-!  l_max_hrr :: INT, private = -1
-!  first_nonzero :: VEC{INT}*, private  DEFAULT_NULL
-!  index_m1 :: VEC{INT}*, private  DEFAULT_NULL
-!  index_p1 :: MAT{INT}*, private  DEFAULT_NULL
-
    pair_cutoff :: REAL, private = SHELL2_PAIR_CUTOFF
 
 contains
+
+!  ==========
+!  Allocation
+!  ==========
 
    create ::: get_from(OBJECT), leaky
    ! Create an object. This version does not set defaults.
@@ -149,96 +140,108 @@ contains
       res :: BIN
    end
 
-   create_copy(shell) ::: leaky
-   ! Create a copy from "shell"
-      self :: PTR
-      shell :: SHELL2, IN
-      .create
-      .copy(shell)
-      .precalculate
+!  ============
+!  Copy methods
+!  ============
+
+!   create_copy(shell) ::: leaky
+!   ! Create a copy from "shell"
+!      self :: PTR
+!      shell :: SHELL2, IN
+!      .create
+!      .copy(shell)
+!      .precalculate
+!   end
+
+!  Warning: removed precalculate, see above
+
+   create_copy(object) ::: get_from(OBJECT), leaky
+   ! Create a copy of object
    end
 
-   copy(shell) ::: leaky
+   copy(object) ::: leaky, pure
    ! Make a copy from "shell"
-      shell :: SHELL2, IN
-      self = shell
+      self :: OUT
+      object :: SHELL2, IN
+
+      self = object
 
       .nullify_ptr_part
 
       if (.destroy_all) then
 
-        .a.copy(shell.a)
-        .b.copy(shell.b)
-        if (shell.exponent_sum.created)        .exponent_sum.create_copy(shell.exponent_sum)
-        if (shell.exponent_inv.created)        .exponent_inv.create_copy(shell.exponent_inv)
-        if (shell.contraction_prefactor.created)   .contraction_prefactor.create_copy(shell.contraction_prefactor)
-        if (shell.contraction_s_prefactor.created) .contraction_s_prefactor.create_copy(shell.contraction_s_prefactor)
-        if (shell.contraction_p_prefactor.created) .contraction_p_prefactor.create_copy(shell.contraction_p_prefactor)
+        COPY_COMPONENT(a)
+        COPY_COMPONENT(b)
+
+        CREATE_COPY_COMPONENT(exponent_sum)
+        CREATE_COPY_COMPONENT(exponent_inv)
+        CREATE_COPY_COMPONENT(contraction_prefactor)
+        CREATE_COPY_COMPONENT(contraction_s_prefactor)
+        CREATE_COPY_COMPONENT(contraction_p_prefactor)
 
       else
 
-        .a = shell.a
-        .b = shell.b
-        if (shell.exponent_sum.created)        .exponent_sum => shell.exponent_sum
-        if (shell.exponent_inv.created)        .exponent_inv => shell.exponent_inv
+        .a = object.a
+        .b = object.b
+
+        if (object.exponent_sum.created) .exponent_sum => object.exponent_sum
+        if (object.exponent_inv.created) .exponent_inv => object.exponent_inv
+
         if (.same_center) then
-           if (shell.contraction_prefactor.created)   .contraction_prefactor => shell.contraction_prefactor
-           if (shell.contraction_s_prefactor.created) .contraction_s_prefactor => shell.contraction_s_prefactor
-           if (shell.contraction_p_prefactor.created) .contraction_p_prefactor => shell.contraction_p_prefactor
+           if (object.contraction_prefactor.created)   .contraction_prefactor   => object.contraction_prefactor
+           if (object.contraction_s_prefactor.created) .contraction_s_prefactor => object.contraction_s_prefactor
+           if (object.contraction_p_prefactor.created) .contraction_p_prefactor => object.contraction_p_prefactor
         else
-           if (shell.contraction_prefactor.created)   .contraction_prefactor.create_copy(shell.contraction_prefactor)
-           if (shell.contraction_s_prefactor.created) .contraction_s_prefactor.create_copy(shell.contraction_s_prefactor)
-           if (shell.contraction_p_prefactor.created) .contraction_p_prefactor.create_copy(shell.contraction_p_prefactor)
+           CREATE_COPY_COMPONENT(contraction_prefactor)
+           CREATE_COPY_COMPONENT(contraction_s_prefactor)
+           CREATE_COPY_COMPONENT(contraction_p_prefactor)
         end
+
       end
 
-      if (shell.pair_center.created)  .pair_center.create_copy(shell.pair_center)
-      if (shell.center_diff.created)  .center_diff.create_copy(shell.center_diff)
+      CREATE_COPY_COMPONENT(pair_center)
+      CREATE_COPY_COMPONENT(center_diff)
 
    end
 
-   copy(shell_a,shell_b) ::: leaky
-   ! Copy the shell2 using shell1 objects
-      shell_a,shell_b :: SHELL1, IN
-      .a.copy(shell_a)
-      .b.copy(shell_b)
+   copy(sh_a,sh_b) ::: leaky, pure
+   ! Copy and precalculate "self" from its two parts
+      self :: INOUT
+      sh_a,sh_b :: SHELL1, IN
+
+      .a.copy(sh_a)
+      .b.copy(sh_b)
       .precalculate
+
    end
 
-   copy(shell_a,shell_b,pos_a,pos_b) ::: leaky
-   ! Copy the shell2 using shell objects and positions
-      shell_a,shell_b :: SHELL1, IN
+   copy(sh_a,sh_b,pos_a,pos_b) ::: leaky, pure
+   ! Copy and precalculate "self" from its two parts
+      self :: INOUT
+      sh_a,sh_b :: SHELL1, IN
       pos_a,pos_b :: VEC{REAL}, IN
-      .a.copy(shell_a,pos_a)
-      .b.copy(shell_b,pos_b)
+
+      .a.copy(sh_a,pos_a)
+      .b.copy(sh_b,pos_b)
       .precalculate
+
    end
 
-   copy(shell_a,shell_b,pos_a,pos_b) ::: leaky
-   ! Copy the shell2 using shell objects and positions
-      shell_a,shell_b :: SHELL, IN
+   copy(sh_a,sh_b,pos_a,pos_b) ::: leaky, pure
+   ! Copy and precalculate "self" from two SHELL parts and positions
+      self :: INOUT
+      sh_a,sh_b :: SHELL, IN
       pos_a,pos_b :: VEC{REAL}, IN
-      .a.copy(shell_a,pos_a)
-      .b.copy(shell_b,pos_b)
+
+      .a.copy(sh_a,pos_a)
+      .b.copy(sh_b,pos_b)
       .precalculate
+
    end
 
-!   set(shell_a,shell_b)
-!   ! Set the shell2 using shell1 objects
-!     shell_a,shell_b :: SHELL1, IN
-!     .a.set(shell_a)
-!     .b.set(shell_b)
-!     .precalculate
-!   end
-!
-!   set(shell_a,shell_b,pos_a,pos_b)
-!   ! Copy the shell2 using shell objects
-!     shell_a,shell_b :: SHELL, IN
-!     pos_a,pos_b :: VEC{REAL}, IN
-!     .a.set(shell_a,pos_a)
-!     .b.set(shell_b,pos_b)
-!     .precalculate
-!   end
+!  ===========
+!  Set methods
+!  ===========
 
    set_spherical(val)
    ! Set sphericals to "val" defaults
@@ -251,23 +254,28 @@ contains
    ! gaussian primitives, below which that primitive pair is isgnored in the
    ! calculation of the ERI's.
       cutoff :: REAL, IN
+
    ENSURE(cutoff>ZERO,"cutoff must be pisitive")
+
       if (FALSE) self = self
+
       pair_cutoff = cutoff
+
    end
 
-   set_and_precompute_from(shellpr,pos_a,pos_b,same_center,skip) ::: leaky
+   set_and_precompute_from(shellpr,pos_a,pos_b,same_center,skip) ::: leaky, pure
    ! Set the a and b parts from "shellpr" but override the positions.
    ! "same_center" should be set TRUE if pos_a==pos_b.
    ! "skip" can be set TRUE if NOT same_center; it skips gaussian product
    ! pairs which are too small to worry about.
    ! NOTE: this does not create many pointer parts
+      self :: IN
       shellpr :: SHELL1PAIR, IN
       pos_a,pos_b :: VEC{REAL}, IN
       same_center,skip :: BIN, IN
 
-      AB,At,P,b_pos_b, av :: VEC{REAL}(3)
-      a,b,r2ab,b_r2ab,ab_inv,prefac, s,cp,cc :: REAL
+      AB,At,P,b_pos_b :: VEC{REAL}(3)
+      a,b,r2ab,b_r2ab,ab_inv,prefac :: REAL
       i,j,bg,ag :: INT
 
       ! Pointer assign
@@ -315,15 +323,13 @@ contains
 
            i = 0
            do bg = 1,.b.n_cc
-             do ag = 1,.a.n_cc
-               i = i + 1
-             ! .contraction_prefactor(i)  = shellpr.contraction_prefactor(i)
-               .pair_center(:,i) = pos_a
-               .center_diff(:,i) = ZERO
-             end
+           do ag = 1,.a.n_cc
+              i = i + 1
+            ! .contraction_prefactor(i)  = shellpr.contraction_prefactor(i)
+              .pair_center(:,i) = pos_a
+              .center_diff(:,i) = ZERO
            end
-
-           .av_pair_center = pos_a
+           end
 
         else
 
@@ -337,40 +343,35 @@ contains
            else;                  At = pos_b
            end
 
-           s    = ZERO
-           av   = ZERO
            r2ab = dot_product(AB,AB)
-           i    = 0
+
+           i = 0
 
            do bg = 1,.b.n_cc
 
-             b       = .b.exponent(bg)
-             b_pos_b = b*pos_b
-             b_r2ab  = b*r2ab
+              b = .b.exponent(bg)
+              b_pos_b = b*pos_b
+              b_r2ab = b*r2ab
 
-             do ag = 1,.a.n_cc
+              do ag = 1,.a.n_cc
 
-               i = i + 1
+                 i = i + 1
 
-               a      = .a.exponent(ag)
-               ab_inv = .exponent_inv(i)
-               cp     = shellpr.contraction_prefactor(i)
-               prefac = exp(-a*b_r2ab*ab_inv)
+                 a = .a.exponent(ag)
+                 ab_inv = .exponent_inv(i)
 
-               .contraction_prefactor(i) = prefac*cp
+                 .contraction_prefactor(i) = shellpr.contraction_prefactor(i) &
+                                           * exp(-a*b_r2ab*ab_inv)
 
-               P                 = (b_pos_b + a*pos_a) * ab_inv
-               .pair_center(:,i) = P         ! This can't this be precalculated
-               .center_diff(:,i) = P - At    ! it could be compressed, below
+                 ! This can't this be precalculated
+                 ! but could be compressed, as below
+                 P = (b_pos_b + a*pos_a) * ab_inv
+                 .pair_center(:,i) = P         
+                 .center_diff(:,i) = P - At    
 
-               cc = cp/(ab_inv*sqrt(ab_inv))
-               s  = s + cc
-               av = P * cc
+              end
 
-             end
            end
-
-           .av_pair_center = av/s
 
         end
 
@@ -386,45 +387,39 @@ contains
         else;                  At = pos_b
         end
 
-        s    = ZERO
-        av   = ZERO
         r2ab = dot_product(AB,AB)
-        i    = 0
-        j    = 0
+
+        i = 0
+        j = 0
 
         do bg = 1,.b.n_cc
 
-          b       = .b.exponent(bg)
-          b_pos_b = b*pos_b
-          b_r2ab  = b*r2ab
+           b = .b.exponent(bg)
+           b_pos_b = b*pos_b
+           b_r2ab = b*r2ab
 
-          do ag = 1,.a.n_cc
+           do ag = 1,.a.n_cc
 
-            i = i + 1
+              i = i + 1
 
-            a      = .a.exponent(ag)
-            ab_inv = .exponent_inv(i)
-            prefac = exp(-a*b_r2ab*ab_inv)
+              a = .a.exponent(ag)
+              ab_inv = .exponent_inv(i)
+              prefac = exp(-a*b_r2ab*ab_inv)
 
-            if (prefac<pair_cutoff) cycle ! skip
+              if (prefac<pair_cutoff) cycle 
+              
+              ! Compress
+              j = j + 1
 
-            j = j + 1
+              .contraction_prefactor(i)  = prefac*shellpr.contraction_prefactor(i)
 
-            cp                         = shellpr.contraction_prefactor(i)
-            .contraction_prefactor(i)  = prefac*cp
+              P = (b_pos_b + a*pos_a) * ab_inv
+              .pair_center(:,j) = P
+              .center_diff(:,j) = P - At
 
-            P                 = (b_pos_b + a*pos_a) * ab_inv
-            .pair_center(:,j) = P
-            .center_diff(:,j) = P - At
+           end
 
-            cc = cp/(ab_inv*sqrt(ab_inv))
-            s  = s + cc
-            av = P * cc
-
-          end
         end
-
-        .av_pair_center = av/s
 
       end
 
@@ -468,33 +463,24 @@ contains
 
       r2ab = dot_product(AB,AB)
       i = 0
-
       do bg = 1,.b.n_cc
-
          b      = .b.exponent(bg)
          b_r2ab = b * r2ab
          b_cc   = .b.contraction(bg)
-
          do ag = 1,.a.n_cc
-
             i = i + 1
-
-            a       = .a.exponent(ag)
+            a = .a.exponent(ag)
             exp_sum = a + b
             exp_inv = ONE/exp_sum
-            P       = (b*.b.position + a*.a.position) * exp_inv
-
-            .exponent_sum(i)   = exp_sum
-            .exponent_inv(i)   = exp_inv
-            a_exp_inv          = a*exp_inv
+            P = (b*.b.position + a*.a.position) * exp_inv
+            .exponent_sum(i) = exp_sum
+            .exponent_inv(i) = exp_inv
+            a_exp_inv        = a*exp_inv
           ! .a_exponent_inv(i) = a_exp_inv
           ! .b_exponent_inv(i) = b*exp_inv
-            .contraction_prefactor(i) = b_cc*.a.contraction(ag) &
-                                      * exp_inv*sqrt(exp_inv)   &
-                                      * exp(-b_r2ab*a_exp_inv)
-            .pair_center(:,i)  = P
-            .center_diff(:,i)  = P - At
-
+            .contraction_prefactor(i) = b_cc*.a.contraction(ag) *exp_inv*sqrt(exp_inv)* exp(-b_r2ab*a_exp_inv)
+            .pair_center(:,i) = P
+            .center_diff(:,i) = P - At
          end
       end
 
@@ -502,9 +488,9 @@ contains
 
    end
 
-!===============================================================================
-!    Fourier transform integrals
-!===============================================================================
+!  ===========================
+!  Fourier transform integrals
+!  ===========================
 
    skip_ft(cutoff) result (res)
    ! Whether the ft for this shell pair is too small.
@@ -591,7 +577,6 @@ contains
       e.destroy
    end
 
-
    make_ft(res,k_pts)
    ! Calculates the Fourier transform for a product of two contracted
    ! gaussian shells, evaluated at a series of k points k_pts
@@ -605,7 +590,7 @@ contains
    ! Calculates the Fourier transform for a product of two contracted
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
-   ! This version has the gaussian2 stuff inlined and special cases optimised,
+   ! This version has the gaussian2 stuff inlined and special cases optimized,
    ! it's pretty messy but much faster.
       res :: MAT3{CPX}, target
       k_pts :: MAT{REAL}, target
@@ -1139,7 +1124,7 @@ contains
               ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
               bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
              ! This is the general routine.  It includes reduced multiplication,
-             ! and use of pointers to minimise array finding.
+             ! and use of pointers to minimize array finding.
               do aa = 1, .a.n_cc
                 ca = .a.contraction(aa)
                 ex_a=.a.exponent(aa)
@@ -1291,7 +1276,7 @@ contains
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
    ! Also adds in thermal correction and partition factors.
-   ! This version has the gaussian2 stuff inlined and special cases optimised,
+   ! This version has the gaussian2 stuff inlined and special cases optimized,
    ! it's pretty messy but much faster.
       res :: MAT3{CPX}, target
       k_pts :: MAT{REAL}, target
@@ -1829,7 +1814,7 @@ contains
               ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
               bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
              ! This is the general routine.  It includes reduced multiplication,
-             ! and use of pointers to minimise array finding.
+             ! and use of pointers to minimize array finding.
               do aa = 1, .a.n_cc
                 ca = .a.contraction(aa)
                 ex_a=.a.exponent(aa)
@@ -1908,7 +1893,7 @@ contains
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
    ! Also adds in thermal correction and partition factors.
-   ! This version has the gaussian2 stuff inlined and special cases optimised,
+   ! This version has the gaussian2 stuff inlined and special cases optimized,
    ! it's pretty messy but much faster.
       res :: MAT3{CPX}
       k_pts :: MAT{REAL}, target
@@ -3229,7 +3214,7 @@ contains
       if (.l_sum==0) return               
 
       ! The highest l center is used to generate the integrals 
-      ! to minimise the transfer cost.
+      ! to minimize the transfer cost.
       if (.a.l>.b.l) then; b1 =  ex_b*g1*R
       else;                b1 = -ex_a*g1*R
       end
@@ -4964,7 +4949,7 @@ contains
       ag,bg,e,ep1,n_roots,i,j,n,n_sum :: INT
 
       if (mass_c < TOL(15)) then; eta_c=1.0d30  ! Very big.
-      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRD))
+      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRDS))
       end
       eta_c = 1.0d60 ! uncomment this to get rid of relativistic correction.
 
@@ -5190,7 +5175,7 @@ contains
       ag,bg,i,j,n :: INT
 
       if (mass_c < TOL(15)) then; eta_c=1.0d30  ! Very big.
-      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRD))
+      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRDS))
       end
       eta_c = 1.0d60 ! uncomment this to get rid of relativistic correction.
 
@@ -5362,7 +5347,7 @@ contains
       ag,bg,i,n :: INT
 
       if (mass_c < TOL(15)) then; eta_c=1.0d30  ! Very big.
-      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRD))
+      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRDS))
       end
       eta_c = 1.0d60 ! uncomment this to get rid of relativistic correction.
 
@@ -5438,7 +5423,7 @@ contains
       ag,bg,i,n :: INT
 
       if (mass_c < TOL(15)) then; eta_c=1.0d30  ! Very big.
-      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRD))
+      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRDS))
       end
       eta_c = 1.0d60 ! uncomment this to get rid of relativistic correction.
 
@@ -5530,7 +5515,7 @@ contains
       ag,bg,i :: INT
 
       if (mass_c < TOL(15)) then; eta_c=1.0d30  ! Very big.
-      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRD))
+      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRDS))
       end
       eta_c = 1.0d60 ! uncomment this to get rid of relativistic correction.
 
@@ -5584,7 +5569,7 @@ contains
       ag,bg,i :: INT
 
       if (mass_c < TOL(15)) then; eta_c=1.0d30  ! Very big.
-      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRD))
+      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRDS))
       end
       eta_c = 1.0d60 ! uncomment this to get rid of relativistic correction.
 
@@ -6414,9 +6399,9 @@ contains
         end ! case statement
    end
 
-! ====================================
-! Normalization routines and functions
-! ====================================
+!  ====================================
+!  Normalization routines and functions
+!  ====================================
 
    change_to_spherical(C,S)
    ! Change a cartesian integral block "C" to a spherical integral
@@ -6518,6 +6503,9 @@ contains
 
    end
 
+!  ======
+!  Output
+!  ======
 
    put
    ! Put the shell2 information on file "out"

@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat{real}.foo 4384 2014-05-22 10:34:55Z dylan_ $
+! $Id: mat{real}.foo 4213 2013-12-19 08:51:17Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module MAT{REAL}
@@ -27,7 +27,7 @@ module MAT{REAL}
    implicit none
 
    interface uncompress_from_pyramid
-      symmetric_unzip_triangle
+      uncompress_from_triangle
    end
 
    ! For getting rotation matrix to match vectors
@@ -36,63 +36,63 @@ module MAT{REAL}
 
 contains
 
-!  =================
-!  Memory allocation
-!  =================
+! =================
+! Memory allocation
+! =================
 
-   create(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given dimensions
    end
 
-   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the specified "bounds" for each dimension
    end
 
-   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given dimensions
    end
 
-   create(bounds1,bounds2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds1,bounds2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the specified bounds for each dimension
    end
 
-   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a matrix with the given bounds for all dimensions
    end
 
-   create_copy(matrix) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   create_copy(matrix) ::: get_from(MAT{INTRINSIC}), leaky
    ! Create a replica copy of matrix
    end
 
-   destroy ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   destroy ::: get_from(MAT{INTRINSIC}), leaky
    ! Destroy the object
    end
 
-   created result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   created result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   destroyed result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Returns true if self has *not* been created
    end
 
-!  ============================
-!  Size-of and shape operations 
-!  ============================
+! ============================
+! Size-of and shape operations 
+! ============================
 
-   size result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   size result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the array
    end
 
-   dim1 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   dim1 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the 1st dimension
    end
 
-   dim2 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure
+   dim2 result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo
    ! Return the size of the 2nd dimension
    end
 
-   shape result (res) ::: get_from(MAT{INTRINSIC}), pure
+   shape result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the shape of "self"
    end
 
@@ -108,53 +108,54 @@ contains
    ! Returns TRUE if the matrix is square
    end
 
-!  =======================
-!  Shrinking and expansion
-!  =======================
+! =======================
+! Shrinking and expansion
+! =======================
 
-   shrink(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   shrink(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Shrinks self to dimension dim1xdim2.  Contents are retained.
    end
 
-   expand(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   expand(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Expands self to dimension dim1xdim2.  Contents are retained.
    end
 
-   shrink_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   shrink_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Shrinks columns of self to dimension dim2. Contents are retained.
    end
 
-   expand_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   expand_columns(dim2) ::: get_from(MAT{INTRINSIC}), leaky
    ! Expands the columns self to dim2.  Contents are retained.
    end
 
-   append_columns(cols) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   append_columns(cols) ::: get_from(MAT{INTRINSIC}), leaky
    ! Append the columns "cols" onto the end of self.
    end
 
-   append_column(col) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   append_column(col) ::: get_from(MAT{INTRINSIC}), leaky
    ! Append the column "col" onto the end of self.
    end
 
-   prune_column(col) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   prune_column(col) ::: get_from(MAT{INTRINSIC}), leaky
    ! Prune the column "col".
    end
 
-!  ====================
-!  Comparison functions
-!  ====================
+! ====================
+! Comparison functions
+! ====================
 
-   equals(b) result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   equals(b) result (res) ::: get_from(MAT{INTRINSIC})
    ! Check if the matrix is the same as "b".
    end
 
-   same_as(b,eps) result (res) ::: get_from(MAT{INTRINSIC}), PURE
-   ! Check if the matrix is the same as "b", within "eps".
+   same_as(b,eps,diff) result (res) ::: get_from(MAT{INTRINSIC}), pure
+   ! Check if the matrix is the same as "b", within "eps", and return the
+   ! actual difference in "diff"
    end
 
-!  ================
-!  Range operations
-!  ================
+! ================
+! Range operations
+! ================
 
    all_in_range(range) result (res) ::: get_from(MAT{INTRINSIC}), pure
    ! Return TRUE if all values of self are within the specified "range".
@@ -177,9 +178,9 @@ contains
    ! elements of "self" which are within the specified "range".
    end
 
-!  =================
-!  Inquiry functions
-!  =================
+! =================
+! Inquiry functions
+! =================
 
    is_diagonal(eps) result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" is a diagonal matrix to within
@@ -218,25 +219,25 @@ contains
    ! If present, "eps" is used to decide when a small number is zero.
    end
 
-!  =================
-!  Column operations 
-!  =================
+! =================
+! Column operations 
+! =================
 
-   has_column(c,eps) result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   has_column(c,col,eps) result (res) ::: get_from(MAT{INTRINSIC})
    ! Returns TRUE if the matrix "self" has a column "c", with "eps" tolerance.
+   ! If present, the matching column index "col" is also returned.
    end
 
-   index_for_column(c,eps) result (res) ::: get_from(MAT{INTRINSIC}), PURE
-   ! Return the index of the first column in "self" which matches "c",
-   ! within tolerance "eps", or else return 0 for no match.
+   has_columns(c,cols,eps) result (res) ::: get_from(MAT{INTRINSIC}), leaky
+   ! Returns TRUE if the matrix "self" has any column "c", with "eps"
+   ! tolerance.  If present, *all* the matching columns are returned
+   ! in "cols".
    end
 
-   indices_for_column(c,eps) result (res) ::: get_from(MAT{INTRINSIC}), leaky, PURE
-   ! Return the indices of columns in "self" which match "c",
-   ! within tolerance "eps", or else return 0 for no match.
+   column_index(c,eps) result (res) ::: get_from(MAT{INTRINSIC})
+   ! The matching column index is returned, if the column matches "col" to
+   ! tolerance "eps", if it is present.
    end
-
-
 
    compare_columns_with(m,col) ::: get_from(MAT{INTRINSIC})
    ! Compare the columns of "self" with "m". The elements of array "col" are set
@@ -260,7 +261,6 @@ contains
    ! unique. Return the number of unique columns.
    end
 
-
    swap_columns(col1,col2) ::: get_from(MAT{INTRINSIC})
    ! Swap columns "col1" and "col2" of self
    end
@@ -270,11 +270,6 @@ contains
    ! self(:,i)      = self(:,list(i))
    ! self(:,col(i)) = self(:,i)
    end
-
-   reverse_column_order ::: get_from(MAT{INTRINSIC}), PURE
-   ! Reverse the order of the columns of self.
-   end
-
 
    column_norms result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the norms of every column
@@ -289,84 +284,78 @@ contains
    ! Good for testing distances without using a sqrt.
    end
 
-   index_of_minimum_column_norm result (res) ::: get_from(MAT{INTRINSIC}), pure
-   ! Return the column index of the column with the *minimum* norm. 
+   index_of_minimum_column_norm(offset) result (res) ::: get_from(MAT{INTRINSIC})
+   ! Return the column index of the column with the *minimum* norm. If present,
+   ! "offset" is subtracted from every column beforehand, and then added back
+   ! afterwards. This is useful for finding the index of the column with minimum
+   ! distance to "offset", for a list of points held in "self".
    end
 
-   max_abs_column_difference result (res) ::: get_from(MAT{INTRINSIC}), pure
+   max_abs_column_difference result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the maximum of the absolute difference between all the column vector
    ! pairs of the matrix.
    end
 
-
-   mean_column_vector result (res) ::: get_from(MAT{INTRINSIC}), pure
+   mean_column_vector result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the mean of the column vectors.
    end
 
-   sum_column_vectors result (res) ::: get_from(MAT{INTRINSIC}), pure
+   sum_column_vectors result (res) ::: get_from(MAT{INTRINSIC})
    ! Sum the column vectors (i.e. rows) in "self".
    end
 
-
-   plus_column(col) ::: get_from(MAT{INTRINSIC}), pure
-   ! Add column "col" to every column of "self".
+   reverse_column_order ::: get_from(MAT{INTRINSIC})
+   ! Reverse the order of the columns of self.
    end
 
-   minus_column(col) ::: get_from(MAT{INTRINSIC}), pure
-   ! Subtract column "col" to every column of "self".
-   end
+! ==============
+! Row operations
+! ==============
 
-   plus_scaled_column(col,fac) ::: get_from(MAT{INTRINSIC}), pure
-   ! Add the "fac" scaled column "col" to every column of "self".
-   end
-
-!  ==============
-!  Row operations
-!  ==============
-
-   unique_rows(row) ::: get_from(MAT{INTRINSIC}), PURE
+   unique_rows(row) ::: get_from(MAT{INTRINSIC})
    ! Compare the later rows of "self" with earlier rows to see if they are
    ! unique. The elements of array "row" are set TRUE if the corresponding
    ! row is unique.
    end
 
-   unique_rows(row) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   unique_rows(row) ::: get_from(MAT{INTRINSIC}), leaky
    ! Compare the later rows of "self" with earlier rows to see if they are
    ! unique. The elements of array "row" are set to the indices of the unique
    ! rows.
    end
 
-   no_of_unique_rows result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   no_of_unique_rows result (res) ::: get_from(MAT{INTRINSIC})
    ! Compare the later row of "self" with earlier rows to see if they are
    ! unique. Return the number of unique rows.
    end
 
-   swap_rows(row1,row2) ::: get_from(MAT{INTRINSIC}), PURE
+   swap_rows(row1,row2) ::: get_from(MAT{INTRINSIC})
    ! Swap columns "row1" and "row2" of self
+      row1,row2 :: INT, IN
    end
 
-   swap_rows(list) ::: get_from(MAT{INTRINSIC}), PURE
+   swap_rows(list) ::: get_from(MAT{INTRINSIC})
    ! Sequentially swap all rows in a row "list",
    ! self(i,:)       = self(list(i),:)
    end
 
-   row_norms result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   row_norms result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the norms of every row
    end
 
-   sum_row_vectors result (res) ::: get_from(MAT{INTRINSIC}), pure
+   sum_row_vectors result (res) ::: get_from(MAT{INTRINSIC})
    ! Sum the row vectors (i.e. columns) in "self".
    end
 
-!  ==========================================
-!  Matrix algebra and vector space operations
-!  ==========================================
+! ==========================================
+! Matrix algebra and vector space operations
+! ==========================================
 
-   determinant result (res) ::: get_from(MAT{INTRINSIC}), recursive, PURE
+   determinant result (res) ::: get_from(MAT{INTRINSIC}), recursive
    ! Return the determinant
    end
 
-   adjugate(i,j) result (res) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   adjugate(i,j) result (res) ::: get_from(MAT{INTRINSIC}), leaky
    ! Return the adjugate of a matrix
    end
 
@@ -375,27 +364,25 @@ contains
    ! Return the sum of the elements in "self"
    end
 
-   dot(l,r) result (res) ::: get_from(MAT{INTRINSIC}, LR?=>VEC{REAL}, RES?=>REAL), PURE
+   dot(l,r) result (res) ::: get_from(MAT{INTRINSIC}, LR?=>VEC{REAL}, RES?=>REAL)
    ! Multiply the matrix self by vector "l" on the left and vector "r" on the
    ! right ie:  res = l^dagger self r. Useful for non-unit metric dot_products.
    end
 
-   dot(l,r) result (res) ::: get_from(MAT{INTRINSIC}, LR?=>VEC{CPX}, RES?=>CPX), PURE
+   dot(l,r) result (res) ::: get_from(MAT{INTRINSIC}, LR?=>VEC{CPX}, RES?=>CPX)
    ! Multiply the matrix self by vector "l" on the left and vector "r" on the
    ! right ie:  res = l^dagger self r. Useful for non-unit metric dot_products.
    end
 
 
-   rotate(v) ::: get_from(MAT{INTRINSIC}), PURE
+   rotate(v) ::: get_from(MAT{INTRINSIC})
    ! Rotate vector "v" by self
    end
 
-   jacobi_rotation(p,q) ::: pure
+   jacobi_rotation(p,q)
    ! Do a two dimensional Jacobi rotation in the plane of "p" and "q" so as to
    ! eliminate the off diagonal element self(p,q). NOTE: self must be symmetric
-      self :: INOUT
-      p,q :: INT, IN
-
+      p,q :: INT
       i :: INT
       s_pp,s_qq,s_pq,theta,t,c,s,tau,s_ip,s_iq,r_ip,r_iq :: REAL
 
@@ -434,14 +421,12 @@ contains
 
    end
 
-   jacobi_rotation(p,q,v) ::: pure
+   jacobi_rotation(p,q,v)
    ! Do a two dimensional Jacobi rotation in the plane of "p" and "q" so as to
    ! eliminate the off diagonal element self(p,q) and also update the rotation
    ! matrix "v". NOTE: self must be symmetric
-      self :: INOUT
-      p,q :: INT, IN
-      v :: MAT{REAL}, INOUT
-
+      p,q :: INT
+      v :: MAT{REAL}
       i :: INT
       s_pp,s_qq,s_pq,theta,t,c,s,tau,s_ip,s_iq,r_ip,r_iq :: REAL
 
@@ -490,36 +475,27 @@ contains
 
    end
 
-   to_3x3_rotation_matrix(axis,angle) ::: PURE
+   to_3x3_rotation_matrix(axis,angle) 
    ! Set "self" to the rotation matrix which rotates around vector "axis" in
    ! an anticlockwise direction (when looking against the "axis" vector) by
    ! amount "angle" (in radians).
-      self :: OUT
       axis :: VEC{REAL}, IN
       angle :: REAL, IN
-
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1==3,"must be 3x3 matrix")
    ENSURE(axis.dim==3,"axis is not 3 dimensional")
-
       x,y,z,xp,yp :: VEC{REAL}(3)
-
       z = axis
-      z.normalise
-
+      z.normalize
       x = z.cross([ONE,ZERO,ZERO])
       if (x.is_zero(TOL(9))) x = z.cross([ZERO,ONE,ZERO])
-      x.normalise 
-
-      y  = z.cross(x)
-
+      x.normalize 
+      y = z.cross(x)
       xp = cos(angle)*x+sin(angle)*y
       yp = cos(angle)*y-sin(angle)*x
-
       self =  z.outer_product_with(z) &
            + xp.outer_product_with(x) &
            + yp.outer_product_with(y) 
-
    end
 
 
@@ -533,100 +509,100 @@ contains
    end
 
 
-   set_to(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}), PURE
+   set_to(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL})
    ! Set self to "a"
    end
 
-   set_to_transpose_of(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}), PURE
+   set_to_transpose_of(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL})
    ! Self becomes the transpose of "a"
    end
 
-   to_transpose ::: get_from(MAT{INTRINSIC}), PURE
+   to_transpose ::: get_from(MAT{INTRINSIC})
    ! Self becomes its own transpose.
    end
 
 
-   plus(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}), PURE
+   plus(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL})
    ! Add to self the matrix "a"
    end
 
-   minus(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}), PURE
+   minus(a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL})
    ! Subtract from self the matrix "a"
    end
 
-   to_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, FAC?=>REAL), PURE
+   to_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, FAC?=>REAL)
    ! Set "self" to matrix "at" scaled by "fac"
    end
 
-   plus_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, FAC?=>REAL), PURE
+   plus_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, FAC?=>REAL)
    ! Add to "self" matrix "a" scaled by "fac"
    end
 
-   minus_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, FAC?=>REAL), PURE
+   minus_scaled(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, FAC?=>REAL)
    ! Subtract from "self" matrix "a" scaled by "fac"
    end
 
 
-   to_product_of(a,b,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>REAL), PURE
+   to_product_of(a,b,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>REAL)
    ! Set "self" to the matrix product of "a" and "b". If present, "transpose_a"
    ! and "transpose_b" can be set to TRUE if "a" and "b" need to be transposed.
    end
 
-   plus_product_of(a,b,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>REAL), PURE
+   plus_product_of(a,b,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>REAL)
    ! Add to "self" the matrix product of "a" and "b". If present, "transpose_a"
    ! and "transpose_b" can be set to TRUE if "a" and "b" need to be transposed.
    end
 
-   to_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>REAL, FAC?=>REAL), PURE
+   to_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>REAL, FAC?=>REAL)
    ! Set "self" to the matrix product of "a" and "b" scaled by "fac". If
    ! present, "transpose_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! need to be transposed.
    end
 
-   plus_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>REAL, FAC?=>REAL), PURE
+   plus_scaled_product_of(a,b,fac,transpose_a,transpose_b) ::: get_from(MAT{INTRINSIC}, AB?=>REAL, FAC?=>REAL)
    ! Add to "self" the matrix product of "a" and "b" scaled by "fac". If
    ! present, "transpose_a" and "transpose_b" can be set to TRUE if "a" and "b"
    ! neeb to be transposed.
    end
 
 
-   to_outer_product_of(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>REAL, FAC?=>REAL), PURE
+   to_outer_product_of(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>REAL, FAC?=>REAL)
    ! Set "self" to the outer product of "a" with itself, with an
    ! optional scale factor "fac".
    end
 
-   plus_outer_product_of(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>REAL, FAC?=>REAL), PURE
+   plus_outer_product_of(a,fac) ::: get_from(MAT{INTRINSIC}, A?=>REAL, FAC?=>REAL)
    ! Add to "self" the outer product of "a" with itself, with an
    ! optional scale factor "fac".
    end
 
 
-   to_product_with_diagonal(a,diag,transpose_a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, DIAG?=>VEC{REAL}), PURE
+   to_product_with_diagonal(a,diag,transpose_a) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, DIAG?=>VEC{REAL})
    ! Set "self" to the matrix product of "a" with diagonal matrix "diag" (stored
    ! as a vector).  If present, ""transpose_a" can be set to TRUE if "a" needs
    ! to be transposed.
    end
 
-   to_product_with_diagonal(dg,a,transpose_a) ::: get_from(MAT{INTRINSIC}, DG?=>VEC{REAL}, A?=>MAT{REAL}), PURE
+   to_product_with_diagonal(dg,a,transpose_a) ::: get_from(MAT{INTRINSIC}, DG?=>VEC{REAL}, A?=>MAT{REAL})
    ! Set "self" to the matrix product of diagonal matrix "dg" (stored as a
    ! vector) and "a".  If present, "transpose_a" can be set to TRUE if "a" needs
    ! to be transposed.
    end
 
-!  ================
-!  Trace operations
-!  ================
+! ================
+! Trace operations
+! ================
 
-   trace result (res) ::: get_from(MAT{INTRINSIC}), pure
+   trace result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the trace of self
    end
 
-   trace_product_with(a,transpose_a) result (res) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, RES?=>REAL, CAST=>), PURE
+   trace_product_with(a,transpose_a) result (res) ::: get_from(MAT{INTRINSIC}, A?=>MAT{REAL}, RES?=>REAL, CAST=>)
    ! Return the trace of the product of "self" with matrix "a",
    ! and if "transpose_a" is present and TRUE, then transpose "a".
    end
 
-   dot(a) result (res) ::: pure
+   dot(a) result (res) 
    ! Synonym for trace_product_with(a) ... Return the trace of the product of
    ! "self" with matrix "a". This is really intended for use with symmetric
    ! matrices only.
@@ -635,16 +611,14 @@ contains
       res :: REAL
  ! ENSURE(.is_symmetric,"self is not symmetric")
  ! ENSURE(a.is_symmetric,"self is not symmetric")
-
       res = .trace_product_with(a,transpose_a=TRUE)
-
    end
 
-   trace_product_with(a,b,c) result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   trace_product_with(a,b,c) result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the trace of the product of "self" with matrices "a", "b" and "c".
    end
 
-   trace_product_with(a,b,c,d,e) result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   trace_product_with(a,b,c,d,e) result (res) ::: get_from(MAT{INTRINSIC})
    ! Return the trace of the product of "self" with matrices "a", "b" ... "e".
    end
 
@@ -671,62 +645,62 @@ contains
 
    end
 
-!  ========================
-!  Change of basis routines
-!  ========================
+! ========================
+! Change of basis routines
+! ========================
 
-   change_basis_using(V) ::: get_from(MAT{INTRINSIC}, V?=>MAT{REAL}), PURE
+   change_basis_using(V) ::: get_from(MAT{INTRINSIC}, V?=>MAT{REAL})
    ! Change the basis of "self" using vectors "V"; self = V^dagger self V
    end
 
-   change_basis_using(V) ::: get_from(MAT{INTRINSIC}, V?=>VEC{REAL}), PURE
+   change_basis_using(V) ::: get_from(MAT{INTRINSIC}, V?=>VEC{REAL})
    ! Change the basis of "self" using diagonal matrix "V" (stored as a vector).
    ! self = V self V
    end
 
-   change_basis_using(L,R) ::: get_from(MAT{INTRINSIC}, LR?=>MAT{REAL}), PURE
+   change_basis_using(L,R) ::: get_from(MAT{INTRINSIC}, LR?=>MAT{REAL})
    ! Change the basis of "self" using left and right matrices "L" and "R"
    ! and place the result in "new", new = L^dagger self R
    end
 
-   change_basis_using(L,R) ::: get_from(MAT{INTRINSIC}, LR?=>VEC{REAL}), PURE
+   change_basis_using(L,R) ::: get_from(MAT{INTRINSIC}, LR?=>VEC{REAL})
    ! Change the basis of "self" using diagonal matrices "L" and "R" (stored as
    ! vectors).  self = L self R
    end
 
-   change_basis_to(new,V) ::: get_from(MAT{INTRINSIC}, V?=>MAT{REAL}), PURE
+   change_basis_to(new,V) ::: get_from(MAT{INTRINSIC}, V?=>MAT{REAL})
    ! Change the basis of "self" using vectors "V", and place the result in
    ! "new".  new = V^dagger self V
    end
 
-   change_basis_to(new,V) ::: get_from(MAT{INTRINSIC}, NEW?=>MAT{CPX}, V?=>MAT{CPX}, TRANSPOSE_A=>DAGGER_A), PURE
+   change_basis_to(new,V) ::: get_from(MAT{INTRINSIC}, NEW?=>MAT{CPX}, V?=>MAT{CPX}, TRANSPOSE_A=>DAGGER_A)
    ! Change the basis of "self" using vectors "V", and place the result in
    ! "new" i.e. new = V^dagger self V. This version uses only intrinsic
    ! procedures to avoid circular dependencies.
    end
 
-   change_basis_to(new,L,R) ::: get_from(MAT{INTRINSIC}, LR?=>MAT{REAL}), PURE
+   change_basis_to(new,L,R) ::: get_from(MAT{INTRINSIC}, LR?=>MAT{REAL})
    ! Change the basis of "self" using left and right matrices "L" and "R"
    ! and place the result in "new", new = L^dagger self R
    end
 
-   back_transform_using(V) ::: get_from(MAT{INTRINSIC}, V?=>MAT{REAL}), PURE
+   back_transform_using(V) ::: get_from(MAT{INTRINSIC}, V?=>MAT{REAL})
    ! Back transform "self" using vectors "V", and place the result in "self".
    ! self = V self V^dagger
    end
 
-   back_transform_to(new,V) ::: get_from(MAT{INTRINSIC}, V?=>MAT{REAL}), PURE
+   back_transform_to(new,V) ::: get_from(MAT{INTRINSIC}, V?=>MAT{REAL})
    ! Back transform "self" using vectors "V", and place the result in "new".
    ! new = V self V^dagger
    end
 
-   back_transform_to(new,V) ::: get_from(MAT{INTRINSIC}, NEW?=>MAT{CPX}, V?=>MAT{CPX}, TRANSPOSE_A=>DAGGER_A), PURE
+   back_transform_to(new,V) ::: get_from(MAT{INTRINSIC}, NEW?=>MAT{CPX}, V?=>MAT{CPX}, TRANSPOSE_A=>DAGGER_A)
    ! Back transform "self" using vectors "V", and place the result in "new".
    ! i.e. new = V self V^dagger. This version uses only intrinsic calls to avoid
    ! circular dependencies.
    end
 
-   back_transform_to(new,L,R) ::: get_from(MAT{INTRINSIC}, LR?=>MAT{REAL}), PURE
+   back_transform_to(new,L,R) ::: get_from(MAT{INTRINSIC}, LR?=>MAT{REAL})
    ! Back transform "self" using left and right matrices "L" and "R"
    ! and place the result in "new", new = L self R^dagger
    end
@@ -735,9 +709,9 @@ contains
    ! Do a similarity transform of "self" using vectors "V": self = V self V^-1
    end
 
-!  ==============
-!  ADP comparison
-!  ==============
+! ==============
+! ADP comparison
+! ==============
 
    S12_with_ADP(U2,U1err,U2err,S12err) result (res) 
    ! Return the determinant a 3x3 matrix
@@ -791,9 +765,9 @@ contains
 
    end
 
-!  ===============================
-!  Tensor change of basis routines
-!  ===============================
+! ===============================
+! Tensor change of basis routines
+! ===============================
 
    to_tensor_change_basis_of(V,reorder)
    ! If "V" is a matrix used to change basis for a symmetric
@@ -826,40 +800,52 @@ contains
          ! This does: M'_ab = sum_cd V_ca M_cd V_db
          ab = 0
          do a = 1,n
-            do b = 1,a
-               ab = ab + 1
-               cd = 0
-               do c = 1,n
-                  do d = 1,c
-                     cd = cd + 1
-                     self(ab,cd) =               V(c,a)*V(d,b) 
-                     if (c==d) cycle
-                     self(ab,cd) = self(ab,cd) + V(d,a)*V(c,b)
-                  end
-               end
+         do b = 1,a
+
+            ab = ab + 1
+            cd = 0
+
+            do c = 1,n
+            do d = 1,c
+
+               cd = cd + 1
+
+               self(ab,cd) =               V(c,a)*V(d,b) 
+               if (c==d) cycle
+               self(ab,cd) = self(ab,cd) + V(d,a)*V(c,b)
+
             end
+            end
+         end
          end
 
       else
 
          ! This does: M'_ab = sum_cd V_ca M_cd V_db
-         DIE_IF(n/=3,"V must be 3x3")
+         ENSURE(n==3,"V must be 3x3")
+
          ab = 0
          do a = 1,n
-            do b = 1,a
-               ab = ab + 1
-               nab = new(ab)
-               cd = 0
-               do c = 1,n
-                  do d = 1,c
-                     cd = cd + 1
-                     ncd = new(cd)
-                     self(nab,ncd) =                 V(c,a)*V(d,b) 
-                     if (c==d) cycle
-                     self(nab,ncd) = self(nab,ncd) + V(d,a)*V(c,b)
-                  end
-               end
+         do b = 1,a
+
+            ab = ab + 1
+            nab = new(ab)
+            cd = 0
+
+            do c = 1,n
+            do d = 1,c
+
+               cd = cd + 1
+               ncd = new(cd)
+
+               self(nab,ncd) =                 V(c,a)*V(d,b) 
+               if (c==d) cycle
+               self(nab,ncd) = self(nab,ncd) + V(d,a)*V(c,b)
+
             end
+            end
+
+         end
          end
 
       end
@@ -931,73 +917,73 @@ contains
 
    end
 
-!  ==========================
-!  Operations on the diagonal
-!  ==========================
+! ==========================
+! Operations on the diagonal
+! ==========================
 
-   set_from_diagonal(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{REAL}), PURE
+   set_from_diagonal(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{REAL})
    ! Converts the diagonal vector "d" to matrix "self".
    end
 
-   set_diagonal_to(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{REAL}), PURE
+   set_diagonal_to(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{REAL})
    ! Set the diagonal of "self" to vector "d"
    end
 
-   set_diagonal_to(val) ::: get_from(MAT{INTRINSIC}, VAL?=>REAL), PURE
+   set_diagonal_to(val) ::: get_from(MAT{INTRINSIC}, VAL?=>REAL)
    ! Set the diagonal of "self" to "val"
    end
 
-   put_diagonal_to(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{REAL}), PURE
+   put_diagonal_to(d) ::: get_from(MAT{INTRINSIC}, D?=>VEC{REAL})
    ! Get the diagonal elements of "self" in vector "d"
    end
 
-   increment_diagonal_by(val) ::: get_from(MAT{INTRINSIC}, VAL?=>REAL), PURE
+   increment_diagonal_by(val) ::: get_from(MAT{INTRINSIC}, VAL?=>REAL)
    ! Add "val" to the diagonal of "self"
    end
 
-   scale_diagonal_by(fac) ::: get_from(MAT{INTRINSIC}, FAC?=>REAL), PURE
+   scale_diagonal_by(fac) ::: get_from(MAT{INTRINSIC}, FAC?=>REAL)
    ! Weight the diagonal elements of "self" by "fac"
    end
 
-   zero_diagonal ::: get_from(MAT{INTRINSIC}), PURE
+   zero_diagonal ::: get_from(MAT{INTRINSIC})
    ! Zero the diagonal elements of "self"
    end
 
-   zero_off_diagonal ::: get_from(MAT{INTRINSIC}), PURE
+   zero_off_diagonal ::: get_from(MAT{INTRINSIC})
    ! Zero the off diagonal elements of "self"
    end
 
-   max_diagonal_element result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   max_diagonal_element result (res) ::: get_from(MAT{INTRINSIC})
    ! Get the maximum element on the diagonal of the matrix
    end
 
-   max_abs_diagonal_element result (res) ::: get_from(MAT{INTRINSIC}), PURE
+   max_abs_diagonal_element result (res) ::: get_from(MAT{INTRINSIC})
    ! Get the maximum absolute value of the diagonal elements of the self matrix
    end
 
-!  ========================
-!  Symmetrising and folding
-!  ========================
+! ========================
+! Symmetrising and folding
+! ========================
 
-   symmetrize ::: get_from(MAT{INTRINSIC}), PURE
+   symmetrize ::: get_from(MAT{INTRINSIC})
    ! Set self to half of itself plus half its transpose, i.e.
    ! self = 1/2 (self + self^T)
    end
 
-   antisymmetrize ::: get_from(MAT{INTRINSIC}), PURE
+   antisymmetrize ::: get_from(MAT{INTRINSIC})
    ! Set self to half of itself minus half its transpose, i.e.
    ! self = 1/2 (self - self^T)
    end
 
-   symmetric_fold ::: get_from(MAT{INTRINSIC}), PURE
+   symmetric_fold ::: get_from(MAT{INTRINSIC})
    ! Add the upper triangle of "self" into the lower triangle
    end
 
-   antisymmetric_fold ::: get_from(MAT{INTRINSIC}), PURE
+   antisymmetric_fold ::: get_from(MAT{INTRINSIC})
    ! Subtract the upper triangle of "self" into the lower triangle
    end
 
-   symmetric_reflect ::: get_from(MAT{INTRINSIC}), PURE
+   symmetric_reflect ::: get_from(MAT{INTRINSIC})
    ! Make the upper triangle of "self" the same as the lower triangle
    end
 
@@ -1006,194 +992,218 @@ contains
    ! make the diagonal zero.
    end
 
-   symmetric_fold_to_triangle(tr) ::: get_from(MAT{INTRINSIC}), PURE
+   symmetric_fold_to_triangle(tr) ::: get_from(MAT{INTRINSIC})
    ! Add the upper triangle of "self" into the lower triangle and return
    ! the lower triangle "tr" as a vector across rows.
    end
 
-!  ======================================
-!  Compression and uncompression routines
-!  ======================================
+! ======================================
+! Compression and uncompression routines
+! ======================================
 
-   zip_lower_triangle_to(tr) ::: get_from(MAT{INTRINSIC}), pure
-   ! Converts the lower triangle of "self" to the vector "tr"
+   compress_to_triangle(tr) ::: get_from(MAT{INTRINSIC})
+   ! Converts the lower triangle of matrix self to the triangle "tr".
    ! using row order.
    end
 
-   symmetric_unzip_triangle(tr) ::: get_from(MAT{INTRINSIC}), pure
+   uncompress_from_triangle(tr) ::: get_from(MAT{INTRINSIC}), pure
    ! Converts the triangle "tr" into the symmetric matrix "self".
    end
 
-   antisymmetric_unzip_triangle(tr) ::: get_from(MAT{INTRINSIC}), pure
+   uncompress_anti_triangle(tr) ::: get_from(MAT{INTRINSIC})
    ! Converts the triangle "tr" into the antisymmetric matrix "self".
    end
 
-   tri_size result (ltr) ::: get_from(MAT{INTRINSIC}), pure
+   tri_size result (ltr) ::: get_from(MAT{INTRINSIC})
    ! Returns the size of the lower triangle needed to store self.
    end
 
-   flatten(vec) ::: pure
+   flatten(vec)
    ! flatten  a matrix into a vector
    ! meant for singlet bra at present
-      self :: IN
-      vec :: VEC{REAL}, OUT
-     
-      o,p :: INT
-      counter :: INT
-     
-      counter = 0
-      do o = 1,.dim1
-         counter = counter + 1
-         vec(counter) = self(o,o)
-      end
-     
-      do o = 1,.dim1
-      do p = 1,o-1
-          counter = counter + 1
-          vec(counter) = self(o,p)
-          DIE_IF(self(o,p)/=self(p,o),"not singlet")
-      end
-      end
+     vec :: VEC{REAL}*
+
+   ENSURE(vec.created,"vec not created")
+   ENSURE(.dim1==.dim2,"matrix not square")
+
+     o,p :: INT
+     counter :: INT
+
+     counter = 0
+     do o = 1,.dim1
+       counter = counter + 1
+       vec(counter) = self(o,o)
+     end
+
+     do o = 1,.dim1
+     do p = 1,o-1
+        counter = counter + 1
+        vec(counter) = self(o,p)
+        ENSURE(self(o,p)==self(p,o),"not singlet")
+     end
+     end
 
    end
 
-   unflatten(vec_mat) ::: pure
+   unflatten(vec_mat)
    ! unflatten a matrix into a vector of matrices
    ! meant for singlet contraction_wfs at present
-     self :: IN
-     vec_mat :: VEC{MAT_{REAL}}, OUT
+      vec_mat :: VEC{MAT_{REAL}}, INOUT
 
-     n,o,p,dim1,dim :: INT
-     counter :: INT
-     val :: REAL
+ ! ENSURE(vec_mat.created,"vec_mat not created")
+ ! ENSURE(self.created,"self not created")
 
-     dim =  .dim1
-     dim1 = int(sqrt(2*.dim2+QUARTER)-HALF)
-     DIE_IF(vec_mat.dim/=dim,"vec_mat.dim/=self.dim1")
-     DIE_IF(vec_mat(1).element.dim2/=dim1,"vec_mat(1).element.dim2/=dim1")
+      n,o,p,dim1,dim :: INT
+      counter :: INT
+     
+      dim  = .dim1
+      dim1 = int(sqrt(2*.dim2+QUARTER)-HALF)
+     
+      ENSURE(vec_mat.dim==dim,"vec_mat.dim/=self.dim1")
+      ENSURE(vec_mat(1).element.dim2==dim1,"vec_mat(1).element.dim2/=dim1")
+     
+      do n = 1,dim
+     
+         counter = 0
+     
+         do o = 1, dim1
+            counter = counter + 1
+            vec_mat(n).element(o,o)=self(n,counter)
+         end
+     
+         do o = 1, dim1
+         do p = 1,o-1
+            counter = counter + 1
+            vec_mat(n).element(o,p)=self(n,counter)/sqrt(TWO)
+            vec_mat(n).element(p,o)=vec_mat(n).element(o,p)
+         end
+         end
 
-     do n = 1,dim
-
-        counter = 0
-        do o = 1, dim1
-           counter=counter+1
-           vec_mat(n).element(o,o)=self(n,counter)
-        end
-
-        do o = 1, dim1
-        do p = 1,o-1
-           counter = counter + 1
-           val = self(n,counter)/sqrt(TWO)
-           vec_mat(n).element(o,p) = val
-           vec_mat(n).element(p,o) = val
-        end
-        end
-
-     end
+      end
 
    end
 
-   unflatten_triplets(vec_mat) ::: pure
+   unflatten_triplets(vec_mat)
    ! unflatten a matrix into a vector of matrices
    ! meant for triplet contraction_wfs at present
-     self :: INOUT
-     vec_mat :: VEC{MAT_{REAL}}, INOUT
+      vec_mat :: VEC{MAT_{REAL}}, INOUT
 
-     n,o,p,dim1,dim :: INT
-     counter :: INT
-     val :: REAL
+ ! ENSURE(vec_mat.created,"vec_mat not created")
+ ! ENSURE(self.created,"self not created")
 
-     dim = .dim1
-     dim1 = int(sqrt(2*.dim2+QUARTER)+HALF)
-     DIE_IF(vec_mat.dim/=dim,"vec_mat.dim/=self.dim1")
-     DIE_IF(vec_mat(1).element.dim2/=dim1,"vec_mat(1).element.dim2/=dim1")
-
-     self = self/sqrt(TWO)
-
-     do n = 1,dim
-
-        counter = 0
-
-        do o = 1, dim1-1
-        do p = o+1,dim1
-           counter = counter + 1
-           val = self(n,counter)
-           vec_mat(n).element(o,p) = val
-           vec_mat(n).element(p,o) =-val
-        end
-        end
-
-     end
+      n,o,p,dim1,dim :: INT
+      counter :: INT
+      
+      dim  = .dim1
+      dim1 = int(sqrt(2*.dim2+QUARTER)+HALF)
+      
+      ENSURE(vec_mat.dim==dim,"vec_mat.dim/=self.dim1")
+      ENSURE(vec_mat(1).element.dim2==dim1,"vec_mat(1).element.dim2/=dim1")
+      
+      self=self/sqrt(TWO)
+      
+      do n = 1,dim
+      
+         counter = 0
+      
+         do o = 1, dim1-1
+            do p = o+1,dim1
+               counter = counter + 1
+               vec_mat(n).element(o,p) =  self(n,counter)
+               vec_mat(n).element(p,o) = -self(n,counter)
+            end
+         end
+      
+      end
 
    end
  
-!  =================
-!  Orthogonalisation
-!  =================
+! =================
+! Orthogonalisation
+! =================
 
-   schmidt_orthonormalise(lambda)
-   ! Schmidt orthonormalise the column vectors in "self".
+   schmidt_orthonormalize(lambda)
+   ! Schmidt orthonormalize the column vectors in "self".
    ! If the eigenvalue (lambda) of a vector is less than a cutoff, then that
    ! vector is chosen to be an orthonormal component.
    ! Eigenvalues must be sorted largest to smallest.
-     self :: target
-     lambda :: VEC{REAL}, IN
-   ENSURE(size(lambda)>=.dim2,"not enough eigenvalues")
+      self :: target
+      lambda :: VEC{REAL}, IN
+
+   ENSURE(lambda.dim>=.dim2,"not enough eigenvalues")
    ENSURE(.dim1>=.dim2,"more vectors than dimension of vector space")
-     new,old :: VEC{REAL}*
-     fac,norm :: REAL
-     dim1,dim2,n,k,x,y,j :: INT
-     dim1 = .dim1
-     dim2 = .dim2
 
-     y=dim2+1   ! y is set to the first vanishing eigenvalue.
-     do x=1,dim2
-       if (lambda(x)<TOL(10)) then
-         y=x
-         exit
-       end
-     end
-
-     do n = 1,y-1  ! the usual Schmidt orthogonalisation.
-        new => self(:,n)
-        do k = 1,n-1
-           old => self(:,k)
-           fac = dot_product(old,new)
-           new = new - fac*old
+      new,old :: VEC{REAL}*
+      fac,norm :: REAL
+      dim1,dim2,n,k,x,y,j :: INT
+      dim1 = .dim1
+      dim2 = .dim2
+      
+      ! y is set to the first vanishing eigenvalue.
+      y = dim2 + 1   
+      
+      do x=1,dim2
+        if (lambda(x)<TOL(10)) then
+          y=x
+          exit
         end
-        norm = dot_product(new,new)
-        ENSURE(norm>TOL(10),"linear dependence in vector " // n.to_str)
-        new = new * (ONE/sqrt(norm))
-     end
-
-     do n = y,dim2                       ! make up some orthogonal vectors for
-       do j=1,dim1                       ! the vanishing eigenvalues.
+      end
+      
+      ! Usual Schmidt orthogonalisation.
+      do n = 1,y-1  
+      
          new => self(:,n)
-         new = ZERO
-         new(j) = ONE
+      
          do k = 1,n-1
             old => self(:,k)
             fac = dot_product(old,new)
             new = new - fac*old
          end
+      
          norm = dot_product(new,new)
-         if (norm>TOL(10)) then  ! we have found an orthogonal vector
-           new = new * (ONE/sqrt(norm))
-           exit
-         else                   ! try another
-           DIE_IF(j==dim1,"cannot find an orthogonal vector")
+         ENSURE(norm>TOL(10),"linear dependence in vector " // n.to_str)
+      
+         new = new * (ONE/sqrt(norm))
+      
+      end
+      
+      ! Make up some orthogonal vectors for
+      ! the vanishing eigenvalues.
+      do n = y,dim2                     
+      do j=1,dim1                       
+      
+         new => self(:,n)
+         new = ZERO
+        
+         new(j) = ONE
+        
+         do k = 1,n-1
+            old => self(:,k)
+            fac = dot_product(old,new)
+            new = new - fac*old
          end
-       end
-     end
+        
+         ! Found an orthogonal vector?
+         norm = dot_product(new,new)
+         if (norm>TOL(10)) then ! yes
+            new = new * (ONE/sqrt(norm))
+            exit
+         else                   ! try another
+            ENSURE(j/=dim1,"cannot find an orthogonal vector")
+         end
+      
+      end
+      end
+
    end
 
-!   schmidt_orthonormalise(S,scales,n_dependent)
-!   ! Schmidt orthonormalise the vectors in "self" using "S" as the
+!   schmidt_orthonormalize(S,scales,n_dependent)
+!   ! Schmidt orthonormalize the vectors in "self" using "S" as the
 !   ! metric. "scales" is set to the
-!   ! normalisation factors used to normalise each column after the Schmidt
+!   ! normalisation factors used to normalize each column after the Schmidt
 !   ! procedure. Only those vectors with norm more than the linear dependence
-!   ! tolerance are orthonormalised. the others are counted (n_dependent) 
-!   ! and normalised if the norm is not initially below a certain threshold. 
+!   ! tolerance are orthonormalized. the others are counted (n_dependent) 
+!   ! and normalized if the norm is not initially below a certain threshold. 
 !     self :: target
 !     S :: MAT{REAL}, IN 
 !     scales :: VEC{REAL}, OUT
@@ -1242,7 +1252,7 @@ contains
 !        scales(n) = norm
 !     !   if(norm>MAT_LINEAR_DEPENDENCE_TOL) then
 !        if(norm>tol) then
-!!normalisation of the orthogonalised vector
+!!normalisation of the orthogonalized vector
 !          norm = sqrt(norm)
 !          new = new/norm
 !        else
@@ -1257,20 +1267,22 @@ contains
 !     skip.destroy
 !   end
 
-   schmidt_orthonormalise(S,scales,n_dependent,ld_tol)
-   ! Schmidt orthonormalise the vectors in "self" using "S" as the
+   schmidt_orthonormalize(S,scales,n_dependent,ld_tol)
+   ! Schmidt orthonormalize the vectors in "self" using "S" as the
    ! metric 
    ! "scales" is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are orthonormalised. the others are counted (n_dependent) 
+   ! tolerance are orthonormalized. the others are counted (n_dependent) 
    ! and rejected at the end of the list.
      self :: target
      S :: MAT{REAL}, IN 
      scales :: VEC{REAL}, OUT
      n_dependent :: INT, OUT
      ld_tol :: REAL, optional
+
    ENSURE(NOT S.is_zero,"S is zero matrix")
+
      decreasing_vec :: MAT{REAL}*
      old,new :: VEC{REAL}*
      keep :: VEC{REAL}*
@@ -1279,87 +1291,116 @@ contains
      norm :: REAL
      n,o,p,dim1,dim2 :: INT
      skip :: VEC{BIN}*
-     n_dependent=0
-     tol=LINEAR_DEPENDENCE_TOL
-     if(present(ld_tol)) tol=ld_tol
+
+     tol = LINEAR_DEPENDENCE_TOL
+     if(present(ld_tol)) tol = ld_tol
+
+     n_dependent = 0
+
      dim1= .dim1
      dim2= .dim2
+
      keep.create(dim2)
      skip.create(dim1)
      skip = FALSE
-!eliminate function with small norms
+
+     ! Eliminate function with small norms
      do n = 1,dim1
-       new => self(n,:)
-       norm = S.dot(new,new)
-       if(norm < tol) then
-         n_dependent=n_dependent+1
-         skip(n)=TRUE
-         scales(n)=norm
-       end
+
+        new => self(n,:)
+        norm = S.dot(new,new)
+
+        if(norm < tol) then
+           n_dependent=n_dependent+1
+           skip(n)=TRUE
+           scales(n)=norm
+        end
+
      end
-     DIE_IF(skip(1),"ground state is quasilinearly dependent")
+
+     ENSURE(NOT skip(1),"ground state is quasilinearly dependent")
+
      do n = 1,dim1
+
         if(skip(n)) cycle
+
         new => self(n,:)
         keep = new
         norm = S.dot(keep,keep)
-!orthogonalisation
+
+        ! Orthogonalisation
         do o = 1,n-1
+
            if(skip(o)) cycle
+
            old => self(o,:)
            fac = S.dot(old,new)
            new = new - fac*old
            norm = norm - fac*fac
+
         end
+
         scales(n) = norm
-     !   if(norm>MAT_LINEAR_DEPENDENCE_TOL) then
+
         if(norm>tol) then
-!normalisation of the orthogonalised vector
-          norm = sqrt(norm)
-          new = new/norm
+
+           ! Normalisation of the orthogonalized vector
+           norm = sqrt(norm)
+           new = new/norm
+
         else
-          n_dependent=n_dependent+1
-          new=keep
-          skip(n) = TRUE
+
+           n_dependent = n_dependent + 1
+           new = keep
+           skip(n) = TRUE
+
         end
      end
+
      nullify(new)
      nullify(old)
      keep.destroy
-!reject the quasilinearly dependent vectors at the end of the array
-     o=0
-     p=0
+
+     ! Reject the quasilinearly dependent vectors at the end of the array
+     o = 0
+     p = 0
+
      decreasing_vec.create(dim1,dim2)
-     do n=1,dim1
-       if(NOT skip(n)) then
-         p=p+1
-         decreasing_vec(p,:)=self(n,:)
-       else
-         decreasing_vec(dim1-o,:)=self(n,:)
-         o=o+1
-       end
+
+     do n = 1,dim1
+        if (NOT skip(n)) then
+           p = p + 1
+           decreasing_vec(p,:)=self(n,:)
+        else
+           decreasing_vec(dim1-o,:)=self(n,:)
+           o = o + 1
+        end
      end
-     self=decreasing_vec
+
+     self = decreasing_vec
+
      decreasing_vec.destroy
      skip.destroy
+
    end
 
-   schmidt_orthonormalise(S,indices,scales,n_dependent,ld_tol) ::: leaky
-   ! Schmidt orthonormalise the vectors in "self" using "S" as the
-   ! metric.
-   ! "scales" is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
-   ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are orthonormalised. the others are counted (n_dependent) 
-   ! rejected at the end of the list, their new order is in indices
-   ! (which makes the routine leaky).
+   schmidt_orthonormalize(S,indices,scales,n_dependent,ld_tol) ::: leaky
+   ! Schmidt orthonormalize the vectors in "self" using "S" as the
+   ! metric.  "scales" is set to the normalisation factors used to
+   ! normalize each column after the Schmidt procedure. Only those
+   ! vectors with norm more than the linear dependence tolerance are
+   ! orthonormalized. the others are counted (n_dependent) rejected at
+   ! the end of the list, their new order is in indices (which makes
+   ! the routine leaky).
      self :: target
      indices :: VEC{INT}*
      S :: MAT{REAL}, IN 
      scales :: VEC{REAL}, OUT
      n_dependent :: INT, OUT
      ld_tol :: REAL, optional
+
    ENSURE(NOT S.is_zero,"S is zero matrix")
+
      decreasing_vec :: MAT{REAL}*
      old,new :: VEC{REAL}*
      keep :: VEC{REAL}*
@@ -1368,389 +1409,477 @@ contains
      norm :: REAL
      n,o,p,dim1,dim2 :: INT
      skip :: VEC{BIN}*
-     n_dependent=0
-     tol=LINEAR_DEPENDENCE_TOL
-     if(present(ld_tol)) tol=ld_tol
+
+     tol = LINEAR_DEPENDENCE_TOL
+     if (present(ld_tol)) tol = ld_tol
+
+     n_dependent = 0
+     
      dim1= .dim1
      dim2= .dim2
+
      keep.create(dim2)
      skip.create(dim1)
      skip = FALSE
-!eliminate function with small norms
+
+     ! Eliminate function with small norms
      do n = 1,dim1
-       new => self(n,:)
-       norm = S.dot(new,new)
-       if(norm < tol) then
-         n_dependent=n_dependent+1
-         skip(n)=TRUE
-         scales(n)=norm
-       end
+
+        new => self(n,:)
+        norm = S.dot(new,new)
+        
+        if(norm < tol) then
+           n_dependent = n_dependent + 1
+           skip(n) = TRUE
+           scales(n) = norm
+        end
+
      end
-     DIE_IF(skip(1),"ground state is quasilinearly dependent")
+
+     ENSURE(NOT skip(1),"ground state is quasilinearly dependent")
+
      do n = 1,dim1
+
         if(skip(n)) cycle
+
         new => self(n,:)
         keep = new
         norm = S.dot(keep,keep)
-!orthogonalisation
+
+        ! Orthogonalisation
         do o = 1,n-1
+
            if(skip(o)) cycle
+
            old => self(o,:)
            fac = S.dot(old,new)
            new = new - fac*old
            norm = norm - fac*fac
+
         end
+
         scales(n) = norm
-     !   if(norm>MAT_LINEAR_DEPENDENCE_TOL) then
+
         if(norm>tol) then
-!normalisation of the orthogonalised vector
-          norm = sqrt(norm)
-          new = new/norm
+           ! Normalisation of the orthogonalized vector
+           norm = sqrt(norm)
+           new = new/norm
         else
-          n_dependent=n_dependent+1
-          new=keep
-          skip(n) = TRUE
+           n_dependent = n_dependent + 1
+           new = keep
+           skip(n) = TRUE
         end
+
      end
+
      nullify(new)
      nullify(old)
      keep.destroy
-!reject the quasilinearly dependent vectors at the end of the array
-     o=0
-     p=0
+
+     ! Reject the quasilinearly dependent vectors at the end of the array
+     o = 0
+     p = 0
+
      decreasing_vec.create(dim1,dim2)
      indices.create(dim1)
-     do n=1,dim1
-       if(NOT skip(n)) then
-         p=p+1
-         decreasing_vec(p,:)=self(n,:)
-         indices(n)=p
-       else
-         decreasing_vec(dim1-o,:)=self(n,:)
-         indices(n)=dim1-o
-         o=o+1
-       end
-     end
-     self=decreasing_vec
-     decreasing_vec.destroy
-     skip.destroy
-   end
 
-   schmidt_2orthonormalise(S,scales,n_dependent,bra_vec)
-   ! Schmidt orthonormalise the vectors in "self" using "S" as the
-   ! metric and orthogonalise also with respect to spectator geminals. 
-   ! "scales" is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
-   ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are orthonormalised. the others are counted (n_dependent) 
-   ! and rejected at the end of the list.
-     self :: target
-     S :: MAT{REAL}, IN 
-     bra_vec :: VEC{MAT_{REAL}}*
-     scales :: VEC{REAL}, OUT
-     n_dependent :: INT, OUT
-   ENSURE(NOT S.is_zero,"S is zero matrix")
-     decreasing_vec :: MAT{REAL}*
-     old,new :: VEC{REAL}*
-     keep :: VEC{REAL}*
-     fac :: REAL
-     tol :: REAL
-     norm :: REAL
-     n,o,p,dim1,dim2 :: INT
-     skip :: VEC{BIN}*
-     n_dependent=0
-     tol=sqrt(MAT_LINEAR_DEPENDENCE_TOL)
-     dim1= .dim1
-     dim2= .dim2
-     keep.create(dim2)
-!orthogonalisation to spectator bra's
-     do p=2,bra_vec.dim
-       bra_vec(p)[:,:].flatten(keep) 
-       norm = dot_product(keep,keep)
-       keep=keep/Sqrt(norm)
-       new => self(1,:)
-       fac = dot_product(keep,new)
-!       write(6,*) "spectator number, fac for GS",p,fac
-       new = new - fac*keep
-       do n = 2,dim1
-         new => self(n,:)
-         fac = dot_product(keep,new)
-         new = new - fac*keep
-       end
-     end
-     skip.create(dim1)
-     skip = FALSE
-!eliminate function with small norms
-     do n = 1,dim1
-       new => self(n,:)
-       norm = S.dot(new,new)
-       if(norm < tol) then
-         n_dependent=n_dependent+1
-         skip(n)=TRUE
-         scales(n)=norm
-       end
-     end
-     DIE_IF(skip(1),"ground state is quasilinearly dependent")
-     do n = 1,dim1
-        if(skip(n)) cycle
-        new => self(n,:)
-        keep = new
-        norm = S.dot(keep,keep)
-!orthogonalisation
-        do o = 1,n-1
-           if(skip(o)) cycle
-           old => self(o,:)
-           fac = S.dot(old,new)
-           new = new - fac*old
-           norm = norm - fac*fac
-        end
-        scales(n) = norm
-     !   if(norm>MAT_LINEAR_DEPENDENCE_TOL) then
-        if(norm>tol) then
-!normalisation of the orthogonalised vector
-          norm = sqrt(norm)
-          new = new/norm
+     do n =1,dim1
+        if(NOT skip(n)) then
+           p = p + 1
+           decreasing_vec(p,:) = self(n,:)
+           indices(n) = p
         else
-          n_dependent=n_dependent+1
-          new=keep
-          skip(n) = TRUE
+           decreasing_vec(dim1-o,:) = self(n,:)
+           indices(n) = dim1-o
+           o = o + 1
         end
      end
-     nullify(new)
-     nullify(old)
-     keep.destroy
-!reject the quasilinearly dependent vectors at the end of the array
-     o=0
-     p=0
-     decreasing_vec.create(dim1,dim2)
-     do n=1,dim1
-       if(NOT skip(n)) then
-         p=p+1
-         decreasing_vec(p,:)=self(n,:)
-       else
-         decreasing_vec(dim1-o,:)=self(n,:)
-         o=o+1
-       end
-     end
-     self=decreasing_vec
+
+     self = decreasing_vec
+
      decreasing_vec.destroy
      skip.destroy
+
    end
 
-   hybrid_orthonormalise(S,scales,n_dependent)
-   ! Symmetrically orthonormalise the vectors in "self" using "S" as the
-   ! metric except the first vector which is Schmidt orthogonalised to the
-   ! others. "scales" is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
-   ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are orthonormalised. the others are counted (n_dependent) 
-   ! and rejected at the end of the list.
-     self :: target
-     S :: MAT{REAL}, IN 
-     scales :: VEC{REAL}, OUT
-     n_dependent :: INT, OUT
-   ENSURE(NOT S.is_zero,"S is zero matrix")
- !  ENSURE(NOT .is_zero,"self is zero matrix")
-     decreasing_vec :: MAT{REAL}*
-     SS,SI :: MAT{REAL}*
-     gs,new :: VEC{REAL}*
-     bra,ket :: VEC{REAL}*
-     keep :: VEC{REAL}*
-     indices :: VEC{INT}*
-     fac :: REAL
-     tol :: REAL
-     n,p,dim,dim1,dim2 :: INT
-     norm :: REAL
-     n_dependent=0
-     tol=sqrt(MAT_LINEAR_DEPENDENCE_TOL)
-   !  tol=dsqrt(tol)
-     dim1= .dim1
-     dim2= .dim2
-     keep.create(dim2)
-!orthogonalisation to first vector
-     gs => self(1,:)
-     norm = S.dot(gs,gs)
-     scales(1)=sqrt(norm)
-     DIE_IF(norm<tol,"Ground state's norm smaller than tol") 
-     gs=gs/sqrt(norm)
-     do n = 2,dim1
-       new => self(n,:)
-       keep = new
-       norm = S.dot(keep,keep)
-       scales(n)=sqrt(norm)
-       fac = S.dot(gs,new)
-       keep = keep - fac*gs
-       norm = norm - fac*fac
-       if(norm < tol) then !eliminate function with small norms
-         n_dependent=n_dependent+1
-       else !normalisation of the orthogonalised vector
-         norm = sqrt(norm)
-         scales(n)=norm
-         new = keep/norm
-       end
-     end
-     nullify(gs)
-     nullify(new)
-     keep.destroy
-!sort vectors remaining to orthogonalize in decreasing order
-     indices.create(dim1-1)
-     scales(2:dim1).quick_sort(indices,decreasing_order=TRUE)
-     decreasing_vec.create(2,dim1,1,dim2)
-     scales(2:dim1)=scales(indices+1)
-     do p=2,dim1
-       decreasing_vec(p,:) = self(indices(p-1)+1,:)
-     end
-     indices.destroy
-     do p=dim1-n_dependent+1,dim1
-       self(p,:) = decreasing_vec(p,:) 
-     end
-!symmetrically orthogonalise the vectors orthogonal to the first one
-     dim=dim1-1-n_dependent
-     SI.create(dim,dim) !inverse square root of scalar product matrix
-     SS.create(dim,dim) !scalar product matrix
-     do n = 2,dim+1
-       bra => decreasing_vec(n,:)
-       SS(n-1,n-1)=ONE
-       do p = n+1,dim+1
-         ket => decreasing_vec(p,:)
-         SS(n-1,p-1) = S.dot(bra,ket)
-         SS(p-1,n-1) = SS(n-1,p-1)
-       end
-     end
-     nullify(bra)
-     nullify(ket)
-     SI.to_inverse_sqrt_of(SS)
-     SS.destroy
-     self(2:dim+1,:).to_product_of(SI,decreasing_vec(2:dim+1,:))
-     decreasing_vec.destroy
-     SI.destroy
-   end
-
-   hybrid_2orthonormalise(S,scales,n_dependent,bra_vec)
-   ! Symmetrically orthonormalise the vectors in "self" using "S" as the
-   ! metric except the first vector which is Schmidt orthogonalised to the
-   ! others. "scales" is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
-   ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are orthonormalised. the others are counted (n_dependent) 
-   ! and rejected at the end of the list.
-     self :: target
-     S :: MAT{REAL}, IN 
-     bra_vec :: VEC{MAT_{REAL}}*
-!     i_geminals :: INT, IN
-     scales :: VEC{REAL}, OUT
-     n_dependent :: INT, OUT
-   ENSURE(NOT S.is_zero,"S is zero matrix")
- !  ENSURE(NOT .is_zero,"self is zero matrix")
-     decreasing_vec :: MAT{REAL}*
-     SS,SI :: MAT{REAL}*
-     gs,new :: VEC{REAL}*
-     bra,ket :: VEC{REAL}*
-     keep :: VEC{REAL}*
-     indices :: VEC{INT}*
-     fac :: REAL
-     tol :: REAL
-     n,p,dim,dim1,dim2 :: INT
-     norm :: REAL
-     n_dependent=0
-     tol=sqrt(MAT_LINEAR_DEPENDENCE_TOL)
-   !  tol=dsqrt(tol)
-     dim1= .dim1
-     dim2= .dim2
-     keep.create(dim2)
-!orthogonalisation to spectator bra's
-!     do p=1,i_geminals-1
-!       bra_vec(p)[:,:].flatten(keep) ! careful with dim if truncature
-!       new => self(1,:)
-!       fac = dot_product(keep,new)
-!       write(*,*) "spectator number, fac for GS",p,fac
-!       new = new - fac*keep
-!       do n = 2,dim1
-!         new => self(n,:)
+!   schmidt_2orthonormalize(S,scales,n_dependent,bra_vec)
+!   ! Schmidt orthonormalize the vectors in "self" using "S" as the
+!   ! metric and orthogonalize also with respect to spectator geminals.
+!   ! "scales" is set to the normalisation factors used to normalize
+!   ! each column after the Schmidt procedure. Only those vectors with
+!   ! norm more than the linear dependence tolerance are
+!   ! orthonormalized. the others are counted (n_dependent) and
+!   ! rejected at the end of the list.
+!      self :: target
+!      S :: MAT{REAL}, IN 
+!      bra_vec :: VEC{MAT_{REAL}}*
+!      scales :: VEC{REAL}, OUT
+!      n_dependent :: INT, OUT
+!
+!   ENSURE(NOT S.is_zero,"S is zero matrix")
+!
+!      decreasing_vec :: MAT{REAL}*
+!      old,new :: VEC{REAL}*
+!      keep :: VEC{REAL}*
+!      fac :: REAL
+!      tol :: REAL
+!      norm :: REAL
+!      n,o,p,dim1,dim2 :: INT
+!      skip :: VEC{BIN}*
+!      
+!      tol = sqrt(MAT_LINEAR_DEPENDENCE_TOL)
+!      
+!      n_dependent = 0
+!      
+!      dim1= .dim1
+!      dim2= .dim2
+!      
+!      keep.create(dim2)
+!      
+!      ! Orthogonalisation to spectator bra's
+!      do p = 2,bra_vec.dim
+!      
+!         bra_vec(p)[:,:].flatten(keep) 
+!         norm = dot_product(keep,keep)
+!         keep = keep/sqrt(norm)
+!      
+!         new => self(1,:)
 !         fac = dot_product(keep,new)
 !         new = new - fac*keep
-!       end
-!     end
-     do p=2,bra_vec.dim
-       bra_vec(p)[:,:].flatten(keep) ! careful with dim if truncature
-       write(*,*) "keep=bra(2)",keep
-       norm = dot_product(keep,keep)
-       keep=keep/Sqrt(norm)
-       new => self(1,:)
-       fac = dot_product(keep,new)
-       write(*,*) "spectator number, fac for GS",p,fac
-       new = new - fac*keep
-       do n = 2,dim1
-         new => self(n,:)
-         fac = dot_product(keep,new)
-         new = new - fac*keep
-       end
-     end
-!orthogonalisation to first vector
-     gs => self(1,:)
-     norm = S.dot(gs,gs)
-     scales(1)=sqrt(norm)
-     DIE_IF(norm<tol,"Ground state's norm smaller than tol") 
-     gs=gs/sqrt(norm)
-     do n = 2,dim1
-       new => self(n,:)
-       keep = new
-       norm = S.dot(keep,keep)
-       scales(n)=sqrt(norm)
-       fac = S.dot(gs,new)
-       keep = keep - fac*gs
-       norm = norm - fac*fac
-       if(norm < tol) then !eliminate function with small norms
-         n_dependent=n_dependent+1
-       else !normalisation of the orthogonalised vector
-         norm = sqrt(norm)
-         scales(n)=norm
-         new = keep/norm
-       end
-     end
-     nullify(gs)
-     nullify(new)
-     keep.destroy
-!sort vectors remaining to orthogonalize in decreasing order
-     indices.create(dim1-1)
-     scales(2:dim1).quick_sort(indices,decreasing_order=TRUE)
-     decreasing_vec.create(2,dim1,1,dim2)
-     scales(2:dim1)=scales(indices+1)
-     do p=2,dim1
-       decreasing_vec(p,:) = self(indices(p-1)+1,:)
-     end
-     indices.destroy
-     do p=dim1-n_dependent+1,dim1
-       self(p,:) = decreasing_vec(p,:) 
-     end
-!symmetrically orthogonalise the vectors orthogonal to the first one
-     dim=dim1-1-n_dependent
-     SI.create(dim,dim) !inverse square root of scalar product matrix
-     SS.create(dim,dim) !scalar product matrix
-     do n = 2,dim+1
-       bra => decreasing_vec(n,:)
-       SS(n-1,n-1)=ONE
-       do p = n+1,dim+1
-         ket => decreasing_vec(p,:)
-         SS(n-1,p-1) = S.dot(bra,ket)
-         SS(p-1,n-1) = SS(n-1,p-1)
-       end
-     end
-     nullify(bra)
-     nullify(ket)
-     SI.to_inverse_sqrt_of(SS)
-     SS.destroy
-     self(2:dim+1,:).to_product_of(SI,decreasing_vec(2:dim+1,:))
-     decreasing_vec.destroy
-     SI.destroy
-   end
+!         do n = 2,dim1
+!            new => self(n,:)
+!            fac = dot_product(keep,new)
+!            new = new - fac*keep
+!         end
+!      
+!      end
+!      skip.create(dim1)
+!      skip = FALSE
+!      
+!      ! Eliminate function with small norms
+!      do n = 1,dim1
+!      
+!         new => self(n,:)
+!         norm = S.dot(new,new)
+!      
+!         if (norm<tol) then
+!            n_dependent = n_dependent + 1
+!            skip(n)   = TRUE
+!            scales(n) = norm
+!         end
+!      
+!      end
+!      
+!      ENSURE(NOT skip(1),"ground state is quasilinearly dependent")
+!      
+!      do n = 1,dim1
+!      
+!         if (skip(n)) cycle
+!      
+!         new => self(n,:)
+!         keep = new
+!         norm = S.dot(keep,keep)
+!      
+!         ! Orthogonalisation
+!         do o = 1,n-1
+!      
+!            if (skip(o)) cycle
+!      
+!            old => self(o,:)
+!            fac = S.dot(old,new)
+!            new = new - fac*old
+!            norm = norm - fac*fac
+!      
+!         end
+!      
+!         scales(n) = norm
+!      
+!         if(norm>tol) then
+!            ! Normalisation of the orthogonalized vector
+!            norm = sqrt(norm)
+!            new = new/norm
+!         else
+!            n_dependent=n_dependent+1
+!            new=keep
+!            skip(n) = TRUE
+!         end
+!      
+!      end
+!      
+!      nullify(new)
+!      nullify(old)
+!      keep.destroy
+!      
+!      ! Reject the quasilinearly dependent vectors at the end of the array
+!      o = 0
+!      p = 0
+!      
+!      decreasing_vec.create(dim1,dim2)
+!      do n = 1,dim1
+!         if (NOT skip(n)) then
+!            p = p + 1
+!            decreasing_vec(p,:) = self(n,:)
+!         else
+!            decreasing_vec(dim1-o,:) = self(n,:)
+!            o = o + 1
+!         end
+!      end
+!      
+!      self = decreasing_vec
+!      
+!      decreasing_vec.destroy
+!      skip.destroy
+!
+!   end
 
-   schmidt_orthonormalise(S,scales) ::: get_from(MAT{INTRINSIC})
-   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
+!   hybrid_orthonormalize(S,scales,n_dependent)
+!   ! Symmetrically orthonormalize the vectors in "self" using "S" as the
+!   ! metric except the first vector which is Schmidt orthogonalized to the
+!   ! others. "scales" is set to the
+!   ! normalisation factors used to normalize each column after the Schmidt
+!   ! procedure. Only those vectors with norm more than the linear dependence
+!   ! tolerance are orthonormalized. the others are counted (n_dependent) 
+!   ! and rejected at the end of the list.
+!      self :: target
+!      S :: MAT{REAL}, IN 
+!      scales :: VEC{REAL}, OUT
+!      n_dependent :: INT, OUT
+!
+!   ENSURE(NOT S.is_zero,"S is zero matrix")
+!
+!      decreasing_vec :: MAT{REAL}*
+!      SS,SI :: MAT{REAL}*
+!      gs,new :: VEC{REAL}*
+!      bra,ket :: VEC{REAL}*
+!      keep :: VEC{REAL}*
+!      indices :: VEC{INT}*
+!      fac :: REAL
+!      tol :: REAL
+!      n,p,dim,dim1,dim2 :: INT
+!      norm :: REAL
+!      
+!      tol = sqrt(MAT_LINEAR_DEPENDENCE_TOL)
+!      n_dependent = 0
+!      
+!      dim1= .dim1
+!      dim2= .dim2
+!      
+!      keep.create(dim2)
+!      
+!      ! Orthogonalisation to first vector
+!      gs => self(1,:)
+!      norm = S.dot(gs,gs)
+!      scales(1) = sqrt(norm)
+!      ENSURE(norm>=tol,"Ground state's norm smaller than tol") 
+!      gs = gs/sqrt(norm)
+!      
+!      do n = 2,dim1
+!         new => self(n,:)
+!         keep = new
+!         norm = S.dot(keep,keep)
+!         scales(n)=sqrt(norm)
+!         fac = S.dot(gs,new)
+!         keep = keep - fac*gs
+!         norm = norm - fac*fac
+!
+!         if(norm < tol) then 
+!            ! Eliminate function with small norms
+!            n_dependent=n_dependent+1
+!         else 
+!            ! Normalisation of the orthogonalized vector
+!            norm = sqrt(norm)
+!            scales(n)=norm
+!            new = keep/norm
+!         end
+!
+!      end
+!      
+!      nullify(gs)
+!      nullify(new)
+!      keep.destroy
+!      
+!      ! Sort vectors remaining to orthogonalize in decreasing order
+!      indices.create(dim1-1)
+!      scales(2:dim1).quick_sort(indices,decreasing_order=TRUE)
+!      decreasing_vec.create(2,dim1,1,dim2)
+!      scales(2:dim1)=scales(indices+1)
+!      do p = 2,dim1
+!         decreasing_vec(p,:) = self(indices(p-1)+1,:)
+!      end
+!      
+!      indices.destroy
+!      
+!      do p = dim1-n_dependent+1,dim1
+!         self(p,:) = decreasing_vec(p,:) 
+!      end
+!      
+!      ! Symmetrically orthogonalize the vectors orthogonal to the first one
+!      dim = dim1-1-n_dependent
+!      
+!      SI.create(dim,dim) !inverse square root of scalar product matrix
+!      SS.create(dim,dim) !scalar product matrix
+!      
+!      do n = 2,dim+1
+!      
+!         bra => decreasing_vec(n,:)
+!         SS(n-1,n-1)=ONE
+!      
+!         do p = n+1,dim+1
+!            ket => decreasing_vec(p,:)
+!            SS(n-1,p-1) = S.dot(bra,ket)
+!            SS(p-1,n-1) = SS(n-1,p-1)
+!         end
+!      
+!      end
+!      
+!      nullify(bra)
+!      nullify(ket)
+!      
+!      SI.to_inverse_sqrt_of(SS)
+!      SS.destroy
+!      
+!      self(2:dim+1,:).to_product_of(SI,decreasing_vec(2:dim+1,:))
+!      
+!      decreasing_vec.destroy
+!      SI.destroy
+!
+!   end
+
+!   hybrid_2orthonormalize(S,scales,n_dependent,bra_vec)
+!   ! Symmetrically orthonormalize the vectors in "self" using "S" as the
+!   ! metric except the first vector which is Schmidt orthogonalized to the
+!   ! others. "scales" is set to the
+!   ! normalisation factors used to normalize each column after the Schmidt
+!   ! procedure. Only those vectors with norm more than the linear dependence
+!   ! tolerance are orthonormalized. the others are counted (n_dependent) 
+!   ! and rejected at the end of the list.
+!      self :: target
+!      S :: MAT{REAL}, IN 
+!      bra_vec :: VEC{MAT_{REAL}}*
+!      scales :: VEC{REAL}, OUT
+!      n_dependent :: INT, OUT
+!
+!   ENSURE(NOT S.is_zero,"S is zero matrix")
+!
+!      decreasing_vec :: MAT{REAL}*
+!      SS,SI :: MAT{REAL}*
+!      gs,new :: VEC{REAL}*
+!      bra,ket :: VEC{REAL}*
+!      keep :: VEC{REAL}*
+!      indices :: VEC{INT}*
+!      fac :: REAL
+!      tol :: REAL
+!      n,p,dim,dim1,dim2 :: INT
+!      norm :: REAL
+!      
+!      tol = sqrt(MAT_LINEAR_DEPENDENCE_TOL)
+!      n_dependent = 0
+!      
+!      dim1= .dim1
+!      dim2= .dim2
+!      
+!      keep.create(dim2)
+!      
+!      do p = 2,bra_vec.dim
+!      
+!         ! Careful with dim if truncature
+!         bra_vec(p)[:,:].flatten(keep) 
+!         norm = dot_product(keep,keep)
+!         keep = keep/sqrt(norm)
+!      
+!         new => self(1,:)
+!         fac = dot_product(keep,new)
+!         new = new - fac*keep
+!         do n = 2,dim1
+!            new => self(n,:)
+!            fac = dot_product(keep,new)
+!            new = new - fac*keep
+!         end
+!      
+!      end
+!      
+!      ! Orthogonalisation to first vector
+!      gs => self(1,:)
+!      norm = S.dot(gs,gs)
+!      scales(1) = sqrt(norm)
+!      ENSURE(norm>=tol,"Ground state's norm smaller than tol") 
+!      
+!      gs = gs/sqrt(norm)
+!      
+!      do n = 2,dim1
+!      
+!         new => self(n,:)
+!         keep = new
+!         norm = S.dot(keep,keep)
+!         scales(n)=sqrt(norm)
+!      
+!         fac = S.dot(gs,new)
+!         keep = keep - fac*gs
+!         norm = norm - fac*fac
+!         if (norm < tol) then 
+!            ! Eliminate function with small norms
+!            n_dependent=n_dependent+1
+!         else 
+!            ! Normalisation of the orthogonalized vector
+!            norm = sqrt(norm)
+!            scales(n)=norm
+!            new = keep/norm
+!         end
+!      
+!      end
+!      
+!      nullify(gs)
+!      nullify(new)
+!      
+!      keep.destroy
+!      
+!      ! Sort vectors remaining to orthogonalize in decreasing order
+!      indices.create(dim1-1)
+!      scales(2:dim1).quick_sort(indices,decreasing_order=TRUE)
+!      decreasing_vec.create(2,dim1,1,dim2)
+!      scales(2:dim1)=scales(indices+1)
+!      do p = 2,dim1
+!         decreasing_vec(p,:) = self(indices(p-1)+1,:)
+!      end
+!      indices.destroy
+!      do p = dim1-n_dependent+1,dim1
+!         self(p,:) = decreasing_vec(p,:) 
+!      end
+!      
+!      ! Symmetrically orthogonalize the vectors orthogonal to the first one
+!      dim=dim1-1-n_dependent
+!      SI.create(dim,dim) !inverse square root of scalar product matrix
+!      SS.create(dim,dim) !scalar product matrix
+!      
+!      do n = 2,dim+1
+!         bra => decreasing_vec(n,:)
+!         SS(n-1,n-1)=ONE
+!         do p = n+1,dim+1
+!           ket => decreasing_vec(p,:)
+!           SS(n-1,p-1) = S.dot(bra,ket)
+!           SS(p-1,n-1) = SS(n-1,p-1)
+!         end
+!      end
+!      
+!      nullify(bra)
+!      nullify(ket)
+!      
+!      SI.to_inverse_sqrt_of(SS)
+!      SS.destroy
+!      
+!      self(2:dim+1,:).to_product_of(SI,decreasing_vec(2:dim+1,:))
+!      
+!      decreasing_vec.destroy
+!      SI.destroy
+!
+!   end
+
+   schmidt_orthonormalize(S,scales) ::: get_from(MAT{INTRINSIC})
+   ! Schmidt orthonormalize the column vectors in "self" using "S" as the
    ! metric. If "scales" is present, it is set to the
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure. Only those vectors with norm more than the linear dependence
-   ! tolerance are normalised. 
+   ! tolerance are normalized. 
      self :: target
      S :: MAT{REAL}, IN
      scales :: VEC{REAL}
@@ -1763,38 +1892,38 @@ contains
    ! noticed when Schmidt orthogonalising is used, starting from column 1.
    end
 
-   schmidt_orthonormalise(scale) ::: get_from(MAT{INTRINSIC})
-   ! Schmidt orthonormalise the column vectors in "self" metric. If
+   schmidt_orthonormalize(scale) ::: get_from(MAT{INTRINSIC})
+   ! Schmidt orthonormalize the column vectors in "self" metric. If
    ! "scale" is present, it is set to the product of the normalisation
-   ! factors used to normalise each column after the Schmidt
+   ! factors used to normalize each column after the Schmidt
    ! procedure. 
    end
 
-   schmidt_orthonormalise(S,scale) ::: get_from(MAT{INTRINSIC})
-   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
+   schmidt_orthonormalize(S,scale) ::: get_from(MAT{INTRINSIC})
+   ! Schmidt orthonormalize the column vectors in "self" using "S" as the
    ! metric. If "scale" is present, it is set to the product of the
-   ! normalisation factors used to normalise each column after the Schmidt
+   ! normalisation factors used to normalize each column after the Schmidt
    ! procedure.
    end
 
-   schmidt_orthonormalise(S,from,to) ::: get_from(MAT{INTRINSIC})
-   ! Schmidt orthonormalise the *column* vectors in "self" using "S" as the
-   ! metric. Only the columns starting from index "from" are orthonormalised,
-   ! and further, those columns are only orthonormalised to first columns, up to
+   schmidt_orthonormalize(S,from,to) ::: get_from(MAT{INTRINSIC})
+   ! Schmidt orthonormalize the *column* vectors in "self" using "S" as the
+   ! metric. Only the columns starting from index "from" are orthonormalized,
+   ! and further, those columns are only orthonormalized to first columns, up to
    ! the column with index "to".
    end
 
-   reverse_schmidt_orthonormalise(S) ::: get_from(MAT{INTRINSIC})
-   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
+   reverse_schmidt_orthonormalize(S) ::: get_from(MAT{INTRINSIC})
+   ! Schmidt orthonormalize the column vectors in "self" using "S" as the
    ! metric.
    end
 
-   reverse_schmidt_orthogonalise ::: get_from(MAT{INTRINSIC}, CAST=>)
-   ! Schmidt orthonormalise the column vectors in "self" using unit metric.
+   reverse_schmidt_orthogonalize ::: get_from(MAT{INTRINSIC}, CAST=>)
+   ! Schmidt orthonormalize the column vectors in "self" using unit metric.
    end
 
-   symmetrically_orthonormalise(S) ::: get_from(MAT{INTRINSIC})
-   ! Symmetrically orthonormalise the column vectors in "self" using
+   symmetrically_orthonormalize(S) ::: get_from(MAT{INTRINSIC})
+   ! Symmetrically orthonormalize the column vectors in "self" using
    ! "S" as the metric, which must be real and positive definite.
    end
 
@@ -1805,95 +1934,12 @@ contains
    ! the routine, what is done is: self = self(:,permutation).
    end
 
-!  ========================
-!  Idempotency purification
-!  ========================
+! =====================
+! Eigenproblem routines
+! =====================
 
-   McWeeny_purify(S) ::: PURE
-   ! Apply the McWeeny purification to obtain an idempotent density
-   ! matrix, using "S" as the metric.
-      self :: INOUT
-      S :: MAT{REAL}, IN
-
-      W,PS,PSPS :: MAT{REAL}@
-      diff :: REAL
-
-      W    = self
-      PS   = self
-      PSPS = self
-
-      do
-
-         ! McWeeny term
-         PS.to_product_of(self,S)
-         W.to_scaled_product_of(PS,self,fac=THREE)
-         PSPS.to_product_of(PS,PS)
-         W.plus_scaled_product_of(PSPS,self,fac=-TWO)
-
-         ! Same?
-         diff = maxval(abs(self - W))
-         self = W
-         if (diff<REAL_EPSILON) exit
-
-
-      end
-
-      deallocate(PSPS)
-      deallocate(PS)
-      deallocate(W)
-         
-
-   end
-
-   Holas_5th_order_purify(S) ::: PURE
-   ! Apply the Holas's 5th order purification to obtain an idempotent
-   ! density matrix, using "S" as the metric. This was shown by
-   ! J. Kim and Y. Jung (2011) CPL 511 p. 159-60.
-      self :: INOUT
-      S :: MAT{REAL}, IN
-
-      W,PS,PS2,PS3 :: MAT{REAL}@
-      diff :: REAL
-
-      W   = self
-      PS  = self
-      PS2 = self
-      PS3 = self
-
-      do
-
-         ! Holas term
-         PS.to_product_of(self,S)
-         PS2.to_product_of(PS,PS)
-         W.to_scaled_product_of(PS2,self,fac=TEN)
-
-         PS3.to_product_of(PS2,PS)
-         W.plus_scaled_product_of(PS3,self,fac=-FIFTEEN)
-
-         PS2.to_product_of(PS3,PS)
-         W.plus_scaled_product_of(PS2,self,fac=SIX)
-
-         ! Same?
-         diff = maxval(abs(self - W))
-         self = W
-         if (diff<REAL_EPSILON) exit
-
-      end
-
-      deallocate(PS3)
-      deallocate(PS2)
-      deallocate(PS)
-      deallocate(W)
-         
-
-   end
-
-!  =====================
-!  Eigenproblem routines
-!  =====================
-
-!   diagonalise_by_jacobi_2(eigenvalues, failure, iter, u, eps, max_iter)
-!   ! Diogonalises self using the Jacobi rotations method. Returns the
+!   diagonalize_by_jacobi_2(eigenvalues, failure, iter, u, eps, max_iter)
+!   ! Diogonalizes self using the Jacobi rotations method. Returns the
 !   ! eigenvalues and rotation matrix. Input the accuracy if desired.
 !     eigenvalues :: VEC{REAL}
 !     failure :: BIN
@@ -1958,8 +2004,8 @@ contains
 !     m.destroy
 !   end
 
-!   diagonalise_by_jacobi(eigenvalues,eigenvectors,eps,max_iterations)
-!   ! Diagonalises "self" using the Jacobi rotations method. Returns the
+!   diagonalize_by_jacobi(eigenvalues,eigenvectors,eps,max_iterations)
+!   ! Diagonalizes "self" using the Jacobi rotations method. Returns the
 !   ! "eigenvalues" and "eigenvectors". Input the accuracy "eps" or the
 !   ! maximum number of iterations "max_iter", if desired.
 !     eigenvalues :: VEC{REAL}
@@ -1985,7 +2031,6 @@ contains
 !     iter=-1
 !     done = FALSE
 !     do
-!      ! DIE_IF(iter>max_iter,"too many iterations")
 !        if (iter>max_iter) exit
 !        if (done) exit
 !        write(*,*) "iter =",iter
@@ -2017,8 +2062,8 @@ contains
 !     W.destroy
 !   end
 
-   diagonalise_by_jacobi(eigenvalues,eps,max_iterations)
-   ! Diagonalises "self" using the Jacobi rotations method. Returns
+   diagonalize_by_jacobi(eigenvalues,eps,max_iterations)
+   ! Diagonalizes "self" using the Jacobi rotations method. Returns
    ! the "eigenvalues". Input the accuracy "eps" or the maximum number
    ! of iterations "max_iter", if desired.
       eigenvalues :: VEC{REAL}
@@ -2067,7 +2112,7 @@ contains
 
       end
 
-      DIE_IF(iter>max_iter,"too many iterations")
+      ENSURE(iter<=max_iter,"too many iterations")
 
       W.put_diagonal_to(eigenvalues)
 
@@ -2075,34 +2120,44 @@ contains
 
    end
 
-   diagonalise_by_jacobi(eigenvalues,eigenvectors,eps,max_iterations)
-   ! Diagonalises "self" using the Jacobi rotations method. Returns the
+   diagonalize_by_jacobi(eigenvalues,eigenvectors,eps,max_iterations)
+   ! Diagonalizes "self" using the Jacobi rotations method. Returns the
    ! "eigenvalues". Input the accuracy "eps" or the maximum number of iterations
    ! "max_iter", if desired.
       eigenvalues :: VEC{REAL}
       eigenvectors :: MAT{REAL}
       eps :: REAL, optional
       max_iterations :: INT, optional
+
   ENSURE(.is_square, "self is not square")
   ENSURE(.is_symmetric, "self is not symmetrix")
   ENSURE(eigenvalues.dim==.dim1,"wrong size, eigenvalues")
   ENSURE(eigenvectors.is_square, "eigenvectors are not square")
   ENSURE(eigenvalues.dim1>=.dim1,"wrong size, eigenvectors")
+
       i,j,iter,max_iter  :: INT
       accuracy,tol :: REAL
       done :: BIN
       W :: MAT{REAL}*
+
       accuracy = TOL(8)
       if (present(eps)) accuracy = eps
+
       max_iter = 500
       if (present(max_iterations)) max_iter = max_iterations
+
       W.create_copy(self)
       eigenvectors.to_unit_matrix
+
       iter = 0
+
       do
+
         iter = iter + 1
-        DIE_IF(iter>max_iter,"too many iterations")
+
+        ENSURE(iter<=max_iter,"too many iterations")
         if (iter>max_iter) exit
+
         tol = accuracy
         done = TRUE
         do i = 1,.dim1
@@ -2112,11 +2167,16 @@ contains
            W.jacobi_rotation(i,j,eigenvectors)      
         end
         end
+
         done = done AND iter>3
         if (done) exit
+
       end
+
       W.put_diagonal_to(eigenvalues)
+
       W.destroy
+
    end
 
 !   solve_general_eigenproblem(eigenvalues,left,right,normalize)
@@ -2130,15 +2190,15 @@ contains
 !      er,ei,W :: VEC{REAL}*
 !      A,le,re :: MAT{REAL}*
 !      i,dim,dimW, info :: INT
-!      normalise :: BIN
+!      normalize :: BIN
 !      dot :: REAL
 !      ENSURE(.is_square,"non-square matrix")
 !      ENSURE(size(eigenvalues)>=.dim1,"eigenvalue array too small")
 !      ENSURE(size(left)>=size(self),"left eigenvector matrix too small")
 !      ENSURE(size(right)>=size(self),"right eigenvector matrix too small")
 !      dim = .dim1
-!      normalise = TRUE
-!      if (present(normalize)) normalise = normalize
+!      normalize = TRUE
+!      if (present(normalize)) normalize = normalize
 !      if (self.is_symmetric) then
 !         A.create(dim,dim)
 !         er.create(dim)
@@ -2182,7 +2242,7 @@ contains
 !         ei.destroy; er.destroy
 !         A.destroy
 !      end
-!      if (normalise) then
+!      if (normalize) then
 !         do i = 1,dim
 !            dot = dot_product(left(:,i),right(:,i))
 !            dot = ONE/sqrt(dot)
@@ -2205,41 +2265,7 @@ contains
    ! "eigenvalues" and a matrix of "eigenvectors"
       eigenvalues :: VEC{REAL}
       eigenvectors :: MAT{REAL}
-#ifdef ESSL
-      .solve_symm_eigenproblem_ESSL(eigenvalues,eigenvectors)
-#else
       .solve_symm_eigenproblem_LAPACK(eigenvalues,eigenvectors)
-#endif
-   end
-
-   solve_symm_eigenproblem_ESSL(eigenvalues,eigenvectors) ::: private
-   ! Solve the symmetric eigenproblem for "self", yeilding a vector of
-   ! "eigenvalues" and a matrix of "eigenvectors". ESSL version.
-      eigenvalues :: VEC{REAL}
-      eigenvectors :: MAT{REAL}
-
-   ENSURE(.is_square,"non-square matrix")
-   ENSURE(eigenvalues.dim >=.dim1,"eigenvalue array too small")
-   ENSURE(eigenvectors.dim>=.dim, "eigenvector matrix too small")
-
-      ap,W :: VEC{REAL}*
-      dim :: INT
-
-      eigenvalues  = eigenvalues
-      eigenvectors = eigenvectors
-
-      dim = .dim1
-      ap.create(dim*(dim+1)/2)
-      self.zip_lower_triangle_to(ap)
-      W.create(2*dim)
-
-#ifdef ESSL
-      call dspev(21,ap,eigenvalues,eigenvectors,dim,dim,W,2*dim)
-#endif
-
-      W.destroy
-      ap.destroy
-
    end
 
    solve_symm_eigenproblem_LAPACK(eigenvalues,eigenvectors) ::: private
@@ -2247,138 +2273,78 @@ contains
    ! "eigenvalues" and a matrix of "eigenvectors". LAPACK version.
       eigenvalues :: VEC{REAL}
       eigenvectors :: MAT{REAL}
+
    ENSURE(.is_square,"non-square matrix")
    ENSURE(eigenvalues.dim>=.dim1,"eigenvalue array too small")
    ENSURE(size(eigenvectors)>=size(self),"eigenvector matrix too small")
+
       W :: VEC{REAL}*
       dim,fail,lwork :: INT
+
       dim = .dim1
       lwork = max(dim*dim,3*dim-1)
       W.create(lwork)
+
       eigenvectors = self
+
       fail = 0
-#ifndef ESSL
       call dsyev("V","L",dim,eigenvectors,dim,eigenvalues,W,lwork,fail)
-#endif
-   ENSURE(fail==0,"no solution, error found")
+
+      ENSURE(fail==0,"no solution, error found")
+
       W.destroy
+
    end
 
    internal_vectors(eigenvectors2,iv_tol) ::: leaky
    ! Extract the internal vectors of a matrix i.e. vectors in the
    ! orthocomplement of the kernel of the matrix.
-   !leaky because the number of outputed internal vectors is not known
-   !beforehand
+   ! leaky because the number of outputed internal vectors is not known
+   ! beforehand
      eigenvectors2 :: MAT{REAL}*
      iv_tol :: REAL, optional
-     ENSURE(.dim1==.dim2,"matrix not square")
+
+   ENSURE(.dim1==.dim2,"matrix not square")
+
      eigenvalues :: VEC{REAL}* 
      eigenvectors :: MAT{REAL}*
      tol :: REAL
      i,h,dim :: INT
-     tol=INTERNAL_GEMINAL_TOL
+
+     tol = INTERNAL_GEMINAL_TOL
      if (present(iv_tol)) tol = iv_tol
+
      dim=.dim1
+
      eigenvalues.create(dim)
      eigenvectors.create(dim,dim)
+
      .solve_eigenproblem(eigenvalues,eigenvectors)
-     h=count(mask= eigenvalues >tol)
-     DIE_IF(count(mask= eigenvalues <  -TOL(10))/=0,"matrix not positive")
-     DIE_IF(h==0,"no internal vector")
+
+     h = count(mask= eigenvalues >tol)
+
+     ENSURE(h/=0,"no internal vector")
+     ENSURE(count(mask=eigenvalue <-TOL(10))==0,"matrix not positive")
+
      eigenvectors2.create(h,dim)
-     h=0
-     do i=1,dim
-       if (NOT eigenvalues(i).is_zero(tol)) then
-         h=h+1
-         eigenvectors2(h,:)=eigenvectors(:,i)
-       end
+
+     h = 0
+     do i = 1,dim
+        if (NOT eigenvalues(i).is_zero(tol)) then
+           h = h + 1
+           eigenvectors2(h,:)=eigenvectors(:,i)
+        end
      end
+
      eigenvalues.destroy 
      eigenvectors.destroy
+
    end
 
-!  Unused ESSL routines
 
-!   solve_general_eigenproblem(eigenvalues,eigenvectors)
-!   ! Solve the eigenproblem for "self", yeilding a vector of "eigenvalues" and
-!   ! a matrix of "eigenvectors"
-!      eigenvalues :: VEC{CPX}
-!      eigenvectors :: MAT{CPX}
-!       W :: VEC{REAL}*
-!      dim1,dim2,dime,dimv :: INT
-!      select :: BIN
-!      dim1 = .dim1
-!      dim2 = .dim2
-!      dime = size(eigenvalues)
-!      dimv = size(eigenvectors)
-!      ENSURE(dim1==dim2,"non-square matrix")
-!      ENSURE(dime>=dim1,"eigenvalue array too small")
-!      ENSURE(dimv>=dim1*dim1,"eigenvector matrix too small")
-!      W.create(2*dim1)
-!      call dgeev(1,self,dim1,eigenvalues,eigenvectors,dim1,select,dim1,W,2*dim1)
-!      W.destroy
-!   end
-!
-!   solve_general_eigenproblem(eigenvalues,left,right,normalize)
-!   ! Solve the eigenproblem for "self", yeilding a vector of "eigenvalues" and
-!   ! a matrix of "left" and "right" eigenvectors. If "normalize" is present
-!   ! and FALSE, the left and right eigenvectors are not automatically
-!   ! renormalized so that (left)^T (right) = 1.
-!   ! NOTE : this routine fails if there are complex eigenvalues. Use the complex
-!   ! routine in this case.
-!      eigenvalues :: VEC{REAL}, target
-!      left,right :: MAT{REAL}, target
-!      normalize :: BIN, optional
-!      er,ei,W :: VEC{REAL}*
-!      A,le,re :: MAT{REAL}*
-!      i,dim,dimW, info :: INT
-!      normalise :: BIN
-!      dot :: REAL
-!      ENSURE(.is_square,"non-square matrix")
-!      ENSURE(size(eigenvalues)>=.dim1,"eigenvalues array too small")
-!      ENSURE(size(left)>=size(self),"left eigenvector matrix too small")
-!      ENSURE(size(right)>=size(self),"right eigenvector matrix too small")
-!      dim = .dim1
-!      normalise = TRUE
-!      if (present(normalize)) normalise = normalize
-!      if (.is_symmetric) then
-!         .solve_symmetric_eigenproblem(eigenvalues,right)
-!         left = right
-!      else
-!         A.create(dim,dim)
-!         ei.create(dim)
-!         er => eigenvalues
-!         le => left
-!         re => right
-!         dimW = 8*dim
-!         W.create(dimW)
-!         A = self
-!         ! Solve the eigenvalueproblem
-!         call dgeev('V','V',dim,A,dim,er,ei,le,dim,re,dim,W,dimW,info)
-!         ENSURE(info==0,"error, info="// trim(info.to_str))
-!         ! Search for the complex eigenvalues/vectors
-!         do i = 1,dim
-!            if (NOT ei(i).is_zero(TOL(20))) then
-!               DIE("There are complex eigenvalues, use the complex routine")
-!            end
-!         end
-!         W.destroy
-!         ei.destroy
-!         A.destroy
-!      end
-!      if (normalise) then
-!         do i = 1,dim
-!            dot = dot_product(left(:,i),right(:,i))
-!            dot = ONE/sqrt(dot)
-!            left(:,i)  = dot*left(:,i)
-!            right(:,i) = dot*right(:,i)
-!         end
-!      end
-!   end
-
-!  ========================
-!  Linear equation routines
-!  ========================
+! ========================
+! Linear equation routines
+! ========================
 
    solve_linear_equation(rhs,solution,fail)
    ! Solve the linear equations posed by "self", with "rhs" as the RHS vector,
@@ -2386,35 +2352,7 @@ contains
       rhs :: VEC{REAL}, IN
       solution :: VEC{REAL}, OUT
       fail :: BIN, OUT, optional
-#ifdef ESSL
-      .solve_linear_equation_ESSL(rhs,solution)
-#else
       .solve_linear_equation_LAPACK(rhs,solution,fail)
-#endif
-   end
-
-   solve_linear_equation_ESSL(rhs,solution) ::: private
-   ! Solve the linear equations posed by "self", with "rhs" as the RHS vector,
-   ! yeilding vector "solution" as the answer. ESSL version
-      rhs :: VEC{REAL}, IN
-      solution :: VEC{REAL}, OUT
-   ENSURE(.is_square,"non-square matrix")
-   ENSURE(rhs.dim==.dim1,"incompatible rhs")
-   ENSURE(solution.dim==.dim1,"incompatible solution vector")
-      LU :: MAT{REAL}*
-      pivot :: VEC{INT}*
-      dim :: INT
-      dim = rhs.dim
-      LU.create(dim,dim)
-      pivot.create(dim)
-      LU = self
-      solution = rhs
-#ifdef ESSL
-      call dgef(LU,dim,dim,pivot)
-      call dges(LU,dim,dim,pivot,solution,0)
-#endif
-      pivot.destroy
-      LU.destroy
    end
 
    solve_linear_equation_LAPACK(rhs,solution,fail) ::: private
@@ -2423,29 +2361,35 @@ contains
       rhs :: VEC{REAL}, IN
       solution :: VEC{REAL}, OUT
       fail :: BIN, OUT, optional
+
    ENSURE(.is_square,"non-square matrix")
    ENSURE(rhs.dim==.dim1,"incompatible rhs")
    ENSURE(solution.dim==.dim1,"incompatible solution vector")
+
       LU :: MAT{REAL}*
       pivot :: VEC{INT}*
       dim,nrhs,err :: INT
+
       dim = rhs.dim
       nrhs = 1
+
       nullify(LU); LU.create(dim,dim)
       nullify(pivot); pivot.create(dim)
+
       LU = self
       solution = rhs
-#ifndef ESSL
       call dgesv(dim,nrhs,LU,dim,pivot,solution,dim,err)
-#endif
+
       if (present(fail)) then
          fail = FALSE
          if (err/=0) fail = TRUE
       else
          ENSURE(err==0,"no solution, error found")
       end
+
       pivot.destroy
       LU.destroy
+
    end
 
    solve_linear_equations(rhs,solution)
@@ -2453,43 +2397,7 @@ contains
    ! vectors, yeilding matrix "solution" as a matrix of solution vectors.
       rhs :: MAT{REAL}, IN
       solution :: MAT{REAL}, OUT
-#ifdef ESSL
-      .solve_linear_equations_ESSL(rhs,solution)
-#else
       .solve_linear_equations_LAPACK(rhs,solution)
-#endif
-   end
-
-   solve_linear_equations_ESSL(rhs,solution) ::: private
-   ! Solve the linear equations posed by "self", with "rhs" as a matrix of RHS
-   ! vectors, yeilding matrix "solution" as a matrix of solution vectors.
-   ! ESSL version.
-      rhs :: MAT{REAL}, IN
-      solution :: MAT{REAL}, OUT
-
-   ENSURE(.is_square,"non-square matrix")
-   ENSURE(rhs.dim1==.dim2,"rhs incompatible with coefficient matrix")
-   ENSURE(rhs.dim2 >0,"no rhs vectors")
-
-      LU :: MAT{REAL}*
-      pivot :: VEC{INT}*
-      dim1,nrhs :: INT
-
-      dim1 = rhs.dim1
-      nrhs = rhs.dim2
-      nrhs = nrhs
-      LU.create(dim1,dim1)
-      pivot.create(dim1)
-      LU = self
-      solution = rhs
-#ifdef ESSL
-      call dgef(LU,dim1,dim1,pivot)
-      call dgesm("N",LU,dim1,dim1,pivot,solution,dim1,nrhs)
-#endif
-
-      pivot.destroy
-      LU.destroy
-
    end
 
    solve_linear_equations_LAPACK(rhs,solution) ::: private
@@ -2498,24 +2406,30 @@ contains
    ! LAPACK version
       rhs :: MAT{REAL}, IN
       solution :: MAT{REAL}, OUT
+
    ENSURE(.is_square,"non-square matrix")
    ENSURE(rhs.dim1==.dim2,"rhs incompatible with coefficient matrix")
    ENSURE(nrhs>0,"no rhs vectors")
+
       LU :: MAT{REAL}*
       pivot :: VEC{INT}*
       dim1,nrhs,err :: INT
+
       dim1 = rhs.dim1
       nrhs = rhs.dim2
+
       LU.create(dim1,dim1)
       pivot.create(dim1)
+
       LU = self
       solution = rhs
-#ifndef ESSL
       call dgesv(dim1,nrhs,LU,dim1,pivot,solution,dim1,err)
-#endif
+
+      ENSURE(err==0,"no solution, error found")
+
       pivot.destroy
       LU.destroy
-      ENSURE(err==0,"no solution, error found")
+
    end
 
    solve_convex_linear_equation(rhs,solution,plist,keep0,keep1,fail)
@@ -2541,6 +2455,7 @@ contains
       plist :: VEC{INT}, IN
       keep0,keep1 :: VEC{INT}, IN, optional
       fail :: BIN, OUT, optional
+
    ENSURE(.is_square,"non-square matrix")
    ENSURE(rhs.dim==.dim1,"incompatible rhs")
    ENSURE(solution.dim==.dim1,"incompatible solution vector")
@@ -2548,65 +2463,40 @@ contains
    ENSURE(plist.all_in_range([1,.dim]),"plist indices out of range")
    ENSURE(NOT (present(keep0) AND present(keep1)),"specify only keep0 or keep1, not both")
       pdim,rdim,kdim,k,n,n_combinations :: INT
+
       ulist,list :: VEC{INT}*
       combination :: MAT{INT}*
       sol,sol0,rhs0 :: VEC{REAL}*
       e,e0 :: REAL
       found_one,even :: BIN
-!      if (.dim1==6) then
-!      list.create(4)
-!      sol.create(.dim1)
-!      sol = ZERO
-!      sol(1) = 0.3
-!      sol(2) = 0.7
-!      sol(4) = 0.4
-!      sol(5) = 0.6
-!      list = [1,2,4,5]
-!            e0 = dot_product(rhs(list),sol(list)) &
-!               - HALF*dot_product(sol(list),matmul(self(list,list),sol(list)))
-!      print *, "===in MAT, average energy =",e0
-!      sol.destroy
-!      list.destroy
-!      end
-!!      if (.dim1==3) then
-!!      list.create(2)
-!!      sol.create(.dim1)
-!!      sol = ZERO
-!!      sol(1) = 0.3
-!!      sol(2) = 0.7
-!!      list = [1,2]
-!!            e0 = dot_product(rhs(list),sol(list)) &
-!!               - HALF*dot_product(sol(list),matmul(self(list,list),sol(list)))
-!!      print *, "===in MAT, average energy =",e0
-!!      sol.destroy
-!!      list.destroy
-!!      end
+
       even = FALSE
+
       if (present(keep0)) then
          ENSURE(keep0.has_all_elements_common_with(plist),"keep0 not a sublist of plist")
          kdim = keep0.dim
          even = kdim.is_even
       end
+
       if (present(keep1)) then
          ENSURE(keep1.has_all_elements_common_with(plist),"keep1 not a sublist of plist")
          kdim = keep1.dim
          even = kdim.is_even
       end
+
       pdim = plist.dim
       WARN_IF(pdim>=20,"LHS dimension may be too large")
+
       found_one = FALSE
       e = huge(ONE)
       sol.create(.dim1)
-      ulist.create(.dim1); ulist = [(k,k=1,.dim1)]
-      ulist.prune(plist)                          ! ulist = all - plist = unconstrained 
-    ! print *, "-----------start------------"
-    ! print *, "even =",even
-    ! print *, "plist:"
-    ! print *, plist
-    ! print *, "ulist:"
-    ! print *, ulist
-      do k = pdim,1,-1 ! Loop over indice groups of length "k" which are non-zero
-    ! print *, "---> combinations of length k =", k
+      ulist.create(.dim1)
+      ulist = [(k,k=1,.dim1)]
+      ulist.prune(plist)      ! ulist = all - plist = unconstrained 
+
+      ! Loop over indice groups of length "k" which are non-zero
+      do k = pdim,1,-1 
+
          if (present(keep1)) then
             if (k>2*kdim) cycle
          end
@@ -2614,297 +2504,174 @@ contains
          combination.create(k,n_combinations)         
          plist.make_combinations_of_length(k,combination)
          rdim = k + .dim1 - pdim
+
          rhs0.create(rdim)
          sol0.create(rdim)
          list.create(rdim)                        ! list = comb(plist) + ulist
-         do n = 1,n_combinations                  ! Loop over a particular "k" length combo
-    ! print *, "combination:"
-    ! print *, combination(:,n)
-            if (present(keep1)) then               ! if present, keep only these elements
+
+         ! Loop over a particular "k" length combo
+         do n = 1,n_combinations                  
+
+            ! If present, keep only these elements
+            if (present(keep1)) then               
                if (NOT keep1.has_all_elements_common_with(combination(:,n))) cycle
             end
-            if (present(keep0)) then               ! if present, keep only these elements
-    ! print *, "keep0:"
-    ! print *, keep0
+
+            ! If present, keep only these elements
+            if (present(keep0)) then               
              ! if (NOT keep0.has_all_elements_common_with(combination(:,n))) cycle
                if (NOT keep0.has_elements_common_with(combination(:,n))) cycle
                if (even AND all(combination(:,n)> .dim1/2)) cycle
                if (even AND all(combination(:,n)<=.dim1/2)) cycle
             end
-            list(1:k)  = combination(:,n)         ! The "list" of non-zero solution elements
-            list(k+1:) = ulist                    ! Always add the list of unconstrained elements
-    ! print *, "list:"
-    ! print *, list
-    ! print *, "rhs:"
-    ! print *, rhs
+
+            ! The "list" of non-zero solution elements
+            ! Always add the list of unconstrained elements
+            list(1:k)  = combination(:,n)         
+            list(k+1:) = ulist                    
+
             rhs0 = rhs(list)
-    ! print *, "rhs0:"
-    ! print *, rhs0
-    ! print *, "lhs0:"
-    ! print *, self(list,list)
-            self(list,list).solve_linear_equation(rhs0,sol0) ! Find the subset solution, "sol"
+
+            ! Find the subset solution, "sol"
+            self(list,list).solve_linear_equation(rhs0,sol0) 
             sol(list) = sol0
-    ! print *, "sol0:"
-    ! print *, sol0
-    ! print *, "sol:"
-    ! print *, sol
-            if (NOT present(keep1) AND any(sol(list(1:k))<ZERO)) cycle  ! Unacceptable ..............
+
+            ! Unacceptable ..............
+            if (NOT present(keep1) AND any(sol(list(1:k))<ZERO)) cycle  
+
             e0 = dot_product(rhs(list),sol(list)) &
                - HALF*dot_product(sol(list),matmul(self(list,list),sol(list)))
-    ! print *, "e0 = ",e0
-            if (e0>=e) cycle                      ! Found a better solution before
-            solution = ZERO                       ! Zero non-"list" solution elements
-            solution(list) = sol(list)            ! Keep this solutions
-    ! print *, "new solution found:"
-    ! print *, solution
-            e = e0                                ! Keep this E value
+
+            ! Found a better solution before
+            if (e0>=e) cycle                      
+
+            ! Zero non-"list" solution elements
+            ! & keep this solutions
+            solution = ZERO                       
+            solution(list) = sol(list)            
+
+            ! Keep this E value
+            e = e0                                
+
             found_one = TRUE
+
          end
+
          list.destroy
          sol0.destroy; rhs0.destroy
          combination.destroy
       end
+
       ulist.destroy
       sol.destroy
+
       if (present(fail)) then
          if (NOT found_one) then; fail = TRUE
          else;                    fail = FALSE
          end
       else
-         DIE_IF(NOT found_one,"acceptable solution was not found")
+         ENSURE(found_one,"acceptable solution was not found")
       end
+
    end
-
-!   solve_convex_linear_equation(rhs,solution,plist,keep0,keep1,even,fail)
-!   ! This routine solves the quadratic minimisation problem:
-!   !    f(X) = rhs . X  -  HALF * X^T . self . X  |  X>=0
-!   ! over all the elements in "plist", subject to the constraint that the
-!   ! "solution" X is positive for all elements in "plist". Any elements of the
-!   ! "solution" not in "plist" are not constrained to be positive nor do they
-!   ! participate in the evaluation of the quadratic function f -- they are
-!   ! usually lagrange multipliers. This routine involves solving reduced linear
-!   ! equations with "self" as the LHS and "rhs" as the RHS, over all partitions
-!   ! of the elements in "plist".  If "keep0" is present, then the indices in
-!   ! this sublist of "plist" must be kept when considering all partitions. If
-!   ! "keep1" is present, then the indices in this sublist of "plist" must be
-!   ! kept plus one extra index, when considering the partitions, and further,
-!   ! the positivity constraint is relaxed on these indices. It is an error if
-!   ! "keep0" and "keep1" are both present. If "even" is present and TRUE then
-!   ! "self" must be even dimensioned and the linear equations are considered to
-!   ! be a (alpha,beta) direct product -- "plist" refers only to the first half of
-!   ! the indices: the remaining indices are obtained from the first half by
-!   ! adding .dim/2. The same applies to the indices in "keep0" and "keep1" --
-!   ! the remaining indices must be generated. If present, "fail" is set TRUE if
-!   ! no solutions are found, otherwise the routine terminates with an error.
-!   ! WARNING: if the dimension of the matrix is too large, this routine will
-!   ! take a long time.
-!      rhs,solution :: VEC{REAL}
-!      plist :: VEC{INT}
-!      keep0,keep1 :: VEC{INT}, optional
-!      even,fail :: BIN, optional
-!   ENSURE(.is_square,"non-square matrix")
-!   ENSURE(rhs.dim==.dim1,"incompatible rhs")
-!   ENSURE(solution.dim==.dim1,"incompatible solution vector")
-!   ENSURE(plist.dim<=.dim1,"plist to large")
-!   ENSURE(plist.all_in_range([1,.dim]),"plist indices out of range")
-!   ENSURE(NOT (present(keep0) AND present(keep1)),"specify only keep0 or keep1, not both")
-!      pdim,pfac,rdim,kdim,k,n,n_combinations :: INT
-!      ulist,list :: VEC{INT}*
-!      combination :: MAT{INT}*
-!      sol,sol0,rhs0 :: VEC{REAL}*
-!      e,e0 :: REAL
-!      found_one,is_even :: BIN
-!      is_even = FALSE
-!      if (present(even)) is_even = even
-!      pfac = 1
-!      if (is_even) then
-!         ENSURE(.dim1.is_even,"self not even dimensioned")
-!         pfac = 2
-!      end
-!      if (present(keep0)) then
-!         ENSURE(keep0.has_all_elements_common_with(plist),"keep0 not a sublist of plist")
-!         kdim = keep0.dim
-!      end
-!      if (present(keep1)) then
-!         ENSURE(keep1.has_all_elements_common_with(plist),"keep1 not a sublist of plist")
-!         kdim = keep1.dim
-!      end
-!      pdim = plist.dim
-!      WARN_IF(pdim>=20,"LHS dimension may be too large")
-!      found_one = FALSE
-!      e = huge(ONE)
-!      sol.create(.dim1)
-!      ulist.create(.dim1); ulist = [(k,k=1,.dim1)]
-!      ulist.prune(plist)                          ! ulist = all - plist = unconstrained 
-!      print *, "-----------start------------"
-!      print *, "plist:"
-!      print *, plist
-!      print *, "ulist:"
-!      print *, ulist
-!      do k = pdim,1,-1 ! Loop over indice groups of length "k" which are non-zero
-!      print *, "combinations of length k =", k
-!         if (present(keep1)) then
-!            if (k/=kdim+1) cycle
-!         end
-!         n_combinations = int(pdim.choose(k)) 
-!         combination.create(k,n_combinations)         
-!         plist.make_combinations_of_length(k,combination)
-!         rdim = pfac*k + .dim1 - pfac*pdim
-!         rhs0.create(rdim)
-!         sol0.create(rdim)
-!         list.create(rdim)                        ! list = comb(plist) + ulist
-!         do n = 1,n_combinations                  ! Loop over a particular "k" length combo
-!      print *, "combination:"
-!      print *, combination(:,n)
-!            if (present(keep1)) then               ! if present, keep only these elements
-!               if (NOT keep1.has_all_elements_common_with(combination(:,n))) cycle
-!            end
-!            if (present(keep0)) then               ! if present, keep only these elements
-!               if (NOT keep0.has_all_elements_common_with(combination(:,n))) cycle
-!            end
-!            if (is_even) then
-!               list(1:k)  = combination(:,n)         ! The "list" of non-zero solution elements
-!               list(1:k)  = combination(:,n)         ! The "list" of non-zero solution elements
-!               list(k+1:) = ulist                    ! Always add the list of unconstrained elements
-!            else
-!               list(1:k)  = combination(:,n)         ! The "list" of non-zero solution elements
-!               list(k+1:) = ulist                    ! Always add the list of unconstrained elements
-!            end
-!      print *, "list:"
-!      print *, list
-!            rhs0 = rhs(list)
-!            self(list,list).solve_linear_equation(rhs0,sol0) ! Find the subset solution, "sol"
-!            sol(list) = sol0
-!            if (NOT present(keep1) AND any(sol(list(1:k))<ZERO)) cycle  ! Unacceptable ..............
-!            e0 = dot_product(rhs(list),sol(list)) &
-!               - HALF*dot_product(sol(list),matmul(self(list,list),sol(list)))
-!            if (e0>=e) cycle                      ! Found a better solution before
-!            solution = ZERO                       ! Zero non-"list" solution elements
-!            solution(list) = sol(list)            ! Keep this solutions
-!      print *, "new solution found:"
-!      print *, solution
-!            e = e0                                ! Keep this E value
-!            found_one = TRUE
-!         end
-!         list.destroy
-!         sol0.destroy; rhs0.destroy
-!         combination.destroy
-!      end
-!      ulist.destroy
-!      sol.destroy
-!      if (present(fail)) then
-!         if (NOT found_one) then; fail = TRUE
-!         else;                    fail = FALSE
-!         end
-!      else
-!         DIE_IF(NOT found_one,"acceptable solution was not found")
-!      end
-!   end
-
-!   solve_convex_linear_equations(rhs,solution,plist,nlist)
-!   ! This routine solves the constrained linear equations with "self" as the LHS
-!   ! of the linear equations, "rhs" as the RHS vector, and where the "solution"
-!   ! is constrained to have positive values for those elements in "plist", AND
-!   ! also "solution" minimises the quadratic problem "rhs.X - HALF*X^T.self.X"
-!   ! over the elements in "plist" AND "nlist" of "solution". i.e.
-!   ! plist -- positive or constrained elements, for testing
-!   ! nlist -- non-positive or non-constrained elements for testing
-!   ! Any other elements are non-constrained and non-tested. WARNING: if the
-!   ! dimension of the matrix is too large, this routine will take a long time.
-!      self :: target
-!      rhs,solution :: VEC{REAL}
-!      plist,nlist :: VEC{INT}
-!   ENSURE(.is_square,"non-square matrix")
-!   ENSURE(rhs.dim==.dim1,"incompatible rhs")
-!   ENSURE(solution.dim==.dim1,"incompatible solution vector")
-!   ENSURE(plist.dim<=.dim1,"plist to large")
-!   ENSURE(nlist.dim<=.dim1,"nlist to large")
-!   ENSURE(plist.all_in_range([1,.dim]),"plist indices out of range")
-!   ENSURE(nlist.all_in_range([1,.dim]),"plist indices out of range")
-!   ENSURE(plist.has_no_elements_common_with(nlist),"plist and nlist not disjoint")
-!      pdim,rdim,k,n,n_combinations :: INT
-!      ulist,tlist,list :: VEC{INT}*
-!      combination :: MAT{INT}*
-!      sol,sol0,rhs0 :: VEC{REAL}*
-!      e,e0 :: REAL
-!      found_one :: BIN
-!      found_one = FALSE
-!      e = huge(ONE)
-!      pdim = plist.dim
-!      sol.create(.dim1)
-!      ulist.create(.dim1); ulist = [(k,k=1,.dim1)]
-!      ulist.prune(plist)                          ! ulist = all - plist
-!      print *, "-----------start------------"
-!      print *, "ulist:"
-!      print *, ulist
-!      do k = pdim,1,-1 ! Loop over indice groups of length "k" which are non-zero
-!      print *, "combinations of length k =", k
-!         n_combinations = int(pdim.choose(k)) 
-!         combination.create(k,n_combinations)         
-!         plist.make_combinations_of_length(k,combination)
-!         rdim = k + .dim1 - pdim
-!         rhs0.create(rdim)
-!         sol0.create(rdim)
-!         list.create(rdim)                        ! list = comb(plist) + ulist
-!         tlist.create(k+nlist.dim)
-!         do n = 1,n_combinations                  ! Loop over a particular "k" length combo
-!            list(1:k)  = combination(:,n)         ! The "list" of non-zero solution elements
-!            list(k+1:) = ulist                    ! Add the list of unconstrained elements
-!            tlist(1:k) = combination(:,n) 
-!            tlist(k+1:)= nlist                    ! test tlist = comb(plist) + nlist
-!      print *, "list:"
-!      print *, list
-!      print *, "tlist:"
-!      print *, tlist
-!            rhs0 = rhs(list)
-!            self(list,list).solve_linear_equation(rhs0,sol0) ! Find the subset solution, "sol"
-!      print *, "rhs0:"
-!      print *, rhs0
-!      print *, "sol0:"
-!      print *, sol0
-!      sol(list) = sol0
-!      print *, "sol:"
-!      print *, sol(list)
-!            if (any(sol(list(1:k))<ZERO)) cycle        ! Unacceptable ..............
-!      print *, "passed +ve test"
-!            e0 = dot_product(rhs(tlist),sol(tlist)) &
-!               - HALF*dot_product(sol(tlist),matmul(self(tlist,tlist),sol(tlist)))
-!      print *, "e0=",e0
-!            if (e0>=e) cycle                      ! Found a better solution before
-!      print *, "passed e0 test"
-!            solution = ZERO                       ! Zero non-"list" solution elements
-!            solution(list) = sol(list)            ! Keep this solutions
-!            e = e0                                ! Keep this E value
-!            found_one = TRUE
-!         end
-!         tlist.destroy; list.destroy
-!         sol0.destroy; rhs0.destroy
-!         combination.destroy
-!      end
-!      print *, "-----------finish------------"
-!      ulist.destroy
-!      sol.destroy
-!    ! if (NOT present(keep)) indices.destroy
-!      DIE_IF(NOT found_one,"acceptable solution was not found")
-!   end
 
    solve_ill_linear_equations(rhs,solution,tol_0,n_0,tol_near_0,n_near_0,eval_near_0,evec_near_0,inverse,CM) ::: leaky
    ! Solve a set of ill-conditioned linear equations. Eigenvalues of
    ! "self" less than "tol_near_0" are ignored.
       rhs :: VEC{REAL}, IN
       solution :: VEC{REAL}, OUT
-      tol_0,tol_near_0 :: REAL, IN, optional
-      n_0,n_near_0 :: INT, OUT, optional
-      eval_near_0 :: VEC{REAL}*, optional
-      evec_near_0 :: MAT{REAL}*, optional
-      inverse,CM :: MAT{REAL}, OUT, optional
+      tol_0,tol_near_0 :: REAL, IN
+      n_0,n_near_0 :: INT, OUT
+      eval_near_0 :: VEC{REAL}*
+      evec_near_0 :: MAT{REAL}*
+      inverse :: MAT{REAL}, OUT
+      CM :: MAT{REAL}, OUT
 
    ENSURE(.is_square,"not square")
-   ENSURE(present(tol_0)       EQV present(n_0),        "tol_0 and n_0 must both be present")
-   ENSURE(present(tol_near_0)  EQV present(n_near_0),   "tol_near_0 and n_near_0 must both be present")
-   ENSURE(present(eval_near_0) EQV present(evec_near_0),"eval_near_0 and evec_near_0 must both be present")
 
-      inv,evec :: MAT{REAL}* 
+      evec :: MAT{REAL}* 
+      eval,vi,vj :: VEC{REAL}* 
+      d,i,j :: INT
+      inv_ii,inv_jj :: REAL
+
+      ! Temporaries
+      d = .dim1
+      eval.create(d)
+      evec.create(d,d)
+
+      ! Solve the eigenvalue problem
+      .solve_eigenproblem(eval,evec)
+
+      ! Count eigenvalues which are zero
+      n_0 = count(eval<=ZERO OR abs(eval)<=tol_0)
+
+      ! Count eigenvalues which are nearly zero (leaky)
+      n_near_0 = count(eval<=ZERO OR abs(eval)<=tol_near_0)
+
+      ! Invert eigenvalues. Save those which are nearly zero (leaky)
+      eval_near_0.destroy
+      eval_near_0.create(n_near_0)
+      evec_near_0.destroy
+      evec_near_0.create(d,n_near_0)
+      j = 0
+      do i = 1,d
+         if (eval(i)>ZERO AND abs(eval(i))>tol_near_0) then
+            eval(i) = ONE/eval(i)
+         else
+            j = j + 1
+            eval_near_0(j)   = eval(i)
+            evec_near_0(:,j) = evec(:,i)
+            eval(i) = ZERO
+         end
+      end
+
+      ! Make the inverse/uncertainties
+      evec = transpose(evec)
+      do i = 1,d
+         vi => evec(:,i)
+         do j = 1,d
+            vj => evec(:,j)
+            inverse(i,j) = VEC{REAL}:sum(vi*eval*vj)
+         end
+      end
+      evec.destroy
+      eval.destroy
+
+      ! Get the solution
+      solution.to_product_of(inverse,rhs)
+
+      ! Get correlation matrix
+      do i = 1,d
+      do j = 1,d
+         inv_ii = inverse(i,i)
+         inv_jj = inverse(j,j)
+         if (inv_ii.equals(ZERO,TOL(9)) OR inv_jj.equals(ZERO,TOL(9))) then
+            CM(i,j) = ZERO
+         else
+            CM(i,j) = inverse(i,j)/sqrt(inv_ii*inv_jj)
+         end
+      end
+      end
+
+   end
+
+   solve_ill_linear_equations(rhs,solution,tol_near_0,n_near_0,inverse,eval_near_0,evec_near_0) ::: leaky
+   ! Solve a set of ill-conditioned linear equations. 
+   ! Eigenvalues of "self" less than "tol_near_0" are ignored. 
+   ! The pseudo "inverse" of the LHS is returned.
+   ! The near-0 eigenvalues and eigenvectors are returned also.
+   ! NOTE: You must ensure these are nullified to begin.
+      rhs :: VEC{REAL}, IN
+      solution :: VEC{REAL}, OUT
+      inverse :: MAT{REAL}, OUT
+      tol_near_0 :: REAL, IN
+      n_near_0 :: INT, OUT
+      eval_near_0 :: VEC{REAL}*
+      evec_near_0 :: MAT{REAL}*
+
+   ENSURE(.is_square,"not square")
+
+      evec :: MAT{REAL}* 
       eval,vi,vj :: VEC{REAL}* 
       d,i,j :: INT
 
@@ -2912,156 +2679,88 @@ contains
       d = .dim1
       eval.create(d)
       evec.create(d,d)
-      inv.create(d,d)
 
       ! Solve the eigenvalue problem
       .solve_eigenproblem(eval,evec)
 
-      ! Count eigenvalues which are zero
-      if (present(n_0) AND present(tol_0)) &
-         n_0 = count(eval<=ZERO OR abs(eval)<=tol_0)
+      ! Get the numbr of near-0 eigenvalues
+      n_near_0 = count(eval<=ZERO OR abs(eval)<=tol_near_0)
 
-      ! Count eigenvalues which are nearly zero (leaky)
-      if (present(n_near_0) AND present(tol_near_0)) then
+      ! Create the near-0 eigenvalue & eigenvector arrays
+      eval_near_0.destroy
+      eval_near_0.create(n_near_0)
+      evec_near_0.destroy
+      evec_near_0.create(d,n_near_0)
 
-         n_near_0 = count(eval<=ZERO OR abs(eval)<=tol_near_0)
-
-         eval_near_0.destroy
-         eval_near_0.create(n_near_0)
-         evec_near_0.destroy
-         evec_near_0.create(d,n_near_0)
-
-         j = 0
-         do i = 1,d
-            if (eval(i)>ZERO AND abs(eval(i))>tol_near_0) then
-               eval(i) = ONE/eval(i)
-            else
-               j = j + 1
-               eval_near_0(j)   = eval(i)
-               evec_near_0(:,j) = evec(:,i)
-               eval(i) = ZERO
-            end
+      ! Store near-0 eigenvalues and eigenvectors
+      ! Invert non-zero eigenvalues
+      j = 0
+      do i = 1,d
+         if (eval(i)>ZERO AND abs(eval(i))>tol_near_0) then
+            eval(i) = ONE/eval(i)
+         else
+            j = j + 1
+            eval_near_0(j)   = eval(i)
+            evec_near_0(:,j) = evec(:,i)
+            eval(i) = ZERO
          end
       end
 
       ! Make the inverse
-      evec = transpose(evec)
-
+      evec.to_transpose
       do i = 1,d
          vi => evec(:,i)
          do j = 1,d
             vj => evec(:,j)
-            inv(i,j) = VEC{REAL}:sum(vi*eval*vj)
+            inverse(i,j) = VEC{REAL}:sum(vi*eval*vj)
          end
       end
       evec.destroy
       eval.destroy
 
       ! Get the solution
-      solution.to_product_of(inv,rhs)
-
-      ! Get uncertainties
-      if (present(inverse)) then
-         inverse = inv
-      end
-
-      ! Get correlation matrix
-      if (present(CM)) then
-
-         if (present(tol_near_0)) then
-            do i = 1,d
-            do j = 1,d
-               if (inv(i,i).equals(ZERO,TOL(9)) OR inv(j,j).equals(ZERO,TOL(9))) then
-                  CM(i,j) = ZERO
-               else
-                  CM(i,j) = inv(i,j)/sqrt(inv(i,i)*inv(j,j))
-               end
-            end
-            end
-         else
-            do i = 1,d
-            do j = 1,d
-               CM(i,j) = inv(i,j)/sqrt(inv(i,i)*inv(j,j))
-            end
-            end
-         end
-
-      end
-
-      inv.destroy
+      solution.to_product_of(inverse,rhs)
 
    end
 
-!  ==========================================================
-!  Matrix functions: square roots, inverses, and exponentials
-!  ==========================================================
+! ==========================================================
+! Matrix functions: square roots, inverses, and exponentials
+! ==========================================================
 
    to_inverse_of(R)
    ! self = (R)^(-1); can have R=self
        R :: MAT{REAL}
-#ifdef ESSL
-      .to_inverse_of_ESSL(R)
-#else
       .to_inverse_of_LAPACK(R)
-#endif
-   end
-
-   to_inverse_of_ESSL(R) ::: private
-   ! self = (R)^(-1); can have R=self. ESSL version.
-   ! This ESSL version is untested.
-      R :: MAT{REAL}
-   ENSURE(.is_square,"not square")
-   ENSURE(.is_same_shape_as(R),"not same shape as R")
-
-#ifdef ESSL
-      W :: MAT{REAL}*
-      ipiv :: VEC{INT}*
-      d,d2 :: INT
-      rcond :: REAL
-      det :: VEC{REAL}(2)
-
-      d  = size(R,1)
-      d2 = d*d
-      self = R
-      ipiv.create(d)
-
-      W.create(d,d)
-      call dgef(d,d,self,ipiv)
-      W(:,1) = ipiv
-      call dgeicd(self, d, d, 4, rcond, det, W, d2)
-
-      W.destroy
-      ipiv.destroy
-#else
-      DIE("wtf?")
-      if (FALSE) self = self
-      R = R
-#endif
-
    end
 
    to_inverse_of_LAPACK(R) ::: private
    ! self = (R)^(-1); can have R=self. LAPACK version.
       R :: MAT{REAL}
+
    ENSURE(.is_square,"not square")
    ENSURE(.is_same_shape_as(R),"not same shape as R")
+
       W :: MAT{REAL}*
       ipiv :: VEC{INT}*
       d,d2,fail :: INT
+
       d  = size(R,1)
       d2 = d*d
+
       self = R
       ipiv.create(d)
       W.create(d,d)
       fail = 0
-#ifndef ESSL
+
       call dgetrf(d,d,self,d,ipiv,fail)
       ENSURE(fail==0,"failed LU factorisation, fail = "//trim(fail.to_str))
+
       call dgetri(d,self,d,ipiv,W,d2,fail)
       ENSURE(fail==0,"failed back substitution, fail = "//trim(fail.to_str))
-#endif
+
       ipiv.destroy
       W.destroy
+
    end
 
    to_pseudo_inverse_of(R,tol_0)
@@ -3109,67 +2808,6 @@ contains
 
       ! Clean
       evec.destroy
-      eval.destroy
-
-   end
-
-   to_inverse_of(R_eval,R_evec,tol,n_small)
-   ! self = R^(-1), but supplied are the R eigenvalues "R_eval"
-   ! and the R eigenvectors "R_evec". If "tol" is present use that to
-   ! decide on zero eigenvalues.  If "n_small" return the number of
-   ! small eigenvalues.
-      self :: OUT
-      R_eval :: VEC{REAL}, IN
-      R_evec :: MAT{REAL}, target, IN
-      tol :: REAL, optional, IN
-      n_small :: INT, optional, OUT
-
-      eval :: VEC{REAL}* DEFAULT_NULL
-      veci,vecj :: VEC{REAL}* DEFAULT_NULL
-      d,i,j,n :: INT
-      val :: STR
-      eps,temp :: REAL
-
-      ! Get tolerance for smallness
-      eps = TOL(20)
-      if (present(tol)) eps = tol
-
-      ! Get inverse inverse eigenvalues
-      d = R_eval.dim
-
-      eval.create(d)
-
-      n = 0
-      do i = 1,d
-
-         temp = R_eval(i)
-
-         if (temp<-eps) then
-            val = temp.to_str("e15.8")
-            DIE("non-positive eigenvalue, "// trim(val))
-         else if (temp<=eps) then
-            val = temp.to_str("e15.8")
-            WARN("small eigenvalue, "// trim(val))
-            n = n + 1
-         end
-
-         if (temp<=eps) then; eval(i) = ZERO
-         else;                eval(i) = ONE/temp
-         end
-
-      end
-
-      if (present(n_small)) n_small = n
-
-      ! Back transform
-      do i = 1,d
-         veci => R_evec(i,:)
-         do j = 1,d
-            vecj => R_evec(j,:)
-            self(i,j) = VEC{REAL}:sum(veci*eval*vecj)
-         end
-      end
-
       eval.destroy
 
    end
@@ -3464,8 +3102,10 @@ contains
 
       eps = TOL(9)
       if (present(tol)) eps = tol
+
       max_iter = 100
       if (present(max_it)) max_iter = max_it
+
       prefac = ONE/FOUR
       if (present(prefactor)) prefac = prefactor
 
@@ -3477,16 +3117,23 @@ contains
       self.to_unit_matrix
 
       k = 0
+
       do
+
          k = k + 1
+
          D = self
          self = (THREE/TWO)*D
-         .plus_scaled_product_of(X,D,fac=-HALF)
+         self.plus_scaled_product_of(X,D,fac=-HALF)
          S.change_basis_to(X,self)
          X = prefac*X
+
          if (X.has_unit_diagonal(eps)) exit
-         DIE_IF(k>max_iter,"power series too long")
+
+         ENSURE(k<=max_iter,"power series too long")
+
       end
+
       self = sqrt(prefac)*self
 
       D.destroy
@@ -3571,10 +3218,10 @@ contains
          ! Do a line minimisation along gradient Xv from X=0
          saved_reference => reference
          saved_actual => Rd
-         VEC{REAL}:line_minimise_from_v2(MAT{REAL}::match_vectors,X0,Xv,L,TOL(6))
+         VEC{REAL}:line_minimize_from_v2(MAT{REAL}::match_vectors,X0,Xv,L,TOL(6))
 
          ! Exponentiate X and update U
-         X.antisymmetric_unzip_triangle(X0)
+         X.uncompress_anti_triangle(X0)
          U.to_exponential_of(X)
          X.to_product_of(self,U)
          self = X
@@ -3607,7 +3254,7 @@ contains
       Rd.create(d,n)
 
       ! Exponentiate Xv and get L
-      X.antisymmetric_unzip_triangle(Xv)
+      X.uncompress_anti_triangle(Xv)
       U.to_exponential_of(X)
       Rd.to_product_of(U,saved_actual,transpose_a=TRUE)
       Rd = Rd - saved_reference
@@ -3633,17 +3280,16 @@ contains
       Rd.destroy; U.destroy; X.destroy
    end
 
-!  =============
-!  String widths
-!  =============
+! =============
+! String widths
+! =============
    
    str_lengths(dp,spaces) result (res) ::: get_from(MAT{INTRINSIC}), pure
    ! Returns the minimal string lengths, with optional extra "spaces"
    end 
 
-   get_max_str_length(msl,max_dp,spaces) ::: get_from(MAT{INTRINSIC}), pure
-   ! Return "msl" the maximum of the string lengths, keeping "max_dp"
-   ! decimal places and including extra "spaces"
+   max_str_length(dp,spaces) result (res) ::: get_from(MAT{INTRINSIC}), pure
+   ! Returns the maximum of the string lengths, with optional extra "spaces"
    end
 
 !  =======================
@@ -3769,9 +3415,9 @@ contains
    ! "X_block_dim" elements are copied from blocks of "self" into "X". 
    end
 
-!  =====================
-!  Conversion to strings
-!  =====================
+! =====================
+! Conversion to strings
+! =====================
 
    to_str(style,width,precision,left_justify) result (res) ::: get_from(MAT{INTRINSIC}), pure
    ! Change self to a string with specified "style", "width" and
@@ -3783,9 +3429,9 @@ contains
       res :: MAT{STR}(.dim1,.dim2)
    end
 
-!  ===============
-!  Unit conversion
-!  ===============
+! ===============
+! Unit conversion
+! ===============
 
    convert_to(units)
    ! Convert the number "self" in atomic units or generic units to a
@@ -3809,9 +3455,9 @@ contains
       self   = self*factor
    end
 
-!  ==================================================
-!  Gaussian function rotation representation matrices
-!  =================================================
+! ==================================================
+! Gaussian function rotation representation matrices
+! =================================================
 
    gaussian_d_xyz_matrix result (dtr)
    ! Return the representation matrix for a d-type xyz product found in gaussian
@@ -3819,14 +3465,11 @@ contains
    ! induced is: d = d' * dtr, when the coordinates r of the gaussian shell
    ! functions are written in terms of new coordinates r' as: r = self^T * r'.
       dtr :: MAT{REAL}(6,6)
-
    ENSURE(.is_square,"self not square")
    ENSURE(.dim1==3,"wrong size, self")
-
       i,i1,i2 :: INT
       d1 :: VEC{INT}(6)  = (/1,2,3,1,1,2/)
       d2 :: VEC{INT}(6)  = (/1,2,3,2,3,3/)
-
       do i = 1,6 ! loop on old coordinates
          i1 = d1(i)
          i2 = d2(i)
@@ -3840,22 +3483,18 @@ contains
          dtr(6,i)  = self(2,i1)*self(3,i2) &
                    + self(3,i1)*self(2,i2)
       end
-
    end
 
    gaussian_f_xyz_matrix result (ftr)
    ! Return the representation matrix for an f xyz product found in gaussian
    ! shells from a p-type xyz matrix
       ftr :: MAT{REAL}(10,10)
-
    ENSURE(.is_square,"self not square")
    ENSURE(.dim1==3,"wrong size, self")
-
       i,i1,i2,i3 :: INT
       f1 :: VEC{INT}(10) = (/1,2,3,1,1,2,2,3,3,1/)
       f2 :: VEC{INT}(10) = (/1,2,3,1,1,2,2,3,3,2/)
       f3 :: VEC{INT}(10) = (/1,2,3,2,3,1,3,1,2,3/)
-
       do i = 1,10
          i1 = f1(i)
          i2 = f2(i)
@@ -3888,23 +3527,19 @@ contains
                    + self(3,i1)*self(1,i2)*self(2,i3) &
                    + self(3,i1)*self(2,i2)*self(1,i3)
       end
-
    end
 
    gaussian_g_xyz_matrix result (gtr)
    ! Return the representation matrix for a g xyz product found in gaussian
    ! shells from a p-type xyz matrix
       gtr :: MAT{REAL}(15,15)
-
    ENSURE(.is_square,"self not square")
    ENSURE(.dim1==3,"wrong size, self")
-
       i,i1,i2,i3,i4 :: INT
       g1 :: VEC{INT}(15) = (/1,2,3,1,1,2,2,3,3,1,1,2,1,2,3/)
       g2 :: VEC{INT}(15) = (/1,2,3,1,1,2,2,3,3,1,1,2,1,2,3/)
       g3 :: VEC{INT}(15) = (/1,2,3,1,1,2,2,3,3,2,3,3,2,1,1/)
       g4 :: VEC{INT}(15) = (/1,2,3,2,3,1,3,1,2,2,3,3,3,3,2/)
-
       do i = 1,15
          i1 = g1(i)
          i2 = g2(i)
@@ -3992,7 +3627,6 @@ contains
                    + self(2,i1)*self(3,i2)*self(1,i3)*self(3,i4) &
                    + self(2,i1)*self(1,i2)*self(3,i3)*self(3,i4)
       end
-
    end
 
 ! ======================
@@ -4049,9 +3683,9 @@ contains
 
    end
 
-!  ==========
-!  Misc stuff
-!  ==========
+! ==========
+! Misc stuff
+! ==========
 
    make_enclosing_sphere(pos,radius) 
    ! Determine the position and radius of a sphere that encloses all points in
@@ -4139,13 +3773,13 @@ contains
       MWq.to_product_of(M,Wq)
       Vp = MWq(:p,:p)
       MWq.destroy
-      Vp.schmidt_orthonormalise(theta)
+      Vp.schmidt_orthonormalize(theta)
 
       Vq.to_product_of(Uq,Wq)                   ! get Vq
-      Vq.reverse_schmidt_orthogonalise
+      Vq.reverse_schmidt_orthogonalize
 
       Wp.to_product_of(Up,Vp,transpose_a=TRUE)  ! get Wp
-      Wp.reverse_schmidt_orthogonalise
+      Wp.reverse_schmidt_orthogonalize
 
       theta = sqrt(theta)
       theta = asin(theta)
@@ -4576,109 +4210,5 @@ contains
       end
       deallocate(Rm)
    end
-
-!  solve_symm_eigenproblem_SCALAPACK(eigenvalues,eigenvectors) ::: private
-!  ! Solve the symmetric eigenproblem for "self", yeilding a vector of
-!  ! "eigenvalues" and a matrix of "eigenvectors". SCALAPACK version.
-!     eigenvalues :: VEC{REAL}
-!     eigenvectors :: MAT{REAL}
-!     ENSURE(.is_square,"non-square matrix")
-!     ENSURE(eigenvalues.dim>=.dim1,"eigenvalue array too small")
-!     ENSURE(size(eigenvectors)>=size(self),"eigenvector matrix too small")
-!
-!!     W :: VEC{REAL}*
-!     lmat :: VEC{REAL}* ! local matrix
-!
-!     nb, myrow, mycol, nprow, npcol, nlrow, nlcol :: INT
-!     desca :: VEC{INT}(50) ! Vector (or matrix side) descriptor array for BLACS
-!     i,j,dim,info :: INT
-!
-!     dim = .dim1
-!
-!!      lwork :: INT
-!!      lwork = max(dim*dim,3*dim-1)
-!!      W.create(lwork)
-!!      eigenvectors = self
-!!      fail = 0
-!!#ifndef ESSL
-!!      call dsyev("V","L",dim,eigenvectors,dim,eigenvalues,W,lwork,fail)
-!!#endif
-!!      W.destroy
-!
-!
-!!  n, nb, myrow, mycol, n_local_rows, n_local_cols :: INT
-!!  clustersize, np0, mq0, anb,sqnpc,nps,nsygst_lwopt,nsytrd_lwopt,lwork :: INT
-!!  localmat :: MAT{REAL}*
-!!  desca :: VEC{REAL}(8)
-!!  work,gap :: VEC{REAL}*
-!!  ifail,iwork,iclustr :: VEC{INT}*
-!!  junki :: INT
-!!  junkr,abstol,orfac :: REAL
-!
-!!  call descinit(desca,dim,dim,tp.proc_grid_bs,tp.proc_grid_bs,0,0,tp.blacs_2d_context,nb,info)
-!!
-!!  ! This is for pdsygvx
-!!  liwork = 3 + 5*n
-!!  clustersize = 20
-!!  nn = max(n,nb,2)
-!!  np0 = numroc(nn,nb,0,0,nprow)
-!!  mq0 = numroc(nn,nb,0,0,npcol)
-!!  anb = pjlaenv(.blacs_2d_context,3,'PDSYTTRD','L',0,0,0,0)
-!!  sqnpc = int(sqrt(real(nprow * npcol,kind=REAL_KIND)))
-!!  nps = max(numroc(n,1,0,0,sqnpc), 2*anb)
-!!  nsygst_lwopt = nb*(2*np0 + nq0 + nb)
-!!  nsytrd_lwopt = n + 2*( anb+1 )*( 4*nps+2 ) + ( nps + 3 ) *  nps
-!!  lrwork = 5*n + max(5*nn,np0*mq0+2*nb*nb) + iceil(neigvec,nprow*npcol)*nn + (clustersize-1)*n
-!!  lrwork >=  max(lrwork, 5*n + nsytrd_lwopt, nsygst_lwopt )
-!
-!    ! Save typing.
-!    nb = tonto_parallel.proc_grid_bs
-!    myrow = tonto_parallel.proc_grid_myrow
-!    mycol = tonto_parallel.proc_grid_mycol
-!    nprow = tonto_parallel.proc_grid_nrow
-!    npcol = tonto_parallel.proc_grid_ncol
-!    nlrow = tonto_parallel.n_this_row(n)
-!    nlcol = tonto_parallel.n_this_col(n)
-!
-!    ! Allocate local matrix.
-!    lmat.create(nlrow,nlcol)
-!
-!    ! Set local matrix from global matrix on this processor.
-!    ! Probably not efficient.
-!    do i = 1, dim
-!      do j = 1, dim
-!         call pdelset(lmat,i,j,desca,self(i,j))
-!      end
-!    end
-!
-!!  ifail.create(n))
-!!  rwork.create(lrwork))
-!!  iwork.create(liwork))
-!!  iclustr.create(2*nprow*npcol))
-!!  gap.create(nprow*npcol))
-!!
-!!  abstol = 2*pdlamch('S')
-!!  orfac = -1.0d0 ! -ve means use defaults.
-!!  call pdsyevx( 'V', 'A', 'L', n, a, 1, 1, desca, 'Z',
-!!      'Z', 'Z', 'Z', abstol, neigok, neigvecok, eigvals, orfac, eigvec, 1,
-!!                  1, desca, rwork, lrwork, iwork, liwork, ifail,
-!!                  iclustr, gap, info )
-!!
-!!  gap.destroy
-!!  iclustr.destroy
-!!  iwork.destroy
-!!  work.destroy
-!!  ifail.destroy
-!
-!    !ENSURE(info==0,"no solution, error found")
-!    ! Copy the local matrix to global matrix on all processors.
-!    ! Probably not efficient.
-!    do i = 1, dim
-!      do j = 1, dim
-!        call pdelset('A', ' ',self(i,j),lmat,i,j,desca)
-!      end
-!    end
-!    lmat.destroy
-!  end
 
 end

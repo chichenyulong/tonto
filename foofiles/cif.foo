@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: cif.foo 4318 2014-04-07 08:53:54Z dylan_ $
+! $Id: cif.foo 4259 2014-01-21 02:40:50Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module CIF
@@ -32,15 +32,15 @@ contains
 !  Create and destroy methods
 !  ==========================
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   create(name) ::: leaky
+   create(name) ::: leaky, pure
    ! Create a a cif with .file_name to be "name".
       self :: PTR
       name :: STR
@@ -48,40 +48,52 @@ contains
       .set_file_name(name)
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts
+      self :: INOUT
+
       nullify(.file)
+
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts
+      self :: INOUT
+
       .file.destroy
+
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
    ! Create a copy of object
    end
 
-   copy(cif) ::: leaky
-   ! Set self to be "cif".
-      cif :: CIF, IN
+   copy(object) ::: leaky, pure
+   ! Set self to be "object".
+      self :: INOUT
+      object :: CIF, IN
 
-      self = cif
+      self = object
 
       .nullify_ptr_part
-      if (cif.file.created) .file.create_copy(cif.file)
+
+      CREATE_COPY_COMPONENT(file)
 
    end
 
@@ -319,15 +331,6 @@ contains
       ENSURE(.OH_bond_length>ZERO,"length must be +ve to be applied")
    end
 
-   apply_bond_length result (apply)
-   ! Return whether to apply the any bond length factor.
-      apply :: BIN
-      apply = .BH_bond_length>ZERO &
-           OR .CH_bond_length>ZERO &
-           OR .NH_bond_length>ZERO &
-           OR .OH_bond_length>ZERO 
-   end
-
    apply_BH_bond_length result (apply)
    ! Return whether to apply the BH bond length factor.
       apply :: BIN
@@ -377,37 +380,29 @@ contains
 !  Find data block
 !  ===============
 
-   find_data_block(name,found)
-   ! Find the start of a data block "data_<name>" with "<name>" 
-   ! in the cif file.
-   ! . Start from line .start_of_data = 1
-   ! . If present and the block is found, "found" is set TRUE.
-   ! . If not present and the block is not found, it is an error. 
-   ! . If found, the ".start_of_data", ".end_of_data" records 
-   !   are stored, and the "<name>" in ".data_block_name".
-      name :: STR, IN
+   find_data_block(block_name,found)
+   ! Read and find the start of the data block with name "block_name", starting
+   ! from ".start_of_data", and store its ".data_block_name". If present "found"
+   ! is set TRUE if the bblock is found, else FALSE; if it is not present and
+   ! the data block is not found then it is an error.
+      block_name :: STR, IN
       found :: BIN, optional, OUT
 
    ENSURE(.file.created,"CIF file has not been created")
    ENSURE(.file.is_open,"CIF file has not been opened")
 
-      ! From line 1
-      .start_of_data = 1
-
       do
 
-         ! Find the start
-         .find_start_of_data_block
+         .find_next_data_block
 
-         ! Found?
          if (present(found)) then
             found = .data_block_found
             if (NOT found) return
          else
-            ENSURE(.data_block_found,"cant find data block with name " // trim(name))
+            ENSURE(.data_block_found,"cant find data block with name " // trim(block_name))
          end
 
-         if (.data_block_name==name) exit
+         if (.data_block_name==block_name) exit
 
          .start_of_data = .end_of_data 
 
@@ -415,84 +410,92 @@ contains
 
    end
 
-   find_start_of_data_block ::: private
-   ! Find a data block "data_<name>" 
-   ! . Start from line ".start_of_data"
-   ! . Store its <name> in ".data_block_name"
-   ! . Store the record where it occurs in ".start_of_data"
-   ! . If found, set ".data_block_found" TRUE, else FALSE
-   ! . Cursor is left before the data block, or at the EOF 
-   !   if nothing was found.
-   ENSURE(.start_of_data>0,".start_of_data is 0")
+   find_next_data_block 
+   ! Read through and find the next data block, and store its ".data_block_name",
+   ! ".start_of_data", and ".end_of_data" line numbers. The search begins from
+   ! line ".start_of_data". The routine returns if no data block can be found
+   ! and in that case ".data_block_found" is set to FALSE.
    ENSURE(.file.created,"CIF file has not been created")
    ENSURE(.file.is_open,"CIF file has not been opened")
 
-      .data_block_name = " "
+      .find_start_of_data_block
 
-      .file.look_for_item("data_",             &
-                          head_match=TRUE,     &
+      if (NOT .data_block_found) return
+
+      .find_end_of_data_block
+
+   end
+
+   find_start_of_data_block ::: private
+   ! Read through and find a data block, and store its ".data_block_name",
+   ! ".start_of_data". The search begins from line ".start_of_data". The
+   ! ".data_block_found" is set to TRUE if the block is found, otherwise it is
+   ! set FALSE and the routine returns. The cursor is left after the starting
+   ! data block token, or at the starting position if nothing is found.
+   ENSURE(.file.created,"CIF file has not been created")
+   ENSURE(.file.is_open,"CIF file has not been opened")
+
+      .file.look_for_item("data_", &
                           from=.start_of_data, &
+                          head_match=TRUE, &
                           found=.data_block_found)
 
-      if (.data_block_found) then
+      if (NOT .data_block_found) return
 
-         ! Get data block name
-         .file.move_to_previous_item
-         .file.read(.data_block_name)
-      
-         ! Name without data_ at start
-         .data_block_name = .data_block_name(6:) 
-      
-         .start_of_data = .file.line_number
+      ! Get data block name
+      .file.move_to_previous_item
+      .file.read(.data_block_name)
 
-         ! Find the end, from the start
-         .find_end_of_data_block
+      ! Name without data_ at start
+      .data_block_name = .data_block_name(6:) 
 
-         ! Move back to the start
-         .file.move_to_line(.start_of_data)
-
-      end
+      .start_of_data = .file.line_number
 
    end
 
    find_end_of_data_block ::: private
-   ! Find the end of a data block, starting from the first line
-   ! after ".start_of_data"
-   ! . Store the record where it occurs in ".end_of_data". 
-   ! . Cursor is left at the end of the data block, possibly at the
-   !   end of the file if no block terminator was found. 
+   ! Read through and find the end of a data block, starting from the first line
+   ! after ".start_of_data", and store this end in ".end_of_data". The cursor is
+   ! left at the end of the data block (possibly at the end of the file if there
+   ! was no explicit block terminator found). NOTE: There is always an ending to
+   ! a data block.
    ENSURE(.file.created,"CIF file has not been created")
    ENSURE(.file.is_open,"CIF file has not been opened")
 
+      fnd :: BIN
+
       ! Find EOD
-      .file.look_for_item("_eof",                &
-                          exact_match=TRUE,      &
-                          from=.start_of_data+1, &
-                          end_tokens=["data_"])
+      .file.look_for_item("_eof", return_cursor=FALSE, &
+                                  from=.start_of_data+1, &
+                                  end_tokens=["data_","_eof "], &
+                                  found=fnd)
 
       ! Set the line number for EOD
-      .end_of_data = .file.record
+      .end_of_data = .file.no_of_lines
+      if (fnd) .end_of_data = .file.line_number
 
    end
 
    find_crystal_data_block(found)
-   ! Find the first acceptable crystal data block
-   ! . Starting from ".start_of_data" 
-   ! . Store its name in ".data_block_name".
-   ! . If present "found" is set TRUE
-   ! . If not present, it is an error
+   ! Read through and find the *first* acceptable crystal data block,
+   ! starting from ".start_of_data", and store its ".data_block_name".
+   ! It is an error if a data block is not found; except in the case
+   ! when "found" is present, in which case it is set TRUE if the data
+   ! block exists, otherwise FALSE.
       found :: BIN, OUT, optional
 
    ENSURE(.file.created,"CIF file has not been created")
    ENSURE(.file.is_open,"CIF file has not been opened")
 
       there :: VEC{BIN}(4)
-      f,l :: INT
+      first,last :: INT
+
+      .file.move_to_line(1)
 
       do
 
-         ! Find block from .start_of_data ...
-         .find_start_of_data_block
+         ! Find a data block ...
+         .find_next_data_block
 
          ! Set found or DIE
          if (present(found)) then
@@ -503,35 +506,34 @@ contains
          end
 
          ! OK, we found a data block
-         f = .start_of_data
-         l  = .end_of_data
+         first = .start_of_data
+         last  = .end_of_data
 
          ! Look for some kind of space group information
-         .file.look_for_item("_symmetry_space_group_name_Hall", from=f,until=l,found=there(1))
+         .file.look_for_item("_symmetry_space_group_name_Hall",from=first,until=last,found=there(1))
          if (NOT there(1)) &
-         .file.look_for_item("_symmetry_equiv_pos_as_xyz",      from=f,until=l,found=there(1))
+         .file.look_for_item("_symmetry_equiv_pos_as_xyz",from=first,until=last,found=there(1))
          if (NOT there(1)) & ! CIF v 1.1
-         .file.look_for_item("_space_group_name_Hall",          from=f,until=l,found=there(1))
+         .file.look_for_item("_space_group_name_Hall",from=first,until=last,found=there(1))
          if (NOT there(1)) &
-         .file.look_for_item("_space_group_symop_operation_xyz",from=f,until=l,found=there(1))
+         .file.look_for_item("_space_group_symop_operation_xyz",from=first,until=last,found=there(1))
          if (NOT there(1)) & ! Last resort: Hermann-Maguin symbols
-         .file.look_for_item("_symmetry_space_group_name_H-M",  from=f,until=l,found=there(1))
+         .file.look_for_item("_symmetry_space_group_name_H-M",from=first,until=last,found=there(1))
          if (NOT there(1)) & 
-         .file.look_for_item("_space_group_name_H-M_alt",       from=f,until=l,found=there(1))
+         .file.look_for_item("_space_group_name_H-M_alt",from=first,until=last,found=there(1))
          if (NOT there(1)) & 
-         .file.look_for_item("_symmetry_Int_Tables_number",     from=f,until=l,found=there(1))
+         .file.look_for_item("_symmetry_Int_Tables_number",from=first,until=last,found=there(1))
 
          ! Look for cell data
-         .file.look_for_item("_cell_length",          from=f,until=l,found=there(2))
+         .file.look_for_item("_cell_length",from=first,until=last,found=there(2))
 
          ! Look for atomic coordinates
-         .file.look_for_item("_atom_site_label",      from=f,until=l,found=there(3))
+         .file.look_for_item("_atom_site_label",from=first,until=last,found=there(3))
          if (NOT there(3)) &
-         .file.look_for_item("_atom_site_type_symbol",from=f,until=l,found=there(3))
-         .file.look_for_item("_atom_site_fract",      from=f,until=l,found=there(4))
+         .file.look_for_item("_atom_site_type_symbol",from=first,until=last,found=there(3))
+         .file.look_for_item("_atom_site_fract",from=first,until=last,found=there(4))
 
-         ! All data there? 
-         ! Then its really a crystal data block
+         ! All data there? Then itss really a crystal data block
          if (all(there)) exit 
 
          ! Keep looking, from current end-of-data
@@ -541,24 +543,6 @@ contains
 
       ! Success
       if (present(found)) found = TRUE
-
-   end
-
-   move_to_end_of_data
-   ! Move to the (previously found) end of a data block.
-   ENSURE(.file.created,"CIF file has not been created")
-   ENSURE(.file.is_open,"CIF file has not been opened")
-   ENSURE(.end_of_data>0,"end_of_data is not set")
-
-      eod :: INT
-
-      eod = .end_of_data
-
-      ! Find EOD
-      .file.move_to_line(eod)
-
-      ! Set the line number for EOD
-      .start_of_data = eod
 
    end
 
@@ -786,8 +770,12 @@ contains
 
          ! Anything to read?
          if (.file.at_end_of_file) then
-            if (label==0) DIE("EOF, no _data labels!")
-            if (label >0) DIE("EOF after _data labels i.e. no loop data!")
+            if (label==0) then
+               DIE("EOF, no _data labels!")
+            end
+            if (label>0) then
+               DIE("EOF after _data labels i.e. no loop data!")
+            end
             exit
          end
 
@@ -838,15 +826,13 @@ contains
 
       n_labels,ID_pos :: INT
       word :: STR
-      fnd :: BIN
       val :: TYPE
 
       ! Find the looped item
-      .find_looped_item(ID,fnd,ID_pos,n_labels)
+      .find_looped_item(ID,found,ID_pos,n_labels)
 
       ! Return if not found
       if (present(found)) then
-         found = fnd
          if (NOT found) return
       end
 
@@ -1026,8 +1012,12 @@ contains
 
          ! Anything to read?
          if (.file.at_end_of_file) then
-            if (label==0) DIE("EOF, no _data labels!")
-            if (label >0) DIE("EOF after _data labels i.e. no loop data!")
+            if (label==0) then
+               DIE("EOF, no _data labels!")
+            end
+            if (label>0) then
+               DIE("EOF after _data labels i.e. no loop data!")
+            end
             exit
          end
 
@@ -1058,8 +1048,10 @@ contains
 
       ! Found?
       fnd = item==ID.dim AND NOT ID_ind.has_repetitions
-      if (present(found)) then; found = fnd
-      else if (NOT fnd) then; DIE("not all data items found")
+      if (present(found)) then
+         found = fnd
+      else if (NOT fnd) then
+         DIE("not all data items found")
       end
 
       ! Leave cursor before first data item
@@ -1118,8 +1110,12 @@ contains
 
             ! Anything to read?
             if (.file.at_end_of_file) then
-               DIE_IF(item==1,"EOF before reading first item in ID!")
-               DIE_IF(item/=ID.dim,"EOF before all ID's were preocessed!")
+               if (item==1) then
+                  DIE("EOF before reading first item in ID!")
+               end
+               if (item/=ID.dim) then
+                  DIE("EOF before all ID's were preocessed!")
+               end
                exit
             end
 
@@ -1212,8 +1208,12 @@ contains
 
             ! Anything to read?
             if (.file.at_end_of_file) then
-               DIE_IF(item==1,"EOF before reading first ID!")
-               DIE_IF(item/=ID.dim,"EOF before all ID's were preocessed!")
+               if (item==1) then
+                  DIE("EOF before reading first item in ID!")
+               end
+               if (item/=ID.dim) then
+                  DIE("EOF before all ID's were preocessed!")
+               end
                exit
             end
 

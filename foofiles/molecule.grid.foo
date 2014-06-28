@@ -46,8 +46,6 @@ contains
          case("b_l_field                           "); .::make_B_L_field_grid
          case("b_s_field                           "); .::make_B_S_field_grid
          case("binding_function_wang_peng          "); .::make_binding_function_wp_grid
-         case("bond_density_atom                   "); .::make_bond_density_atom_grid
-         case("bond_electron_density               "); .::make_bond_ED_grid
          case("bond_weight                         "); .::make_bond_weight_grid
          case("crystal_error_map                   "); .::make_crystal_error_map
          case("current_density                     "); .::make_j_grid
@@ -134,9 +132,8 @@ contains
    ! Do one of the many kinds of isosurface plot calculations
    ENSURE(.isosurface.created,"no isosurface")
 
-      select case (.isosurface.property)
+      select case (.isosurface.iso_kind)
          case("bond_density_atom                "); .isosurface.cubify(::bond_density_atom_grid)
-         case("bond_electron_density            "); .isosurface.cubify(::bond_ED_grid)
          case("bond_weight                      "); .isosurface.cubify(::bond_weight_grid)
          case("deformation_bond_density         "); .isosurface.cubify(::deformation_bond_density_grid)
          case("deformation_density              "); .isosurface.cubify(::deformation_density_grid)
@@ -152,8 +149,7 @@ contains
          case("dft_energy                       "); .isosurface.cubify(::dft_energy_grid)
          case("dft_xc_potential                 "); .isosurface.cubify(::dft_xc_pot_grid)
          case("electric_potential               "); .isosurface.cubify(::electric_potential_grid)
-       ! case("electron_density                 "); .isosurface.cubify(::electron_density_grid)
-         case("electron_density                 "); .isosurface.cubify(::bond_ED_grid)
+         case("electron_density                 "); .isosurface.cubify(::electron_density_grid)
          case("elf                              "); .isosurface.cubify(::ELF_grid)
          case("eli_d                            "); .isosurface.cubify(::ELI_D_grid)
          case("fermi_mobility                   "); .isosurface.cubify(::fermi_mobility_grid)
@@ -174,7 +170,7 @@ contains
          case("stockholder_weight               "); .isosurface.cubify(::Hirshfeld_density_grid)
          case("true_fermi_mobility              "); .isosurface.cubify(::true_fermi_mobility_grid)
          case("tsirelson_elf                    "); .isosurface.cubify(::Tsirelson_ELF_grid)
-         case default;                UNKNOWN(.isosurface.property)
+         case default;                UNKNOWN(.isosurface.iso_kind)
       end
 
    end
@@ -182,10 +178,8 @@ contains
    do_plot_property_on_isosurface 
    ! Plot one of the many kinds of density functions on an existing
    ! isosurface===useful for mapping properties on a surface.
-
       select case (.isosurface.surface_property)
          case("bond_density_atom               "); .isosurface.plot_function(::bond_density_atom_grid)
-         case("bond_electron_density           "); .isosurface.plot_function(::bond_ED_grid)
          case("deformation_bond_density        "); .isosurface.plot_function(::deformation_bond_density_grid)
          case("deformation_density             "); .isosurface.plot_function(::deformation_density_grid)
          case("deformation_dft_eff_potential   "); .isosurface.plot_function(::def_dft_eff_pot_grid)
@@ -205,8 +199,6 @@ contains
          case("eli_d                           "); .isosurface.plot_function(::ELI_D_grid)
          case("fermi_mobility                  "); .isosurface.plot_function(::fermi_mobility_grid)
          case("g_kinetic_energy                "); .isosurface.plot_function(::G_kinetic_energy_grid)
-         case("group_product_e_field_grid      "); .isosurface.plot_function(::group_product_E_field_grid)
-         case("group_product_esp_grid          "); .isosurface.plot_function(::group_product_ESP_grid)
          case("grad_rho_on_rho                 "); .isosurface.plot_function(::grad_rho_on_rho_grid)
          case("h_dft_energy                    "); .isosurface.plot_function(::H_dft_energy_grid)
          case("hirshfeld_density               "); .isosurface.plot_function(::Hirshfeld_density_grid)
@@ -218,8 +210,6 @@ contains
          case("oscillator_orbital              "); .isosurface.plot_function(::oscillator_orbital_grid)
          case("orbital_density                 "); .isosurface.plot_function(::orbital_density_grid)
          case("promolecule_density             "); .isosurface.plot_function(::promolecule_density_grid)
-         case("product_e_field_grid            "); .isosurface.plot_function(::product_E_field_grid)
-         case("product_esp_grid                "); .isosurface.plot_function(::product_ESP_grid)
          case("spin_density                    "); .isosurface.plot_function(::spin_density_grid)
          case("stockholder_density             "); .isosurface.plot_function(::stockholder_density_grid)
          case("stockholder_weight              "); .isosurface.plot_function(::Hirshfeld_density_grid)
@@ -227,7 +217,6 @@ contains
          case("tsirelson_elf                   "); .isosurface.plot_function(::Tsirelson_ELF_grid)
          case default;                UNKNOWN(.isosurface.surface_property)
       end
-
    end
 
 !  ============================
@@ -245,26 +234,19 @@ contains
       Z_n,r :: REAL
       pos :: VEC{REAL}(3)
 
-      n_pts  = pts.dim1
-
+      n_pts = size(pts,1)
       values = ZERO
       do n = 1,.n_atom
-
          Z_n = .atom(n).nuclear_charge
          pos = .atom(n).position
-
          do i = 1,n_pts
-
             r = pos.distance_to(pts(i,:))
-
             if (r>tiny(r)) then
               values(i) = values(i) + Z_n / r
             else
               values(i) = values(i) + huge(ONE)
             end
-
          end
-
       end
 
    end
@@ -772,7 +754,7 @@ contains
 
    make_DKH_orbital_grid_r(grid,orb,pt,square)
    ! ???
-     ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+     ENSURE(.molecular_orbitals.restricted.created,"no MO's")
      grid :: VEC{REAL}, OUT 
      orb :: INT, IN
      pt :: MAT{REAL}, IN
@@ -1254,7 +1236,7 @@ contains
  
       !!! moving back to contracted basis sets 
       M.create(.n_prim,.n_bf)
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
       buco.create(.n_bf,.n_prim)
       buco.to_product_of(M,R,transpose_a=TRUE)
       R.destroy
@@ -1753,7 +1735,7 @@ contains
       M2.create(2*.n_prim,2*.n_prim)
       M.create(.n_prim,.n_prim)
 
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
 
       M2 = (ZERO,ZERO)
       M2.alpha_alpha_plus(M)
@@ -1892,7 +1874,7 @@ contains
       pt :: MAT{REAL}, IN
       square :: BIN, IN, optional
 
-   ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+   ENSURE(.molecular_orbitals.restricted.created,"no MO's")
 
       MO :: MAT{REAL}*
 
@@ -2175,7 +2157,7 @@ contains
  
  !!! moving back to contracted basis sets 
       M.create(.n_prim,.n_bf)
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
       buco.create(.n_bf,.n_prim)
       buco.to_product_of(M,R,transpose_a=TRUE)
       R.destroy
@@ -2661,7 +2643,7 @@ contains
       !!! moving back to contracted basis sets 
       M.create(.n_prim,.n_bf)
 
-      .BASE:make_normalised_contraction_mx(M)
+      .BASE:make_normalized_contraction_mx(M)
 
       M2.create(2*.n_prim,2*.n_prim)
       M2 = (ZERO,ZERO)
@@ -2832,7 +2814,7 @@ contains
 !     nabla_grid, pts :: MAT{REAL}
 !   ENSURE(pts.dim2==3,  "wrong dimension for points array")
 !   ENSURE(nabla_grid.dim2==3,  "wrong dimension for nabla_grid array")
-!   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+!   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
 !   ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 !     orb :: VEC{REAL}*
 !     dens_1,dens_2,nabla_orb,comp :: VEC{REAL}*
@@ -2905,9 +2887,9 @@ contains
    ENSURE(pts.dim2==3,  "wrong dimension for points array")
    ENSURE(nabla_grid.dim2==3,  "wrong dimension for nabla_grid array")
    ENSURE(.natural_orbitals.created, "no natural orbitals")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.created, "no occupation numbers")
-   ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
+   ENSURE(.occupation_numbers.restricted.created,"no occupation numbers")
 
       orb :: VEC{REAL}*
       nabla_orb :: MAT{REAL}*
@@ -2954,9 +2936,9 @@ contains
    ENSURE(nabla_grid.dim1==pts.dim1,"wrong dimension for nabla_grid array")
    ENSURE(grid.dim==pts.dim1,"wrong dimension for grid array")
    ENSURE(.natural_orbitals.created, "no natural orbitals")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.created, "no occupation numbers")
-   ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
+   ENSURE(.occupation_numbers.restricted.created,"no occupation numbers")
 
       orb :: VEC{REAL}*
       nabla_orb :: MAT{REAL}*
@@ -3110,667 +3092,6 @@ contains
 
    end
 
-! IOTC LAPLACIAN STUFF
-
-   get_x_negative_laplacian_grid
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   ENSURE(.plot_grid.created, "no grid")
-      pt :: MAT{REAL}*
-      grid :: VEC{REAL}*
-      grid.create(.plot_grid.n_pt)
-      pt.create(.plot_grid.n_pt,3); .plot_grid.make_points(pt)
-      stdout.flush
-      stdout.text("Negative laplacian from get_x_negative_laplacian_grid")
-      stdout.flush
-      .::make_xx_laplacian_grid(grid,pt)
-      grid=-grid
-      .::dump_plot_grid(grid,"negative_laplacian_grid")
-      pt.destroy
-      grid.destroy
-   end
-
-   get_x_laplacian_grid
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   ENSURE(.plot_grid.created, "no grid")
-      pt :: MAT{REAL}*
-      grid :: VEC{REAL}*
-      grid.create(.plot_grid.n_pt)
-      pt.create(.plot_grid.n_pt,3); .plot_grid.make_points(pt)
-      stdout.flush
-      stdout.text("Laplacian from get_x_laplacian_grid")
-      stdout.flush
-      .::make_xx_laplacian_grid(grid,pt)
-      .::dump_plot_grid(grid,"laplacian_grid")
-      pt.destroy
-      grid.destroy
-   end
-
-   make_xx_laplacian_grid(grid,pt)
-   ! this is kevin
-   ! here begins the PCE correction of density
-   ! welcome
-   !
-  grid :: VEC{REAL} 
-  pt :: MAT{REAL}
-  MO,MOa,MOb :: MAT{REAL}*
-  CMO :: MAT{CPX}*
-  D,Da,Db :: MAT{REAL}*
-  CD :: MAT{CPX}*
-  nx :: INT
-
-      grid=ZERO
-
-      select case (.scfdata.scf_kind)
-        case ("rhf","rks","xray_rks","xray_rhf","noninteracting-group-rhf")
-           ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
-           ENSURE(.spin_multiplicity==1,"this is not a singlet state")
-              MO => .molecular_orbitals.restricted(:,1:.n_a)
-              D  => .density_matrix.restricted
-              D.to_scaled_product_of(MO,MO,fac=TWO,transpose_b=TRUE)
-              if (NOT .scfdata.PCE_CORR) then
-               .::make_xx_laplacian_grid_r(grid,pt,D)
-             else
-               nx=1   ! PCE corr for LAPLACIAN, I am using the Density routine in the 1st step, 'cause it is da same
-               .::density_IOTC_r(grid,pt,D,nx)
-            end if
-           case ("uhf","uks","xray_uhf","xray_uks", &
-              "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
-            ENSURE(.molecular_orbitals.created("unrestricted"),"no MO's")
-              MOa => .molecular_orbitals.alpha(:,1:.n_a)
-              MOb => .molecular_orbitals.beta(:,1:.n_b)
-              Da => .density_matrix.alpha
-              Db => .density_matrix.beta
-              Da.to_product_of(MOa,MOa,transpose_b=TRUE)
-              Db.to_product_of(MOb,MOb,transpose_b=TRUE)
-              D.create(.n_bf,.n_bf)
-              D=Da+Db 
-             if (NOT .scfdata.PCE_CORR) then
-              .::make_xx_laplacian_grid_r(grid,pt,D)
-             else
-              nx=1   ! PCE corr for LAPLACIAN, I am using the Density routine in the 1st step, 'cause it is da same
-              .::density_IOTC_r(grid,pt,D,nx)
-            end if
-             D.destroy
-       case ("gchf","xray_gchf")
-         ENSURE(.molecular_orbitals.created("general_complex"),"no MO's")
-         CD => .density_matrix.general_complex
-         CMO => .molecular_orbitals.general_complex(:,1:.n_e)
-         CD.to_product_of(CMO,CMO,dagger_b=TRUE)
-         if (NOT .scfdata.PCE_CORR) then
-           .::make_xx_laplacian_grid_gc(grid,pt,CD)
-             else
-              nx=1   ! PCE corr for LAPLACIAN, I am using the Density routine in the 1st step, 'cause it is da same
-              .::density_IOTC_gc(grid,pt,CD,nx)
-         end if     
-        case default
-           DIE("unknown or not implemented SCF kind, "//trim(.scfdata.scf_kind))
-        end
-   end
-
-   make_xx_laplacian_grid_r(grid,pt,D)
-   ! make the PCE corrected structure factors 
-   ! 
-       grid :: VEC{REAL}
-       pt :: MAT{REAL}
-       D :: MAT{REAL}
-       n_gcm :: INT
-       n,i,j,k_max :: INT
-       g :: REAL
-   !    c :: REAL
-   !    xx,yy,zz :: REAL
-        m_out :: MAT{INT}* 
-!       GG,ft_hkl,pftp_hkl,buco :: MAT{REAL}*
-       GG,pgpg,p2gg,gp2g,buco :: MAT{REAL}*
-       MM,YU,S,R,Z,PZP :: MAT{REAL}*
-   !    M :: MAT{REAL}*
-       P2,Ap,Ep :: VEC{REAL}*
-
-      k_max = size(pt,1)
-
-      m_out.create(.n_prim,.n_prim)
-      .REL:get_n_gcm(m_out,n_gcm)  
-      R.create(.n_prim,.n_prim)
-      .REL:make_primitive_overlap_matrix(R)
-      S.create(n_gcm,n_gcm)
-      S=ZERO 
-      .REL:get_da_gcm_now(R,S,m_out) 
-      R.destroy 
-
-     MM.create(.n_prim,.n_bf)
-     .BASE:make_normalised_contraction_mx(MM)
-!    MM.create(.n_prim,.n_bf)
-!    MM=M
-!    M.destroy
-
-     pgpg.create(.n_bf,.n_bf)
-     p2gg.create(.n_bf,.n_bf)
-     gp2g.create(.n_bf,.n_bf)
-     GG.create(.n_prim,.n_prim)
-     buco.create(.n_bf,.n_prim)
-!     pftp_hkl.create(.n_prim,.n_prim)
-     do n = 1,k_max
-        pgpg=ZERO
-        p2gg=ZERO
-        GG=ZERO
-        buco=ZERO
-! here it comes babes
-! point for point the density will be on and on calculated
-! I am sincerely sorry, but the code comparing to its non-relativistic/NOs
-! counterpart is really not effective :(
-       .REL:make_primitive_pgpg_matrix(GG,pt(n,1),pt(n,2),pt(n,3))
-       buco.to_product_of(MM,GG,transpose_a=TRUE)
-       pgpg.to_product_of(buco,MM)
-       buco=ZERO
-       GG=ZERO
-       .REL:make_primitive_p2gg_matrix(GG,pt(n,1),pt(n,2),pt(n,3))
-       buco.to_product_of(MM,GG,transpose_a=TRUE)
-       p2gg.to_product_of(buco,MM)
-       buco=ZERO
-       GG=ZERO
-       .REL:make_primitive_gp2g_matrix(GG,pt(n,1),pt(n,2),pt(n,3))
-       buco.to_product_of(MM,GG,transpose_a=TRUE)
-       gp2g.to_product_of(buco,MM)
-
-        g=ZERO
-   
-        do i=1,.n_bf
-           do j=1,.n_bf
-               g = g + (TWO*pgpg(i,j)+p2gg(i,j)+gp2g(i,j))*D(j,i)  !????? cmpx matrix ??? perhaps the cpx parts is not needed BUT!!!!
-           end do           
-        end do           
-
-      !then it seems to work what nos routines laplacian does
-      ! g=g/TWO
-
-      grid(n)=g
-
-     end do
-     MM.destroy
-     buco.destroy
-  
-     .BASE:put_debug(grid,"laplacian grid from mx not nos")
-
-       S.destroy
-       Z.destroy
-       PZP.destroy
-       GG.destroy
-       YU.destroy
-       Ap.destroy
-       Ep.destroy
-       P2.destroy
-!       c2P.destroy
-!       PP.destroy
-       m_out.destroy
-       pgpg.destroy
-       p2gg.destroy
-       gp2g.destroy
-    
-   end
-
-   make_xx_laplacian_grid_gc(grid,pt,D)
-   ! make the PCE corrected structure factors 
-   ! 
-       grid :: VEC{REAL}
-       pt :: MAT{REAL}
-       D :: MAT{CPX}
-       n_gcm :: INT
-       n,i,j,k_max :: INT
-       g :: CPX
-       m_out :: MAT{INT}* 
-!       GG,ft_hkl,pftp_hkl,buco :: MAT{REAL}*
-       GG,GG22,pgpg,p2gg,gp2g,buco :: MAT{REAL}*
-       MM,YU,S,R,Z,PZP :: MAT{REAL}*
-       P2,Ap,Ep :: VEC{REAL}*
-
-      k_max = size(pt,1)
-
-      m_out.create(.n_prim,.n_prim)
-      .REL:get_n_gcm(m_out,n_gcm)  
-      R.create(.n_prim,.n_prim)
-      .REL:make_primitive_overlap_matrix(R)
-      S.create(n_gcm,n_gcm)
-      S=ZERO 
-      .REL:get_da_gcm_now(R,S,m_out) 
-      R.destroy 
-
-     MM.create(.n_prim,.n_bf)
-     .BASE:make_normalised_contraction_mx(MM)
-!    MM.create(.n_prim,.n_bf)
-!    MM=M
-!    M.destroy
-
-     pgpg.create(.n_bf,.n_bf)
-     p2gg.create(.n_bf,.n_bf)
-     gp2g.create(.n_bf,.n_bf)
-     GG.create(.n_prim,.n_prim)
-     GG22.create(2*.n_bf,2*.n_bf)
-     buco.create(.n_bf,.n_prim)
-!     pftp_hkl.create(.n_prim,.n_prim)
-     do n = 1,k_max
-        pgpg=ZERO
-        p2gg=ZERO
-        GG=ZERO
-        GG22=ZERO
-        buco=ZERO
-! here it comes babes
-! point for point the density will be on and on calculated
-! I am sincerely sorry, but the code comparing to its non-relativistic/NOs
-! counterpart is really not effective :(
-       .REL:make_primitive_pgpg_matrix(GG,pt(n,1),pt(n,2),pt(n,3))
-       buco.to_product_of(MM,GG,transpose_a=TRUE)
-       pgpg.to_product_of(buco,MM)
-       buco=ZERO
-       GG=ZERO
-       .REL:make_primitive_p2gg_matrix(GG,pt(n,1),pt(n,2),pt(n,3))
-       buco.to_product_of(MM,GG,transpose_a=TRUE)
-       p2gg.to_product_of(buco,MM)
-       buco=ZERO
-       GG=ZERO
-       .REL:make_primitive_gp2g_matrix(GG,pt(n,1),pt(n,2),pt(n,3))
-       buco.to_product_of(MM,GG,transpose_a=TRUE)
-       gp2g.to_product_of(buco,MM)
-
-
-       do i=1,.n_bf
-           do j=1,.n_bf
-               GG22(i,j) = (TWO*pgpg(i,j)+p2gg(i,j)+gp2g(i,j))  !????? cmpx matrix ??? perhaps the cpx parts is not needed BUT!!!!
-               GG22(i+.n_bf,j+.n_bf) = (TWO*pgpg(i,j)+p2gg(i,j)+gp2g(i,j))  !????? cmpx matrix ??? perhaps the cpx parts is not needed BUT!!!!
-           end do           
-       end do          
-
-       g=(ZERO,ZERO)
-   
-       do i=1,2*.n_bf
-           do j=1,2*.n_bf
-           !    g = g + (TWO*pgpg(i,j)+p2gg(i,j)+gp2g(i,j))*D(j,i)  !????? cmpx matrix ??? perhaps the cpx parts is not needed BUT!!!!
-               g = g + D(j,i)*GG22(i,j)
-           end do           
-       end do           
-
-      !then it seems to work what nos routines laplacian does
-      ! g=g/TWO ! this seems rubbish
-      
-      !stdout.put(g)
-      !stdout.flush
-
-      grid(n)=real(g)
-
-     end do
-     MM.destroy
-     buco.destroy
-  
-     .BASE:put_debug(grid,"laplacian grid from mx not nos")
-
-       S.destroy
-       Z.destroy
-       PZP.destroy
-       GG.destroy
-       GG22.destroy
-       YU.destroy
-       Ap.destroy
-       Ep.destroy
-       P2.destroy
-!       c2P.destroy
-!       PP.destroy
-       m_out.destroy
-       pgpg.destroy
-       p2gg.destroy
-       gp2g.destroy
-    
-   end
-  
-   make_LAPLACIAN_IOTC_PCE_off(GG,Yr,YU,Ap,bp,p,xx,yy,zz,m_out,n_gcm,S,O)
-   ! correct the picture change
-   ! g is the electron density in a given point with coordinates x=xx, y=yy, z=zz
-   ! this routine is based on the make_r_DKH_matrix(H) routine
-        GG :: MAT{REAL} , OUT
-        Yr,YU :: MAT{REAL} , IN
-        Ap,bp,p :: VEC{REAL} , IN
-        xx,yy,zz :: REAL , IN
-        m_out :: MAT{INT} , IN
-        n_gcm :: INT , IN
-        S,O :: MAT{REAL} , IN
-
-     !   c :: REAL  
-        i,j :: INT   
-        R :: MAT{REAL}*  
-        D,DI,PDP :: MAT{REAL}*
-     !   Rx,Ry,Rz :: MAT{REAL}*
-        A,B :: MAT{REAL}*
-        M,buco :: MAT{REAL}* 
-
-!!!  the laplacian part pgpg
-     R.create(.n_prim,.n_prim)
-     R=ZERO
-     ! this routine is exatlich the same as pDp one, sorry for that
-     .REL:make_primitive_pgpg_matrix(R,xx,yy,zz)
-     D.create(n_gcm,n_gcm)
-     D=ZERO
-     .REL:get_da_gcm_now(R,D,m_out)  
-     A.create(n_gcm,n_gcm)
-     A.to_product_of(YU,D,transpose_a=TRUE)
-     D.to_product_of(A,YU)
-     D=TWO*D
-
-!!!  the laplacian part p2gg
-     DI.create(n_gcm,n_gcm)
-     DI=ZERO
-     R=ZERO
-     .REL:make_primitive_p2gg_matrix(R,xx,yy,zz)
-     .REL:get_da_gcm_now(R,DI,m_out)  
-     A.to_product_of(YU,DI,transpose_a=TRUE)
-     DI.to_product_of(A,YU)
-     D=DI+D
-
-!!!  the laplacian part gp2g
-     DI=ZERO
-     R=ZERO
-     .REL:make_primitive_gp2g_matrix(R,xx,yy,zz)
-     .REL:get_da_gcm_now(R,DI,m_out)  
-     A.to_product_of(YU,DI,transpose_a=TRUE)
-     DI.to_product_of(A,YU)
-     D=DI+D
-
-!!!  PDP MATRIX  !!!
-!!!  the laplacian part ppggpp the same as ppDpp
-      R=ZERO
-     .REL:make_primitive_ppDpp_matrix(R,xx,yy,zz) 
-     PDP.create(n_gcm,n_gcm)
-     PDP=ZERO
-     .REL:get_da_gcm_now(R,PDP,m_out)  
-     A=ZERO
-     A.to_product_of(YU,PDP,transpose_a=TRUE)
-     PDP.to_product_of(A,YU)
-     PDP=TWO*PDP
-
-!!!  the laplacian part pppDp
-     DI=ZERO
-     R=ZERO
-     .REL:make_primitive_pppDp_matrix(R,xx,yy,zz) 
-     .REL:get_da_gcm_now(R,DI,m_out)  
-     A.to_product_of(YU,DI,transpose_a=TRUE)
-     DI.to_product_of(A,YU)
-     PDP=DI+PDP
-
-!!!  the laplacian part pDppp
-     DI=ZERO
-     R=ZERO
-     .REL:make_primitive_pDppp_matrix(R,xx,yy,zz) 
-     .REL:get_da_gcm_now(R,DI,m_out)  
-     A.to_product_of(YU,DI,transpose_a=TRUE)
-     DI.to_product_of(A,YU)
-     PDP=DI+PDP
-
-     DI.destroy
-
-!!! A-O LETS GO !!!
-        
-     do i=1,n_gcm
-       do j=1,n_gcm
-    
-        D(i,j) = Ap(i)*D(i,j)*Ap(j)
-        PDP(i,j) = Ap(i)*PDP(i,j)*Ap(j)                                        
-    
-       end
-     end
-
-     B.create(n_gcm,n_gcm) 
-     B=ZERO  
-     .::build_da_IOTC_dens(B,Yr,PDP,D,p,bp,n_gcm)
-
-     D=ZERO
-     D=matmul(O,matmul(B,O))
-
-     PDP.destroy
-   
-     B=ZERO
-     B.to_product_of(S,YU)
-
-     A=ZERO
-     A.to_product_of(B,D)
-     D.to_product_of(A,B,transpose_b=TRUE)
-
-     A.destroy
-     B.destroy
-
-!!! moving back to tonto style primitive basis sets 
-     R=ZERO
-! put the Fock matrix back to the space .n_prim space
-     .REL:get_back_prim_now(D,R,m_out)  
-     D.destroy
-
-!!! moving back to contracted basis sets 
-     M.create(.n_prim,.n_bf)
-     .BASE:make_normalised_contraction_mx(M)
-     buco.create(.n_bf,.n_prim)
-     buco.to_product_of(M,R,transpose_a=TRUE)
-     R.destroy
-
-     GG.to_product_of(buco,M)
-
-     M.destroy
-     buco.destroy
-   end   
-  
-   make_LAPLACIAN_IOTC_PCE_SO_off(GG,Yr,YU,Ap,bp,p,xx,yy,zz,n_gcm,S,O)
-   ! correct the  picture change
-   ! g is the electron density in a given point with coordinates x=xx, y=yy, z=zz
-   ! this routine is based on the make_r_DKH_matrix(H) routine
-   
-        GG,Yr :: MAT{CPX} 
-        YU :: MAT{REAL} , IN
-        Ap,bp,p :: VEC{REAL} , IN
-        xx,yy,zz :: REAL , IN
-        n_gcm :: INT , IN
-        S :: MAT{REAL} , IN
-        O :: MAT{CPX} 
-
-        II :: CPX
-        fac,c :: REAL  
-        i,j :: INT  
-        F,A2,B2,M2,buco,PAP :: MAT{CPX}*
-        D,PDP,SOx,SOy,SOz,DI,DIx,DIy,DIz :: MAT{REAL}*  
-     !   WW,W2,TX,Z,PZP,X :: MAT{REAL}*  
-        A,B,M :: MAT{REAL}*
-
-!!!  the density pgpg operator !!!
-     D.create(n_gcm,n_gcm)
-     D=ZERO
-     A.create(n_gcm,n_gcm)
-     A=ZERO
-     .REL:make_primitive_pDp_matrix(D,xx,yy,zz)
-     A.to_product_of(YU,D,transpose_a=TRUE)
-     D.to_product_of(A,YU)
-     D=TWO*D
-
-     DI.create(n_gcm,n_gcm)
-     DI=ZERO
-!!!  the density ppgg operator !!!
-     .REL:make_primitive_p2gg_matrix(DI,xx,yy,zz)
-     A.to_product_of(YU,DI,transpose_a=TRUE)
-     DI.to_product_of(A,YU)
-     D=D+DI
-
-     DI=ZERO
-!!!  the density ppgg operator !!!
-     .REL:make_primitive_gp2g_matrix(DI,xx,yy,zz)
-     A.to_product_of(YU,DI,transpose_a=TRUE)
-     DI.to_product_of(A,YU)
-     D=D+DI
-
-!!!  the density PPXPP operator !!!
-     PDP.create(n_gcm,n_gcm)
-     PDP=ZERO
-     .REL:make_primitive_ppDpp_matrix(PDP,xx,yy,zz) 
-     A=ZERO
-     A.to_product_of(YU,PDP,transpose_a=TRUE)
-     PDP.to_product_of(A,YU)
-!!!  SO MATRICES  !!!
-     SOx.create(n_gcm,n_gcm)
-     SOy.create(n_gcm,n_gcm)
-     SOz.create(n_gcm,n_gcm)
-      SOx=ZERO; SOy=ZERO; SOz=ZERO
-     .REL:make_primitive_ppDpp_SO_matrix(SOx,SOy,SOz,xx,yy,zz) 
-     A=ZERO
-     A.to_product_of(YU,SOx,transpose_a=TRUE)
-     SOx.to_product_of(A,YU)
-     A=ZERO
-     A.to_product_of(YU,SOy,transpose_a=TRUE)
-     SOy.to_product_of(A,YU)
-     A=ZERO
-     A.to_product_of(YU,SOz,transpose_a=TRUE)
-     SOz.to_product_of(A,YU)
-     ! times 2 
-     PDP=TWO*PDP; SOx=TWO*SOx; SOy=TWO*SOy; SOz=TWO*SOz
-
-     DIx.create(n_gcm,n_gcm)
-     DIy.create(n_gcm,n_gcm)
-     DIz.create(n_gcm,n_gcm)
-!!! the PPPXP part + SO     
-     DI=ZERO; DIx=ZERO; DIy=ZERO; DIz=ZERO
-     .REL:make_primitive_pppDp_matrix(DI,xx,yy,zz) 
-     .REL:make_primitive_pppDp_SO_matrix(DIx,DIy,DIz,xx,yy,zz) 
-     A=ZERO
-     A.to_product_of(YU,DI,transpose_a=TRUE)
-     DI.to_product_of(A,YU)
-     A=ZERO
-     A.to_product_of(YU,DIx,transpose_a=TRUE)
-     DIx.to_product_of(A,YU)
-     A=ZERO
-     A.to_product_of(YU,DIy,transpose_a=TRUE)
-     DIy.to_product_of(A,YU)
-     A=ZERO
-     A.to_product_of(YU,DIz,transpose_a=TRUE)
-     DIz.to_product_of(A,YU)
-     PDP=PDP+DI;SOx=SOx+DIx;SOy=SOy+DIy;SOz=SOz+DIz
-
-!!! the PXPPP part + SO     
-     DI=ZERO; DIx=ZERO; DIy=ZERO; DIz=ZERO
-     .REL:make_primitive_pDppp_matrix(DI,xx,yy,zz) 
-     .REL:make_primitive_pDppp_SO_matrix(DIx,DIy,DIz,xx,yy,zz) 
-     A=ZERO
-     A.to_product_of(YU,DI,transpose_a=TRUE)
-     DI.to_product_of(A,YU)
-     A=ZERO
-     A.to_product_of(YU,DIx,transpose_a=TRUE)
-     DIx.to_product_of(A,YU)
-     A=ZERO
-     A.to_product_of(YU,DIy,transpose_a=TRUE)
-     DIy.to_product_of(A,YU)
-     A=ZERO
-     A.to_product_of(YU,DIz,transpose_a=TRUE)
-     DIz.to_product_of(A,YU)
-     PDP=PDP+DI;SOx=SOx+DIx;SOy=SOy+DIy;SOz=SOz+DIz
-
-     DI.destroy;DIx.destroy;DIy.destroy;DIz.destroy
-
-!!! A-O LETS GO !!!
-
-!     B.create(n_gcm,n_gcm) 
-     A=ZERO
-!     B=ZERO  
-        
-     c = SPEED_OF_LIGHT_AU
-     do i=1,n_gcm
-       do j=1,n_gcm
-    
-        D(i,j) = Ap(i)*D(i,j)*Ap(j)                                        
-        PDP(i,j) = Ap(i)*PDP(i,j)*Ap(j)
-        SOx(i,j) = Ap(i)*SOx(i,j)*Ap(j)
-        SOy(i,j) = Ap(i)*SOy(i,j)*Ap(j)
-        SOz(i,j) = Ap(i)*SOz(i,j)*Ap(j)
-    
-       end
-     end
-     
-    A.destroy
-
-   A2.create(2*n_gcm,2*n_gcm)
-   A2=(ZERO,ZERO)
-     A2.alpha_alpha_plus(D)
-     A2.beta_beta_plus(D)
-!   A.make_hermitian   
-    .BASE:put_debug(A2,"A matrix")
-   PAP.create(2*n_gcm,2*n_gcm)
-   PAP=(ZERO,ZERO)
-     PAP.alpha_alpha_plus(PDP)
-     PAP.beta_beta_plus(PDP)
-     II = (ZERO,ONE)
-     fac= ONE
-     PAP.beta_alpha_plus(SOx,fac*II)
-     PAP.beta_alpha_plus(SOy,-fac)
-     PAP.alpha_alpha_plus(SOz,fac*II)
-     PAP.beta_beta_plus(SOz,-fac*II)
-     PAP.make_hermitian   
-     .BASE:put_debug(PAP,"PAP matrix")
-     D.destroy
-     PDP.destroy
-     SOx.destroy
-     SOy.destroy
-     SOz.destroy
-!     R.destroy
-    
-     F.create(2*n_gcm,2*n_gcm)
-     F=(ZERO,ZERO)
-! the hamiltonian is gonna be built
-     .::build_da_IOTC_dens(F,Yr,PAP,A2,p,bp)
-     .BASE:put_debug(F,"F matrix")
-     
-     PAP.destroy
-
-     A2=(ZERO,ZERO)
-     ! normalization
-     A2.to_product_of(F,O)
-     F.to_product_of(O,A2,dagger_a=TRUE)
-    
-! back to cartesian basis set
-     B.create(n_gcm,n_gcm) 
-     B.to_product_of(S,YU)
-     B2.create(2*n_gcm,2*n_gcm)
-     B2=(ZERO,ZERO)
-     B2.alpha_alpha_plus(B)
-     B2.beta_beta_plus(B)
-     B.destroy
-
-     A2=(ZERO,ZERO)
-     A2.to_product_of(B2,F)
-     F.to_product_of(A2,B2,dagger_b=TRUE)
-    .BASE:put_debug(F,"U+YOFOYU matrix")
-
-     B2.destroy
-
-     A2=(ZERO,ZERO)
-
-!!! moving back to contracted basis sets 
-     M.create(.n_prim,.n_bf)
-     M=ZERO
-    .BASE:make_normalised_contraction_mx(M)
-    .BASE:put_debug(M,"M matrix")
-!     M2.create(2*.n_prim,2*.n_bf)
-     M2.create(2*.n_prim,2*.n_prim)
-     M2=(ZERO,ZERO)
-     M2.alpha_alpha_plus(M)
-     M2.beta_beta_plus(M)
-     .BASE:put_debug(M2,"M2 matrix")
-     buco.create(2*.n_prim,2*.n_prim)
-     buco=(ZERO,ZERO)
-!     buco.to_product_of(M2,F,transpose_a=TRUE)
-     buco.to_product_of(M2,F,dagger_a=TRUE)
-     A2.to_product_of(buco,M2)
-     .BASE:put_debug(A2,"MU+YOFOYUM matrix")
-     M.destroy
-     F.destroy
-     M2.destroy
-     buco.destroy
-
-     GG = A2
-     A2.destroy
-     .BASE:put_debug(GG,"GG matrix")
-
-   end   
-
 !  =========================
 !  Electron density routines
 !  =========================
@@ -3836,9 +3157,7 @@ contains
       pt :: MAT{REAL}, IN
 
    ENSURE(.natural_orbitals.created, "no natural orbitals")
-   ENSURE(.natural_orbitals.created("unrestricted"),"no natural orbitals")
    ENSURE(.occupation_numbers.created, "no occupation numbers")
-   ENSURE(.occupation_numbers.created("unrestricted"),"no occupation numbers")
 
       NO :: MAT{REAL}*
       occ :: VEC{REAL}*
@@ -3859,13 +3178,14 @@ contains
 
    end
 
-   make_density_grid_r(density_grid,pt)
+   make_density_grid_r(density_grid,pt) ::: pure
    ! Make the "density_grid" for the supplied points "pt" from restricted real
    ! natural orbitals
       density_grid :: VEC{REAL}
       pt :: MAT{REAL}
+
    ENSURE(pt.dim2==3,  "wrong dimension for points array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation numbers")
 
       NO :: VEC{REAL}*
@@ -3902,7 +3222,6 @@ contains
       sgn :: INT, IN, optional
 
    ENSURE(pt.dim2==3,  "wrong dimension for points array")
-   ENSURE(.natural_orbitals.created("unrestricted"), "no unrestricted NO's")
    ENSURE(.occupation_numbers.alpha.created, "no alpha occupation numbers")
    ENSURE(.occupation_numbers.beta.created, "no beta occupation numbers")
 
@@ -3937,7 +3256,7 @@ contains
 
    end
 
-   make_density_grid_c(density_grid,pt)
+   make_density_grid_c(density_grid,pt) ::: pure
    ! Make the "density_grid" for the supplied points "pt" from restricted
    ! complex natural orbitals.
       density_grid :: VEC{REAL}
@@ -3956,10 +3275,15 @@ contains
       density_grid = ZERO
 
       NO.create(pt.dim1)
+
       do n = 1,n_occ
+
          .::make_orbital_grid_c(NO,.natural_orbitals.restricted_complex(:,n), pt)
+
          occ = .occupation_numbers.restricted(n)
+
          density_grid = density_grid + occ * RE(conjg(NO(:))*NO(:))
+
       end
 
       NO.destroy
@@ -3974,7 +3298,7 @@ contains
 
    ENSURE(pt.dim2==3,  "incorrect dimension for points array")
    ENSURE(.natural_orbitals.created("general_complex"), "no natural orbitals")
-   ENSURE(.occupation_numbers.created("general"), "no occupation numbers")
+   ENSURE(.occupation_numbers.general.created, "no occupation numbers")
 
       gd,gu :: VEC{CPX}*
       n_occ,n :: INT
@@ -4051,7 +3375,7 @@ contains
  
          case ("rhf","rks","xray_rks","xray_rhf","noninteracting-group-rhf")
 
-            ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+            ENSURE(.molecular_orbitals.restricted.created,"no MO's")
             ENSURE(.spin_multiplicity==1,"this is not a singlet state")
 
             MO => .molecular_orbitals.restricted(:,1:.n_a)
@@ -4066,8 +3390,6 @@ contains
   
          case ("uhf","uks","xray_uhf","xray_uks", &
                "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
-
-            ENSURE(.molecular_orbitals.created("unrestricted"),"no MO's")
 
             MOa => .molecular_orbitals.alpha(:,1:.n_a)
             MOb => .molecular_orbitals.beta(:,1:.n_b)
@@ -4092,7 +3414,7 @@ contains
             grid_a.destroy
             grid_b.destroy
   
-         case ("gchf","xray_gchf")
+         case ("gchf")
 
             ENSURE(.molecular_orbitals.created("general_complex"),"no MO's")
 
@@ -4337,7 +3659,7 @@ contains
  
          case ("rhf","rks","xray_rks","xray_rhf","noninteracting-group-rhf")
  
-            ENSURE(.molecular_orbitals.created("restricted"),"no MO's")
+            ENSURE(.molecular_orbitals.restricted.created,"no MO's")
             ENSURE(.spin_multiplicity==1,"this is not a singlet state")
  
             MO => .molecular_orbitals.restricted(:,1:.n_a)
@@ -4354,8 +3676,6 @@ contains
   
          case ("uhf","uks","xray_uhf","xray_uks", &
                "pnd_uhf","pnd_uks","xray_pnd_uhf","xray_pnd_uks")
-
-            ENSURE(.molecular_orbitals.created("unrestricted"),"no MO's")
 
             MOa => .molecular_orbitals.alpha(:,1:.n_a)
             MOb => .molecular_orbitals.beta(:,1:.n_b)
@@ -4379,7 +3699,7 @@ contains
             grid_a.destroy
             grid_b.destroy
   
-         case ("gchf","xray_gchf")
+         case ("gchf")
 
             ENSURE(.molecular_orbitals.created("general_complex"),"no MO's")
 
@@ -4396,16 +3716,15 @@ contains
 
    end
 
-   density_IOTC_r(density_grid,pt,D,ax)
+   density_IOTC_r(density_grid,pt,D)
    ! the density_grid will be filled with the values of density
    ! given by the coordinates in the pt matrix
       self :: IN
       density_grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
       D :: MAT{REAL}, IN
-      ax :: INT , optional
 
-      n_gcm,n_pt,nx :: INT
+      n_gcm,n_pt :: INT
       n,i,j,k :: INT
       g,c,alpha,alpha2 :: REAL
       m_out :: MAT{INT}*
@@ -4415,9 +3734,6 @@ contains
       P2,Ap,E,p,ep,bp :: VEC{REAL}*
 
       n_pt = pt.dim1
-      nx=0
-      if(present(ax)) nx=ax
-
 
       !!! analysis of the primitive basis set via the overap matrix
       !!! trying to lower the problem to an general contracted basis set
@@ -4541,14 +3857,8 @@ contains
          ! and on calculated I am sincerely sorry, but the code
          ! comparing to it's non-relativistic counter part really not
          ! effective :(
-       if (nx==0) then
          .::make_DENSITY_IOTC_PCE_off(GG,Yr,YU,Ap,bp,p,ep,pt(n,1),pt(n,2),pt(n,3),m_out,n_gcm,S,O)
-       else if (nx==1) then
-         .::make_LAPLACIAN_IOTC_PCE_off(GG,Yr,YU,Ap,bp,p,pt(n,1),pt(n,2),pt(n,3),m_out,n_gcm,S,O)
-       else
-         DIE("Currently, I accept only  nx={0,1}.")
-       end if
-
+ 
         g=ZERO
  
         do i=1,.n_bf
@@ -4578,15 +3888,14 @@ contains
 
    end
 
-   density_IOTC_gc(density_grid,pt,D,ax)
+   density_IOTC_gc(density_grid,pt,D)
    ! the density_grid will be filled with the values of density
    ! given by the coordinates in the pt matrix
     density_grid :: VEC{REAL} , OUT
     pt :: MAT{REAL} , IN
     D :: MAT{CPX} , IN
-    ax :: INT, optional
 
-    n_gcm,n_pt,nx :: INT
+    n_gcm,n_pt :: INT
     n,i,j :: INT
     g,fac,c,alpha,alpha2,eps :: REAL
     gc,II :: CPX
@@ -4598,17 +3907,15 @@ contains
     Ap,E,bp,p,P2,ep,UN :: VEC{REAL}*
 
     n_pt = pt.dim1
-    nx=0
-    if(present(ax)) nx=ax
-
      !test
-     !!! n_gcm = .n_prim = .n_bf !!!
      mmm.create(.n_prim,.n_prim)
       .REL:get_n_gcm(mmm,n_gcm)
      mmm.destroy 
      if( abs(.n_prim-n_gcm) > 0 OR abs(.n_prim-.n_bf) > 0 )then
        DIE(" It seems you are using contracted gaussians this does not work for IOTC at gchf level!")
      end if    
+
+  !!! n_gcm = .n_prim = .n_bf
 
 ! this is actually not needed but I am also using n_gcm 
      m_out.create(.n_prim,.n_prim) 
@@ -4807,14 +4114,7 @@ contains
 ! point for point the density will be on and on calculated
 ! I am sincerely sorry, but the code is comparing to it's non-relativistic
 ! counter part really not effective :(
-!     .::make_DENSITY_IOTC_PCE_SO_off(GG22,Yr,YU,Ap,bp,p,ep,pt(n,1),pt(n,2),pt(n,3),m_out,n_gcm,S,O)
-       if (nx==0) then
-         .::make_DENSITY_IOTC_PCE_SO_off(GG22,Yr,YU,Ap,bp,p,ep,pt(n,1),pt(n,2),pt(n,3),m_out,n_gcm,S,O)
-       else if (nx==1) then
-         .::make_LAPLACIAN_IOTC_PCE_SO_off(GG22,Yr,YU,Ap,bp,p,pt(n,1),pt(n,2),pt(n,3),n_gcm,S,O)
-       else
-         DIE("Currently, I accept only  nx={0,1}.")
-       end if
+     .::make_DENSITY_IOTC_PCE_SO_off(GG22,Yr,YU,Ap,bp,p,ep,pt(n,1),pt(n,2),pt(n,3),m_out,n_gcm,S,O)
 
        gc=(ZERO,ZERO)
 
@@ -4850,10 +4150,9 @@ contains
 !  ===================================
 
    make_rho_grid(N0,pt,D) ::: leaky
-   ! Make density grid "N0" on points "pt" using density matrix "D"
-   ! skipping as many points as possible. This routine will probably
-   ! have to be batched over *spatially localised* points to reduce
-   ! memory requirements.
+   ! Make the density "N0" on an arbitrary grid "pt" skipping as many
+   ! points as possible. This routine will probably have to be batched
+   ! over *spatially localized* points to reduce memory requirements.
       N0 :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
       D  :: MAT{REAL}, target, IN
@@ -5014,10 +4313,9 @@ contains
    end
 
    make_derivative_rho_grid(N0,pt,D) ::: leaky
-   ! Make density grids "N0" on points "pt" using density matrices "D"
-   ! skipping as points as possible. This routine will probably have
-   ! to be batched over *spatially localised* points to reduce memory
-   ! requirements.
+   ! Make the field "N0" on an arbitrary grid "pt" skipping as many
+   ! points as possible. This routine will probably have to be batched
+   ! over *spatially localized* points to reduce memory requirements.
       N0 :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
       D  :: MAT3{REAL}, target, IN
@@ -5374,226 +4672,6 @@ contains
 !      grid1 = TWO*grid1
 !   end
 
-!  ======================
-!  Efficient bond ED grid
-!  ======================
-
-   make_bond_ED_grid(g,pt)
-   ! Work out the bond electron density grid "g" for points "pt".
-      self :: IN
-      g :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.natural_orbitals.created, "no natural orbitals")
-   ENSURE(.natural_orbitals.any_created, "no natural orbitals")
-
-      okind :: STR
-
-      okind = .natural_orbitals.spinorbital_kind
-
-      select case (okind)
-         case ("restricted"); .::make_bond_ED_grid_r(g,pt)
-         case default;        DIE("unimplemented")
-      end
-
-   end
-
-   make_bond_ED_grid_r(g,pt)
-   ! Make the bond electron density grid "g" for points "pt" from the
-   ! restricted real density matrix. 
-      self :: IN
-      g :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.density_matrix.created("restricted"), "no restricted density matrix")
-
-      .::make_bond_ED_grid(g,pt,.density_matrix.restricted)
-
-   end
-
-   make_bond_ED_grid(N0,pt,D) ::: leaky
-   ! Make the bond electron density grid "N0" for points "pt"
-   ! skipping as many points as possible. 
-      self :: IN
-      N0 :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-      D  :: MAT{REAL}, target, IN
-
-   ENSURE(N0.dim==pt.dim1,"N0 and pt: incompatible sizes")
-   ENSURE(3     ==pt.dim2,"pt: wrong dim2")
-   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.atom.created,  "no atom list")
-   ENSURE(.becke_grid.created,"no becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
-
-      bf_lgval :: VEC{VEC_{INT}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
-      ra,rb,pc,pa,pb :: VEC{REAL}(3)
-      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
-      overlapping_atom, lga,lgb, sp :: VEC{INT}*
-      grida0,gridb0, DD :: MAT{REAL}*
-      sha :: SHELL1
-      sh  :: SHELL2
-      Dab, fac,val, ga,gb :: REAL
-      atom_o,cutoff,n_pt,n_keep, bs, p,n  :: INT
-      atom_a,fsa,lsa,sa,fa,la,na,a :: INT
-      atom_b,fsb,lsb,sb,fb,lb,nb,b :: INT
-      sab :: INT
-
-      ! Basis function cutoff 
-      cutoff = floor(log10(.becke_grid.basis_function_cutoff))
-
-      ! Saved basis function grid and skip list
-      bf_lgval.create(.n_shell)
-      bf_grid0.create(.n_shell)
-
-      ! Atom "a" displaced points and skip switches
-      n_pt = pt.dim1
-      xa.create(n_pt)
-      ya.create(n_pt)
-      za.create(n_pt)
-      a2.create(n_pt)
-      sp.create(n_pt)
-
-      ! Create N0
-      N0 = ZERO
-
-      ! Loop atom_a
-      do atom_a = 1,.n_atom
-
-         fsa = .first_shell_for_atom(atom_a)
-         lsa =  .last_shell_for_atom(atom_a)
-   
-         ! Make shell atom displaced points
-         .atom(atom_a).make_displaced_pts(xa,ya,za,a2,pt,n_pt) 
-   
-         ! Atom a position
-         ra = .atom(atom_a).position
-
-         ! Loop overlapping atom_b
-         overlapping_atom => .overlapping_atoms_for_atom(atom_a).element
-         do atom_o = 1,overlapping_atom.dim
-
-            atom_b = overlapping_atom(atom_o)
-
-            ! Skip if atoms are equal
-            if (atom_b>=atom_a) cycle
-
-            fsb = .first_shell_for_atom(atom_b)
-            lsb = min(.last_shell_for_atom(atom_b),lsa)
-   
-            ! Atom a position
-            rb = .atom(atom_b).position
-
-            ! Loop shells on atom a
-            do sa = fsa,lsa
-      
-               fa = .first_basis_fn_for_shell(sa)
-               la =  .last_basis_fn_for_shell(sa)
-               na = la - fa + 1
-
-               ! Set shell for index "sa"
-               bs           = .basis_shell_for_shell(sa)
-               sha          = .precomputed_basis_shellpair(bs,1).a
-               sha.position = ra
-
-               ! Make shell "sa" basis function grida0 and lga values
-               grida0.create(n_pt,na)
-               lga.create(n_pt)
-               sha.make_grid(grida0,n_pt,na,xa,ya,za,a2,lga)
-   
-               ! Save the values
-               bf_grid0(sa).element => grida0
-               bf_lgval(sa).element => lga
-
-               ! Loop shells on atom b
-               do sb = fsb,min(lsb,sa)
-   
-                  fb = .first_basis_fn_for_shell(sb)
-                  lb = .last_basis_fn_for_shell(sb)
-                  nb = lb - fb + 1
-
-                  ! Get shell-pair
-                  .BASE:get_precomputed_shell_pair(sh,sab)
-
-                  ! TEST: Pair-center distance
-                  pc = sh.av_pair_center
-                  pa = pc - ra
-                  pb = pc - rb
-                  pc = pc - HALF*(ra+rb)
-                  if (pa.norm<pc.norm) cycle
-                  if (pb.norm<pc.norm) cycle
-
-                  ! Get the "sb" basis function grid
-                  lgb    => bf_lgval(sb).element 
-                  gridb0 => bf_grid0(sb).element 
-   
-                  ! How many points in common?
-                  n_keep = count(lga+lgb>=cutoff)
-                  if (n_keep==0) cycle
-   
-                  ! Make significant points
-                  sp(1:n_keep) = pack([(n,n=1,n_pt)],mask=lga+lgb>=cutoff)
-   
-                  ! Factor
-                  fac = TWO
-                  if (sa==sb) fac = ONE
-   
-                  ! Density block
-                  DD => D(fa:la,fb:lb)
-   
-                  if (na*nb==1) then
-   
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
-                     Dab = fac*DD(1,1)
-                     do p = 1,n_keep
-                        n = sp(p)
-                        ga = ga0(n)
-                        gb = gb0(n)
-                        val = ga*gb*Dab
-                        N0(n) = N0(n) + val
-                     end
-   
-                  else
-   
-                     ! Add density contribution to rho
-                     do a = 1,na
-                        ga0 => grida0(:,a)
-                        do b = 1,nb
-                           gb0 => gridb0(:,b)
-                           Dab = fac*DD(a,b)
-                           do p = 1,n_keep
-                              n = sp(p)
-                              ga = ga0(n)
-                              gb = gb0(n)
-                              val = ga*gb*Dab
-                              N0(n) = N0(n) + val
-                           end
-                        end
-                     end
-   
-                  end ! if ss or not ss
-
-                  ! Clean
-                  sh.destroy_ptr_part
-
-               end    ! -- loop sb
-            end       ! -- loop sa
-         end          ! -- atom_b
-      end             ! -- atom_a
-
-      ! Clean up
-      sp.destroy
-      a2.destroy
-      za.destroy
-      ya.destroy
-      xa.destroy
-      bf_grid0.destroy
-      bf_lgval.destroy
-
-   end
-
 !  ===============
 !  Hirshfeld grids
 !  ===============
@@ -5899,12 +4977,8 @@ contains
       bf_grid0.create(.n_shell)
 
       ! Atom "a" displaced points (from "c") and skip switches
-      xa.create(n_pt)
-      ya.create(n_pt)
-      za.create(n_pt)
-      a2.create(n_pt)
-      skipa0.create(n_pt)
-      skipab.create(n_pt)
+      xa.create(n_pt); ya.create(n_pt); za.create(n_pt); a2.create(n_pt)
+      skipa0.create(n_pt); skipab.create(n_pt)
 
       ! Loop c-overlapping atoms "oa"
       do ca = 1,overlapping_atom.dim
@@ -6088,8 +5162,8 @@ contains
    ENSURE(rho0.dim==pt.dim1,"rho0a has wrong 1st dimension")
    ENSURE(pt.dim2==3,"pt has wrong 2nd dimension")
    ENSURE(.overlapping_atoms.created,"no .overlappin_atoms")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
-   ENSURE(.occupation_numbers.created("restricted"),"no restrictd occupation numbers")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
+   ENSURE(.occupation_numbers.restricted.created,"no restrictd occupation numbers")
 
       sh :: SHELL1
       g0,sh_grid0,NO :: MAT{REAL}*
@@ -6125,7 +5199,7 @@ contains
       end
 
       ! Now square up each natural orbital. We can't skip any NO's
-      ! since they could be all delocalised.
+      ! since they could be all delocalized.
       rho0 = ZERO
       do n = 1,n_occ
          occ = .occupation_numbers.restricted(n)
@@ -6412,11 +5486,11 @@ contains
    ENSURE(rho1.dim1==pt.dim1,"rho1 has wrong 1st dimension")
    ENSURE(rho1.dim2==3,"rho1 has wrong 2nd dimension")
    ENSURE(rho0.dim==pt.dim1,"rho0 has wrong 1st dimension")
-   DIE_IF(pt.dim1/=(ma+mb),"pt, inconsistent 1st dimension")
+   ENSURE(pt.dim1==(ma+mb),"pt, inconsistent 1st dimension")
    ENSURE(pt.dim2==3,"pt has wrong 2nd dimension")
    ENSURE(.overlapping_atoms.created,"no .overlappin_atoms")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
-   ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
+   ENSURE(.occupation_numbers.restricted.created,"no occupation numbers")
 
       sh :: SHELL1
       shell :: VEC{SHELL}*
@@ -6637,7 +5711,7 @@ contains
       end
 
       ! Now square up each natural orbital. We can't skip any NO's
-      ! since they could be all delocalised.
+      ! since they could be all delocalized.
       cut = cut/sqrt(REALIFY(n_occ))
       rho1 = ZERO
       rho0 = ZERO
@@ -6902,8 +5976,6 @@ contains
    ENSURE(rho0b.dim==pt.dim1,"rho0b has wrong 1st dimension")
    ENSURE(pt.dim2==3,"pt has wrong 2nd dimension")
    ENSURE(.overlapping_atoms.created,"no .overlappin_atoms")
-   ENSURE(.natural_orbitals.created("unrestricted"), "no unrestricted NO's")
-   ENSURE(.occupation_numbers.created("unrestricted"),"no unrestrictd occupation numbers")
 
       sh :: SHELL1
       g0a,g0b,sh_grid0,NOa,NOb :: MAT{REAL}*
@@ -6949,7 +6021,7 @@ contains
       end
 
       ! Now square up each natural orbital. We can't skip any NO's since they
-      ! could be all delocalised.
+      ! could be all delocalized.
       rho0a = ZERO
       rho0b = ZERO
       do n = 1,na
@@ -7255,8 +6327,6 @@ contains
    ENSURE(rho0b.dim==pt.dim1,"rho0a has wrong 1st dimension")
    ENSURE(pt.dim2==3,"pt has wrong 2nd dimension")
    ENSURE(.overlapping_atoms.created,"no .overlappin_atoms")
- ! ENSURE(.natural_orbitals.created("unrestricted"), "no restricted NO's")
- ! ENSURE(.occupation_numbers.created("unrestricted"),"no occupation numbers")
 
       sha,shb :: SHELL1
       list :: VEC{INT}*
@@ -7532,9 +6602,9 @@ contains
 
    end
 
-!  ===================================
-!  Property/plot densities (templates)
-!  ===================================
+!  ==================================
+!  Propert/plot densities (templates)
+!  ==================================
 
    prop_grid ::: template
    ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
@@ -7852,8 +6922,8 @@ contains
    delete_plot_grid
    ! Delete the plot grid whose name is specified on the input line
 
-   DIE_IF(stdin.buffer.n_items/=2,"must specify grid to delete in input")
-   DIE_IF(stdin.buffer.item_index==2,"must be on the last item")
+   ENSURE(stdin.buffer.n_items==2,"must specify grid to delete in input")
+   ENSURE(stdin.buffer.item_index/=2,"must be on the last item")
 
       name :: STR
       title :: STR
@@ -7893,9 +6963,6 @@ contains
       .::make_density_grid(g,pt)
    end
 
-!  =========================
-!  Deformation density grids
-!  =========================
 
    make_deformation_density_grid ::: get_from(prop_grid, GRID=>::make_deformation_density_grid, LABEL=>"deformation_density_grid")
    ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
@@ -7915,27 +6982,6 @@ contains
       self :: MOLECULE*
       .BASE:set_from_saved_self
       .::make_deformation_density_grid(g,pt)
-   end
-
-!  =============
-!  Bond ED grids
-!  =============
-
-   make_bond_ED_grid ::: get_from(prop_grid, GRID=>::make_bond_ED_grid, LABEL=>"bond_ED_grid")
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   end
-
-   bond_ED_grid(g,pt) ::: selfless
-   ! Work out the bond electron density grid "g" for points "pt".
-      g  :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-      self :: MOLECULE*
-
-      .BASE:set_from_saved_self
-
-      .::make_bond_ED_grid(g,pt)
-
    end
 
 !  ==================
@@ -8615,8 +7661,8 @@ contains
       grid :: VEC{REAL}
       pt :: MAT{REAL}
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.molecular_orbitals.created("restricted"), "no restricted MO's")
-   ENSURE(.orbital_energies.created("restricted"), "no restricted orbital energies")
+   ENSURE(.molecular_orbitals.restricted.created, "no restricted MO's")
+   ENSURE(.orbital_energies.restricted.created, "no restricted orbital energies")
 
       rho,MO :: VEC{REAL}*
       n_occ,n,n_pt :: INT
@@ -8721,28 +7767,11 @@ contains
 
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
-      NO_kind :: STR
-
-      NO_kind = .natural_orbitals.spinorbital_kind
 
       if (trim(.natural_orbitals.number_kind)=="real") then
-
-        select case (NO_kind)
-          case ("restricted")
-           .::make_laplacian_grid_r(laplacian_grid,pt)
-          case ("unrestricted")
-           .::make_laplacian_grid_u(laplacian_grid,pt)
-          case default
-            DIE("unknown real orbital kind")
-        end     
-
+         .::make_laplacian_grid_r(laplacian_grid,pt)
       else
-        select case (NO_kind)
-          case ("general_complex")
-            .::make_laplacian_grid_gc(laplacian_grid,pt) 
-          case default
-            DIE("unknown complex orbital kind")
-        end 
+         DIE("code not written yet")
       end
 
    end
@@ -8754,7 +7783,7 @@ contains
       pt :: MAT{REAL}
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
       NO :: VEC{REAL}*
@@ -8790,111 +7819,6 @@ contains
       P.destroy
       NO.destroy
 
-   end
-
-   make_laplacian_grid_u(laplacian_grid,pt)
-   ! Make the "laplacian_grid" for the supplied points "pt" from restricted
-   ! real natural orbitals
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-
-   ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
-   ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
-
-      NO :: VEC{REAL}*
-      P,D :: MAT{REAL}*
-      na,nb,n,n_pt :: INT
-      occ :: REAL
-
-      n_pt = pt.dim1
-      na = .BASE:no_of_occupied_NOs("alpha")
-      nb = .BASE:no_of_occupied_NOs("beta")
-
-      NO.create(n_pt)
-      P.create(n_pt,3)
-      D.create(n_pt,3)
-
-      laplacian_grid = ZERO
-
-      ! alpha part
-      parallel do n = 1,na
-         .::make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.alpha(:,n), pt)
-         occ = .occupation_numbers.alpha(n)
-         laplacian_grid = laplacian_grid &
-            + occ * (NO*(D(:,1)+D(:,2)+D(:,3)) &
-                  + P(:,1)*P(:,1)+P(:,2)*P(:,2)+P(:,3)*P(:,3))
-
-      end
-      PARALLEL_SUM(laplacian_grid)
-
-      ! beta part
-      parallel do n = 1,nb
-         .::make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.beta(:,n), pt)
-         occ = .occupation_numbers.beta(n)
-         laplacian_grid = laplacian_grid &
-            + occ * (NO*(D(:,1)+D(:,2)+D(:,3)) &
-                  + P(:,1)*P(:,1)+P(:,2)*P(:,2)+P(:,3)*P(:,3))
-
-      end
-      PARALLEL_SUM(laplacian_grid)
-
-      ! it seems that the factor is required 
-      laplacian_grid = TWO*laplacian_grid
-
-      D.destroy
-      P.destroy
-      NO.destroy
-
-   end
-
-   make_laplacian_grid_gc(laplacian_grid,pt)
-   ! Make the "laplacian_grid" for the supplied points "pt" from general complex
-   ! natural orbitals
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-
-   ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("general_complex"), "no gc NO's")
-   ENSURE(.occupation_numbers.general.created, "no alpha occupation #'s")
-
-      NO :: VEC{CPX}*
-      P,D :: MAT{CPX}*
-      ne,n,n_pt :: INT
-
-      n_pt = pt.dim1
-      laplacian_grid = ZERO
-      NO.create(n_pt)
-      P.create(n_pt,3)
-      D.create(n_pt,3)
-      ne = .BASE:no_of_occupied_NOs("general")
-     ! stdout.put(.occupation_numbers.general)
-
-     ! alpha part
-      parallel do n = 1,ne
-       .::make_laplacian_orbital_grid_c(D,P,NO,.natural_orbitals.general_complex(1:.n_prim,n), pt)
-       laplacian_grid = laplacian_grid +  &
-          .occupation_numbers.general(n) * ( &
-       NO * (D(:,1)+D(:,2)+D(:,3)) + (conjg(P(:,1))*P(:,1) + conjg(P(:,2))*P(:,2) + conjg(P(:,3))*P(:,3)))
-      end
-      PARALLEL_SUM(laplacian_grid)
-
-     ! beta part
-      parallel do n = 1,ne
-       .::make_laplacian_orbital_grid_c(D,P,NO,.natural_orbitals.general_complex(.n_prim+1:2*.n_prim,n), pt)
-       laplacian_grid = laplacian_grid +  &
-          .occupation_numbers.general(n) * ( &
-       NO * (D(:,1)+D(:,2)+D(:,3)) + (conjg(P(:,1))*P(:,1) + conjg(P(:,2))*P(:,2) + conjg(P(:,3))*P(:,3)))
-       !   NO * (D(:,1)+D(:,2)+D(:,3)) + (P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3)))
-      end
-      PARALLEL_SUM(laplacian_grid)
-
-      ! seems neccesarry (the factor of two)
-      laplacian_grid = TWO*laplacian_grid
-
-      D.destroy
-      P.destroy
-      NO.destroy
    end
 
    laplacian_grid(g,pt) ::: selfless
@@ -8947,28 +7871,11 @@ contains
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
 
-      NO_kind :: STR
-      NO_kind = .natural_orbitals.spinorbital_kind
-
       if (trim(.natural_orbitals.number_kind)=="real") then
-        select case (NO_kind)
-          case ("restricted")
-            .::make_laplacian_grid_r(laplacian_grid,pt)
-            laplacian_grid = -laplacian_grid
-          case ("unrestricted")
-            .::make_laplacian_grid_u(laplacian_grid,pt)
-            laplacian_grid = -laplacian_grid
-          case default
-            DIE("unknown real orbital kind")
-        end     
+        .::make_laplacian_grid_r(laplacian_grid,pt)
+        laplacian_grid = -laplacian_grid
       else
-        select case (NO_kind)
-          case ("general_complex")
-            .::make_laplacian_grid_gc(laplacian_grid,pt) 
-            laplacian_grid = -laplacian_grid
-          case default
-            DIE("unknown complex orbital kind")
-        end 
+        DIE("code not written yet")
       end
 
    end
@@ -9003,7 +7910,7 @@ contains
       pt :: MAT{REAL}
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
       rho,NO :: VEC{REAL}*
@@ -9076,7 +7983,7 @@ contains
       pt :: MAT{REAL}
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
       NO :: VEC{REAL}*
@@ -9173,7 +8080,7 @@ contains
       pt :: MAT{REAL}
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
       NO,rho :: VEC{REAL}*
@@ -9242,8 +8149,8 @@ contains
       G_grid :: VEC{REAL}
       pt :: MAT{REAL}
       
-   DIE_IF(.scfdata.destroyed,"no scfdata")
-   DIE_IF(.scfdata.energy.is_zero,"no scf energy")
+   ENSURE(.scfdata.created,"no scfdata")
+   ENSURE(NOT .scfdata.energy.is_zero,"no scf energy")
 
       .::make_G_kinetic_energy_grid(G_grid,pt)
 
@@ -9280,7 +8187,7 @@ contains
       pt :: MAT{REAL}
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
       NO :: VEC{REAL}*
@@ -9349,7 +8256,7 @@ contains
       pt :: MAT{REAL}
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
       NO,rho,nab_ro2,lap_rho :: VEC{REAL}*
@@ -9396,7 +8303,7 @@ contains
 
       lambda = ONE/72.0d0
       k2 = HALF/SIX
-      fac = 0.3d0*(THREE*PI*PI)**(TWOTHIRD)
+      fac = 0.3d0*(THREE*PI*PI)**(TWOTHIRDS)
       G_grid = fac*rho**(FIVE/THREE) + lambda*nab_ro2/rho + k2*lap_rho
 
       nab_ro2.destroy
@@ -9476,7 +8383,7 @@ contains
       pt :: MAT{REAL}
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
       rho,NO :: VEC{REAL}*
@@ -9556,7 +8463,7 @@ contains
       pt :: MAT{REAL}
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
-   ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
+   ENSURE(.natural_orbitals.restricted.created, "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
       NO :: VEC{REAL}*
@@ -9641,8 +8548,8 @@ contains
       H_grid :: VEC{REAL}
       pt :: MAT{REAL}
       
-   DIE_IF(.scfdata.destroyed,"no scfdata")
-   DIE_IF(.scfdata.energy.is_zero,"no scf energy")
+   ENSURE(.scfdata.created,"no scfdata")
+   ENSURE(NOT .scfdata.energy.is_zero,"no scf energy")
 
       G_grid :: VEC{REAL}*
 
@@ -9995,24 +8902,23 @@ contains
 
    end
 
-   make_electric_potential_grid_r(grid,pt,dens)
-   ! Make the total electric potential "grid" on a series of grid points
+   make_electric_potential_grid_r(pot_grid,pt,dens)
+   ! Make the total electric potential "pot_grid" on a series of grid points
    ! "pt" using AO density matrix "dens"
-      self :: IN
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-      dens :: MAT{REAL}, IN
+      pot_grid :: VEC{REAL}
+      pt :: MAT{REAL}
+      dens :: MAT{REAL}
 
-      ESP_grid :: VEC{REAL}*
+      elec_grid :: VEC{REAL}*
 
-      ESP_grid.create(grid.dim)
+      elec_grid.create(size(pot_grid))
 
-      .::nuclear_potential(grid,pt)
-      .::make_electronic_pot_grid_r(ESP_grid,pt,dens)
+      .::nuclear_potential(pot_grid,pt)
+      .::make_electronic_pot_grid_r(elec_grid,pt,dens)
 
-      grid = grid + ESP_grid
+      pot_grid = pot_grid + elec_grid
 
-      ESP_grid.destroy
+      elec_grid.destroy
 
    end
 
@@ -10040,12 +8946,9 @@ contains
    ! Make the electric potential grid "g" on a series of points "pt"
       g  :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-
       self :: MOLECULE*
-
       .BASE:set_from_saved_self
       .::make_electric_potential_grid(g,pt)
-
    end
 
 
@@ -10068,12 +8971,12 @@ contains
 
    end
 
-   make_electronic_pot_grid_r(grid,pt,dens)
-   ! Make the electronic potential "grid" on a series of grid points "pt"
+   make_electronic_pot_grid_r(pot_grid,pt,dens)
+   ! Make the electronic potential "pot_grid" on a series of grid points "pt"
    ! using AO density matrix "dens"
-      grid :: VEC{REAL}, INOUT
-      pt :: MAT{REAL}, IN
-      dens :: MAT{REAL}, target, IN
+      pot_grid :: VEC{REAL}
+      pt :: MAT{REAL}
+      dens :: MAT{REAL}, target
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.created,  "no atom list")
@@ -10084,7 +8987,7 @@ contains
 
       n_pt = pt.dim1
 
-      grid = ZERO
+      pot_grid = ZERO
 
       parallel do q = 1,.n_shell_pairs
 
@@ -10092,27 +8995,21 @@ contains
 
          Dba => dens(fa:la,fb:lb)
          Vab.create(na,nb)
-
          if (fa/=fb) then
-
            do k = 1,n_pt
              sh.get_nuc(Vab,ONE,pt(k,:))
-             grid(k) = grid(k) - MAT{REAL}:sum(Vab*Dba)*TWO
+             pot_grid(k) = pot_grid(k) - TWO*MAT{REAL}:sum(Vab*Dba)
            end
-
          else
-
            do k = 1,n_pt
              sh.get_nuc(Vab,ONE,pt(k,:))
-             grid(k) = grid(k) - MAT{REAL}:sum(Vab*Dba)
+             pot_grid(k) = pot_grid(k) -     MAT{REAL}:sum(Vab*Dba)
            end
-
          end
-
          Vab.destroy
 
          if (DO_IN_PARALLEL) then
-            PARALLEL_SUM(grid)
+            PARALLEL_SUM(pot_grid)
          end
 
          sh.destroy_ptr_part
@@ -10188,470 +9085,6 @@ contains
       self :: MOLECULE*
       .BASE:set_from_saved_self
       .::make_def_e_pot_grid(g,pt)
-   end
-
-!  ==========================================
-!  ESPs from center and surrounding molecules
-!  ===========================================
-
-   make_the_center_ESP_grid ::: get_from(prop_grid, GRID=>::make_the_center_ESP_grid, LABEL=>"the_center_ESP_grid")
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   end
-
-   make_the_center_ESP_grid(grid,pt)
-   ! Make the central neighboring-molecule ESP "grid",
-   ! i.e. for atom groups>1, on a series of points "pt". 
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.basis_info_made, "no basis info")
-
-      if (trim(.density_matrix.number_kind)=="real") then
-         .::make_the_center_ESP_grid_r(grid,pt)
-      end
-
-   end
-
-   make_the_center_ESP_grid_r(grid,pt)
-   ! Make the central neighboring-molecule ESP "grid",
-   ! i.e. for atom groups>1, on a series of points "pt". 
-      grid :: VEC{REAL}
-      pt :: MAT{REAL}
-
-   ENSURE(.atom_group.created,"no atom group information")
-   ENSURE(.atom_group.dim>=2 ,"must have more than 2 groups")
-   ENSURE(.atom_group(1).mol.density_matrix.created ,"no mol 1 density matrix!")
-   ENSURE(.atom_group(2).mol.density_matrix.created ,"no mol 2 density matrix!")
-
-      mol :: MOLECULE*
-
-      mol => .atom_group(1).mol
-
-      ! ESP for central molecule
-      mol.::make_electric_potential_grid(grid,pt)
-
-   end
-
-   the_center_ESP_grid(g,pt) ::: selfless
-   ! Make the central neighboring-molecule ESP "grid",
-   ! i.e. for atom groups>1, on a series of points "pt". 
-      g  :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-      self :: MOLECULE*
-
-      .BASE:set_from_saved_self
-      .::make_the_center_ESP_grid(g,pt)
-
-   end
-
-
-   make_non_center_ESP_grid ::: get_from(prop_grid, GRID=>::make_non_center_ESP_grid, LABEL=>"non_center_ESP_grid")
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   end
-
-   make_non_center_ESP_grid(grid,pt)
-   ! Make the non-central neighboring-molecule ESP "grid",
-   ! i.e. for atom groups>1, on a series of points "pt". 
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.basis_info_made, "no basis info")
-
-      if (trim(.density_matrix.number_kind)=="real") then
-         .::make_non_center_ESP_grid_r(grid,pt)
-      end
-
-   end
-
-   make_non_center_ESP_grid_r(grid,pt)
-   ! Make the non-central neighboring-molecule ESP "grid",
-   ! i.e. for atom groups>1, on a series of points "pt". 
-      grid :: VEC{REAL}
-      pt :: MAT{REAL}
-
-   ENSURE(.atom_group.created,"no atom group information")
-   ENSURE(.atom_group.dim>=2 ,"must have more than 2 groups")
-   ENSURE(.atom_group(1).mol.density_matrix.created ,"no mol 1 density matrix!")
-   ENSURE(.atom_group(2).mol.density_matrix.created ,"no mol 2 density matrix!")
-
-      ESP :: VEC{REAL}*
-      mol :: MOLECULE*
-      m :: INT
-
-      ESP.create(grid.dim)
-
-      grid = ZERO
-
-      ! Loop over non-central molecules
-      do m = 2,.atom_group.dim
-
-         ! Make ESP for molecule m
-         mol => .atom_group(m).mol
-         mol.::make_electric_potential_grid(ESP,pt)
-
-         grid = grid + ESP
-
-      end
-
-      ESP.destroy
-
-   end
-
-   non_center_ESP_grid(g,pt) ::: selfless
-   ! Make the non-central neighboring-molecule ESP "grid",
-   ! i.e. for atom groups>1, on a series of points "pt". 
-      g  :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-      self :: MOLECULE*
-
-      .BASE:set_from_saved_self
-      .::make_non_center_ESP_grid(g,pt)
-
-   end
-
-!  ==========================================
-!  Product of ESPs from surrounding molecules
-!  ==========================================
-
-   make_product_ESP_grid ::: get_from(prop_grid, GRID=>::make_product_ESP_grid, LABEL=>"product_ESP_grid")
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   end
-
-   make_product_ESP_grid(grid,pt)
-   ! Make the product of the central and  neighboring-molecule 
-   ! ESP "grid", on a series of points "pt". 
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.basis_info_made, "no basis info")
-
-      .::make_product_ESP_grid_r(grid,pt)
-
-   end
-
-   make_product_ESP_grid_r(grid,pt)
-   ! Make the product of the central and  neighboring-molecule 
-   ! ESP "grid", on a series of points "pt". 
-      grid :: VEC{REAL}
-      pt :: MAT{REAL}
-
-   ENSURE(.atom_group.created,"no atom group information")
-   ENSURE(.atom_group.dim>=2 ,"must have more than 2 groups")
-   ENSURE(.atom_group(1).mol.density_matrix.created ,"no mol 1 density matrix!")
-   ENSURE(.atom_group(2).mol.density_matrix.created ,"no mol 2 density matrix!")
-
-      ESP :: VEC{REAL}*
-      mol :: MOLECULE*
-      m :: INT
-
-      ESP.create(grid.dim)
-
-      grid = ZERO
-
-      ! Loop over non-central molecules
-      do m = 2,.atom_group.dim
-
-         ! Make ESP for molecule m
-         mol => .atom_group(m).mol
-         mol.::make_electric_potential_grid(ESP,pt)
-
-         grid = grid + ESP
-
-      end
-
-      ! Central molecule ESP
-      mol => .atom_group(1).mol
-      mol.::make_electric_potential_grid(ESP,pt)
-
-      ! Make product
-      grid = grid*ESP
-
-      ESP.destroy
-
-   end
-
-   product_ESP_grid(g,pt) ::: selfless
-   ! Make the product of the central and  neighboring-molecule 
-   ! ESP "grid", on a series of points "pt". 
-      g  :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-      self :: MOLECULE*
-
-      .BASE:set_from_saved_self
-      .::make_product_ESP_grid(g,pt)
-
-   end
-
-
-   make_group_product_ESP_grid ::: get_from(prop_grid, GRID=>::make_group_product_ESP_grid, LABEL=>"group_product_ESP_grid")
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   end
-
-   make_group_product_ESP_grid(grid,pt)
-   ! Make the product of the central and all neighboring-molecule 
-   ! ESP "grid"s, pairwise on each fragment patch, on a series of
-   ! points "pt". The points are divided into fragment patches first.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.basis_info_made, "no basis info")
-
-      .::make_group_product_ESP_grid_r(grid,pt)
-
-   end
-
-   make_group_product_ESP_grid_r(grid,pt)
-   ! Make the product of the central and all neighboring-molecule 
-   ! ESP "grid"s, pairwise on each fragment patch, on a series of
-   ! points "pt". The points are divided into fragment patches first.
-   ! This is for surface properties only, not isosurfaces!
-      self :: IN
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.atom_group.created,"no atom group information")
-   ENSURE(.isosurface.created,"no isosurface")
-
-      list :: VEC{VEC_{INT}}*
-      ESP :: VEC{REAL}@
-      ptg :: MAT{REAL}@
-      mol :: MOLECULE*
-      g :: INT
-
-
-      list.create(pt.dim2)
-      .isosurface.make_pts_list_for_group(list)
-
-      stdout.text("list:")
-      stdout.put(list)
-
-      grid = ZERO
-
-      ! Loop over non-central molecules
-      do g = 2,.atom_group.dim
-
-         ! Get the fragment g patch
-         ptg = pt(:,list(g).element)
-
-         ! Make ESP on patch g for molecule m
-         allocate(ESP(list(g).element.dim))
-         mol => .atom_group(g).mol
-         mol.::make_electric_potential_grid(ESP,ptg)
-         grid(list(g)[:]) = ESP
-
-         ! Clean
-         deallocate(ESP)
-         deallocate(ptg)
-
-      end
-
-      ! Central molecule ESP; use all points pt
-      allocate(ESP(pt.dim))
-      mol => .atom_group(1).mol
-      mol.::make_electric_potential_grid(ESP,pt)
-
-      ! Make product
-      grid = grid*ESP
-
-      ! Clean
-      deallocate(ESP)
-      list.destroy
-
-   end
-
-   group_product_ESP_grid(g,pt) ::: selfless
-   ! Make the product of the central and all neighboring-molecule 
-   ! ESP "grid"s, pairwise on each fragment patch, on a series of
-   ! points "pt". The points are divided into fragment patches first.
-   ! This is for surface properties only, not isosurfaces!
-      g  :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-      self :: MOLECULE*
-
-      .BASE:set_from_saved_self
-      .::make_group_product_ESP_grid(g,pt)
-
-   end
-
-!  ==========================================
-!  Product E field grid surrounding molecules
-!  ==========================================
-
-   make_product_E_field_grid ::: get_from(prop_grid, GRID=>::make_product_E_field_grid, LABEL=>"product_E_field_grid")
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   end
-
-   make_product_E_field_grid(grid,pt)
-   ! Make the product of the central and neighboring-molecule 
-   ! E fields in "grid", on a series of points "pt". 
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.basis_info_made, "no basis info")
-
-      .::make_product_E_field_grid_r(grid,pt)
-
-   end
-
-   make_product_E_field_grid_r(grid,pt)
-   ! Make the product of the central and neighboring-molecule 
-   ! densities and ESPs on "grid", on a series of points "pt". 
-      grid :: VEC{REAL}
-      pt :: MAT{REAL}
-
-   ENSURE(.atom_group.created,"no atom group information")
-   ENSURE(.atom_group.dim>=2 ,"must have more than 2 groups")
-   ENSURE(.atom_group(1).mol.density_matrix.created ,"no mol 1 density matrix!")
-   ENSURE(.atom_group(2).mol.density_matrix.created ,"no mol 2 density matrix!")
-
-      E1,E2 :: MAT{REAL}*
-      mol :: MOLECULE*
-      m,n_pt :: INT
-
-      n_pt = grid.dim
-
-      ! E fields for first and surrounding molecules
-      E1.create(n_pt,3)
-      E2.create(n_pt,3)
-
-      E2 = ZERO
-
-      ! Loop over non-central molecules
-      do m = 2,.atom_group.dim
-
-         ! Make E field for molecules m>2
-         mol => .atom_group(m).mol
-         mol.::make_E_field_grid(E1,pt)
-         E2 = E2 + E1
-
-      end
-
-      ! Central molecule E-field
-      mol => .atom_group(1).mol
-      mol.::make_E_field_grid(E1,pt)
-
-      ! Product of E fields
-      grid = E1(:,1)*E2(:,1) + E1(:,2)*E2(:,2) + E1(:,3)*E2(:,3)
-
-      ! Clean
-      E2.destroy
-      E1.destroy
-
-   end
-
-   product_E_field_grid(g,pt) ::: selfless
-   ! Make the product of the central and neighboring-molecule 
-   ! densities and ESPs on "grid", on a series of points "pt". 
-      g  :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-      self :: MOLECULE*
-
-      .BASE:set_from_saved_self
-      .::make_product_E_field_grid(g,pt)
-
-   end
-
-
-   make_group_product_E_field_grid ::: get_from(prop_grid, GRID=>::make_product_E_field_grid, LABEL=>"group_product_E_field_grid")
-   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
-   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
-   end
-
-   make_group_product_E_field_grid(grid,pt)
-   ! Make the product of the central and neighboring-molecule 
-   ! E fields in "grid", on a series of points "pt". 
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.basis_info_made, "no basis info")
-
-      .::make_group_product_E_field_grid_r(grid,pt)
-
-   end
-
-   make_group_product_E_field_grid_r(grid,pt)
-   ! Make the product of the central and all neighboring-molecule 
-   ! E-field "grid"s, pairwise on each fragment patch, on a series of
-   ! points "pt". The points are divided into fragment patches first.
-   ! This is for surface properties only, not isosurfaces!
-      self :: IN
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.atom_group.created,"no atom group information")
-   ENSURE(.isosurface.created,"no isosurface")
-
-      list :: VEC{VEC_{INT}}*
-      E1,E2 :: MAT{REAL}@
-      ptg :: MAT{REAL}@
-      mol :: MOLECULE*
-      g,n_pt :: INT
-
-      n_pt = grid.dim
-
-      list.create(n_pt)
-      .isosurface.make_pts_list_for_group(list)
-
-      ! E fields for surrounding molecules
-      allocate(E2(n_pt,3))
-      E2 = ZERO
-
-      ! Loop over non-central molecules
-      do g = 2,.atom_group.dim
-
-         ! Get the fragment g patch
-         ptg = pt(:,list(g).element)
-
-         ! Make ESP on patch g for molecule m
-         allocate(E1(list(g).element.dim,3))
-         mol => .atom_group(g).mol
-         mol.::make_E_field_grid(E1,ptg)
-         E2(list(g)[:],:) = E1
-
-         ! Clean
-         deallocate(E1)
-         deallocate(ptg)
-
-      end
-
-      ! Central molecule E-field; use all points pt
-      allocate(E1(n_pt,3))
-      mol => .atom_group(1).mol
-      mol.::make_E_field_grid(E1,pt)
-
-      ! Product of E fields
-      grid = E1(:,1)*E2(:,1) + E1(:,2)*E2(:,2) + E1(:,3)*E2(:,3)
-
-      ! Clean
-      deallocate(E1)
-      deallocate(E2)
-      list.destroy
-
-   end
-
-   group_product_E_field_grid(g,pt) ::: selfless
-   ! Make the product of the central and all neighboring-molecule 
-   ! ESP "grid"s, pairwise on each fragment patch, on a series of
-   ! points "pt". The points are divided into fragment patches first.
-   ! This is for surface properties only, not isosurfaces!
-      g  :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-      self :: MOLECULE*
-
-      .BASE:set_from_saved_self
-      .::make_group_product_E_field_grid(g,pt)
-
    end
 
 !  ================
@@ -11221,7 +9654,7 @@ contains
    ! Work out the Hirshfeld atom density density on ".plot_grid" 
    ENSURE(.plot_grid.created, "no grid")
    ENSURE(.plot_grid.center_atom>0, "no center_atom to plot")
-   ENSURE(.density_matrix.created("restricted"), "no restricted density matrix")
+   ENSURE(.density_matrix.restricted.created, "no restricted density matrix")
 
       grid :: VEC{REAL}*
       pt,D :: MAT{REAL}*
@@ -11283,7 +9716,7 @@ contains
       ! Grid size
       n_pt = pt.dim1
 
-      ! Initialise N0
+      ! Initialize N0
       N0 = ZERO
 
       ! Basis function cutoff
@@ -11483,7 +9916,7 @@ contains
          n_pt = pt.dim1
          Wa.create(n_pt)
          if (.use_interpolators) then
-            DIE_IF(.overlapping_atoms_for_atom.destroyed,"no overlapping_atoms_for_atom!")
+            ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom!")
             overlapping_atom => .overlapping_atoms_for_atom(a).element
             .::make_stockholder_atom_grid_int(Wa,a,pt,overlapping_atom)
          else
@@ -11504,7 +9937,7 @@ contains
    ! Make the Hirshfeld stockholder density "grid" for the atom with
    ! index "a" using supplied points "pt". 
    ! * If .use_interpolators is TRUE and "overlapping_atoms" is
-   !   supplised then interpolators are used.
+   !   supplied then interpolators are used.
    ! * If .use_interpolators is FALSE then interpolators could still
    !   be used if explicitly set for each atom. More likely the
    !   density will be explicitly evaluated.
@@ -11756,7 +10189,7 @@ contains
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.natural_orbitals.created, "no natural orbitals")
-   ENSURE(.natural_orbitals.created("restricted"), "natural orbitals must be restricted")
+   ENSURE(.natural_orbitals.restricted.created, "natural orbitals must be restricted")
 
       DD :: MAT{REAL}*
       g,gx,gy,gz,rho_s,rhox,rhoy,rhoz,tau,NO :: VEC{REAL}*
@@ -11865,7 +10298,7 @@ contains
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.natural_orbitals.created, "no natural orbitals")
-   ENSURE(.natural_orbitals.created("restricted"), "natural orbitals must be restricted")
+   ENSURE(.natural_orbitals.restricted.created, "natural orbitals must be restricted")
 
       DD :: MAT{REAL}*
       mo_val,gx,gy,gz,rho_s,rho_sx,rho_sy,rho_sz,tau,d_s,d0_s,NO :: VEC{REAL}*
@@ -12289,8 +10722,8 @@ contains
       rho.create(n_pt)
       .::make_density_grid(rho,pt)
 
-      fac = (THREE*PI/FOUR) * HALF**TWOTHIRD
-      f = ONE/rho * (dg - TWO*(dgx*dgx + dgy*dgy + dgz*dgz)/rho) - fac * rho**TWOTHIRD
+      fac = (THREE*PI/FOUR) * HALF**TWOTHIRDS
+      f = ONE/rho * (dg - TWO*(dgx*dgx + dgy*dgy + dgz*dgz)/rho) - fac * rho**TWOTHIRDS
 
       rho.destroy
       dgz.destroy
@@ -12431,129 +10864,6 @@ contains
       self :: MOLECULE*
       .BASE:set_from_saved_self
       .::make_true_fermi_mobility_grid(g,pt)
-   end
-
-!  ==============
-!  Electric Field
-!  ==============
-
-   field_grid ::: template
-   ! Work out the field density on ".plot_grid" and dump output
-
-   ENSURE(.plot_grid.created, "no grid")
-
-      field :: MAT{REAL}*
-      fx,fy,fz :: VEC{REAL}*
-      pt :: MAT{REAL}*
-
-      ! Make space for the field and grid points
-      field.create(.plot_grid.n_pt,3)
-      pt.create(.plot_grid.n_pt,3)
-
-      ! Make the grid points
-      .plot_grid.make_points(pt)
-
-      ! Make the grid of field values
-      .FIELD(field,pt)
-
-      ! Assign field components
-      fx => field(:,1)
-      fy => field(:,2)
-      fz => field(:,3)
-
-      ! Print out
-      .::dump_plot_grid(fx,LABEL//".x")
-      .::dump_plot_grid(fy,LABEL//".y")
-      .::dump_plot_grid(fz,LABEL//".z")
-
-      ! Get the magnitude
-      fx = sqrt(fx*fx+fy*fy+fz*fz)
-
-      ! Print out
-      .::dump_plot_grid(fx,LABEL//".magnitude")
-
-      ! Clean up
-      pt.destroy
-      field.destroy
-
-   end
-
-   make_E_field_grid ::: get_from(field_grid, FIELD=>::make_E_field_grid, LABEL=>"E_field")
-   ! Work out the field density on ".plot_grid" and dump output
-   end
- 
-   make_E_field_grid(E,pt) 
-   ! Make the magnetic field "B" field due to the linear current on a
-   ! series of points "pt"
-      self :: IN
-      E :: MAT{REAL}, OUT
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.basis_info_made, "no basis set")
-   ENSURE(.density_matrix.any_created,"no density matrix")
-   ENSURE(E.dim1==pt.dim1,"wrong dim1, E & pt")
-   ENSURE(E.dim2==3,      "wrong dim2, E")
-
-      D,Dba,Ex,Ey,Ez :: MAT{REAL}*
-      q,fa,fb,la,lb,na,nb, p,n_pt :: INT
-      fac :: REAL
-      sh :: SHELL2
-
-      ! No of grid points
-      n_pt = pt.dim1
-
-      ! The imaginary part of AO density matrix
-      D.create(.n_bf,.n_bf)
-      .BASE:make_ao_density_matrix(D)
-
-      ! Initialize
-      E = ZERO
-
-      ! Loop over integral blocks
-      parallel do q = 1,.n_shell_pairs
-
-        ! Get shell indices (leaky)
-        .BASE:get_precomputed_shell_pair(sh,q,fa,la,na,fb,lb,nb)
-
-        ! Get the density matrix
-        Dba.create(nb,na)
-        Dba = D(fb:lb,fa:lb)
-
-        ! Electric field integrals
-        Ex.create(na,nb)
-        Ey.create(na,nb)
-        Ez.create(na,nb)
-
-        ! Loop over points
-        do p = 1,n_pt
-
-           sh.make_E_field_ints(Ex,Ey,Ez,pt(p,:))
-
-           fac = TWO
-           if (fa==fb) FAC = ONE
-
-           E(p,1) = E(p,1) + Ex.trace_product_with(Dba)
-           E(p,2) = E(p,2) + Ey.trace_product_with(Dba)
-           E(p,3) = E(p,3) + Ez.trace_product_with(Dba)
-
-        end
-
-        ! Clean
-        Ez.destroy
-        Ey.destroy
-        Ex.destroy
-        Dba.destroy
-        sh.destroy_ptr_part
-
-      end
-
-      ! Clean
-      D.destroy
-
-      if (DO_IN_PARALLEL) then
-         PARALLEL_SUM(E)
-      end
-
    end
 
 !  ==============
@@ -12750,6 +11060,46 @@ contains
 !      B_S = fac*B_S
 !
 !   end
+
+   field_grid ::: template
+   ! Work out the field density on ".plot_grid" and dump output
+   ENSURE(.plot_grid.created, "no grid")
+
+      field :: MAT{REAL}*
+      fx,fy,fz :: VEC{REAL}*
+      pt :: MAT{REAL}*
+
+      ! Make space for the field and grid points
+      field.create(.plot_grid.n_pt,3)
+      pt.create(.plot_grid.n_pt,3)
+
+      ! Make the grid points
+      .plot_grid.make_points(pt)
+
+      ! Make the grid of field values
+      .FIELD(field,pt)
+
+      ! Assign field components
+      fx => field(:,1)
+      fy => field(:,2)
+      fz => field(:,3)
+
+      ! Print out
+      .::dump_plot_grid(fx,LABEL//".x")
+      .::dump_plot_grid(fy,LABEL//".y")
+      .::dump_plot_grid(fz,LABEL//".z")
+
+      ! Get the magnitude
+      fx = sqrt(fx*fx+fy*fy+fz*fz)
+
+      ! Print out
+      .::dump_plot_grid(fx,LABEL//".magnitude")
+
+      ! Clean up
+      pt.destroy
+      field.destroy
+
+   end
 
    make_B_L_field_grid ::: get_from(field_grid, FIELD=>::make_B_L_field_grid, LABEL=>"B_L_field")
    ! Work out the field density on ".plot_grid" and dump output
@@ -13631,7 +11981,7 @@ contains
    ENSURE(.plot_grid.orbital>=0, "non-positive grid orbital")
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
-   ENSURE(.localiser.created, "no localiser orbject created")
+   ENSURE(.localizer.created, "no localizer orbject created")
 
       pt :: MAT{REAL}*
       gr :: VEC{REAL}*
@@ -13659,7 +12009,7 @@ contains
    end
 
    make_oscillator_orbital_grid_r(g,ind,pt,square)
-   ! Evaluate the oscillator orbital density grid "g" for the localised orbital
+   ! Evaluate the oscillator orbital density grid "g" for the localized orbital
    ! with index "ind" on a set of grid points "pt". You must supply on the input
    ! line the angular momentum "l" and component "n" of the oscillator orbital,
    ! which is an awful hack for the moment.
@@ -13670,7 +12020,7 @@ contains
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.created,  "no atom list")
-   ENSURE(.localiser.created, "no localiser orbject created")
+   ENSURE(.localizer.created, "no localizer orbject created")
 
       os :: VEC{REAL}*
       c  :: VEC{REAL}(3)
@@ -13678,13 +12028,13 @@ contains
       sh :: SHELL1
 
       os.create(pt.dim1)
-      c = .localiser.dipole(ind,ind,:)
+      c = .localizer.dipole(ind,ind,:)
 
       stdin.read(l)
       stdin.read(n)
 
       sh.make_oscillator_orbital_mask(os,c,l,n,pt)
-      .::make_orbital_grid_r(g,.localiser.MO(:,ind),pt,square)
+      .::make_orbital_grid_r(g,.localizer.MO(:,ind),pt,square)
       g = g*os
 
       os.destroy
@@ -13693,7 +12043,7 @@ contains
 
    make_p_oscillator_orb_grid_r(g,ind,pt,square)
    ! Evaluate the oscillator orbital density grid "g" for the projected
-   ! localised orbital with index "ind" on a set of grid points "pt". You must
+   ! localized orbital with index "ind" on a set of grid points "pt". You must
    ! supply on the input line the angular momentum "l" and component "n" of the
    ! oscillator orbital, which is an awful hack for the moment.
       g :: VEC{REAL}, OUT
@@ -13704,7 +12054,7 @@ contains
    ENSURE(NOT .use_spherical_basis,"not implemented")
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.created,  "no atom list")
-   ENSURE(.localiser.created, "no localiser orbject created")
+   ENSURE(.localizer.created, "no localizer orbject created")
 
       gg,os :: VEC{REAL}*
       c  :: VEC{REAL}(3)
@@ -13714,13 +12064,13 @@ contains
 
       gg.create(pt.dim1)
       os.create(pt.dim1)
-      c = .localiser.dipole(ind,ind,:)
+      c = .localizer.dipole(ind,ind,:)
 
       stdin.read(maxl)
       stdin.read(l)
       stdin.read(n)
 
-      .::make_orbital_grid_r(gg,.localiser.MO(:,ind),pt,square)
+      .::make_orbital_grid_r(gg,.localizer.MO(:,ind),pt,square)
 
       ln = GAUSSIAN_DATA:n_comp_up_to(l-1)*.n_a + (ind-1)*GAUSSIAN_DATA:n_comp(l) + n
       g = ZERO
@@ -13729,7 +12079,7 @@ contains
       do n = 1,GAUSSIAN_DATA:n_comp(l)
       do j = 1,.n_a
          i = i + 1
-         coeff = .localiser.TM(i,ln)
+         coeff = .localizer.TM(i,ln)
          if (coeff.is_zero) cycle
          sh.make_oscillator_orbital_mask(os,c,l,n,pt)
          g = g + coeff*gg*os
@@ -13761,7 +12111,7 @@ contains
    ENSURE(.isosurface.created,"no isosurface")
    ENSURE(.isosurface.plot_grid.orbital>=0,"non-positive grid orbital")
    ENSURE(.natural_orbitals.created, "no natural orbitals")
-   ENSURE(.localiser.created, "no localiser orbject created")
+   ENSURE(.localizer.created, "no localizer orbject created")
 
       grid => .isosurface.plot_grid
 
@@ -13822,7 +12172,7 @@ contains
       arch.set(title,"current_norm_density",format="gnuplot,ascii")
       arch.write_gnuplot(j, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, norm=TRUE)
       arch.set(title,"current_density,normalized",format="gnuplot,ascii")
-      arch.write_gnuplot(j, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalise=TRUE)
+      arch.write_gnuplot(j, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalize=TRUE)
 
       ! Clean
       jp.destroy
@@ -13858,7 +12208,7 @@ contains
       arch.set(title,"jd_norm_density",format="gnuplot,ascii")
       arch.write_gnuplot(jd, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, norm=TRUE)
       arch.set(title,"jd_density,normalized",format="gnuplot,ascii")
-      arch.write_gnuplot(jd, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalise=TRUE)
+      arch.write_gnuplot(jd, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalize=TRUE)
 
       ! Clean
       jd.destroy
@@ -13926,7 +12276,7 @@ contains
       arch.set(.name,"jp_norm_density_grid",format="gnuplot,ascii")
       arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, norm=TRUE)
       arch.set(.name,"jp_density_grid,normalized",format="gnuplot,ascii")
-      arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalise=TRUE)
+      arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalize=TRUE)
 
       ! Clean
       jp.destroy
@@ -14073,7 +12423,7 @@ contains
       arch.set(.name,"solenoidal_jp_norm_density_grid",format="gnuplot,ascii")
       arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, norm=TRUE)
       arch.set(.name,"solenoidal_jp_density_grid,normalized",format="gnuplot,ascii")
-      arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalise=TRUE)
+      arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalize=TRUE)
 
       ! Clean
       jp.destroy
@@ -14155,7 +12505,7 @@ contains
       arch.set(.name,"irrotational_jp_norm_density_grid",format="ascii")
       arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, norm=TRUE)
       arch.set(.name,"irrotational_jp_density_grid,normalized",format="ascii")
-      arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalise=TRUE)
+      arch.write_gnuplot(jp, .plot_grid.n_x, .plot_grid.n_y, .plot_grid.n_z, normalize=TRUE)
 
       ! Clean
       jp.destroy

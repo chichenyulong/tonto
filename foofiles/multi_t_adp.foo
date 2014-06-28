@@ -37,15 +37,19 @@ module MULTI_T_ADP
 
 contains
 
-   create ::: get_from(OBJECT), leaky
+!  ==========
+!  Allocation
+!  ==========
+
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object. This version does not set defaults.
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts
 
       nullify(.cif_file_name)
@@ -75,7 +79,7 @@ contains
 
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, pure
    ! Destroy the pointer parts
 
       .cif_file_name.destroy
@@ -86,7 +90,7 @@ contains
 
    end
 
-   destroy_data_ptr_part ::: leaky
+   destroy_data_ptr_part ::: leaky, pure
    ! Destroy the pointer parts
 
       .atom.destroy
@@ -113,23 +117,27 @@ contains
 
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
    ! Create a copy of object
    end
 
-   copy(object) ::: leaky
+   copy(object) ::: leaky, pure
    ! Copy an object
       object :: MULTI_T_ADP, IN
 
@@ -137,30 +145,30 @@ contains
 
       .nullify_ptr_part
 
-      COPY_FROM_OBJECT(equality_constraints)
-      COPY_FROM_OBJECT(decoupled_parameters)
-      COPY_FROM_OBJECT(atom)
-      COPY_FROM_OBJECT(cif_file_name)
-      COPY_FROM_OBJECT(temperature)
-      COPY_FROM_OBJECT(temperature_sigma)
-      COPY_FROM_OBJECT(unit_cell)
-      COPY_FROM_OBJECT(unit_cell_sigma)
-      COPY_FROM_OBJECT(ADP)
-      COPY_FROM_OBJECT(ADP_cov)
-      COPY_FROM_OBJECT(ADP_wt)
-      COPY_FROM_OBJECT(V_coeff)
-      COPY_FROM_OBJECT(Delta_V_on_V)
-      COPY_FROM_OBJECT(parameter_description)
-      COPY_FROM_OBJECT(L)
-      COPY_FROM_OBJECT(lambda)
-      COPY_FROM_OBJECT(omega)
-      COPY_FROM_OBJECT(amplitude)
-      COPY_FROM_OBJECT(gamma_G)
-      COPY_FROM_OBJECT(near_0_eigenvalues)
-      COPY_FROM_OBJECT(near_0_eigenvectors)
-      COPY_FROM_OBJECT(delta_p)
-      COPY_FROM_OBJECT(covariance_matrix)
-      COPY_FROM_OBJECT(correlation_matrix)
+      CREATE_COPY_COMPONENT(equality_constraints)
+      CREATE_COPY_COMPONENT(decoupled_parameters)
+      CREATE_COPY_COMPONENT(atom)
+      CREATE_COPY_COMPONENT(cif_file_name)
+      CREATE_COPY_COMPONENT(temperature)
+      CREATE_COPY_COMPONENT(temperature_sigma)
+      CREATE_COPY_COMPONENT(unit_cell)
+      CREATE_COPY_COMPONENT(unit_cell_sigma)
+      CREATE_COPY_COMPONENT(ADP)
+      CREATE_COPY_COMPONENT(ADP_cov)
+      CREATE_COPY_COMPONENT(ADP_wt)
+      CREATE_COPY_COMPONENT(V_coeff)
+      CREATE_COPY_COMPONENT(Delta_V_on_V)
+      CREATE_COPY_COMPONENT(parameter_description)
+      CREATE_COPY_COMPONENT(L)
+      CREATE_COPY_COMPONENT(lambda)
+      CREATE_COPY_COMPONENT(omega)
+      CREATE_COPY_COMPONENT(amplitude)
+      CREATE_COPY_COMPONENT(gamma_G)
+      CREATE_COPY_COMPONENT(near_0_eigenvalues)
+      CREATE_COPY_COMPONENT(near_0_eigenvectors)
+      CREATE_COPY_COMPONENT(delta_p)
+      CREATE_COPY_COMPONENT(covariance_matrix)
+      CREATE_COPY_COMPONENT(correlation_matrix)
 
    end
 
@@ -198,7 +206,7 @@ contains
       .tol_near_0               = MULTI_T_ADP_TOL_NEAR_0
 
       .cif_files_read             = FALSE
-      .initialised                = FALSE
+      .initialized                = FALSE
 
       ! Experimental data
 
@@ -350,7 +358,7 @@ contains
          case ("}                             ")  ! exit case
          case ("cif_file_names=               "); .read_CIF_file_names
          case ("fit_method=                   "); .read_fit_method
-         case ("initialise_modes              "); .initialise_modes
+         case ("initialize_modes              "); .initialize_modes
          case ("least_squares                 "); .least_squares
          case ("make_v_expansion_coeffs       "); .make_V_expansion_coeffs
          case ("max_allowed_shift=            "); .read_max_allowed_shift
@@ -500,7 +508,7 @@ contains
 
    put
    ! Put the list of vertices for the object
-   ENSURE(.initialised,"not initialised")
+   ENSURE(.initialized,"not initialized")
 
       t,a :: INT
 
@@ -615,7 +623,7 @@ contains
    end
 
 !  ==========
-!  Initialise
+!  Initialize
 !  ==========
 
 ! Process the cif files
@@ -725,13 +733,13 @@ contains
 
 ! Get the initial modes
 
-   initialise_modes ::: leaky
-   ! Initialise modes
-      .initialise_modes(.use_translations,.use_librations,.use_fixed_H_modes,.n_internal)
-      .initialised = TRUE
+   initialize_modes ::: leaky
+   ! Initialize modes
+      .initialize_modes(.use_translations,.use_librations,.use_fixed_H_modes,.n_internal)
+      .initialized = TRUE
    end
 
-   initialise_modes(translations,librations,fixed_H_modes,n_internal) ::: leaky
+   initialize_modes(translations,librations,fixed_H_modes,n_internal) ::: leaky
    ! Set up the starting model for the normal modes.
    ! If translations is TRUE then set those three up
    ! If libration is TRUE then set the next three to be those
@@ -749,14 +757,14 @@ contains
       ! Make translational modes
       if (translations) then
          .L.expand(.n3N,3)
-         .initialise_translations(.L(:,n+1:n+3))
+         .initialize_translations(.L(:,n+1:n+3))
          n = n + 3
       end
 
       ! Make librational modes
       if (librations) then
          .L.expand(.n3N,3)
-         .initialise_librations(.L(:,n+1:n+3))
+         .initialize_librations(.L(:,n+1:n+3))
          n = n + 3
       end
 
@@ -764,19 +772,19 @@ contains
       if (fixed_H_modes) then
          n_H = count(.atom.atomic_number==1)
          .L.expand(.n3N,3*n_H)
-         .atom.initialise_local_H_modes(.L(:,n+1:n+3*n_H))
+         .atom.initialize_local_H_modes(.L(:,n+1:n+3*n_H))
          n = n + 3*n_H
       end
 
       ! Make librational modes
       if (n_internal>0) then
-         .initialise_random_internal(.L(:,n+1:n+n_internal),n_internal)
+         .initialize_random_internal(.L(:,n+1:n+n_internal),n_internal)
          n = n + n_internal
-         DIE_IF(n>.n3N,"too many initial normal modes!")
+         ENSURE(n<=.n3N,"too many initial normal modes!")
       end
 
-      ! Orthnormalise
-      .L.schmidt_orthonormalise
+      ! Orthnormalize
+      .L.schmidt_orthonormalize
 
       ! Assign modes
       .n_modes = n
@@ -785,7 +793,7 @@ contains
 
    end
 
-   initialise_translations(L)
+   initialize_translations(L)
    ! Set up the starting model for the normal modes.
    ! If translations is TRUE then set those three up
    ! If libration is TRUE then set the next three to be those
@@ -807,14 +815,14 @@ contains
          k = k + 3
       end
 
-      ! Normalise columns
-      L(:,1).normalise
-      L(:,2).normalise
-      L(:,3).normalise
+      ! Normalize columns
+      L(:,1).normalize
+      L(:,2).normalize
+      L(:,3).normalize
 
    end
 
-   initialise_librations(L)
+   initialize_librations(L)
    ! Set up the starting model for the normal modes.
    ! If translations is TRUE then set those three up
    ! If libration is TRUE then set the next three to be those
@@ -843,12 +851,12 @@ contains
          k = k + 3
       end
 
-      ! Orthonormalise 
-      L.schmidt_orthonormalise
+      ! Orthonormalize 
+      L.schmidt_orthonormalize
 
    end
 
-   initialise_random_internal(L,n_internal)
+   initialize_random_internal(L,n_internal)
    ! Set up the starting model for the normal modes.
    ! If translations is TRUE then set those three up
    ! If libration is TRUE then set the next three to be those
@@ -860,8 +868,8 @@ contains
       ! Get the vectors
       call random_number(L)
 
-      ! Orthonormalise
-      L.schmidt_orthonormalise
+      ! Orthonormalize
+      L.schmidt_orthonormalize
 
    end
 
@@ -1122,7 +1130,7 @@ contains
    least_squares
    ! Do the least squares fitting procedure
    ENSURE(.cif_files_read,"no cif files read")
-   ENSURE(.initialised,"no initial guess")
+   ENSURE(.initialized,"no initial guess")
    ENSURE(.V_coeff.created,"no V_coeff's")
 
       .use_fixed_H_modes,LL,fac :: REAL
@@ -1148,12 +1156,12 @@ contains
       .correlation_matrix.create(nt,nt)
 
       ! Get the initial parameters
-      .initialise_modes(.use_translations,.use_librations,.use_fixed_H_modes,.n_internal)
+      .initialize_modes(.use_translations,.use_librations,.use_fixed_H_modes,.n_internal)
 
       ! Store initial parameter vector
       .put_model_parameters_into(X0) 
 
-      ! Banner and initialise refinement
+      ! Banner and initialize refinement
       .put_iteration_header
 
       ! Begin refinement loop
@@ -1204,7 +1212,7 @@ contains
             stdout.show("n_near_0               =",.n_near_0)
          end
    
-         ! Renormalise shift if too big
+         ! Renormalize shift if too big
          if (.max_shift>.max_allowed_shift) then
             fac = .max_allowed_shift/.max_shift
             dX = fac * dX
@@ -1238,7 +1246,7 @@ contains
  
       end
 
-      ! Banner and finalise refinement
+      ! Banner and finalize refinement
       .put_iteration_footer
 
       ! Clean
@@ -1322,7 +1330,7 @@ contains
       ! Make Lagrange multiplier part
       .add_d2_C_d_L_d_lambda(HH(nG+1:nt,1:nL)) 
 
-      ! Symmetrise
+      ! Symmetrize
       HH.symmetric_reflect
 
       !!! Mixed parameter-data derivatives !!!
@@ -1354,7 +1362,7 @@ contains
       stdout.text("ADP normal mode refinement")
       stdout.text("==========================")
       stdout.flush
-      stdout.text("Initialisation for modes:")
+      stdout.text("Initialization for modes:")
       stdout.show("Use translations            =",.use_translations)
       stdout.show("Use librations              =",.use_translations)
       stdout.show("No of random internal modes =",.n_internal)
@@ -1420,7 +1428,7 @@ contains
 
       ! How did it finish?
       finished = .refinement_finished(chi2_increased,too_many_iters,converged)
-      DIE_IF(NOT finished,"Structure refinement seems not finished?")
+      ENSURE(finished,"Structure refinement seems not finished?")
 
       ! Print how it finished
       if (converged) then;           stdout.text("Refinement converged.")
@@ -2136,7 +2144,7 @@ contains
             ab = ab + 1
             wD = fac*Welta(ab,t) 
 
-            ! Add the 2nd derivative, somewhat optimised
+            ! Add the 2nd derivative, somewhat optimized
             gi = 0
             do i = 1,.n_modes
             do g = 1,.n3N
@@ -2181,7 +2189,7 @@ contains
             ab = ab + 1
             wD = fac*Welta(ab,t) 
 
-            ! Add the 2nd derivative, somewhat optimised
+            ! Add the 2nd derivative, somewhat optimized
             do i = 1,.n_modes
                HH(i,i) = HH(i,i) + wD * .d2_U_d2_w(a,b,c,t,i) 
             end
@@ -2217,7 +2225,7 @@ contains
             ab = ab + 1
             wD = fac*Welta(ab,t) 
 
-            ! Add the 2nd derivative, somewhat optimised
+            ! Add the 2nd derivative, somewhat optimized
             do i = 1,.n_modes
                HH(i,i) = HH(i,i) + wD * .d2_U_d2_G(a,b,c,t,i) 
             end

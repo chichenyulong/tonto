@@ -31,11 +31,11 @@ module GEMINAL_MF_SCHEME
 
 contains
 
-!===============================================================================
-!                             Create and Destroy Routines
-!===============================================================================
+!  =================
+!  Memory allocation
+!  =================
 
-   create ::: leaky
+   create ::: leaky, pure
    ! Create a contraction-truncation scheme 
       self :: PTR
       nullify(self)
@@ -44,84 +44,92 @@ contains
       .nullify_ptr_part
    end
 
-   create(name,nuc,n_geminals,n_bf,use_brillouin,orthogonality_type,guess_type,print_hamiltonian,convergence,n_step) ::: leaky
+   create(name,nuc,n_geminals,n_bf,use_brillouin,orthogonality_type,guess_type,print_hamiltonian,convergence,n_step) ::: leaky, pure
    ! Create the contraction-truncation scheme 
       self :: PTR
-      name :: STR
-      orthogonality_type :: STR
-      guess_type :: STR
-      nuc :: REAL
-      n_geminals,n_bf :: INT
+      name :: STR, IN
+      nuc :: REAL, IN
+      n_geminals :: INT, IN
+      n_bf :: INT
+      use_brillouin :: BIN
+      orthogonality_type :: STR, IN
+      guess_type :: STR, IN
+      print_hamiltonian :: BIN
       convergence :: REAL
-      use_brillouin,print_hamiltonian :: BIN
       n_step :: INT
+
       nullify(self)
       allocate(self)
       ADD_MEMORY(SELF_TYPE_SIZE)
       .nullify_ptr_part
       .set_defaults(n_geminals,n_bf,name,nuc,use_brillouin,orthogonality_type,guess_type,print_hamiltonian,convergence,n_step)
+
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: always_pure
    ! Nullify the pointer parts of self  
-     nullify(.spectrum)
-     nullify(.ld_tol_scheme)
-     nullify(.ig_tol_scheme)
-     nullify(.tolerance_scheme)
-     nullify(.do_triplet_energies)
-     nullify(.do_electric_dipole)
-     nullify(.truncation_scheme)
+      self :: INOUT
+
+      nullify(.spectrum)
+      nullify(.ld_tol_scheme)
+      nullify(.ig_tol_scheme)
+      nullify(.tolerance_scheme)
+      nullify(.do_triplet_energies)
+      nullify(.do_electric_dipole)
+      nullify(.truncation_scheme)
+
    end
 
-   destroy_ptr_part  ::: leaky
+   destroy_ptr_part  ::: leaky, pure
    ! Destroy the pointer parts of self
-     .spectrum.destroy
-     .ld_tol_scheme.destroy
-     .ig_tol_scheme.destroy
-     .tolerance_scheme.destroy
-     .do_triplet_energies.destroy
-     .do_electric_dipole.destroy
-     .truncation_scheme.destroy
+      self :: INOUT
+
+      .spectrum.destroy
+      .ld_tol_scheme.destroy
+      .ig_tol_scheme.destroy
+      .tolerance_scheme.destroy
+      .do_triplet_energies.destroy
+      .do_electric_dipole.destroy
+      .truncation_scheme.destroy
+
    end
 
-   create_copy(b) ::: leaky
-   ! Create a copy of "b".
-   ! Warning make_integrals, readin_mos, add_core, readin_scheme
-   ! are not copied, they will be set to their default that is FALSE
-     b :: GEMINAL_MF_SCHEME, IN
-     n_step :: INT
-     self :: PTR
-     n_step=b.max_iterations
-     .create(b.spectrum.name,b.spectrum.nuclear_repulsion_energy,b.spectrum.n_geminals, &
-     b.spectrum.n_bf,b.use_brillouin,b.orthogonality_type,b.guess_type, & 
-     b.print_hamiltonian, b.convergence_threshold,n_step)
-     .copy(b)
-   end
-
-   copy(b) ::: leaky
-   ! Copy a GEMINAL_MF_SCHEME "b" to "self". Make sure pointer parts are first
-   ! destroyed or nullified, as you want.
-      b :: GEMINAL_MF_SCHEME, IN
-      self = b
-      if (b.spectrum.created) .spectrum.create_copy(b.spectrum)
-      if (b.ld_tol_scheme.created) .ld_tol_scheme.create_copy(b.ld_tol_scheme)
-      if (b.ig_tol_scheme.created) .ig_tol_scheme.create_copy(b.ig_tol_scheme)
-      if (b.tolerance_scheme.created) .tolerance_scheme.create_copy(b.tolerance_scheme)
-      if (b.truncation_scheme.created) .truncation_scheme.create_copy(b.truncation_scheme)
-      if (b.do_triplet_energies.created) .do_triplet_energies.create_copy(b.do_triplet_energies)
-      if (b.do_electric_dipole.created) .do_electric_dipole.create_copy(b.do_electric_dipole)
-   end
-
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
+   end
+
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
+   end
+
+   copy(object) ::: leaky, pure
+   ! Copy a GEMINAL_MF_SCHEME "object" to "self". Make sure pointer parts are first
+   ! destroyed or nullified, as you want.
+      self :: INOUT
+      object :: GEMINAL_MF_SCHEME, IN
+
+      self = object
+
+      CREATE_COPY_COMPONENT(spectrum)
+      CREATE_COPY_COMPONENT(ld_tol_scheme)
+      CREATE_COPY_COMPONENT(ig_tol_scheme)
+      CREATE_COPY_COMPONENT(tolerance_scheme)
+      CREATE_COPY_COMPONENT(truncation_scheme)
+      CREATE_COPY_COMPONENT(do_triplet_energies)
+      CREATE_COPY_COMPONENT(do_electric_dipole)
+
    end
 
 !  ===========
@@ -376,11 +384,16 @@ contains
    ! Read a reduced number of molecular orbitals with respect to the
    ! size of the atomic orbitals 
      b :: GEMINAL_MF_SPECTRUM*
+
      stdin.read(.n_orbitals)
-     DIE_IF(.n_orbitals>.spectrum.n_bf OR .n_orbitals<0,'invalid orbital number')
+     if (.n_orbitals>.spectrum.n_bf OR .n_orbitals<0) then
+        DIE("invalid orbital number")
+     end
+
      b.create_copy(.spectrum)
      .spectrum.destroy
      .spectrum.create(b.name,b.nuclear_repulsion_energy,b.n_geminals,b.i_geminals,.n_orbitals)
+
    end
 
    read_starting_group
@@ -784,7 +797,11 @@ contains
        end
        .spectrum.set_to_zero_special_ket 
        set=FALSE
-       DIE_IF(maxval(old_tolerance)>.tolerance_scheme(i_step),"Cutoff tolerance has decreased")
+
+       if (maxval(old_tolerance)>.tolerance_scheme(i_step)) then
+          DIE("Cutoff tolerance has decreased")
+       end
+
        do i=0,n_geminals-1
          if(i_loop+i > n_geminals) then
            j=group_order(mod(i_loop+i,n_geminals))
@@ -1001,8 +1018,8 @@ contains
      .get_old_tolerance(old_tolerance)
      stdout.text(" ")
      stdout.text("WARNING, this is a restart job")
-     stdout.text("The step numbering is re-initialised if file name.n.iterations has been erased")
-     stdout.text("The group order have been re-initialised ")
+     stdout.text("The step numbering is re-initialized if file name.n.iterations has been erased")
+     stdout.text("The group order have been re-initialized ")
      stdout.text("The energy improvement message may be wrong for the first steps")
      stdout.text(" if less than n_geminals steps were performed in the original run ")
      stdout.text(" ")
@@ -1028,7 +1045,11 @@ contains
        end
        .spectrum.set_to_zero_special_ket !really needed here
        set=FALSE
-       DIE_IF(maxval(old_tolerance)>.tolerance_scheme(i_step),"Cutoff tolerance has decreased")
+
+       if (maxval(old_tolerance)>.tolerance_scheme(i_step)) then
+          DIE("Cutoff tolerance has decreased")
+       end
+
        do i=0,n_geminals-1
          if(i_loop+i > n_geminals) then
            j=group_order(mod(i_loop+i,n_geminals))

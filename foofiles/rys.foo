@@ -21,7 +21,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: rys.foo 3683 2012-04-05 07:39:49Z dylan_ $
+! $Id: rys.foo 4237 2014-01-11 05:41:51Z dylan_ $
 !-------------------------------------------------------------------------
 
 module RYS
@@ -60,6 +60,10 @@ module RYS
   end
 
 contains
+
+!  ==========
+!  Allocation
+!  ==========
 
    create ::: get_from(OBJECT), leaky
    ! Create an object. This version does not set defaults.
@@ -104,22 +108,31 @@ contains
       res :: BIN
    end
 
-   create_copy(rys)
-   ! Create a copy of "rys"
-      self :: PTR
-      rys :: RYS
-      .create
-      .copy(rys)
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky
+   ! Create a copy of object
    end
 
-   copy(rys) ::: leaky
+   copy(rys) ::: leaky, pure
    ! Make a copy of "rys"
-      rys :: RYS
+      self :: OUT
+      object :: RYS, IN
+
       self = rys
+
       .nullify_ptr_part
-      if (rys.root.created)   .root.create_copy(rys.root)
-      if (rys.weight.created) .weight.create_copy(rys.weight)
+
+      CREATE_COPY_COMPONENT(root)
+      CREATE_COPY_COMPONENT(weight)
+
    end
+
+!  ===========
+!  Get methods
+!  ===========
 
    get_weights_and_t2_roots(X,only_weight)
    ! Return the weights and t2 roots
@@ -2169,7 +2182,8 @@ contains
          p2=p2*r2+a(k1-i)
        end
        prod=p1*p2
-       DIE_IF(prod >= ZERO,"Rys root not found")
+       ENSURE(prod < ZERO,"Rys root not found")
+
        r5=r1
        p5=p1
        r6=r2
@@ -2253,7 +2267,8 @@ contains
            fac=fac-dot*dot
          end
        end
-       DIE_IF(fac < ZERO, "Tried to square root a negative number")
+
+       ENSURE(fac >= ZERO, "Tried to square root a negative number")
        if (fac /= ZERO) then
          fac=ONE/sqrt(fac)
        else
@@ -2267,6 +2282,7 @@ contains
          end
        end
       end
+
    end
 
 end

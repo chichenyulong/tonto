@@ -32,7 +32,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: spacegroup.foo 4398 2014-06-01 06:55:30Z dylan_ $
+! $Id: spacegroup.foo 4259 2014-01-21 02:40:50Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module SPACEGROUP
@@ -67,38 +67,38 @@ module SPACEGROUP
    T_implied :: MAT3{REAL}(3,4,8), private
 
    data T_implied/ &
-        ZERO,      ZERO,      ZERO, &  ! "P" lattice
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  ! "A" lattice
-        ZERO,      HALF,      HALF, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  ! "B" lattice
-        HALF,      ZERO,      HALF, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  ! "C" lattice
-        HALF,      HALF,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  ! "I" lattice
-        HALF,      HALF,      HALF, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  ! "R" lattice
-    TWOTHIRD,     THIRD,     THIRD, &  !
-       THIRD,  TWOTHIRD,  TWOTHIRD, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  ! "H" lattice
-    TWOTHIRD,     THIRD,      ZERO, &  !
-       THIRD,  TWOTHIRD,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  !
-        ZERO,      ZERO,      ZERO, &  ! "F" lattice
-        ZERO,      HALF,      HALF, &  !
-        HALF,      ZERO,      HALF, &  !
-        HALF,      HALF,      ZERO/    !
+          ZERO,     ZERO,     ZERO, &  ! "P" lattice
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  ! "A" lattice
+          ZERO,     HALF,     HALF, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  ! "B" lattice
+          HALF,     ZERO,     HALF, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  ! "C" lattice
+          HALF,     HALF,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  ! "I" lattice
+          HALF,     HALF,     HALF, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  ! "R" lattice
+      TWOTHIRD, ONETHIRD, ONETHIRD, &  !
+      ONETHIRD, TWOTHIRD, TWOTHIRD, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  ! "H" lattice
+      TWOTHIRD, ONETHIRD,     ZERO, &  !
+      ONETHIRD, TWOTHIRD,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  !
+          ZERO,     ZERO,     ZERO, &  ! "F" lattice
+          ZERO,     HALF,     HALF, &  !
+          HALF,     ZERO,     HALF, &  !
+          HALF,     HALF,     ZERO/    !
 
    ! Translation vectors. 
    ! See International Tables B, table A1.4.2.3.
@@ -798,6 +798,10 @@ module SPACEGROUP
 
 contains
 
+!  ==========
+!  Allocation
+!  ==========
+
    create ::: get_from(OBJECT), leaky
    ! Create an object
       self :: PTR
@@ -839,30 +843,40 @@ contains
       res :: BIN
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
    ! Create a copy of object
    end
 
-   copy(sg) ::: leaky
-   ! Make a copy of "sg"
-      sg :: SPACEGROUP, IN
+   copy(object) ::: leaky, pure
+   ! Copy the "object"
+      self :: OUT
+      object :: SPACEGROUP, IN
 
-      self = sg
+      self = object
 
       .nullify_ptr_part
 
-      if (sg.seitz.created)             .seitz.create_copy(sg.seitz)
-      if (sg.product_of_symops.created) .product_of_symops.create_copy(sg.product_of_symops)
-      if (sg.inverse_of_symops.created) .inverse_of_symops.create_copy(sg.inverse_of_symops)
+      CREATE_COPY_COMPONENT(seitz)
+      CREATE_COPY_COMPONENT(product_of_symops)
+      CREATE_COPY_COMPONENT(inverse_of_symops)
 
-      if (sg.inverted_symop.created)    .inverted_symop.create_copy(sg.inverted_symop)
-      if (sg.translated_symop.created)  .translated_symop.create_copy(sg.translated_symop)
-      if (sg.unique_SF_symop.created)   .unique_SF_symop.create_copy(sg.unique_SF_symop)
+      CREATE_COPY_COMPONENT(inverted_symop)
+      CREATE_COPY_COMPONENT(translated_symop)
+      CREATE_COPY_COMPONENT(unique_SF_symop)
 
    end
 
-   set_defaults ::: leaky
+!  ===========
+!  Set methods
+!  ===========
+
+   set_defaults ::: leaky, always_pure
    ! Set default spacegroup
+      self :: OUT
 
       .IT_symbol             = "?"
       .IT_group_number       = 0
@@ -1121,7 +1135,7 @@ contains
 !  Input methods
 !  =============
 
-   ! NOTE: always analyze the spacegroup after reading keywords
+!  NOTE: always analyze the spacegroup after reading keywords
 
    read_keywords ::: get_from(OBJECT), recursive, leaky
    ! Read data from "stdin" using keyword style input.
@@ -1187,7 +1201,7 @@ contains
       mat :: MAT3{REAL}*
       list :: MAT{STR}*
 
-      ! Initialise
+      ! Initialize
       .Hall_symbol = " "
       .HM_symbol = " "
       .analyzed = FALSE
@@ -1496,8 +1510,8 @@ contains
          buffer.get_item(generator)
 
          ! Sanity check
-         DIE_IF(generator/=")","missing origin-shift closing parenthesis")
-         DIE_IF(NOT buffer.exhausted,"extra items at end of Hall symbol")
+         ENSURE(generator==")","missing origin-shift closing parenthesis")
+         ENSURE(buffer.exhausted,"extra items at end of Hall symbol")
 
       end
 
@@ -1508,7 +1522,7 @@ contains
       generator :: STR, IN
       g :: INT, IN
 
-   DIE_IF(generator==" ","generator "//trim(g.to_str)//" symbol is blank")
+   ENSURE(generator/=" ","generator "//trim(g.to_str)//" symbol is blank")
 
       i :: INT
       gen1,as :: STR(len=1)
@@ -1533,7 +1547,7 @@ contains
       end
 
       ! Must have first generator's axis order
-      DIE_IF(g==1 AND gen1==" ","missing first axis order symbol")
+      ENSURE(NOT g==1 OR gen1==" ","missing first axis order symbol")
 
       ! Get axis order
       .axis_order(g) = 1
@@ -1562,10 +1576,10 @@ contains
 
          ! Sanity checks
          impossible = (as==dash_symbol OR as==double_dash_symbol) AND (.axis_order(g)/=2 OR g==1)
-         DIE_IF(impossible,"' or "" rotation axis only for 2nd-order rotation, after 1st axis") 
+         ENSURE(NOT impossible,"' or "" rotation axis only for 2nd-order rotation, after 1st axis") 
 
          impossible = as==star_symbol AND .axis_order(g)/=3
-         DIE_IF(impossible,"* axis only for 3rd-order rotation")
+         ENSURE(NOT impossible,"* axis only for 3rd-order rotation")
 
          ! Next character
          gen  = gen(2:)
@@ -1624,7 +1638,7 @@ contains
    ! NOTE: this only works if the rotation axis order is up to date.
       g :: INT, IN
 
-   DIE_IF(NOT g.is_in_range([1,4]),"g must be in range [1,4]")
+   ENSURE(g.is_in_range([1,4]),"g must be in range [1,4]")
 
       .axis_direction_symbol(g) = "_"
       .axis_direction_index(g)  = 0
@@ -1688,7 +1702,7 @@ contains
       ! Get lattice symbol
       latt.to_upper_case
       latt1 = latt(1:1)
-      DIE_IF(NOT lattice_symbols.includes(latt1),"unknown lattice, "//latt1)
+      ENSURE(lattice_symbols.includes(latt1),"unknown lattice, "//latt1)
 
       ! Set the lattice symbol & lattice symbol index
       .lattice_symbol       = latt1
@@ -1816,7 +1830,7 @@ contains
                             t(3) = t(3) + fac
 
                   case (4)                    ! " axis
-                     DIE_IF(g==1,"must have previous axis")
+                     ENSURE(g/=1,"must have previous axis")
                      aw = .axis_direction_index(g-1)
                      select case (aw)
                         case (1) 
@@ -1834,7 +1848,7 @@ contains
 
                   case (5)                    ! ' axis
                      DIE("no known spacegroup with fractional translation around ' face diagonal axis")
-                   ! DIE_IF(g==1,"must have previous axis")
+                   ! ENSURE(g/=1,"must have previous axis")
                    ! aw = .axis_direction_index(g-1)
                    ! select case (aw)
                    !    case (1) 
@@ -1863,23 +1877,23 @@ contains
          ! International Tables B 1.4.2.3.1 (ii) and
          ! International Tables B Table 1.4.2.5 for: N^z 2' a-b
          if (as=="'") then
-            DIE_IF(g==1,"cannot have dash symbols on 1st generator")
+            ENSURE(g/=1,"cannot have dash symbols on 1st generator")
             N = 5                           ! see comments for NN matrices above
             ax = .axis_direction_index(g)   ! NOTE: must be z
-            DIE_IF(ax/=3,"axis index index must be 3")
+            ENSURE(ax==3,"axis index index must be 3")
          end
 
          ! Double-dash axis symbol
          if (as=='"') then
-            DIE_IF(g==1,"cannot have dash symbols on 1st generator")
+            ENSURE(g/=1,"cannot have dash symbols on 1st generator")
             N = 7                           ! see comments for NN matrices above
             ax = .axis_direction_index(g-1) ! NOTE: axis of previous N symbol
-            DIE_IF(NOT ax.is_in_range([1,3]),"previous generator rotation axis must be in range [1,3]")
+            ENSURE(ax.is_in_range([1,3]),"previous generator rotation axis must be in range [1,3]")
          end
 
          ! Star axis symbol
          if (as=="*") then
-            DIE_IF(N/=3,"star operation is only for order 3 axis")
+            ENSURE(N==3,"star operation is only for order 3 axis")
             N  = 8
             ax = 1
          end
@@ -1984,9 +1998,10 @@ contains
          equal = FALSE
          do k = 1,.n_seitz
             equal = prod.same_as(.seitz(:,:,k))
-            if (NOT equal) cycle
-            .product_of_symops(j,i) = k
-            exit
+            if (equal) then
+               .product_of_symops(j,i) = k
+               exit
+            end
          end
 
          ! A new seitz matrix found
@@ -2009,9 +2024,10 @@ contains
       ! Get the (unique!) inverse symop
       do i = 1,.n_seitz
       do j = 1,.n_seitz
-          if (.product_of_symops(i,j)/=1) cycle
-          .inverse_of_symops(i) = j
-          exit
+          if (.product_of_symops(i,j)==1) then
+             .inverse_of_symops(i) = j
+             exit
+          end
       end
       end
 
@@ -2056,7 +2072,7 @@ contains
    ! inversion is just -1 times the identity, to the cartesian
    ! inversion operator is just the same as the crystal-axis inversion
    ! operator, with -1 down the diagonal.
-   ENSURE(.seitz.created,"Seitz matrices not initialised")
+   ENSURE(.seitz.created,"Seitz matrices not initialized")
 
       n,i,j :: INT
       inverted :: BIN
@@ -2072,11 +2088,11 @@ contains
 
          inverted = .seitz(1:3,1:3,i).equals(-.seitz(1:3,1:3,j))
 
-         if (NOT inverted) cycle
-
-         n = n + 1
-         .inverted_symop(i) = j
-         exit
+         if (inverted) then
+            n = n + 1
+            .inverted_symop(i) = j
+            exit
+         end
 
       end
       end
@@ -2092,7 +2108,7 @@ contains
    ! identity oprator has the same representation in either the
    ! crystal or cartesian axis systems.
    ENSURE(.inverted_symop.created,"no inverted_symop array")
-   ENSURE(.seitz.created,"Seitz matrices not initialised")
+   ENSURE(.seitz.created,"Seitz matrices not initialized")
 
       i,j :: INT
       translated :: BIN
@@ -2113,10 +2129,10 @@ contains
 
             translated = .seitz(1:3,1:3,i).equals(.seitz(1:3,1:3,j))
 
-            if (NOT translated) cycle
-
-            .translated_symop(i) = j
-            exit
+            if (translated) then
+               .translated_symop(i) = j
+               exit
+            end
 
          end
 
@@ -2145,20 +2161,25 @@ contains
       .n_unique_SF_symops = n
 
       ! Make the unique_SF_symop index array
+      .unique_SF_symop.destroy
       .unique_SF_symop.create(n)
+
       n = 0
       do i = 1,.n_seitz
+
          if (.inverted_symop(i)>0) cycle
          if (.translated_symop(i)<i) cycle
+
          n = n + 1
          .unique_SF_symop(n) = i
+
       end
 
    end
 
    unique_SF_symop_mat(u) result (res)
    ! Return the "u"-th reduced symop matrix in the unique list made by routine
-   ! ".make_reduced_symops".
+   ! ".make_unique_SF_symops".
       u :: INT
       res :: MAT{REAL}(3,3)
 
@@ -2326,20 +2347,20 @@ contains
 
          val = mat(i,4)
          if      (val.equals(ZERO)) then; 
-         else if (val.equals(          HALF)) then; jj = trim(jj)//"+1/2"
-         else if (val.equals(         -HALF)) then; jj = trim(jj)//"-1/2"
-         else if (val.equals(         THIRD)) then; jj = trim(jj)//"+1/3"
-         else if (val.equals(        -THIRD)) then; jj = trim(jj)//"-1/3"
-         else if (val.equals(      TWOTHIRD)) then; jj = trim(jj)//"+2/3"
-         else if (val.equals(     -TWOTHIRD)) then; jj = trim(jj)//"-2/3"
-         else if (val.equals(       QUARTER)) then; jj = trim(jj)//"+1/4"
-         else if (val.equals(      -QUARTER)) then; jj = trim(jj)//"-1/4"
-         else if (val.equals( THREEQUARTERS)) then; jj = trim(jj)//"+3/4"
-         else if (val.equals(-THREEQUARTERS)) then; jj = trim(jj)//"-3/4"
-         else if (val.equals(         SIXTH)) then; jj = trim(jj)//"+1/6"
-         else if (val.equals(        -SIXTH)) then; jj = trim(jj)//"-1/6"
-         else if (val.equals(     FIVESIXTH)) then; jj = trim(jj)//"+5/6"
-         else if (val.equals(    -FIVESIXTH)) then; jj = trim(jj)//"-5/6"
+         else if (val.equals(         HALF)) then; jj = trim(jj)//"+1/2"
+         else if (val.equals(        -HALF)) then; jj = trim(jj)//"-1/2"
+         else if (val.equals(        THIRD)) then; jj = trim(jj)//"+1/3"
+         else if (val.equals(       -THIRD)) then; jj = trim(jj)//"-1/3"
+         else if (val.equals(     TWOTHIRD)) then; jj = trim(jj)//"+2/3"
+         else if (val.equals(    -TWOTHIRD)) then; jj = trim(jj)//"-2/3"
+         else if (val.equals(      QUARTER)) then; jj = trim(jj)//"+1/4"
+         else if (val.equals(     -QUARTER)) then; jj = trim(jj)//"-1/4"
+         else if (val.equals( THREEQUARTER)) then; jj = trim(jj)//"+3/4"
+         else if (val.equals(-THREEQUARTER)) then; jj = trim(jj)//"-3/4"
+         else if (val.equals(        SIXTH)) then; jj = trim(jj)//"+1/6"
+         else if (val.equals(       -SIXTH)) then; jj = trim(jj)//"-1/6"
+         else if (val.equals(    FIVESIXTH)) then; jj = trim(jj)//"+5/6"
+         else if (val.equals(   -FIVESIXTH)) then; jj = trim(jj)//"-5/6"
          else; DIE("unknown value at col 4: "//trim(val.to_str))
          end
 
@@ -2501,7 +2522,7 @@ contains
 
    ENSURE(geometry.dim1==3,"Wrong shape for geometry array")
    ENSURE(pfac.dim==n_atom,"Incompatible shape for p array")
-   ENSURE(.seitz.created,  "Seitz matrices not initialised")
+   ENSURE(.seitz.created,  "Seitz matrices not initialized")
 
       do a = 1,n_atom
          pa = geometry(:,a)
@@ -2533,7 +2554,7 @@ contains
 
    ENSURE(geometry.dim1==3,"Wrong shape for geometry array")
    ENSURE(geometry.dim2==pfac.dim,"Incompatible shape for pfac array")
-   ENSURE(.seitz.created,  "Seitz matrices not initialised")
+   ENSURE(.seitz.created,  "Seitz matrices not initialized")
 
       pa,pb :: VEC{REAL}(3)
       a,b,n,n_atom,n_full :: INT
@@ -2545,7 +2566,7 @@ contains
       n_full = 0
       do a = 1,n_atom
          rep = .n_seitz/pfac(a)
-         DIE_IF(NOT rep.is_int,"rep factor for atom "//trim(a.to_str)//" not integral!")
+         ENSURE(rep.is_int,"rep factor for atom "//trim(a.to_str)//" not integral!")
          n_full = n_full + int(.n_seitz/pfac(a))
       end
       full.create(3,n_full)
@@ -2578,7 +2599,7 @@ contains
       g :: MAT{REAL}
       op :: INT
 
-   ENSURE(.seitz.created,"Seitz matrices not initialised")
+   ENSURE(.seitz.created,"Seitz matrices not initialized")
    ENSURE(g.dim1==3,"incorrect size for array g")
    ENSURE(op>0,         "operator index out of bounds")
    ENSURE(op<=.n_seitz, "operator index out of bounds")
@@ -2598,7 +2619,7 @@ contains
       p :: VEC{REAL}(3)
       op :: INT
 
-   ENSURE(.seitz.created, "Seitz matrices not initialised")
+   ENSURE(.seitz.created, "Seitz matrices not initialized")
    ENSURE(op>0,         "operator index out of bounds")
    ENSURE(op<=.n_seitz, "operator index out of bounds")
 
@@ -2616,25 +2637,38 @@ contains
       same :: BIN
       skip :: VEC{BIN}*
       n_atom = size(geom_i,2)
-   ENSURE(.seitz.created, "Seitz matrices not initialised")
+
+   ENSURE(.seitz.created, "Seitz matrices not initialized")
    ENSURE(geom_i.dim1==3, "incorrect size for array geom_i")
    ENSURE(geom_j.dim1==3, "incorrect size for array geom_j")
    ENSURE(n_atom==size(geom_j,2), "incompatible sizes for geom_i, geom_j")
+
       gi.create(3,n_atom); gi = geom_i; .put_geometry_to_unit_cell(gi)
       gj.create(3,n_atom); gj = geom_j; .put_geometry_to_unit_cell(gj)
+
       skip.create(n_atom); skip(:) = FALSE
+
       do i = 1,n_atom
-         do j = 1,n_atom
-            same = gi(:,i).same_as(gj(:,j))
-            if (NOT same OR skip(j)) cycle
+      do j = 1,n_atom
+
+         same = gi(:,i).same_as(gj(:,j))
+
+         if (same AND NOT skip(j)) then
             skip(j) = TRUE
             exit
          end
+
       end
-      res = all(skip) ! True if all atoms in i were matched (skipped) in j
+      end
+
+      ! True if all atoms in i were matched (skipped) in j
+      res = all(skip) 
+
+      ! Clean
       skip.destroy
       gj.destroy
       gi.destroy
+
    end
 
 !  ===========================================
@@ -3133,39 +3167,27 @@ contains
 
    put
    ! Put out the spacegroup information
-      self :: IN
-
    ENSURE(.analyzed,"no info")
-
       stdout.flush
       stdout.flush
       stdout.text("======================")
       stdout.text("Spacegroup information")
       stdout.text("======================")
       stdout.flush
-
       .put_spacegroup_name_info
-      .put_seitz_as_Jones_Faithful
-      .put_group_multiplication_table
-      .put_symop_inverse_table
+      .put_seitz
       .put_inv_trans_symop_data 
-
    end
 
    put_spacegroup_name_info
    ! Put out the spacegroup name information (not the seitz matrices)
-      self :: IN
-
    ENSURE(.analyzed,"spacegroup not analyzed")
 
       subscripts,HM_symbol,Hall_symbol :: STR
       sub :: MAT{STR}(len=1,3,4)
 
-      HM_symbol   = .HM_symbol
-      HM_symbol(1:1).to_upper_case
-
-      Hall_symbol = .Hall_symbol
-      Hall_symbol(1:1).to_upper_case
+      HM_symbol   = .HM_symbol;    HM_symbol(1:1).to_upper_case
+      Hall_symbol = .Hall_symbol;  Hall_symbol(1:1).to_upper_case
 
       stdout.show("International Table no. =",.IT_group_number)
       stdout.show("IT symbol               =",trim(.IT_symbol))
@@ -3196,13 +3218,18 @@ contains
 
    end
 
-   put_seitz_as_Jones_Faithful
-   ! Put out the seitz matrices in Jones-Faithful notation.
-      self :: IN
+   put_seitz(mat)
+   ! Put out the spacegroup seitz matrices.
+      mat :: MAT3{REAL}, target, optional
 
       n :: INT
+      seitz :: MAT3{REAL}*
       jf :: VEC{STR}*
       table :: VEC{TABLE_COLUMN}*
+
+      seitz => .seitz
+      if (present(mat)) seitz => mat
+      ENSURE(seitz.created,"no seitz matrices")
 
       ! Title
       stdout.flush
@@ -3213,9 +3240,9 @@ contains
       stdout.flush
 
       ! Data
-      jf.create(.seitz.dim3)
-      do n = 1,.seitz.dim3
-         .recode_Jones_Faithful_symbol(jf(n),.seitz(:,:,n))
+      jf.create(seitz.dim3)
+      do n = 1,seitz.dim3
+         .recode_Jones_Faithful_symbol(jf(n),seitz(:,:,n))
       end
 
       ! Table
@@ -3231,71 +3258,10 @@ contains
       table.destroy
       jf.destroy
 
-   end
-
-   put_group_multiplication_table
-   ! Put the group multiplcation table
-      self :: IN
-
-      n,g :: INT
-      table :: VEC{TABLE_COLUMN}*
-
-
-      ! Title
-      stdout.flush
-      stdout.flush
-      stdout.text("===============================")
-      stdout.text("Spacegroup multiplication table")
-      stdout.text("================================")
-
-      stdout.flush
-      stdout.text(". The element in the table is product(i,j) where:")
-      stdout.flush
-      stdout.text("     product(i,j) = symop(i) x symop(j)")
-      stdout.flush
-      stdout.text("  where i and j are row and column indices, respectively")
-      stdout.text("  and the product is modulo an integer shift vector.")
-      stdout.flush
-
-      ! Table
-      n = .product_of_symops.dim1
-      table.create(n)
-      do g = 1,n
-         table(g).set_heading(trim(g.to_str))
-         table(g).set_values(.product_of_symops(:,g))
-      end
-      table.put
-
-      ! Clean
-      table.clear_columns
-      table.destroy
-
-   end
-
-   put_symop_inverse_table
-   ! Put the inverse symops
-      self :: IN
-
-      table :: VEC{TABLE_COLUMN}*
-
-
-      ! Title
-      stdout.flush
-      stdout.flush
-      stdout.text("==============================")
-      stdout.text("Spacegroup symop inverse table")
-      stdout.text("==============================")
-
-      ! Table
-      table.create(1)
-      table(1).set_heading("Inverse")
-      table(1).set_subhead("symop")
-      table(1).set_values(.inverse_of_symops(:))
-      table.put
-
-      ! Clean
-      table.clear_columns
-      table.destroy
+      ! Matrices
+    ! stdout.flush
+    ! stdout.text("Seitz matrices:")
+    ! stdout.put(.seitz,auto_width=TRUE)
 
    end
 
@@ -3315,10 +3281,8 @@ contains
       stdout.text("Inversion-translation-related symops")
       stdout.text("====================================")
       stdout.flush
-      stdout.text(". The information in this table is used to speed up")
-      stdout.text("  structure factor calculations since the Fourier transform")
-      stdout.text("  of densities related by such related symops are related by")
-      stdout.text("  complex conjugation and/or a multiplicative phase factor")
+      stdout.text(". The information in this table is used to")
+      stdout.text("  speed up structure factor calculations.")
       stdout.flush
 
       ! Table

@@ -26,7 +26,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: time.foo 4327 2014-04-30 02:09:55Z dylan_ $
+! $Id: time.foo 4184 2013-12-14 05:18:46Z dylan_ $
 !---------------------------------------------------------------------------
 
 module TIME

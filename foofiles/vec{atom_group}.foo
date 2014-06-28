@@ -28,40 +28,44 @@ module VEC{ATOM_GROUP}
 
 contains
 
-!  ===================
-!  Allocation routines
-!  ===================
+!  ==========
+!  Allocation
+!  ==========
 
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, pure
    ! Create space for object
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
+   destroy ::: get_from(VEC{OBJECT}), leaky, pure
    ! Destroy space for object
    end
 
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT})
-   ! Copy "vec".
-   end
-
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
    end
 
-   nullify_ptr_part ::: get_from(VEC{OBJECT})
+   nullify_ptr_part ::: get_from(VEC{OBJECT}), always_pure
    ! Nullify the pointer parts of self
    end
 
-   destroy_ptr_part ::: get_from(VEC{OBJECT}), leaky
+   destroy_ptr_part ::: get_from(VEC{OBJECT}), leaky, pure
    ! Destroy the pointer parts of self
+   end
+
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(v) ::: get_from(VEC{OBJECT}), leaky, always_pure
+   ! Create a replica copy of "v".
+   end
+
+   copy(v) ::: get_from(VEC{OBJECT}), always_pure
+   ! Copy "v".
    end
 
 !  ===========
@@ -72,9 +76,9 @@ contains
    ! Set default values
    end
 
-!  =======================
-!  List-based I/O Routines
-!  =======================
+! =======================
+! List-based I/O Routines
+! =======================
 
    read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
    ! Read in and process list-based keywords from "stdin". List-based keywords
@@ -142,14 +146,6 @@ contains
    ! Read a new set of keys
    end
 
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
-   end
-
    finalize(atom) ::: leaky
    ! Do all the sanity checks and default settings
       atom :: VEC{ATOM}*
@@ -164,9 +160,9 @@ contains
 
    end
 
-!  ===========================
-!  Non-list based I/O routines
-!  ===========================
+! ===========================
+! Non-list based I/O routines
+! ===========================
 
    read_keywords ::: get_from(VEC{OBJECT}), leaky
    ! Read in and process normal (non list-type) keywords from "stdin".
@@ -183,8 +179,8 @@ contains
       word.to_lower_case
       select case (word)
          case("}") ! do nothing.
-         case("redirect                 "); .redirect
-         case("revert                   "); .revert
+         case("redirect                 "); TEXTFILE:redirect(stdin)
+         case("revert                   "); TEXTFILE:revert(stdin)
          case default;     UNKNOWN(word)
       end
 
@@ -206,43 +202,9 @@ contains
    ! Expands self by 1, and appends the single scalar "value" onto the end.
    end
 
-!  =======
-!  Enquiry
-!  =======
-
-   has_fchk_files result (res) ::: pure
-   ! True if all the fchk files are defined
-      self :: IN
-      res :: BIN
-      res = all(self.fchk_file_name /= " ")
-   end
-
-   has_MO_files result (res) ::: pure
-   ! True if all the MO files are defined
-      self :: IN
-      res :: BIN
-      res = all(self.MO_file_name /= " ")
-   end
-
-   has_atom_indices result (res)
-   ! True if all the fchk files are defined
-      self :: IN
-      res :: BIN
-
-      g :: INT
-
-      res = FALSE
-
-      do g = 1,.dim
-         res = self(g).atom_index.created
-         if (NOT res) exit
-      end
-
-   end
-
-!  ======
-!  Output
-!  ======
+! ======
+! Output
+! ======
 
    put
    ! Output the atom group table

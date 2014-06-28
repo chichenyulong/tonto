@@ -19,7 +19,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: gaussian2.foo 4354 2014-05-06 18:22:09Z bucinsky $
+! $Id: gaussian2.foo 4248 2014-01-12 06:58:59Z dylan_ $
 !---------------------------------------------------------------------------
 
 module GAUSSIAN2
@@ -71,6 +71,8 @@ module GAUSSIAN2
        7.202352156061000d-1, 4.326515590026000d-1, 8.847452739438000d-2, 4.943624275537000d-3, &
        3.960697726326000d-5/
 
+!  Where is this table from? --dylan
+
    gaussian_nucleus_eta :: VEC{REAL}(109), private
 
    data gaussian_nucleus_eta/                                                 &
@@ -109,12 +111,12 @@ contains
 !  Memory allocation
 !  =================
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, pure
    ! Create an object. This does not nullify point parts or set
    ! defaults.
    end
 
-   create(Ga,Gb) ::: leaky
+   create(Ga,Gb) ::: leaky, pure
    ! Create a gaussian pair, and optionally set it to "Ga" and "Gb"
       self :: PTR
       Ga,Gb :: GAUSSIAN
@@ -122,52 +124,59 @@ contains
       .set(Ga,Gb)
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, pure
    ! Destroy an object. This version does not destroy pointer parts.
    end
 
-   created result (res) ::: get_from(OBJECT), inlined_by_foo
+   created result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has been created
       self :: PTR
       res :: BIN
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
+   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo, always_pure
    ! Returns true if self has *not* been created
       self :: PTR
       res :: BIN
    end
 
-   create_copy(G) ::: leaky
-   ! Create a copy of "G"
-      self :: PTR
-       G :: GAUSSIAN2
-      .create
-      .copy(G)
+!  ============
+!  Copy methods
+!  ============
+
+   create_copy(object) ::: get_from(OBJECT), leaky, pure
+   ! Create a copy of object
    end
 
-   copy(G)
-   ! Set the gaussian pair object to "G"
-      G :: GAUSSIAN2
-      self = G
+   copy(object) ::: always_pure
+   ! Set self to "object"
+      self :: OUT
+      object :: GAUSSIAN2, IN
+
+      self = object
+
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set(Ga,Gb)
+   set(Ga,Gb) ::: pure
    ! Set the gaussian pair object to "Ga" and "Gb"
-      Ga,Gb :: GAUSSIAN
+      self :: INOUT
+      Ga,Gb :: GAUSSIAN, IN
+
       .a.set(Ga)
       .b.set(Gb)
+
    end
 
-   set(l_a,pos_a,ex_a,l_b,pos_b,ex_b)
+   set(l_a,pos_a,ex_a,l_b,pos_b,ex_b) ::: pure
    ! Set a gaussian object
-      l_a,l_b :: INT
-      pos_a,pos_b :: VEC{REAL}(3)
-      ex_a,ex_b :: REAL
+      self :: INOUT
+      l_a,l_b :: INT, IN
+      pos_a,pos_b :: VEC{REAL}(3), IN
+      ex_a,ex_b :: REAL, IN
 
       .a.set_l(l_a)
       .a.set_position(pos_a)
@@ -179,11 +188,14 @@ contains
 
    end
 
-   set(ex_a,ex_b)
+   set(ex_a,ex_b) ::: pure
    ! Set the exponents of the pair
-      ex_a,ex_b :: REAL, optional
+      self :: INOUT
+      ex_a,ex_b :: REAL, IN, optional
+
       if (present(ex_a)) .a.set_exponent(ex_a)
       if (present(ex_b)) .b.set_exponent(ex_b)
+
    end
 
 !  ==================
@@ -272,16 +284,17 @@ contains
 
    end
 
-   make_e_coeff_derivative(e1,comp,e0) ::: pure, private
+   make_e_coeff_derivative(e1,comp,e0) ::: always_pure, private
    ! Return the derivative McMurchie-Davidson "e1" coefficients for
    ! component "comp" with repect to R = .a.position - .b.position. The zero order
    ! derivative E coefficients "e0" for the same component must be supplied.
    ! This routine is based on Helgaker & Taylor, TCA 83, p. 177 (1992)
    ! (c) dylan jayatilaka, may 1998
       self :: IN
-      comp :: INT, IN
+      e1 :: MAT3{REAL}(0:,0:,0:), OUT 
       e0 :: MAT3{REAL}(0:,0:,0:), IN
-      e1 :: MAT3{REAL}(0:,0:,0:), OUT ! Generic e coefficient table
+      comp :: INT, IN
+      
       t,a,b,ap,am,bp,bm,abp,ab,abm,max :: INT
       R,gamma,g1,g2,a0,a1,b0,b1,e0000,e1000 :: REAL
 
@@ -292,58 +305,84 @@ contains
 
       b0 = .b.exponent*g1
       b1 = b0*R
-      e0000  = e0(0,0,0)
+
+      e0000 = e0(0,0,0)
       e1000 = -2*.a.exponent*b1*e0000
+
       e1(0,0,0) = e1000
-      if (max==0) return                ! Return for e000
+
+      ! Return for e000
+      if (max==0) return                
 
       a0 = .a.exponent*g1
       a1 = a0*R
       g2 = HALF*g1
+
       if (.a.l>=1) then
          e1(1,1,0) =  g2*e1000
          e1(0,1,0) = -b1*e1000 - b0*e0000
       end
+
       if (.b.l>=1) then
          e1(1,0,1) =  g2*e1000
          e1(0,0,1) =  a1*e1000 + a0*e0000
       end
-      if (max==1) return                ! Return for eXX1
 
-      do a = 1,.a.l-1                   ! Consider case b=0
+      ! Return for eXX1
+      if (max==1) return                
+
+      ! Consider case b=0
+      do a = 1,.a.l-1                   
+
          ap = a + 1
          am = a - 1
+
          e1(ap,ap,0) =  g2*e1( a,a,0)
          e1( a,ap,0) =  g2*e1(am,a,0) - b1*e1(a,a,0) - b0*e0(a,a,0)
          e1( 0,ap,0) = -b1*e1( 0,a,0) - b0*e0(0,a,0) +    e1(1,a,0)
+
          do t = 1,am
             e1(t,ap,0) = g2*e1(t-1,a,0) - b1*e1(t,a,0) - b0*e0(t,a,0) + (t+1)*e1(t+1,a,0)
          end
+
       end
-      do b = 1,.b.l-1                   ! Consider case a=0
+
+      ! Consider case a=0
+      do b = 1,.b.l-1                   
+
          bp = b + 1
          bm = b - 1
+
          e1(bp,0,bp) =  g2*e1( b,0,b)
          e1( b,0,bp) =  g2*e1(bm,0,b) + a1*e1(b,0,b) + a0*e0(b,0,b)
          e1( 0,0,bp) =  a1*e1( 0,0,b) + a0*e0(0,0,b) +    e1(1,0,b)
+
          do t = 1,bm
             e1(t,0,bp) = g2*e1(t-1,0,b) + a1*e1(t,0,b) + a0*e0(t,0,b) + (t+1)*e1(t+1,0,b)
          end
+
       end
-      do b = 1,.b.l                     ! Now do the rest, a/=0 & b/=0
-         do a = 0,.a.l-1
-            ab  = a + b
-            ap  = a + 1
-            abp = ab + 1
-            abm = ab - 1
-            e1(abp,ap,b) =  g2*e1( ab,a,b)
-            e1( ab,ap,b) =  g2*e1(abm,a,b) - b1*e1(ab,a,b) - b0*e0(ab,a,b)
-            e1(  0,ap,b) = -b1*e1(  0,a,b) - b0*e0( 0,a,b) +    e1( 1,a,b)
-            do t = 1,abm
-               e1(t,ap,b) = g2*e1(t-1,a,b) - b1*e1(t,a,b) - b0*e0(t,a,b) + (t+1)*e1(t+1,a,b)
-            end
+
+      ! Now do the rest, a/=0 & b/=0
+      do b = 1,.b.l                     
+      do a = 0,.a.l-1
+
+         ab  = a + b
+         ap  = a + 1
+         abp = ab + 1
+         abm = ab - 1
+
+         e1(abp,ap,b) =  g2*e1( ab,a,b)
+         e1( ab,ap,b) =  g2*e1(abm,a,b) - b1*e1(ab,a,b) - b0*e0(ab,a,b)
+         e1(  0,ap,b) = -b1*e1(  0,a,b) - b0*e0( 0,a,b) +    e1( 1,a,b)
+
+         do t = 1,abm
+            e1(t,ap,b) = g2*e1(t-1,a,b) - b1*e1(t,a,b) - b0*e0(t,a,b) + (t+1)*e1(t+1,a,b)
          end
+
       end
+      end
+
    end
 
 !   make_ft_component_old(res,comp,k_pts)
@@ -437,7 +476,7 @@ contains
 !          k1.create([1,k_max],[0,t_max])    ! Define k1 array containing
 !          do n = 1,k_max                        ! powers k^n of k_pts
 !            kn = k_pts(n)
-!            kn_t = kn          ! t=0 is 1, has been optimised out below.
+!            kn_t = kn          ! t=0 is 1, has been optimized out below.
 !            do t = 2,t_max     ! t=1 is k_pts(n), explicity written below.
 !              kn_t = kn_t * kn
 !              k1(n,t) = kn_t
@@ -763,7 +802,7 @@ contains
    ! Calculates the Fourier transform for a product of two primitive
    ! gaussian functions, evaluated at a series of k points "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
-   ! Specialised routine for .a.l=0 and .b.l=0.
+   ! Specialized routine for .a.l=0 and .b.l=0.
       ft :: VEC{CPX}, OUT
       k_pts :: MAT{REAL}, target
       
@@ -966,7 +1005,7 @@ contains
               end
             case default
     ! This is the general routine.  It includes reduced multiplication, and use
-    ! of pointers to minimise array finding.
+    ! of pointers to minimize array finding.
               do b = 0,.b.l ! incorporate prefac into ft_z
               do a = 0,.a.l
                  ft_z(:,a,b) = ft_z(:,a,b) * prefac(:)
@@ -1429,7 +1468,7 @@ contains
 
    end
 
-   make_normalised_overlap_ints(S,spherical) 
+   make_normalized_overlap_ints(S,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       S :: MAT{REAL}
       spherical :: BIN, optional
@@ -1523,8 +1562,8 @@ contains
       do b = 1,l_b+1
          i = (a+b)/2
          do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-            pt = gauss_hermite_pt(k)/t + rp
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + rp
             ra = pt - ax
             rb = pt - bx
             if(a>1) wt = wt*ra**(a-1)
@@ -1667,8 +1706,8 @@ contains
       do d = 1,l_d+1
          i = (a+b+c+d)/2
          do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-            pt = gauss_hermite_pt(k)/t + rp
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + rp
             ra = pt - ax
             rb = pt - bx
             rc = pt - cx
@@ -1686,7 +1725,7 @@ contains
    
    end
 
-   make_normalised_kinetic_ints(T,spherical) 
+   make_normalized_kinetic_ints(T,spherical) 
    ! Calculate T, a cartesian or spherical block of integrals.
       T :: MAT{REAL}
       spherical :: BIN, optional
@@ -2030,8 +2069,8 @@ contains
       do b = 1,l_b+1
          i = (a+b+1)/2
          do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-            pt = gauss_hermite_pt(k)/t + rp
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + rp
             ra = pt - ax
             rb = pt - bx
             rd = pt - ox
@@ -2148,8 +2187,8 @@ contains
       do b = 1,l_b+1
          i = (a+b+2)/2
          do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-            pt = gauss_hermite_pt(k)/t + rp
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + rp
             ra = pt - ax
             rb = pt - bx
             rd = pt - ox
@@ -2279,8 +2318,8 @@ contains
       do b = 1,l_b+1
          i = (a+b+3)/2
          do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-            pt = gauss_hermite_pt(k)/t + rp
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + rp
             ra = pt - ax
             rb = pt - bx
             rd = pt - og
@@ -2297,7 +2336,7 @@ contains
 
    end
 
-   make_normalised_NA_ints(NA,c,spherical) 
+   make_normalized_NA_ints(NA,c,spherical) 
    ! Calculate T, a cartesian or spherical block of integrals.
       NA :: MAT{REAL}
       c :: VEC{REAL}(3)
@@ -2407,8 +2446,8 @@ contains
       do b = 1,l_b+1
          i = (a+b)/2 ! should be max((a+b-1)/2,1) ?
          do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-            pt = gauss_hermite_pt(k)/t + r0
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + r0
             ra = pt - ax
             rb = pt - bx
             if(a>1) wt = wt*ra**(a-1)
@@ -2502,7 +2541,7 @@ contains
 
    end
 
-   make_normalised_DKH_ints(T,SOx,SOy,SOz,c,spherical) 
+   make_normalized_DKH_ints(T,SOx,SOy,SOz,c,spherical) 
    ! Calculate T, a cartesian or spherical block of integrals.
       T,SOx,SOy,SOz :: MAT{REAL}
       c :: VEC{REAL}(3)
@@ -2636,7 +2675,7 @@ contains
 
    end
 
-   make_normalised_DK3_ppZpp_ints(ppZpp,c,spherical) 
+   make_normalized_DK3_ppZpp_ints(ppZpp,c,spherical) 
    ! Calculate T, a cartesian or spherical block of integrals.
       ppZpp :: MAT{REAL}
       c :: VEC{REAL}(3)
@@ -3077,14 +3116,14 @@ contains
       do b = 1,l_b+1
          i = (a+b+1)/2 ! should be max((a+b)/2,1) ?
          do k = first_pt(i),last_pt(i)
-            pt = gauss_hermite_pt(k)/t + r0
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + r0
             ra = pt - ax
             rb = pt - bx
             ru = TWO*uu*(cx-pt)
             ff = ONE
             if(a>1) ff = ff*ra**(a-1)
             if(b>1) ff = ff*rb**(b-1)
-            wt = gauss_hermite_wt(k)
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
             Sx(a,b) = Sx(a,b) + ff*wt
             Fx(a,b) = Fx(a,b) + (ru*ff)*wt
          end
@@ -3199,12 +3238,12 @@ contains
       do b = 1,l_b+1
          i = (a+b+2)/2 ! should be max((a+b)/2,1) ?
          do k = first_pt(i),last_pt(i)
-            pt = gauss_hermite_pt(k)/t + r0
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + r0
             ra = pt - ax
             rb = pt - bx
             ru = TWO*uu*(cx-pt)          ! this is Ex = - d/dcx phi(c)
             rg = TWO*uu*(ONE-ru*(cx-pt)) ! this is dEx/dcx
-            ff = gauss_hermite_wt(k)
+            ff = GAUSSIAN2::gauss_hermite_wt(k)
             if(a>1) ff = ff*ra**(a-1)
             if(b>1) ff = ff*rb**(b-1) ! this is \int dx g(a;ax) g(b;bx) e^(-uu*(cx-r)^2)
             Sx(a,b) = Sx(a,b) + ff    ! integrand = 1
@@ -3331,8 +3370,8 @@ contains
       do b = 1,l_b+1
          i = (a+b+2)/2 ! should be max((a+b+1)/2,1) ?
          do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-            pt = gauss_hermite_pt(k)/t + r0
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + r0
             ra = pt - ax
             rb = pt - bx
             ru = TWO*uu*(cx-pt)
@@ -4447,20 +4486,7 @@ contains
       stdout.show("ex_b  =",.b.exponent)
    end
 
-!!!!!!!!!!!!!!!!!!!!
-!!! finite gaussian nucleus routines
-!!!!!!!!!!!!!!!!!!!!
-
-   nucleus_eta(c) result (eta) ::: selfless
-   ! get the nucleus exponent
-      c :: INT, IN
-      eta :: REAL
-
-      eta  = gaussian_nucleus_eta(c)
-
-   end
-
-   make_normalised_finite_NA_ints(NA,c,nc,n,spherical) 
+   make_normalized_finite_NA_ints(NA,c,nc,n,spherical) 
    ! Calculate finite gaussian NA integrals.
       NA :: MAT{REAL}
       c :: VEC{REAL}(3)
@@ -4497,7 +4523,7 @@ contains
       Ix,Iy,Iz :: MAT3{REAL}*
       ax,ay,az,bx,by,bz :: VEC{INT}*
       rys :: RYS*
-      AB,CD,P,Q,PA,QP :: VEC{REAL}(3)
+      AB,P,Q,PA,QP :: VEC{REAL}(3)
       zeta,zinv,eta,einv,zeinv,rho,xx,AB2,fac,h,r212 :: REAL
       l_e,l_f,n_roots,fa,la,fb,lb :: INT
 
@@ -4521,7 +4547,7 @@ contains
 
       ! Exponents
       zeta = .a.exponent + .b.exponent
-      eta  = gaussian_nucleus_eta(nc)
+      eta  = GAUSSIAN2::gaussian_nucleus_eta(nc)
       r212=sqrt(THREE/TWO/eta)
       r212=r212+real(n)*h
       eta  = THREE/TWO/r212**2
@@ -4532,7 +4558,6 @@ contains
 
       ! Positions
       AB  = .a.position - .b.position
-      CD  = ZERO !.a.pos - .a.pos 
       P   = (.a.exponent*.a.position + .b.exponent*.b.position)*zinv
       Q   = npos 
       PA  = P - .a.position
@@ -4563,7 +4588,7 @@ contains
 
    end
 
-   transfer_2d_ints(Ix,Iy,Iz,AB,max_b) ::: pure, private
+   transfer_2d_ints(Ix,Iy,Iz,AB,max_b) ::: always_pure, private
    ! A hack from the 4 center integrals to let the finite gaussian NA ints work 
    ! Use the transfer relation to put momenta on centr B to get all
    ! the 2d integrals "Ix", "Iy" and "Iz". If present, "max_b" and "max_d"
@@ -4573,26 +4598,31 @@ contains
       Ix,Iy,Iz :: MAT3{REAL}, INOUT
       AB :: VEC{REAL}(3), IN
       max_b :: INT, IN, optional
+
       le1,l_a,l_b,a,b,a1,b1 :: INT
+
       l_a = .a.l; l_b = .b.l
       if (present(max_b)) l_b=max_b
+
       if (l_b==0) return
-      if (l_b/=0) then
-         le1 = l_a + l_b + 1
-         do b = 1,l_b
-         do a = 1,le1 - b
-            b1 = b + 1
-            a1 = a + 1
-            Ix(:,a,b1) = Ix(:,a1,b) + AB(1)*Ix(:,a,b)
-            Iy(:,a,b1) = Iy(:,a1,b) + AB(2)*Iy(:,a,b)
-            Iz(:,a,b1) = Iz(:,a1,b) + AB(3)*Iz(:,a,b)
-         end
-         end
+
+      le1 = l_a + l_b + 1
+      do b = 1,l_b
+      do a = 1,le1 - b
+
+         b1 = b + 1
+         a1 = a + 1
+
+         Ix(:,a,b1) = Ix(:,a1,b) + AB(1)*Ix(:,a,b)
+         Iy(:,a,b1) = Iy(:,a1,b) + AB(2)*Iy(:,a,b)
+         Iz(:,a,b1) = Iz(:,a1,b) + AB(3)*Iz(:,a,b)
+
+      end
       end
 
    end
 
-   transfer_2d_ints_2(Ix,Iy,Iz,AB,max_a,max_b) ::: pure, private
+   transfer_2d_ints_2(Ix,Iy,Iz,AB,max_a,max_b) ::: always_pure, private
    ! A hack from the 4 center integrals to let the finite gaussian DKH ints work 
    ! Use the transfer relation to put momenta on centr B to get all
    ! the 2d integrals "Ix", "Iy" and "Iz". If present, "max_b" and "max_d"
@@ -4602,27 +4632,32 @@ contains
       Ix,Iy,Iz :: MAT3{REAL}, INOUT
       AB :: VEC{REAL}(3), IN
       max_a,max_b :: INT, IN, optional
+
       le1,l_a,l_b,a,b,a1,b1 :: INT
+
       l_a = .a.l; l_b = .b.l
       if (present(max_a)) l_a=max_a
       if (present(max_b)) l_b=max_b
+
       if (l_b==0) return
-      if (l_b/=0) then
-         le1 = l_a + l_b + 1
-         do b = 1,l_b
-         do a = 1,le1 - b
-            b1 = b + 1
-            a1 = a + 1
-            Ix(:,a,b1) = Ix(:,a1,b) + AB(1)*Ix(:,a,b)
-            Iy(:,a,b1) = Iy(:,a1,b) + AB(2)*Iy(:,a,b)
-            Iz(:,a,b1) = Iz(:,a1,b) + AB(3)*Iz(:,a,b)
-         end
-         end
+
+      le1 = l_a + l_b + 1
+      do b = 1,l_b
+      do a = 1,le1 - b
+
+         b1 = b + 1
+         a1 = a + 1
+
+         Ix(:,a,b1) = Ix(:,a1,b) + AB(1)*Ix(:,a,b)
+         Iy(:,a,b1) = Iy(:,a1,b) + AB(2)*Iy(:,a,b)
+         Iz(:,a,b1) = Iz(:,a1,b) + AB(3)*Iz(:,a,b)
+
+      end
       end
 
    end
 
-   form_2d_ints(Ix,Iy,Iz,t2,wt,rho,zinv,PA,QP,max_e) ::: pure
+   form_2d_ints(Ix,Iy,Iz,t2,wt,rho,zinv,PA,QP,max_e) ::: always_pure
    ! Forms the two dimensional integrals "Ix", "Iy" and "Iz" with momenta only
    ! on center A, using Rys roots "t2" and weights "wt".
    ! Other variables are intermediates, to avoid calculations: see make_ERI_ints.
@@ -4636,10 +4671,9 @@ contains
       max_e :: INT, IN, optional
 
       rzt,ce,ce1 :: VEC{REAL}(size(t2))
-      l_e,l_f,e,em1,ep1,k :: INT
+      l_e,e,em1,ep1,k :: INT
 
       l_e = .a.l + .b.l
-      l_f = 0
       if (present(max_e)) l_e = max_e
 
       Ix(:,1) = ONE
@@ -4648,33 +4682,41 @@ contains
 
        if (l_e>0) then
 
-         rzt = rho*t2*zinv
-         Ix(:,2) = PA(1) + rzt(:)*QP(1)
-         Iy(:,2) = PA(2) + rzt(:)*QP(2)
-         Iz(:,2) = PA(3) + rzt(:)*QP(3)
-
-         if (l_e>1) then
-           ce = (ONE - rzt) * HALF * zinv
-           do e = 2,l_e
-             em1 = e - 1
-             ep1 = e + 1
-             ce1 = em1 * ce
-             Ix(:,ep1) = Ix(:,2)*Ix(:,e) + ce1*Ix(:,em1)
-             Iy(:,ep1) = Iy(:,2)*Iy(:,e) + ce1*Iy(:,em1)
-             Iz(:,ep1) = Iz(:,2)*Iz(:,e) + ce1*Iz(:,em1)
-           end
-         end
+          rzt = rho*t2*zinv
+         
+          Ix(:,2) = PA(1) + rzt(:)*QP(1)
+          Iy(:,2) = PA(2) + rzt(:)*QP(2)
+          Iz(:,2) = PA(3) + rzt(:)*QP(3)
+         
+          if (l_e>1) then
+         
+             ce = (ONE - rzt) * HALF * zinv
+             
+             do e = 2,l_e
+             
+                em1 = e - 1
+                ep1 = e + 1
+                
+                ce1 = em1 * ce
+                
+                Ix(:,ep1) = Ix(:,2)*Ix(:,e) + ce1*Ix(:,em1)
+                Iy(:,ep1) = Iy(:,2)*Iy(:,e) + ce1*Iy(:,em1)
+                Iz(:,ep1) = Iz(:,2)*Iz(:,e) + ce1*Iz(:,em1)
+             
+             end
+         
+          end
 
        end
 
       ! Multiply Iz by the weight
       do k = 1,size(Iz,1)
-        Iz(k,:) = Iz(k,:)*wt(k)
+         Iz(k,:) = Iz(k,:)*wt(k)
       end
 
    end
 
-   make_normalised_finite_DKH_ints(T,SOx,SOy,SOz,c,nc,n,spherical) 
+   make_normalized_finite_DKH_ints(T,SOx,SOy,SOz,c,nc,n,spherical) 
    ! Calculate finite nuclues DKH integrals.
       T,SOx,SOy,SOz :: MAT{REAL}
       c :: VEC{REAL}(3)
@@ -4724,7 +4766,7 @@ contains
       AAx,ABx,BBx,AAy,ABy,BBy,AAz,ABz,BBz :: MAT{REAL}*
       ax,ay,az,bx,by,bz :: VEC{INT}*
       rys :: RYS*
-      AB,CD,P,Q,PA,QP :: VEC{REAL}(3)
+      AB,P,Q,PA,QP :: VEC{REAL}(3)
       zeta,zinv,eta,einv,zeinv,rho,xx,AB2,fac,h,r212 :: REAL
       i,l_e,l_f,n_roots,fa,la,fb,lb :: INT
 
@@ -4748,7 +4790,7 @@ contains
 
       ! Exponents
       zeta = .a.exponent + .b.exponent
-      eta  = gaussian_nucleus_eta(nc)
+      eta  = GAUSSIAN2::gaussian_nucleus_eta(nc)
       r212=sqrt(THREE/TWO/eta)
       r212=r212+real(n)*h
       eta  = THREE/TWO/r212**2
@@ -4759,7 +4801,6 @@ contains
 
       ! Positions
       AB  = .a.position - .b.position
-      CD  = ZERO !.a.pos - .a.pos 
       P   = (.a.exponent*.a.position + .b.exponent*.b.position)*zinv
       Q   = npos 
       PA  = P - .a.position
@@ -4821,7 +4862,7 @@ contains
 
    end
 
-   make_normalised_G_overlap_ints(S,pos,nuc,spherical) 
+   make_normalized_G_overlap_ints(S,pos,nuc,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       S :: MAT{REAL}
       pos :: VEC{REAL}
@@ -4900,25 +4941,20 @@ contains
       Nx :: REAL
       max_a,max_b :: INT, optional
       p,q,t,rp,rq,ax,bx,cx,c,wt,pt,ra,rb :: REAL
-      mu,nu,xab,xpc :: REAL
+      nu,xpc :: REAL
       l_a,l_b, a,b,i,k :: INT
       l_a = .a.l; if (present(max_a)) l_a = max_a
       l_b = .b.l; if (present(max_b)) l_b = max_b
       p = .a.exponent + .b.exponent
-    !  t = sqrt(p) ! we will use q here
+    ! t = sqrt(p) ! we will use q here
       ax = .a.position(x)
       bx = .b.position(x)
       rp = (.a.exponent*ax + .b.exponent*bx)/p
-      ! seems to be normally accounted in the prefactors, but will be needed
-      mu=(.a.exponent * .b.exponent)/p
-      xab=ax-bx
       ! new stuff
-      c= gaussian_nucleus_eta(nuc)
+      c= GAUSSIAN2::gaussian_nucleus_eta(nuc)
       cx= Nx  ! position of nucleus
       q=p+c
-      ! t=sqrt(p)
       t=sqrt(q) ! should be correct
-!      nu=mu*c/(mu+c)
        nu=p*c/(p+c)
       rq=(p*rp+c*cx)/q
       xpc=(rp-cx)
@@ -4928,9 +4964,8 @@ contains
       do b = 1,l_b+1
          i = (a+b)/2
          do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-!            pt = gauss_hermite_pt(k)/t + rp
-            pt = gauss_hermite_pt(k)/t + rq
+            wt = GAUSSIAN2::gauss_hermite_wt(k)
+            pt = GAUSSIAN2::gauss_hermite_pt(k)/t + rq
             ra = pt - ax
             rb = pt - bx
             if(a>1) wt = wt*ra**(a-1)
@@ -4940,14 +4975,12 @@ contains
       end
       end
 
-!      Sx=Sx/sqrt(q)*sqrt(q/PI)
       Sx=Sx/sqrt(q)*sqrt(c/PI)
-!      if (x==3)then 
-        Sx=Sx*exp(-nu*xpc**2)
-!      end if  
+      Sx=Sx*exp(-nu*xpc**2)
+
    end
 
-   make_normalised_pGp_overlap_ints(S,SOx,SOy,SOz,pos,nuc,spherical) 
+   make_normalized_pGp_overlap_ints(S,SOx,SOy,SOz,pos,nuc,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       S,SOx,SOy,SOz :: MAT{REAL}
       pos :: VEC{REAL}
@@ -5058,7 +5091,7 @@ contains
 !!! new staff on the PCE correction of visualized densities
 !!!!!!!!!!!!!!!!!!!!
 
-   make_normalised_density_gg(S,x,y,z,spherical) 
+   make_normalized_density_gg(S,x,y,z,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       S :: MAT{REAL}
       x,y,z :: REAL
@@ -5140,7 +5173,7 @@ contains
       end
    end
 
-   make_normalised_pDp_gg(T,x,y,z,spherical) 
+   make_normalized_pDp_gg(T,x,y,z,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       T :: MAT{REAL}
       x,y,z :: REAL
@@ -5232,7 +5265,7 @@ contains
 
    end
 
-   make_normalised_ppDpp_gg(T,x,y,z,spherical) 
+   make_normalized_ppDpp_gg(T,x,y,z,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       T :: MAT{REAL}
       x,y,z :: REAL
@@ -5259,7 +5292,7 @@ contains
 
    end
 
-   make_ppDpp_gg_not_ok(ppDpp,x,y,z)
+   make_ppDpp_gg(ppDpp,x,y,z)
    ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       ppDpp :: MAT{REAL}
@@ -5345,7 +5378,7 @@ contains
 
    end
 
-   make_ppDpp_gg(ppDpp,x,y,z)
+   make_ppDpp_gg_ori(ppDpp,x,y,z)
    ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       ppDpp :: MAT{REAL}
@@ -5403,7 +5436,8 @@ contains
 ! I leave out the SO ints at the moment
 !         SOx = SOx + NAx(ax,bx)*AAy(ay,by)*BBz(az,bz) &
 !                   - NAx(ax,bx)*BBy(ay,by)*AAz(az,bz)  
-
+ 
+!         SOy = SOy + BBx(ax,bx)*NAy(ay,by)*AAz(az,bz) &
 !                   - AAx(ax,bx)*NAy(ay,by)*BBz(az,bz)  
 
 !         SOz = SOz + AAx(ax,bx)*BBy(ay,by)*NAz(az,bz) &
@@ -5419,7 +5453,7 @@ contains
 
    end
 
-   make_normalised_pDp_SO_gg(Dx,Dy,Dz,x,y,z,spherical) 
+   make_normalized_pDp_SO_gg(Dx,Dy,Dz,x,y,z,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       Dx,Dy,Dz :: MAT{REAL}
       x,y,z :: REAL
@@ -5521,766 +5555,10 @@ contains
 
    end
 
-! extra LAPLACIAN PCE stuff
-
-   make_normalised_ppDpp_SO_gg(Dx,Dy,Dz,x,y,z,spherical) 
-   ! Calculate S, a cartesian or spherical block of integrals.
-      Dx,Dy,Dz :: MAT{REAL}
-      x,y,z :: REAL
-      spherical :: BIN, optional
-
-      Wx,Wy,Wz :: MAT{REAL}*
-      is_spherical :: BIN
-
-      is_spherical = FALSE
-      if (present(spherical)) is_spherical = spherical
-
-      if (NOT is_spherical) then 
-         .make_ppDpp_SO_gg(Dx,Dy,Dz,x,y,z)
-      elseif ( .a.l<2 AND .b.l<2 ) then   
-         .make_ppDpp_SO_gg(Dx,Dy,Dz,x,y,z)
-      else
-         Wx.create(.a.n_comp,.b.n_comp)
-         Wy.create(.a.n_comp,.b.n_comp)
-         Wz.create(.a.n_comp,.b.n_comp)
-         .make_ppDpp_SO_gg(Wx,Wy,Wz,x,y,z)
-         .change_to_spherical(Wx,Dx)
-         .change_to_spherical(Wy,Dy)
-         .change_to_spherical(Wz,Dz)
-         Wz.destroy
-         Wy.destroy
-         Wx.destroy
-      end
-
-      Dx = Dx * .normalisation_factor
-      Dy = Dy * .normalisation_factor
-      Dz = Dz * .normalisation_factor
-
-   end
-
-   make_ppDpp_SO_gg(SOx,SOy,SOz,x,y,z)
-   ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
-   ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
-      SOx,SOy,SOz :: MAT{REAL}
-      x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}*
-      fa,la,fb,lb :: INT
-
-      ! Indexing array limits
-      fa = .a.first_gaussian; la = .a.last_gaussian
-      fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
-
-      NAx.create(.a.l+3,.b.l+3); NAy.create(.a.l+3,.b.l+3); NAz.create(.a.l+3,.b.l+3)
-      AAx.create(.a.l+2,.b.l+3); AAy.create(.a.l+2,.b.l+3); AAz.create(.a.l+2,.b.l+3)
-      BBx.create(.a.l+3,.b.l+2); BBy.create(.a.l+3,.b.l+2); BBz.create(.a.l+3,.b.l+2)
-      ABx.create(.a.l+2,.b.l+2); ABy.create(.a.l+2,.b.l+2); ABz.create(.a.l+2,.b.l+2)
-      A2x.create(.a.l+1,.b.l+2); A2y.create(.a.l+1,.b.l+2); A2z.create(.a.l+1,.b.l+2)
-      B2x.create(.a.l+2,.b.l+1); B2y.create(.a.l+2,.b.l+1); B2z.create(.a.l+2,.b.l+1)
-
-      ! Assemble the integrals
-       SOx = ZERO; SOy = ZERO; SOz = ZERO
-
-         .make_density_part(NAx,1,x,.a.l+2,.b.l+2)
-         .make_density_part(NAy,2,y,.a.l+2,.b.l+2)
-         .make_density_part(NAz,3,z,.a.l+2,.b.l+2)
-
-         .differentiate(NAx,"left ",AAx)
-         .differentiate(NAy,"left ",AAy)
-         .differentiate(NAz,"left ",AAz)
-
-         .differentiate(NAx,"right",BBx)
-         .differentiate(NAy,"right",BBy)
-         .differentiate(NAz,"right",BBz)
-         
-         .differentiate(AAx,"right",ABx)
-         .differentiate(AAy,"right",ABy)
-         .differentiate(AAz,"right",ABz)
-
-         .differentiate(ABx,"left",A2x) 
-         .differentiate(ABy,"left",A2y)
-         .differentiate(ABz,"left",A2z)
-
-         .differentiate(ABx,"right",B2x)
-         .differentiate(ABy,"right",B2y)
-         .differentiate(ABz,"right",B2z)
-
-!         SOx = SOx + ABx(ax,bx)*A2y(ay,by)*B2z(az,bz) &
-!                   - ABx(ax,bx)*B2y(ay,by)*A2z(az,bz)  
-          SOx = SOx + ABx(ax,bx)*AAy(ay,by)*BBz(az,bz) &
-                    - ABx(ax,bx)*BBy(ay,by)*AAz(az,bz) &
-                    + NAx(ax,bx)*A2y(ay,by)*BBz(az,bz) &
-                    - NAx(ax,bx)*B2y(ay,by)*AAz(az,bz) &
-                    + NAx(ax,bx)*AAy(ay,by)*B2z(az,bz) &
-                    - NAx(ax,bx)*BBy(ay,by)*A2z(az,bz)  
- 
-!         SOy = SOy + B2x(ax,bx)*ABy(ay,by)*A2z(az,bz) &
-!                   - A2x(ax,bx)*ABy(ay,by)*B2z(az,bz)  
-          SOy = SOy + B2x(ax,bx)*NAy(ay,by)*AAz(az,bz) &
-                    - A2x(ax,bx)*NAy(ay,by)*BBz(az,bz) &
-                    + BBx(ax,bx)*ABy(ay,by)*AAz(az,bz) &
-                    - AAx(ax,bx)*ABy(ay,by)*BBz(az,bz) &
-                    + BBx(ax,bx)*NAy(ay,by)*A2z(az,bz) &
-                    - AAx(ax,bx)*NAy(ay,by)*B2z(az,bz)  
-
-!         SOz = SOz + A2x(ax,bx)*B2y(ay,by)*ABz(az,bz) &
-!                   - B2x(ax,bx)*A2y(ay,by)*ABz(az,bz)  
-          SOz = SOz + A2x(ax,bx)*BBy(ay,by)*NAz(az,bz) &
-                    - B2x(ax,bx)*AAy(ay,by)*NAz(az,bz) &
-                    + AAx(ax,bx)*B2y(ay,by)*NAz(az,bz) &
-                    - BBx(ax,bx)*A2y(ay,by)*NAz(az,bz) &
-                    + AAx(ax,bx)*BBy(ay,by)*ABz(az,bz) &
-                    - BBx(ax,bx)*AAy(ay,by)*ABz(az,bz)  
-
-      A2z.destroy; A2y.destroy; A2x.destroy
-      ABz.destroy; ABy.destroy; ABx.destroy
-      B2z.destroy; B2y.destroy; B2x.destroy
-      BBz.destroy; BBy.destroy; BBx.destroy
-!      A2z.destroy; A2y.destroy; A2x.destroy
-!      B2z.destroy; B2y.destroy; B2x.destroy
-      AAz.destroy; AAy.destroy; AAx.destroy
-      NAz.destroy; NAy.destroy; NAx.destroy
-
-   end
-
-   make_normalised_ppD_gg(T,x,y,z,spherical) 
-   ! Calculate S, a cartesian or spherical block of integrals.
-      T :: MAT{REAL}
-      x,y,z :: REAL
-      spherical :: BIN, optional
-
-      W :: MAT{REAL}*
-      is_spherical :: BIN
-
-      is_spherical = FALSE
-      if (present(spherical)) is_spherical = spherical
-
-      if (NOT is_spherical)then 
-         .make_ppD_gg(T,x,y,z)
-      elseif  ( .a.l<2 AND .b.l<2 )  then
-         .make_ppD_gg(T,x,y,z)
-      else
-         W.create(.a.n_comp,.b.n_comp)
-         .make_ppD_gg(W,x,y,z)
-         .change_to_spherical(W,T)
-         W.destroy
-      end
-
-      T = T * .normalisation_factor
-
-   end
-
-   make_ppD_gg(T,x,y,z)
-   ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
-   ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
-      T :: MAT{REAL}
-      x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz, AAx,AAy,AAz,ABx,ABy,ABz :: MAT{REAL}*
-      fa,la,fb,lb :: INT
-
-      ! Indexing array limits
-      fa = .a.first_gaussian; la = .a.last_gaussian
-      fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
-
-      ! 2D integrals
-      NAx.create(.a.l+3,.b.l+1); NAy.create(.a.l+3,.b.l+1); NAz.create(.a.l+3,.b.l+1)
-      AAx.create(.a.l+2,.b.l+1); AAy.create(.a.l+2,.b.l+1); AAz.create(.a.l+2,.b.l+1)
-      ABx.create(.a.l+1,.b.l+1); ABy.create(.a.l+1,.b.l+1); ABz.create(.a.l+1,.b.l+1)
-
-      ! Roots and weights
-      T = ZERO
-
-      .make_density_part(NAx,1,x,.a.l+2,.b.l)
-      .make_density_part(NAy,2,y,.a.l+2,.b.l)
-      .make_density_part(NAz,3,z,.a.l+2,.b.l)
-
-         .differentiate(NAx,"left ",AAx)
-         .differentiate(NAy,"left ",AAy)
-         .differentiate(NAz,"left ",AAz)
-
-         .differentiate(AAx,"left",ABx)
-         .differentiate(AAy,"left",ABy)
-         .differentiate(AAz,"left",ABz)
-
-         T = T + ABx(ax,bx)*NAy(ay,by)*NAz(az,bz) &
-               + NAx(ax,bx)*ABy(ay,by)*NAz(az,bz) &
-               + NAx(ax,bx)*NAy(ay,by)*ABz(az,bz) 
-               
-!         SOx = SOx + NAx(ax,bx)*AAy(ay,by)*BBz(az,bz) &
-!                   - NAx(ax,bx)*BBy(ay,by)*AAz(az,bz)  
-
-!         SOy = SOy + BBx(ax,bx)*NAy(ay,by)*AAz(az,bz) &
-!                   - AAx(ax,bx)*NAy(ay,by)*BBz(az,bz)  
-
-!         SOz = SOz + AAx(ax,bx)*BBy(ay,by)*NAz(az,bz) &
-!                   - BBx(ax,bx)*AAy(ay,by)*NAz(az,bz)  
-
-
-      ! Clean up
-      ABz.destroy; ABy.destroy; ABx.destroy
-      AAz.destroy; AAy.destroy; AAx.destroy
-      NAz.destroy; NAy.destroy; NAx.destroy
-
-   end
-
-   make_normalised_Dpp_gg(T,x,y,z,spherical) 
-   ! Calculate S, a cartesian or spherical block of integrals.
-      T :: MAT{REAL}
-      x,y,z :: REAL
-      spherical :: BIN, optional
-
-      W :: MAT{REAL}*
-      is_spherical :: BIN
-
-      is_spherical = FALSE
-      if (present(spherical)) is_spherical = spherical
-
-      if (NOT is_spherical)then 
-         .make_Dpp_gg(T,x,y,z)
-      elseif  ( .a.l<2 AND .b.l<2 )  then
-         .make_Dpp_gg(T,x,y,z)
-      else
-         W.create(.a.n_comp,.b.n_comp)
-         .make_Dpp_gg(W,x,y,z)
-         .change_to_spherical(W,T)
-         W.destroy
-      end
-
-      T = T * .normalisation_factor
-
-   end
-
-   make_Dpp_gg(T,x,y,z)
-   ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
-   ! very inefficient. 
-      T :: MAT{REAL}
-      x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz, AAx,AAy,AAz,ABx,ABy,ABz :: MAT{REAL}*
-      fa,la,fb,lb :: INT
-
-      ! Indexing array limits
-      fa = .a.first_gaussian; la = .a.last_gaussian
-      fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
-
-      ! 2D integrals
-      NAx.create(.a.l+1,.b.l+3); NAy.create(.a.l+1,.b.l+3); NAz.create(.a.l+1,.b.l+3)
-      AAx.create(.a.l+1,.b.l+2); AAy.create(.a.l+1,.b.l+2); AAz.create(.a.l+1,.b.l+2)
-      ABx.create(.a.l+1,.b.l+1); ABy.create(.a.l+1,.b.l+1); ABz.create(.a.l+1,.b.l+1)
-
-      ! Roots and weights
-      T = ZERO
-
-      .make_density_part(NAx,1,x,.a.l,.b.l+2)
-      .make_density_part(NAy,2,y,.a.l,.b.l+2)
-      .make_density_part(NAz,3,z,.a.l,.b.l+2)
-
-         .differentiate(NAx,"right",AAx)
-         .differentiate(NAy,"right",AAy)
-         .differentiate(NAz,"right",AAz)
-
-         .differentiate(AAx,"right",ABx)
-         .differentiate(AAy,"right",ABy)
-         .differentiate(AAz,"right",ABz)
-
-         T = T + ABx(ax,bx)*NAy(ay,by)*NAz(az,bz) &
-               + NAx(ax,bx)*ABy(ay,by)*NAz(az,bz) &
-               + NAx(ax,bx)*NAy(ay,by)*ABz(az,bz) 
-               
-!         SOx = SOx + NAx(ax,bx)*AAy(ay,by)*BBz(az,bz) &
-!                   - NAx(ax,bx)*BBy(ay,by)*AAz(az,bz)  
-
-!         SOy = SOy + BBx(ax,bx)*NAy(ay,by)*AAz(az,bz) &
-!                   - AAx(ax,bx)*NAy(ay,by)*BBz(az,bz)  
-
-!         SOz = SOz + AAx(ax,bx)*BBy(ay,by)*NAz(az,bz) &
-!                   - BBx(ax,bx)*AAy(ay,by)*NAz(az,bz)  
-
-
-      ! Clean up
-      ABz.destroy; ABy.destroy; ABx.destroy
-      AAz.destroy; AAy.destroy; AAx.destroy
-      NAz.destroy; NAy.destroy; NAx.destroy
-
-   end
-
-   make_normalised_pppDp_gg(T,x,y,z,spherical) 
-   ! Calculate S, a cartesian or spherical block of integrals.
-      T :: MAT{REAL}
-      x,y,z :: REAL
-      spherical :: BIN, optional
-
-      W :: MAT{REAL}*
-      is_spherical :: BIN
-
-      is_spherical = FALSE
-      if (present(spherical)) is_spherical = spherical
-
-      if (NOT is_spherical)then 
-         .make_pppDp_gg(T,x,y,z)
-      elseif  ( .a.l<2 AND .b.l<2 )  then
-         .make_pppDp_gg(T,x,y,z)
-      else
-         W.create(.a.n_comp,.b.n_comp)
-         .make_pppDp_gg(W,x,y,z)
-         .change_to_spherical(W,T)
-         W.destroy
-      end
-
-      T = T * .normalisation_factor
-
-   end
-
-   make_pppDp_gg(T,x,y,z)
-   ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
-   ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
-      T :: MAT{REAL}
-      x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,AXx,AXy,AXz,ABx,ABy,ABz,XXx,XXy,XXz :: MAT{REAL}*
-      fa,la,fb,lb :: INT
-
-      ! Indexing array limits
-      fa = .a.first_gaussian; la = .a.last_gaussian
-      fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
-
-      ! 2D integrals
-      NAx.create(.a.l+4,.b.l+2); NAy.create(.a.l+4,.b.l+2); NAz.create(.a.l+4,.b.l+2)
-      AAx.create(.a.l+3,.b.l+2); AAy.create(.a.l+3,.b.l+2); AAz.create(.a.l+3,.b.l+2)
-   !  BBx.create(.a.l+1,.b.l+1); BBy.create(.a.l+1,.b.l+1); BBz.create(.a.l+1,.b.l+1)
-      ABx.create(.a.l+2,.b.l+2); ABy.create(.a.l+2,.b.l+2); ABz.create(.a.l+2,.b.l+2)
-      AXx.create(.a.l+2,.b.l+1); AXy.create(.a.l+2,.b.l+1); AXz.create(.a.l+2,.b.l+1)
-      XXx.create(.a.l+1,.b.l+1); XXy.create(.a.l+1,.b.l+1); XXz.create(.a.l+1,.b.l+1)
-
-      ! Roots and weights
-      T = ZERO
-
-      .make_density_part(NAx,1,x,.a.l+3,.b.l+1)
-      .make_density_part(NAy,2,y,.a.l+3,.b.l+1)
-      .make_density_part(NAz,3,z,.a.l+3,.b.l+1)
-
-         .differentiate(NAx,"left ",AAx)
-         .differentiate(NAy,"left ",AAy)
-         .differentiate(NAz,"left ",AAz)
-
-         .differentiate(AAx,"left",ABx)
-         .differentiate(AAy,"left",ABy)
-         .differentiate(AAz,"left",ABz)
-
-         .differentiate(ABx,"right",AXx)
-         .differentiate(ABy,"right",AXy)
-         .differentiate(ABz,"right",AXz)
-
-         .differentiate(AXx,"left",XXx)
-         .differentiate(AXy,"left",XXy)
-         .differentiate(AXz,"left",XXz)
-      AXz.destroy; AXy.destroy; AXx.destroy
-      AXx.create(.a.l+2,.b.l+2); AXy.create(.a.l+2,.b.l+2); AXz.create(.a.l+2,.b.l+2)
-         .differentiate(AAx,"right",AXx)
-         .differentiate(AAy,"right",AXy)
-         .differentiate(AAz,"right",AXz)
-
-         T = T + XXx(ax,bx)*NAy(ay,by)*NAz(az,bz) &
-               + NAx(ax,bx)*XXy(ay,by)*NAz(az,bz) &
-               + NAx(ax,bx)*NAy(ay,by)*XXz(az,bz) &
-               + ABx(ax,bx)*AXy(ay,by)*NAz(az,bz) &
-               + AXx(ax,bx)*ABy(ay,by)*NAz(az,bz) &
-               + ABx(ax,bx)*NAy(ay,by)*AXz(az,bz) &
-               + AXx(ax,bx)*NAy(ay,by)*ABz(az,bz) &
-               + NAx(ax,bx)*ABy(ay,by)*AXz(az,bz) & 
-               + NAx(ax,bx)*AXy(ay,by)*ABz(az,bz) 
-               
-!         SOx = SOx + NAx(ax,bx)*AAy(ay,by)*BBz(az,bz) &
-!                   - NAx(ax,bx)*BBy(ay,by)*AAz(az,bz)  
-
-!         SOy = SOy + BBx(ax,bx)*NAy(ay,by)*AAz(az,bz) &
-!                   - AAx(ax,bx)*NAy(ay,by)*BBz(az,bz)  
-
-!         SOz = SOz + AAx(ax,bx)*BBy(ay,by)*NAz(az,bz) &
-!                   - BBx(ax,bx)*AAy(ay,by)*NAz(az,bz)  
-
-
-      ! Clean up
-      XXz.destroy; XXy.destroy; XXx.destroy
-      AXz.destroy; AXy.destroy; AXx.destroy
-      ABz.destroy; ABy.destroy; ABx.destroy
-!      BBz.destroy; BBy.destroy; BBx.destroy
-      AAz.destroy; AAy.destroy; AAx.destroy
-      NAz.destroy; NAy.destroy; NAx.destroy
-
-   end
-
-   make_normalised_pDppp_gg(T,x,y,z,spherical) 
-   ! Calculate S, a cartesian or spherical block of integrals.
-      T :: MAT{REAL}
-      x,y,z :: REAL
-      spherical :: BIN, optional
-
-      W :: MAT{REAL}*
-      is_spherical :: BIN
-
-      is_spherical = FALSE
-      if (present(spherical)) is_spherical = spherical
-
-      if (NOT is_spherical)then 
-         .make_pDppp_gg(T,x,y,z)
-      elseif  ( .a.l<2 AND .b.l<2 )  then
-         .make_pDppp_gg(T,x,y,z)
-      else
-         W.create(.a.n_comp,.b.n_comp)
-         .make_pDppp_gg(W,x,y,z)
-         .change_to_spherical(W,T)
-         W.destroy
-      end
-
-      T = T * .normalisation_factor
-
-   end
-
-   make_pDppp_gg(T,x,y,z)
-   ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
-   ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
-      T :: MAT{REAL}
-      x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,AXx,AXy,AXz,ABx,ABy,ABz,XXx,XXy,XXz :: MAT{REAL}*
-      fa,la,fb,lb :: INT
-
-      ! Indexing array limits
-      fa = .a.first_gaussian; la = .a.last_gaussian
-      fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
-
-      ! 2D integrals
-      NAx.create(.a.l+2,.b.l+4); NAy.create(.a.l+2,.b.l+4); NAz.create(.a.l+2,.b.l+4)
-      AAx.create(.a.l+2,.b.l+3); AAy.create(.a.l+2,.b.l+3); AAz.create(.a.l+2,.b.l+3)
-   !  BBx.create(.a.l+1,.b.l+1); BBy.create(.a.l+1,.b.l+1); BBz.create(.a.l+1,.b.l+1)
-      ABx.create(.a.l+2,.b.l+2); ABy.create(.a.l+2,.b.l+2); ABz.create(.a.l+2,.b.l+2)
-      AXx.create(.a.l+2,.b.l+1); AXy.create(.a.l+2,.b.l+1); AXz.create(.a.l+2,.b.l+1)
-      XXx.create(.a.l+1,.b.l+1); XXy.create(.a.l+1,.b.l+1); XXz.create(.a.l+1,.b.l+1)
-
-      ! Roots and weights
-      T = ZERO
-
-      .make_density_part(NAx,1,x,.a.l+1,.b.l+3)
-      .make_density_part(NAy,2,y,.a.l+1,.b.l+3)
-      .make_density_part(NAz,3,z,.a.l+1,.b.l+3)
-
-         .differentiate(NAx,"right",AAx)
-         .differentiate(NAy,"right",AAy)
-         .differentiate(NAz,"right",AAz)
-
-         .differentiate(AAx,"right",ABx)
-         .differentiate(AAy,"right",ABy)
-         .differentiate(AAz,"right",ABz)
-
-         .differentiate(ABx,"right",AXx)
-         .differentiate(ABy,"right",AXy)
-         .differentiate(ABz,"right",AXz)
-
-         .differentiate(AXx,"left",XXx)
-         .differentiate(AXy,"left",XXy)
-         .differentiate(AXz,"left",XXz)
-      AXz.destroy; AXy.destroy; AXx.destroy
-      AXx.create(.a.l+2,.b.l+2); AXy.create(.a.l+2,.b.l+2); AXz.create(.a.l+2,.b.l+2)
-         .differentiate(AAx,"left",AXx)
-         .differentiate(AAy,"left",AXy)
-         .differentiate(AAz,"left",AXz)
-
-         T = T + XXx(ax,bx)*NAy(ay,by)*NAz(az,bz) &
-               + NAx(ax,bx)*XXy(ay,by)*NAz(az,bz) &
-               + NAx(ax,bx)*NAy(ay,by)*XXz(az,bz) &
-               + ABx(ax,bx)*AXy(ay,by)*NAz(az,bz) &
-               + AXx(ax,bx)*ABy(ay,by)*NAz(az,bz) &
-               + ABx(ax,bx)*NAy(ay,by)*AXz(az,bz) &
-               + AXx(ax,bx)*NAy(ay,by)*ABz(az,bz) &
-               + NAx(ax,bx)*ABy(ay,by)*AXz(az,bz) & 
-               + NAx(ax,bx)*AXy(ay,by)*ABz(az,bz) 
-               
-!         SOx = SOx + NAx(ax,bx)*AAy(ay,by)*BBz(az,bz) &
-!                   - NAx(ax,bx)*BBy(ay,by)*AAz(az,bz)  
-
-!         SOy = SOy + BBx(ax,bx)*NAy(ay,by)*AAz(az,bz) &
-!                   - AAx(ax,bx)*NAy(ay,by)*BBz(az,bz)  
-
-!         SOz = SOz + AAx(ax,bx)*BBy(ay,by)*NAz(az,bz) &
-!                   - BBx(ax,bx)*AAy(ay,by)*NAz(az,bz)  
-
-
-      ! Clean up
-      XXz.destroy; XXy.destroy; XXx.destroy
-      AXz.destroy; AXy.destroy; AXx.destroy
-      ABz.destroy; ABy.destroy; ABx.destroy
-!      BBz.destroy; BBy.destroy; BBx.destroy
-      AAz.destroy; AAy.destroy; AAx.destroy
-      NAz.destroy; NAy.destroy; NAx.destroy
-
-   end
-
-   make_normalised_pppDp_SO_gg(Dx,Dy,Dz,x,y,z,spherical) 
-   ! Calculate S, a cartesian or spherical block of integrals.
-      Dx,Dy,Dz :: MAT{REAL}
-      x,y,z :: REAL
-      spherical :: BIN, optional
-
-      Wx,Wy,Wz :: MAT{REAL}*
-      is_spherical :: BIN
-
-      is_spherical = FALSE
-      if (present(spherical)) is_spherical = spherical
-
-      if (NOT is_spherical) then 
-         .make_pppDp_SO_gg(Dx,Dy,Dz,x,y,z)
-      elseif ( .a.l<2 AND .b.l<2 ) then   
-         .make_pppDp_SO_gg(Dx,Dy,Dz,x,y,z)
-      else
-         Wx.create(.a.n_comp,.b.n_comp)
-         Wy.create(.a.n_comp,.b.n_comp)
-         Wz.create(.a.n_comp,.b.n_comp)
-         .make_pppDp_SO_gg(Wx,Wy,Wz,x,y,z)
-         .change_to_spherical(Wx,Dx)
-         .change_to_spherical(Wy,Dy)
-         .change_to_spherical(Wz,Dz)
-         Wz.destroy
-         Wy.destroy
-         Wx.destroy
-      end
-
-      Dx = Dx * .normalisation_factor
-      Dy = Dy * .normalisation_factor
-      Dz = Dz * .normalisation_factor
-
-   end
-
-   make_pppDp_SO_gg(SOx,SOy,SOz,x,y,z)
-   ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
-   ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
-      SOx,SOy,SOz :: MAT{REAL}
-      x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}*
-      fa,la,fb,lb :: INT
-
-      ! Indexing array limits
-      fa = .a.first_gaussian; la = .a.last_gaussian
-      fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
-
-      NAx.create(.a.l+4,.b.l+2); NAy.create(.a.l+4,.b.l+2); NAz.create(.a.l+4,.b.l+2)
-      AAx.create(.a.l+3,.b.l+2); AAy.create(.a.l+3,.b.l+2); AAz.create(.a.l+3,.b.l+2)
-      BBx.create(.a.l+4,.b.l+1); BBy.create(.a.l+4,.b.l+1); BBz.create(.a.l+4,.b.l+1)
-      ABx.create(.a.l+2,.b.l+2); ABy.create(.a.l+2,.b.l+2); ABz.create(.a.l+2,.b.l+2)
-      A2x.create(.a.l+1,.b.l+2); A2y.create(.a.l+1,.b.l+2); A2z.create(.a.l+1,.b.l+2)
-      B2x.create(.a.l+2,.b.l+1); B2y.create(.a.l+2,.b.l+1); B2z.create(.a.l+2,.b.l+1)
-
-      ! Assemble the integrals
-       SOx = ZERO; SOy = ZERO; SOz = ZERO
-
-         .make_density_part(NAx,1,x,.a.l+3,.b.l+1)
-         .make_density_part(NAy,2,y,.a.l+3,.b.l+1)
-         .make_density_part(NAz,3,z,.a.l+3,.b.l+1)
-
-         .differentiate(NAx,"left",AAx)
-         .differentiate(NAy,"left",AAy)
-         .differentiate(NAz,"left",AAz)
-         
-         .differentiate(NAx,"right",BBx)
-         .differentiate(NAy,"right",BBy)
-         .differentiate(NAz,"right",BBz)
-         
-         .differentiate(AAx,"left",ABx)
-         .differentiate(AAy,"left",ABy)
-         .differentiate(AAz,"left",ABz)
-
-         .differentiate(ABx,"left",A2x) 
-         .differentiate(ABy,"left",A2y)
-         .differentiate(ABz,"left",A2z)
-
-         .differentiate(ABx,"right",B2x)
-         .differentiate(ABy,"right",B2y)
-         .differentiate(ABz,"right",B2z)
-
-!         SOx = SOx + ABx(ax,bx)*A2y(ay,by)*B2z(az,bz) &
-!                   - ABx(ax,bx)*B2y(ay,by)*A2z(az,bz)  
-          SOx = SOx + ABx(ax,bx)*AAy(ay,by)*BBz(az,bz) &
-                    - ABx(ax,bx)*BBy(ay,by)*AAz(az,bz) &
-                    + NAx(ax,bx)*A2y(ay,by)*BBz(az,bz) &
-                    - NAx(ax,bx)*B2y(ay,by)*AAz(az,bz) &
-                    + NAx(ax,bx)*AAy(ay,by)*B2z(az,bz) &
-                    - NAx(ax,bx)*BBy(ay,by)*A2z(az,bz)  
- 
-!         SOy = SOy + B2x(ax,bx)*ABy(ay,by)*A2z(az,bz) &
-!                   - A2x(ax,bx)*ABy(ay,by)*B2z(az,bz)  
-          SOy = SOy + B2x(ax,bx)*NAy(ay,by)*AAz(az,bz) &
-                    - A2x(ax,bx)*NAy(ay,by)*BBz(az,bz) &
-                    + BBx(ax,bx)*ABy(ay,by)*AAz(az,bz) &
-                    - AAx(ax,bx)*ABy(ay,by)*BBz(az,bz) &
-                    + BBx(ax,bx)*NAy(ay,by)*A2z(az,bz) &
-                    - AAx(ax,bx)*NAy(ay,by)*B2z(az,bz)  
-
-!         SOz = SOz + A2x(ax,bx)*B2y(ay,by)*ABz(az,bz) &
-!                   - B2x(ax,bx)*A2y(ay,by)*ABz(az,bz)  
-          SOz = SOz + A2x(ax,bx)*BBy(ay,by)*NAz(az,bz) &
-                    - B2x(ax,bx)*AAy(ay,by)*NAz(az,bz) &
-                    + AAx(ax,bx)*B2y(ay,by)*NAz(az,bz) &
-                    - BBx(ax,bx)*A2y(ay,by)*NAz(az,bz) &
-                    + AAx(ax,bx)*BBy(ay,by)*ABz(az,bz) &
-                    - BBx(ax,bx)*AAy(ay,by)*ABz(az,bz)  
-
-      A2z.destroy; A2y.destroy; A2x.destroy
-      ABz.destroy; ABy.destroy; ABx.destroy
-      B2z.destroy; B2y.destroy; B2x.destroy
-      BBz.destroy; BBy.destroy; BBx.destroy
-!      A2z.destroy; A2y.destroy; A2x.destroy
-!      B2z.destroy; B2y.destroy; B2x.destroy
-      AAz.destroy; AAy.destroy; AAx.destroy
-      NAz.destroy; NAy.destroy; NAx.destroy
-
-   end
-
-   make_normalised_pDppp_SO_gg(Dx,Dy,Dz,x,y,z,spherical) 
-   ! Calculate S, a cartesian or spherical block of integrals.
-      Dx,Dy,Dz :: MAT{REAL}
-      x,y,z :: REAL
-      spherical :: BIN, optional
-
-      Wx,Wy,Wz :: MAT{REAL}*
-      is_spherical :: BIN
-
-      is_spherical = FALSE
-      if (present(spherical)) is_spherical = spherical
-
-      if (NOT is_spherical) then 
-         .make_pDppp_SO_gg(Dx,Dy,Dz,x,y,z)
-      elseif ( .a.l<2 AND .b.l<2 ) then   
-         .make_pDppp_SO_gg(Dx,Dy,Dz,x,y,z)
-      else
-         Wx.create(.a.n_comp,.b.n_comp)
-         Wy.create(.a.n_comp,.b.n_comp)
-         Wz.create(.a.n_comp,.b.n_comp)
-         .make_pDppp_SO_gg(Wx,Wy,Wz,x,y,z)
-         .change_to_spherical(Wx,Dx)
-         .change_to_spherical(Wy,Dy)
-         .change_to_spherical(Wz,Dz)
-         Wz.destroy
-         Wy.destroy
-         Wx.destroy
-      end
-
-      Dx = Dx * .normalisation_factor
-      Dy = Dy * .normalisation_factor
-      Dz = Dz * .normalisation_factor
-
-   end
-
-   make_pDppp_SO_gg(SOx,SOy,SOz,x,y,z)
-   ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
-   ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
-      SOx,SOy,SOz :: MAT{REAL}
-      x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}*
-      fa,la,fb,lb :: INT
-
-      ! Indexing array limits
-      fa = .a.first_gaussian; la = .a.last_gaussian
-      fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
-
-      NAx.create(.a.l+2,.b.l+4); NAy.create(.a.l+2,.b.l+4); NAz.create(.a.l+2,.b.l+4)
-      BBx.create(.a.l+2,.b.l+3); BBy.create(.a.l+2,.b.l+3); BBz.create(.a.l+2,.b.l+3)
-      AAx.create(.a.l+1,.b.l+4); AAy.create(.a.l+1,.b.l+4); AAz.create(.a.l+1,.b.l+4)
-      ABx.create(.a.l+2,.b.l+2); ABy.create(.a.l+2,.b.l+2); ABz.create(.a.l+2,.b.l+2)
-      A2x.create(.a.l+1,.b.l+2); A2y.create(.a.l+1,.b.l+2); A2z.create(.a.l+1,.b.l+2)
-      B2x.create(.a.l+2,.b.l+1); B2y.create(.a.l+2,.b.l+1); B2z.create(.a.l+2,.b.l+1)
-
-      ! Assemble the integrals
-       SOx = ZERO; SOy = ZERO; SOz = ZERO
-
-         .make_density_part(NAx,1,x,.a.l+1,.b.l+3)
-         .make_density_part(NAy,2,y,.a.l+1,.b.l+3)
-         .make_density_part(NAz,3,z,.a.l+1,.b.l+3)
-
-         .differentiate(NAx,"right",BBx)
-         .differentiate(NAy,"right",BBy)
-         .differentiate(NAz,"right",BBz)
-         
-         .differentiate(NAx,"left",AAx)
-         .differentiate(NAy,"left",AAy)
-         .differentiate(NAz,"left",AAz)
-         
-         .differentiate(BBx,"right",ABx)
-         .differentiate(BBy,"right",ABy)
-         .differentiate(BBz,"right",ABz)
-
-         .differentiate(ABx,"left",A2x) 
-         .differentiate(ABy,"left",A2y)
-         .differentiate(ABz,"left",A2z)
-
-         .differentiate(ABx,"right",B2x)
-         .differentiate(ABy,"right",B2y)
-         .differentiate(ABz,"right",B2z)
-
-!         SOx = SOx + ABx(ax,bx)*A2y(ay,by)*B2z(az,bz) &
-!                   - ABx(ax,bx)*B2y(ay,by)*A2z(az,bz)  
-          SOx = SOx + ABx(ax,bx)*AAy(ay,by)*BBz(az,bz) &
-                    - ABx(ax,bx)*BBy(ay,by)*AAz(az,bz) &
-                    + NAx(ax,bx)*A2y(ay,by)*BBz(az,bz) &
-                    - NAx(ax,bx)*B2y(ay,by)*AAz(az,bz) &
-                    + NAx(ax,bx)*AAy(ay,by)*B2z(az,bz) &
-                    - NAx(ax,bx)*BBy(ay,by)*A2z(az,bz)  
- 
-!         SOy = SOy + B2x(ax,bx)*ABy(ay,by)*A2z(az,bz) &
-!                   - A2x(ax,bx)*ABy(ay,by)*B2z(az,bz)  
-          SOy = SOy + B2x(ax,bx)*NAy(ay,by)*AAz(az,bz) &
-                    - A2x(ax,bx)*NAy(ay,by)*BBz(az,bz) &
-                    + BBx(ax,bx)*ABy(ay,by)*AAz(az,bz) &
-                    - AAx(ax,bx)*ABy(ay,by)*BBz(az,bz) &
-                    + BBx(ax,bx)*NAy(ay,by)*A2z(az,bz) &
-                    - AAx(ax,bx)*NAy(ay,by)*B2z(az,bz)  
-
-!         SOz = SOz + A2x(ax,bx)*B2y(ay,by)*ABz(az,bz) &
-!                   - B2x(ax,bx)*A2y(ay,by)*ABz(az,bz)  
-          SOz = SOz + A2x(ax,bx)*BBy(ay,by)*NAz(az,bz) &
-                    - B2x(ax,bx)*AAy(ay,by)*NAz(az,bz) &
-                    + AAx(ax,bx)*B2y(ay,by)*NAz(az,bz) &
-                    - BBx(ax,bx)*A2y(ay,by)*NAz(az,bz) &
-                    + AAx(ax,bx)*BBy(ay,by)*ABz(az,bz) &
-                    - BBx(ax,bx)*AAy(ay,by)*ABz(az,bz)  
-
-      A2z.destroy; A2y.destroy; A2x.destroy
-      ABz.destroy; ABy.destroy; ABx.destroy
-      B2z.destroy; B2y.destroy; B2x.destroy
-      BBz.destroy; BBy.destroy; BBx.destroy
-!      A2z.destroy; A2y.destroy; A2x.destroy
-!      B2z.destroy; B2y.destroy; B2x.destroy
-      AAz.destroy; AAy.destroy; AAx.destroy
-      NAz.destroy; NAy.destroy; NAx.destroy
-
-   end
-
 !!!! new stuff on ft
 !
-!   make_normalised_ft_00_c(ft_ab,h,k,l)
-!   ! Make the normalised kinetic integrals "T". 
+!   make_normalized_ft_00_c(ft_ab,h,k,l)
+!   ! Make the normalized kinetic integrals "T". 
 !     ft_ab :: MAT{CPX}
 !      h,k,l :: REAL
 !      .make_dkh_ft_00(ft_ab,h,k,l)
@@ -6290,7 +5568,7 @@ contains
 !   ! Calculates the Fourier transform for a product of two primitive
 !   ! gaussian functions, evaluated at a series of k points "k_pts".
 !   ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
-!   ! Specialised routine for .a.l=0 and .b.l=0.
+!   ! Specialized routine for .a.l=0 and .b.l=0.
 !      ft :: MAT{CPX}
 !      h,k,l :: REAL, target
 !      
@@ -6341,7 +5619,7 @@ contains
 !
 !   end
 !
-!   make_normalised_ft_v2(ft_ab,h,k,l,spherical) 
+!   make_normalized_ft_v2(ft_ab,h,k,l,spherical) 
 !   ! Calculate S, a cartesian or spherical block of integrals.
 !      ft_ab :: MAT{CPX}
 !      h,k,l :: REAL
@@ -6354,27 +5632,27 @@ contains
 !      if (present(spherical)) is_spherical = spherical
 !
 !      if (NOT is_spherical) then
-!         .make_normalised_ft_v2_c(ft_ab,h,k,l)
+!         .make_normalized_ft_v2_c(ft_ab,h,k,l)
 !      elseif  ( .a.l<2 AND .b.l<2 )  then
 !         .make_dkh_ft_v2(ft_ab,h,k,l)
-!         .normalise(ft_ab,is_spherical)
+!         .normalize(ft_ab,is_spherical)
 !      else
 !         W.create(.a.n_comp,.b.n_comp)
-!  !       .make_normalised_ft_v2_c(W,h,k,l)
+!  !       .make_normalized_ft_v2_c(W,h,k,l)
 !         .make_dkh_ft_v2(W,h,k,l)
-!         .normalise(W,is_spherical)
+!         .normalize(W,is_spherical)
 !         .change_to_spherical(W,ft_ab)
 !         W.destroy
 !      end
 !
 !   end
 !
-!   make_normalised_ft_v2_c(ft_ab,h,k,l)
-!   ! Make the normalised kinetic integrals "T". 
+!   make_normalized_ft_v2_c(ft_ab,h,k,l)
+!   ! Make the normalized kinetic integrals "T". 
 !      ft_ab :: MAT{CPX}
 !      h,k,l :: REAL
 !      .make_dkh_ft_v2(ft_ab,h,k,l)
-!      .normalise(ft_ab)
+!      .normalize(ft_ab)
 !   end
 !
 !   make_dkh_ft_v2(ft,h1,h2,h3) 
@@ -6464,7 +5742,7 @@ contains
 !
 !   end
 !
-!   make_normalised_pftp_v2(ft_ab,h,k,l,spherical) 
+!   make_normalized_pftp_v2(ft_ab,h,k,l,spherical) 
 !   ! Calculate S, a cartesian or spherical block of integrals.
 !      ft_ab :: MAT{CPX}
 !      h,k,l :: REAL
@@ -6477,22 +5755,22 @@ contains
 !      if (present(spherical)) is_spherical = spherical
 !
 !      if (NOT is_spherical)then 
-!         .make_normalised_pftp_v2_c(ft_ab,h,k,l)
+!         .make_normalized_pftp_v2_c(ft_ab,h,k,l)
 !      elseif ( .a.l<2 AND .b.l<2 ) then  
 !         .make_dkh_ft_dadb_v2(ft_ab,h,k,l)
-!         .normalise(ft_ab,is_spherical)
+!         .normalize(ft_ab,is_spherical)
 !      else
 !         W.create(.a.n_comp,.b.n_comp)
 !         .make_dkh_ft_dadb_v2(W,h,k,l)
-!         .normalise(W,is_spherical)
+!         .normalize(W,is_spherical)
 !         .change_to_spherical(W,ft_ab)
 !         W.destroy
 !      end
 !
 !   end
 !
-!   make_normalised_pftp_v2_c(ft_ab,h,k,l)
-!   ! Make the normalised kinetic integrals "T". 
+!   make_normalized_pftp_v2_c(ft_ab,h,k,l)
+!   ! Make the normalized kinetic integrals "T". 
 !      ft_ab :: MAT{CPX}
 !      h,k,l :: REAL
 !      .make_dkh_ft_dadb_v2(ft_ab,h,k,l)
@@ -6849,7 +6127,7 @@ contains
 
 !!! new stuff on ft
 
-   normalise_ft(ft)
+   normalize_ft(ft)
    ! Multiplies the ft product at a series of k points, by the normalisation
    ! factors for the two gaussian shells.
      ft :: MAT{CPX}, target
@@ -6880,8 +6158,8 @@ contains
      
    end
 
-   make_normalised_ft_00(ft_ab,h,k,l)
-   ! Make the normalised kinetic integrals "T". 
+   make_normalized_ft_00(ft_ab,h,k,l)
+   ! Make the normalized kinetic integrals "T". 
       ft_ab :: MAT{CPX}
       h,k,l :: REAL
       .make_dkh_ft_00(ft_ab,h,k,l)
@@ -6892,7 +6170,7 @@ contains
    ! Calculates the Fourier transform for a product of two primitive
    ! gaussian functions, evaluated at a series of k points "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
-   ! Specialised routine for .a.l=0 and .b.l=0.
+   ! Specialized routine for .a.l=0 and .b.l=0.
       ft :: MAT{CPX}
       h,k,l :: REAL, target
       
@@ -6935,7 +6213,7 @@ contains
 
    end
 
-   make_normalised_ft_v2(ft_ab,h,k,l,spherical) 
+   make_normalized_ft_v2(ft_ab,h,k,l,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       ft_ab :: MAT{CPX}
       h,k,l :: REAL
@@ -6956,7 +6234,7 @@ contains
          .make_dkh_ft_v2(W,h,k,l)
          .change_to_spherical(W,ft_ab)
          W.destroy
-!         .normalise_ft(ft_ab)
+!         .normalize_ft(ft_ab)
 !         if (.a.l >=2 AND .b.l>=2) then
 !            ft_ab = ft_ab * .normalisation_factor
 !         end if   
@@ -6966,8 +6244,8 @@ contains
 
    end
 
-!   make_normalised_ft_v2(ft_ab,h,k,l)
-!   ! Make the normalised kinetic integrals "T". 
+!   make_normalized_ft_v2(ft_ab,h,k,l)
+!   ! Make the normalized kinetic integrals "T". 
 !      ft_ab :: MAT{CPX}
 !      h,k,l :: REAL
 !      .make_dkh_ft_v2(ft_ab,h,k,l)
@@ -7046,7 +6324,7 @@ contains
 
    end
 
-   make_normalised_pftp_v2(ft_ab,h,k,l,spherical) 
+   make_normalized_pftp_v2(ft_ab,h,k,l,spherical) 
    ! Calculate S, a cartesian or spherical block of integrals.
       ft_ab :: MAT{CPX}
       h,k,l :: REAL
@@ -7070,15 +6348,15 @@ contains
 !         if (.a.l >=2 AND .b.l>=2) then
 !            ft_ab = ft_ab * .normalisation_factor
 !         end if   
-!         .normalise_ft(ft_ab)
+!         .normalize_ft(ft_ab)
       end
 
        ft_ab = ft_ab * .normalisation_factor
 
    end
 
-!   make_normalised_pftp_v2(ft_ab,h,k,l)
-!   ! Make the normalised kinetic integrals "T". 
+!   make_normalized_pftp_v2(ft_ab,h,k,l)
+!   ! Make the normalized kinetic integrals "T". 
 !      ft_ab :: MAT{CPX}
 !      h,k,l :: REAL
 !      .make_dkh_ft_dadb_v2(ft_ab,h,k,l)

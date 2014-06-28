@@ -20,7 +20,7 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{vec_{intrinsic}}.foo 4376 2014-05-16 18:09:06Z dylan_ $
+! $Id: vec{vec_{intrinsic}}.foo 4242 2014-01-12 05:24:37Z dylan_ $
 !---------------------------------------------------------------------------
 
 virtual module VEC{VEC_{INTRINSIC}}
@@ -29,11 +29,11 @@ virtual module VEC{VEC_{INTRINSIC}}
 
 contains
 
-!  =================
-!  Memory allocation
-!  =================
+!  ==========
+!  Allocation
+!  ==========
 
-   create(dim) ::: leaky, PURE
+   create(dim) ::: leaky
    ! Create space for object
       self :: PTR
       dim :: INT, IN
@@ -54,10 +54,10 @@ contains
 
    end
 
-   create(dim,dimv) ::: leaky, PURE
+   create(dim,dimv) ::: leaky
    ! Create space for a vector of vectors
       self :: PTR
-      dim,dimv :: INT, IN
+      dim,dimv :: INT
 
       status :: INT
 
@@ -76,11 +76,11 @@ contains
 
    end
 
-   create(dim,bounds) ::: leaky, PURE
+   create(dim,bounds) ::: leaky
    ! Create space for a vector of vectors
       self :: PTR
-      dim :: INT, IN
-      bounds :: VEC{INT}(2), IN
+      dim :: INT
+      bounds :: VEC{INT}(2)
 
       status :: INT
 
@@ -99,10 +99,10 @@ contains
 
    end
 
-   create(bounds1) ::: leaky, PURE
+   create(bounds1) ::: leaky
    ! Create space for a vector of vectors
       self :: PTR
-      bounds1 :: VEC{INT}(2), IN
+      bounds1 :: VEC{INT}(2)
 
       status :: INT
 
@@ -118,10 +118,10 @@ contains
 
    end
 
-   create(bounds1,bounds2) ::: leaky, PURE
+   create(bounds1,bounds2) ::: leaky
    ! Create space for a vector of vectors
       self :: PTR
-      bounds1,bounds2 :: VEC{INT}(2), IN
+      bounds1,bounds2 :: VEC{INT}(2)
 
       status :: INT
 
@@ -138,10 +138,9 @@ contains
 
    end
 
-   create_vec(dimv) ::: leaky, PURE
+   create_vec(dimv) ::: leaky
    ! Allocate the pointer parts
-      self :: INOUT
-      dimv :: INT, IN
+      dimv :: INT
 
       i :: INT
 
@@ -151,32 +150,17 @@ contains
 
    end
 
-   create_vec(bounds) ::: leaky, PURE
+   create_vec(bounds) ::: leaky
    ! Allocate the pointer parts
-      self :: INOUT
-      bounds :: VEC{INT}(2), IN
-
+      bounds :: VEC{INT}(2)
       i :: INT
-
       do i = 1,.dim
          self(i).element.create(bounds)
       end
-
    end
 
-   create_copy(vec) ::: leaky, PURE
-   ! Create a replica copy of "vec".
-      self :: PTR
-      vec :: VEC{VEC_{INTRINSIC}}, IN
-
-      .create(vec.dim)
-      .copy(vec)
-
-   end
-
-   nullify_ptr_part ::: pure
+   nullify_ptr_part
    ! Nullify the pointer parts
-      self :: INOUT
 
       s :: INT
 
@@ -186,7 +170,7 @@ contains
 
    end
 
-   destroy ::: leaky, PURE
+   destroy ::: leaky
    ! Destroy space for object
       self :: PTR
 
@@ -206,7 +190,7 @@ contains
 
    end
 
-   destroy_ptr_part ::: leaky, PURE
+   destroy_ptr_part ::: leaky
    ! Destroy the pointer parts
       self :: PTR
 
@@ -218,22 +202,21 @@ contains
 
    end
 
-   max_element_dim result (res) ::: pure
-   ! Return the maximum element dimension
-      self :: IN
-      res :: INT
+!  ============
+!  Copy methods
+!  ============
 
-      s :: INT
+   create_copy(v) ::: leaky, pure
+   ! Create a replica copy of "v".
+      self :: PTR
+      v :: VEC{VEC_{INTRINSIC}}, IN
 
-      res = 0
-
-      do s = 1,.dim
-         res = max(res,self(s).element.dim)
-      end
+      .create(v.dim)
+      .copy(v)
 
    end
 
-   copy(v) ::: leaky, PURE
+   copy(v) ::: leaky, pure
    ! Make a copy of "v".
       self :: OUT
       v :: VEC{VEC_{INTRINSIC}}, IN
@@ -245,8 +228,11 @@ contains
       .nullify_ptr_part
 
       do i = 1,v.dim
+
          if (v(i).element.destroyed) cycle
+
          self(i).element.create_copy(v(i).element)
+
       end
 
    end
@@ -255,7 +241,7 @@ contains
 !  Shrinking and expansion
 !  =======================
 
-   shrink(dim) ::: leaky, PURE
+   shrink(dim) ::: leaky
    ! Shrinks self to dimension "dim". Contents are retained.
       self :: PTR
       dim :: INT, IN
@@ -267,27 +253,33 @@ contains
       i,old_size :: INT
       old :: VEC{VEC_{INTRINSIC}}*
 
+      ! Shrink?
       if (dim==.dim) return
 
-      old     => self
+      ! Save self
+      old => self
       old_size = old.dim
 
-      nullify(self)
+      ! Shrink
       self.create(dim)
+
+      ! Assign saved parts
       do i = 1,dim
-         self(i).element => old(i).element
-         nullify(old(i).element)
+        self(i).element => old(i).element
+        nullify(old(i).element)
+      end
+
+      ! Destroy end
+      do i = dim+1,old_size
+        old(i).element.destroy
       end
 
       ! Clean
-      do i = dim+1,old_size
-         old(i).element.destroy
-      end
       old.destroy
 
    end
 
-   expand(dim) ::: leaky, PURE
+   expand(dim) ::: leaky
    ! Expands self to dimension "dim". Contents are retained.
    ! NOTE: pointer assignment is used to retain contents.
    ! NOTE: Elements which are added are nullified.
@@ -306,17 +298,23 @@ contains
         ENSURE(lbound(self,1)==1,"lbound must be 1")
         ENSURE(dim>=.dim, "dim not large enough")
 
+        ! Save self
         old => self
         old_size = old.dim
+
+        ! Expand
         self.create(dim)
 
+        ! Copy over
         do i = 1,old_size
            self(i).element => old(i).element
            nullify(old(i).element)
         end
 
+        ! Clean
         old.destroy
 
+        ! Nullify extension
         do i = old_size+1,dim
            nullify(self(i).element)
         end
@@ -325,7 +323,7 @@ contains
 
    end
 
-   append(v) ::: leaky, PURE
+   append(v) ::: leaky
    ! Expands self to the required dimension, and append the contents
    ! of encapsulated vector "v". 
       self :: PTR
@@ -340,12 +338,12 @@ contains
       .expand(dim+v.dim)
 
       do i = 1,v.dim
-         self(dim+i).element.create_copy(v(i).element)
+        self(dim+i).element.create_copy(v(i).element)
       end
 
    end
 
-   append(value) ::: leaky, PURE
+   append(value) ::: leaky
    ! Expands self to the required dimension, and append the single
    ! "value" onto the end of self.
       self :: PTR
@@ -363,12 +361,11 @@ contains
 
    end
 
-   append_listed_to(res,list) ::: leaky, PURE
+   append_listed_to(res,list) ::: leaky
    ! Append together (i.e. concatenate) the vectors in self whose
    ! indices are listed in "list".
-      self :: IN
-      list :: VEC{INT}, IN
       res :: VEC{INTRINSIC}*
+      list :: VEC{INT}, IN
 
    ENSURE(list.dim>=1,"list must not have zero dimension")
    ENSURE(maxval(list)<=.dim,"some elements of list are too large")
@@ -382,6 +379,24 @@ contains
       do i = 2,list.dim
          l = list(i)
          res.append(self(l).element)
+      end
+
+   end
+
+!  ===============
+!  General methods
+!  ===============
+
+   max_element_dim result (res)
+   ! Return the maximum element dimension
+      self :: IN
+      res :: INT
+
+      s :: INT
+
+      res = 0
+      do s = 1,.dim
+         res = max(res,self(s).element.dim)
       end
 
    end

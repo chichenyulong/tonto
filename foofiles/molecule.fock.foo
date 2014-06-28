@@ -79,7 +79,7 @@ contains
 
            .::make_u_fock(P,F,direct,core,r12)
 
-        case ("gchf","xray_gchf")
+        case ("gchf")
 
            .::make_gc_fock(P,F,direct,core,r12)
            .::add_gc_so_fock(P,F)
@@ -723,7 +723,7 @@ contains
       P_max  = maxval(max_P)
       IP_max = maxval(.max_I) * P_max
 
-      ! Initialise J, K
+      ! Initialize J, K
       J = ZERO
       K = ZERO
 
@@ -1501,10 +1501,6 @@ contains
    ! This does not use th JK matrix engine
       J,K,P :: OPMATRIX*
 
-   ENSURE(J.created("unrestricted"),"unrestricted J not created")
-   ENSURE(K.created("unrestricted"),"unrestricted K not created")
-   ENSURE(P.created("unrestricted"),"unrestricted P not created")
-
       PP :: MAT{REAL}*
       I,max_P :: VEC{REAL}*
       sh4s,sh4n :: SHELL1QUARTET
@@ -1632,9 +1628,6 @@ contains
       J,K,P :: OPMATRIX*
 
    ENSURE(.precomputed_basis_shellpair.created,"no precomputed shell pair information")
-   ENSURE(J.created("unrestricted"),"unrestricted J not created")
-   ENSURE(K.created("unrestricted"),"unrestricted K not created")
-   ENSURE(P.created("unrestricted"),"unrestricted P not created")
 
       PA,PB,JA,JB :: VEC{VEC_{REAL}}*
       max_P,JAab,JBab,JAcd,JBcd,PAab,PBab,PAcd,PBcd :: VEC{REAL}*
@@ -1666,7 +1659,7 @@ contains
       P_max  = maxval(max_P)
       IP_max = maxval(.max_I) * P_max
 
-      ! Initialise J, K
+      ! Initialize J, K
       J.alpha = ZERO; J.beta = ZERO
       K.alpha = ZERO; K.beta = ZERO
 
@@ -2708,11 +2701,11 @@ contains
          else if (sh.a.l==0) then                              ! XS case
 
             fb = fb - 1
-            if (sh.l_max<2) then                               ! No normalisers
+            if (sh.l_max<2) then                               ! No normalizers
                do b = 1,sh.b.n_comp
                   ab(b) = P(fa,fb+b)
                end
-            else                                               ! Include normalisers
+            else                                               ! Include normalizers
                do b = 1,sh.b.n_comp
                   ab(b) = P(fa,fb+b)
                end
@@ -2721,11 +2714,11 @@ contains
          else if (sh.b.l==0) then                              ! SX case
 
             fa = fa - 1
-            if (sh.l_max<2) then                               ! No normalisers
+            if (sh.l_max<2) then                               ! No normalizers
                do a = 1,sh.a.n_comp
                   ab(a) = P(fa+a,fb)
                end
-            else                                               ! Include normalisers
+            else                                               ! Include normalizers
                do a = 1,sh.a.n_comp
                   ab(a) = P(fa+a,fb)
                end
@@ -2771,7 +2764,7 @@ contains
                      end
                   end
 
-               else                                            ! Include normalisers
+               else                                            ! Include normalizers
 
                   k = 0
                   do b = 1,sh.b.n_comp
@@ -2807,7 +2800,7 @@ contains
 
                end
 
-               if (sh.l_max<2) then                            ! No normalisers
+               if (sh.l_max<2) then                            ! No normalizers
 
                   do b = 1,sh.b.n_comp
                      xb = bx(b); yb = by(b); zb = bz(b)
@@ -2834,7 +2827,7 @@ contains
                      end
                   end
 
-               else                                            ! Include normalisers
+               else                                            ! Include normalizers
 
                   k = 0
                   do b = 1,sh.b.n_comp
@@ -2881,7 +2874,7 @@ contains
 
                end
 
-               if (sh.l_max<2) then                           ! No normalisers
+               if (sh.l_max<2) then                           ! No normalizers
 
                   do a = 1,sh.a.n_comp
                      xa = ax(a); ya = ay(a); za = az(a)
@@ -2908,7 +2901,7 @@ contains
                      end
                   end
 
-               else                                           ! Include normalisers
+               else                                           ! Include normalizers
 
                   k = 0
                   do b = 1,sh.b.n_comp
@@ -2955,11 +2948,10 @@ contains
    forward_transfer(JJ,J) ::: leaky
    ! Apply the horizontal recursion relation (i.e. the transfer
    ! relation) to shellpair vector "JJ" to produce the matrix "J".
-   ! This is a post-processing operation to shift momentum from
+   ! This is a post-processing operation to shift momentum from\
    ! center a -> b.
       JJ :: VEC{VEC_{REAL}}
       J :: MAT{REAL}
-
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.created,"no atom info")
    ENSURE(JJ.dim==.n_shell_pairs,"wrong size, JJ")
@@ -3128,7 +3120,7 @@ contains
          end
       end
 
-      DIE_IF(NOT found,"atom_a was not found in any atom_group")
+      ENSURE(found,"atom_a was not found in any atom_group")
 
       if (present(group)) then
          if (res) then; group = n
@@ -3167,7 +3159,7 @@ contains
          end
       end
 
-      DIE_IF(NOT found,"atom_a was not found in any atom_group")
+      ENSURE(found,"atom_a was not found in any atom_group")
 
    end
 
@@ -5434,7 +5426,7 @@ contains
             SHELL1QUARTET::make_ERI(sh4n,I)
             sh4n.destroy_cd
 
-            ! Now symmetrise the integrals
+            ! Now symmetrize the integrals
             abcd = 0
             do d = fd,ld
             do c = fc,lc
