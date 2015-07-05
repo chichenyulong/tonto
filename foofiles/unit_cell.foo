@@ -1500,10 +1500,10 @@ contains
       v  = .volume
       dv = .volume_error
 
-      stdout.show("_volume                            ",v,dv)
+      stdout.show("_cell_volume                       ",v,dv,dots=FALSE)
 
       stdout.flush
-      stdout.show("_cell_formula_units_Z              ",Z.to_str("f10.5"))
+      stdout.show("_cell_formula_units_Z              ",Z.to_str("f10.5"),dots=FALSE)
 
       stdout.flush
 

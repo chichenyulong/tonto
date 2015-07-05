@@ -1125,12 +1125,12 @@ contains
       there :: VEC{BIN}(6)
 
       ! Find reflections
-      cif.find_looped_item("_diffrn_refln_index_h",there(1))
-      cif.find_looped_item("_diffrn_refln_index_k",there(2))
-      cif.find_looped_item("_diffrn_refln_index_l",there(3))
-      cif.find_looped_item("_diffrn_refln_F_calc" ,there(4))
-      cif.find_looped_item("_diffrn_refln_F_meas" ,there(5))
-      cif.find_looped_item("_diffrn_refln_F_sigma",there(6))
+      cif.find_looped_item("_refln_index_h",there(1))
+      cif.find_looped_item("_refln_index_k",there(2))
+      cif.find_looped_item("_refln_index_l",there(3))
+      cif.find_looped_item("_refln_F_calc" ,there(4))
+      cif.find_looped_item("_refln_F_meas" ,there(5))
+      cif.find_looped_item("_refln_F_sigma",there(6))
 
       res = all(there)
 
@@ -1144,12 +1144,12 @@ contains
       Fp,Fm,Sg :: VEC{REAL}*
 
       ! Read
-      cif.read_looped_item("_diffrn_refln_index_h",h)
-      cif.read_looped_item("_diffrn_refln_index_k",k)
-      cif.read_looped_item("_diffrn_refln_index_l",l)
-      cif.read_looped_item("_diffrn_refln_F_calc" ,Fp)
-      cif.read_looped_item("_diffrn_refln_F_meas" ,Fm)
-      cif.read_looped_item("_diffrn_refln_F_sigma",Sg)
+      cif.read_looped_item("_refln_index_h",h)
+      cif.read_looped_item("_refln_index_k",k)
+      cif.read_looped_item("_refln_index_l",l)
+      cif.read_looped_item("_refln_F_calc" ,Fp)
+      cif.read_looped_item("_refln_F_meas" ,Fm)
+      cif.read_looped_item("_refln_F_sigma",Sg)
 
       ! Create and assign
       .reflections.destroy
@@ -1179,12 +1179,12 @@ contains
       there :: VEC{BIN}(6)
 
       ! Find reflections
-      cif.find_looped_item("_diffrn_refln_index_h",there(1))
-      cif.find_looped_item("_diffrn_refln_index_k",there(2))
-      cif.find_looped_item("_diffrn_refln_index_l",there(3))
-      cif.find_looped_item("_diffrn_refln_F_squared_calc" ,there(4))
-      cif.find_looped_item("_diffrn_refln_F_squared_meas" ,there(5))
-      cif.find_looped_item("_diffrn_refln_F_squared_sigma",there(6))
+      cif.find_looped_item("_refln_index_h",there(1))
+      cif.find_looped_item("_refln_index_k",there(2))
+      cif.find_looped_item("_refln_index_l",there(3))
+      cif.find_looped_item("_refln_F_squared_calc" ,there(4))
+      cif.find_looped_item("_refln_F_squared_meas" ,there(5))
+      cif.find_looped_item("_refln_F_squared_sigma",there(6))
 
       res = all(there)
 
@@ -1198,12 +1198,12 @@ contains
       Fp,Fm,Sg :: VEC{REAL}*
 
       ! Read
-      cif.read_looped_item("_diffrn_refln_index_h",h)
-      cif.read_looped_item("_diffrn_refln_index_k",k)
-      cif.read_looped_item("_diffrn_refln_index_l",l)
-      cif.read_looped_item("_diffrn_refln_F_squared_calc" ,Fp)
-      cif.read_looped_item("_diffrn_refln_F_squared_meas" ,Fm)
-      cif.read_looped_item("_diffrn_refln_F_squared_sigma",Sg)
+      cif.read_looped_item("_refln_index_h",h)
+      cif.read_looped_item("_refln_index_k",k)
+      cif.read_looped_item("_refln_index_l",l)
+      cif.read_looped_item("_refln_F_squared_calc" ,Fp)
+      cif.read_looped_item("_refln_F_squared_meas" ,Fm)
+      cif.read_looped_item("_refln_F_squared_sigma",Sg)
 
       ! Create and assign
       .reflections.destroy

@@ -1756,12 +1756,12 @@ contains
       stdout.text("_diffrn_radiation_wavelength  "//trim(lambda.to_str))
       stdout.flush
       stdout.text("loop_")
-      stdout.text("    _diffrn_refln_index_h")
-      stdout.text("    _diffrn_refln_index_k")
-      stdout.text("    _diffrn_refln_index_l")
-      stdout.text("    _diffrn_refln_F_calc")
-      stdout.text("    _diffrn_refln_F_meas")
-      stdout.text("    _diffrn_refln_F_sigma")
+      stdout.text("    _refln_index_h")
+      stdout.text("    _refln_index_k")
+      stdout.text("    _refln_index_l")
+      stdout.text("    _refln_F_calc")
+      stdout.text("    _refln_F_meas")
+      stdout.text("    _refln_F_sigma")
 
       do i = 1,self.dim
          stdout.put(self(i).h)

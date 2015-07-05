@@ -484,12 +484,11 @@ program run_HAR
    end
 
    ! Finalize data, and do data pruning
-   m.crystal.xray_data.update(m.crystal.unit_cell)
    m.crystal.xray_data.set_F_sigma_cutoff(fos)
    if (fzcut>ZERO) &
       m.crystal.xray_data.set_F_z_cutoff(fzcut)
+   m.crystal.xray_data.update(m.crystal.unit_cell)
    m.crystal.assign_xray
-   m.crystal.xray_data.prune_reflections
 
    !!!!!!!!!!
    m.BASE:put
