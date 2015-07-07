@@ -241,7 +241,6 @@ contains
       .exp_scale_factor       = DIFFRACTION_DATA_EXP_SCALE_FACTOR
       .optimize_extinction    = DIFFRACTION_DATA_OPTIMIZE_EXTINCTION
       .extinction_factor      = DIFFRACTION_DATA_EXTINCTION_FACTOR
-      .correct_dispersion     = DIFFRACTION_DATA_CORRECT_DISPERSION
 
       ! Agreement statistics
       .n_param                  = 0
@@ -623,8 +622,6 @@ contains
 
          case ("}                             ")  ! exit read_loop
 
-         case ("correct_dispersion=           "); .read_correct_dispersion
-
          case ("debug_off                     "); .read_debug_off
          case ("debug_on                      "); .read_debug_on
          case ("destroy_reflection_data       "); .destroy_reflection_data
@@ -915,12 +912,6 @@ contains
 
       .set_optimize_extinction(val)
 
-   end
-
-   read_correct_dispersion ::: private
-   ! Read the switch whether to correct dispersion or not, according to the
-   ! atomic dispersion factors
-      stdin.read(.correct_dispersion)
    end
 
    read_thermal_smearing_model ::: private
@@ -4098,7 +4089,6 @@ contains
       stdout.show("Using extinction               =", .optimize_extinction)
       stdout.show("Thermal smearing model         =", .thermal_smearing_model)
       stdout.show("Fragment partition model       =", .partition_model)
-      stdout.show("Correct dispersion?            =", .correct_dispersion)
 
       if (.optimize_extinction) then;
       stdout.show("Optimize extinction            =", TRUE)

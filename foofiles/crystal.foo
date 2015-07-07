@@ -3447,14 +3447,6 @@ contains
       end
    end
 
-   correct_dispersion result (res)
-   ! True if dispersion is to be corrected
-      self :: IN
-      res :: BIN
-   ENSURE(.data_exists,"no diffraction data")
-      res = .data.correct_dispersion
-   end
-
    wavelength result (res)
    ! Experimental wavelength
       self :: IN

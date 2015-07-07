@@ -482,49 +482,77 @@ contains
 !  Dispersion correction
 !  =====================
 
-   add_dispersion_correction(ft,k_pts)
-   ! Adds the dispersion correction to "ft".
-   ! WARNING: does not add thermal smearing !!!!
-   ! NOTE: this orutine is wrong - must loop over 
-   !    symm related fragments taking account of
-   !    inversion!!!!!
+! Not needed?
 
-      k_pts :: MAT{REAL}, target
-      ft :: VEC{CPX}
-
-   ENSURE(.crystal.created,"no crystal")
-
-      dc :: CPX
-      k1,k2,k3 :: VEC{REAL}*
-      pos :: VEC{REAL}(3)
-      x,y,z :: REAL
-      a,n :: INT
-
-      if (NOT .crystal.correct_dispersion) return
-
-      k1 => k_pts(:,1)
-      k2 => k_pts(:,2)
-      k3 => k_pts(:,3)
-
-      do n = 1,.crystal.n_unit_cell_atoms
-
-        a = .crystal.frag_atom_for_unit_cell_atom(n)
-        if (a==0) cycle
-
-        dc = .atom(a).dispersion_correction(.crystal.wavelength)
-
-        pos = .crystal.unit_cell_geometry(:,n)
-        .crystal.unit_cell.change_from_fractional(pos)
-
-        x = pos(1)
-        y = pos(2)
-        z = pos(3)
-
-        ft = ft + dc * exp(COMPLEXIFY(ZERO,k1*x+k2*y+k3*z))
-
-      end
-
-   end
+!   add_dispersion_correction(ft,k_pts)
+!   ! Adds the dispersion correction to "ft".
+!   ! WARNING: does not add thermal smearing !!!!
+!   ! NOTE: this orutine is wrong - must loop over 
+!   !    symm related fragments taking account of
+!   !    inversion!!!!!
+!
+!      k_pts :: MAT{REAL}, target
+!      ft :: VEC{CPX}
+!
+!   ENSURE(.crystal.created,"no crystal")
+!
+!      dc :: CPX
+!      k1,k2,k3 :: VEC{REAL}*
+!      pos :: VEC{REAL}(3)
+!      x,y,z :: REAL
+!      a,n :: INT
+!
+!      if (NOT .crystal.correct_dispersion) return
+!
+!      k1 => k_pts(:,1)
+!      k2 => k_pts(:,2)
+!      k3 => k_pts(:,3)
+!
+!      do u = 1,.crystal.n_unit_cell_atoms
+!
+!        a = .crystal.asym_atom_for_unit_cell_atom(u)
+!
+!        symop = .crystal.asym_symop_for_unit_cell_atom(u)
+!        seitz = .crystal.spacegroup.seitz(1:3,1:3,symop)
+!
+!        dc = .crystal.asymmetric_unit_atom(a).dispersion_correction(.crystal.wavelength)
+!
+!        pos = .crystal.unit_cell_geometry(:,u)
+!        .crystal.unit_cell.change_from_fractional(pos)
+!
+!        x = pos(1)
+!        y = pos(2)
+!        z = pos(3)
+!
+!        ft = ft + dc * exp(COMPLEXIFY(ZERO,k1*x+k2*y+k3*z))
+!
+!       U = .atom(a).ADP_tensor
+!       ! to crystal coordinates
+!       U.change_basis_using(.crystal.unit_cell.reciprocal_U_matrix)
+!       ! apply seitz operation
+!       U.change_basis_using(transpose(seitz))
+!       ! to cartesian coordinates
+!       U.change_basis_using(.crystal.unit_cell.direct_U_matrix)
+!
+!       U = -HALF * U
+!!
+!!           disp = .atom(a).dispersion_correction(.crystal.wavelength)
+!!
+!!           pos = .crystal.unit_cell_geometry(:,n)
+!!           .crystal.unit_cell.change_from_fractional(pos)
+!!           x = pos(1); y = pos(2); z = pos(3)
+!!
+!!           do k = 1,k_max
+!!             Bh = k_pts(k,:)
+!!             UBh = matmul(U,Bh)
+!!             T = (dot_product(Bh,UBh))
+!!             phase = exp(COMPLEXIFY(T,Bh(1)*x + Bh(2)*y + Bh(3)*z))
+!!             ft(k) = ft(k) + disp * phase
+!!           end
+!
+!      end
+!
+!   end
 
 !   add_dispersion_correction(ft,k_pts)
 !   ! Adds the dispersion correction to "ft".
@@ -614,37 +642,37 @@ contains
 !
 !   end
 
-   check_dispersion_correction
-   ! Adds dispersion correction to the F_exp, to compare
-   ! with other experimental structure factors that have the
-   ! dispersion correction made to them.
-   ENSURE(.crystal.created,"no crystal")
-
-      k_pts :: MAT{REAL}*
-      ft :: VEC{CPX}*
-
-      ! Make predicted structure factors
-      ft.create(.crystal.n_refl)
-      ft = .crystal.data.F_pred
-
-      ! Add dispersion
-      k_pts.create(.crystal.n_refl,3)
-      .crystal.data.reflections.make_k_pts(k_pts,.crystal.unit_cell)
-      .::add_dispersion_correction(ft,k_pts)
-      k_pts.destroy
-
-      ! Reset F_calc
-      .crystal.data.reflections.set_F_calc(ft)
-      ft.destroy
-
-      ! Reoptimize scale, extinction etc.
-      .crystal.data.make_F_predicted
-
-      ! Report
-      stdout.text("Dispersion corrected F_exp")
-      .crystal.data.reflections.put_structure_factor_data
-
-   end
+!   check_dispersion_correction
+!   ! Adds dispersion correction to the F_exp, to compare
+!   ! with other experimental structure factors that have the
+!   ! dispersion correction made to them.
+!   ENSURE(.crystal.created,"no crystal")
+!
+!      k_pts :: MAT{REAL}*
+!      ft :: VEC{CPX}*
+!
+!      ! Make predicted structure factors
+!      ft.create(.crystal.n_refl)
+!      ft = .crystal.data.F_pred
+!
+!      ! Add dispersion
+!      k_pts.create(.crystal.n_refl,3)
+!      .crystal.data.reflections.make_k_pts(k_pts,.crystal.unit_cell)
+!      .::add_dispersion_correction(ft,k_pts)
+!      k_pts.destroy
+!
+!      ! Reset F_calc
+!      .crystal.data.reflections.set_F_calc(ft)
+!      ft.destroy
+!
+!      ! Reoptimize scale, extinction etc.
+!      .crystal.data.make_F_predicted
+!
+!      ! Report
+!      stdout.text("Dispersion corrected F_exp")
+!      .crystal.data.reflections.put_structure_factor_data
+!
+!   end
 
 !  ==========================
 !  Structure factor integrals
@@ -1405,13 +1433,6 @@ contains
       ! Sum to get F_calc
       .crystal.spacegroup.sum_unique_sf(Fc,sf_eq,.crystal.data.reflections)
 
-      ! Add dispersion
-      if (.crystal.correct_dispersion) then
-         k_pts.create(.crystal.n_refl,3)
-         .crystal.data.reflections.make_k_pts(k_pts,.crystal.unit_cell)
-         .XTAL:add_dispersion_correction(Fc,k_pts)
-         k_pts.destroy
-      end
       sf_eq.destroy
 
       ! Set Fc
@@ -1449,14 +1470,6 @@ contains
 
       ! Sum up unique SF's to get Fc
       .crystal.spacegroup.sum_unique_sf(Fc,sf_eq,.crystal.data.reflections)
-
-      ! Add dispersion correction
-      if (.crystal.correct_dispersion) then
-         k_pts.create(.crystal.n_refl,3)
-         .crystal.data.reflections.make_k_pts(k_pts,.crystal.unit_cell)
-         .::add_dispersion_correction(Fc,k_pts)
-         k_pts.destroy
-      end
 
       ! Clean
       sf_eq.destroy
@@ -1589,8 +1602,8 @@ contains
       sha :: SHELL1
       bf_skip :: VEC{VEC_{BIN}}*
       bf_grid :: VEC{MAT_{REAL}}*
-      sf,tfc  :: CPX
-      cutoff,rf, kr, Dab, fac, n_e,val, tf2,tf3,tf4 :: REAL
+      sf,tfc,dc  :: CPX
+      cutoff,rf, kr, Dab, fac, val, tf2,tf3,tf4 :: REAL
       n_refl,n_k,n_pt,n_keep, c,ca,cb, oa,fsa,lsa,fba, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, as, a,b,i,j,k,n,p :: INT
       D_destroyed :: BIN
@@ -1634,8 +1647,6 @@ contains
       skipa0.create(n_pt)
       skipab.create(n_pt)
 
-      ! Make the constraint
-      n_e = ZERO
       sf_eq = ZERO
 
       ! Loop over integration atoms "c"
@@ -1822,7 +1833,6 @@ contains
 
          ! Weight the atom "c" density
          rho = rho*wt
-         n_e = n_e + sum(rho)
 
          ! Focus on atom c
          atom_c => .atom(c)
@@ -1838,65 +1848,147 @@ contains
          ! Harmonic temperature factor (for each reflection)
          atom_c.put_ADP2_to(adp2)
 
-         ! Anharmonic temperature factor?
-         if (atom_c.has_ADP4s) then
 
-            ! Get anharmonic constants
-            atom_c.put_ADP3_to(adp3)
-            atom_c.put_ADP4_to(adp4)
+         ! Dispersion correction?
+         if (atom_c.correct_dispersion) then
 
-            ! Make the (unique) matrix elements
-            do k = 1,n_k
+            ! This is (delta f',delta f'')
+            dc = COMPLEXIFY(atom_c.delta_f_r,atom_c.delta_f_i)
 
-               kv(1) = k1(k)
-               kv(2) = k2(k)
-               kv(3) = k3(k)
+            ! Anharmonic temperature factor?
+            if (atom_c.has_ADP4s) then
+   
+               ! Get anharmonic constants
+               atom_c.put_ADP3_to(adp3)
+               atom_c.put_ADP4_to(adp4)
+   
+               ! Make the (unique) matrix elements
+               do k = 1,n_k
+   
+                  kv(1) = k1(k)
+                  kv(2) = k2(k)
+                  kv(3) = k3(k)
+   
+                  sf = (ZERO,ZERO)
+   
+                  do i = 1,n_pt
+                     kr = kv(1)*r1(i)+kv(2)*r2(i)+kv(3)*r3(i)
+                     sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+                  end
 
-               sf = (ZERO,ZERO)
-
-               do i = 1,n_pt
-                  kr = kv(1)*r1(i)+kv(2)*r2(i)+kv(3)*r3(i)
-                  sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+                  ! Add dispersion
+                  sf = sf + dc
+   
+                  ! Temperature factor contributions
+                  tf2 = adp2.contract_with(kv)*HALF
+                  tf3 = adp3.contract_with(kv)*SIXTH
+                  tf4 = adp4.contract_with(kv)*SIXTH*QUARTER
+   
+                  tfc = exp(-tf2) * COMPLEXIFY(ONE + tf4,-tf3)
+   
+                  ! Rep. factor
+                  sf  = sf * rf
+   
+                  sf_eq(k) = sf_eq(k) + sf * tfc
+   
                end
+   
+            else ! harmonic ADP + dispersion
+   
+               ! Make the (unique) matrix elements
+               do k = 1,n_k
+   
+                  kv(1) = k1(k)
+                  kv(2) = k2(k)
+                  kv(3) = k3(k)
+   
+                  sf = (ZERO,ZERO)
+   
+                  do i = 1,n_pt
+                     kr = kv(1)*r1(i)+kv(2)*r2(i)+kv(3)*r3(i)
+                     sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+                  end
 
-               ! Temperature factor contributions
-               tf2 = adp2.contract_with(kv)*HALF
-               tf3 = adp3.contract_with(kv)*SIXTH
-               tf4 = adp4.contract_with(kv)*SIXTH*QUARTER
-
-               tfc = exp(-tf2) * COMPLEXIFY(ONE + tf4,-tf3)
-
-               sf  = sf * rf
-
-               sf_eq(k) = sf_eq(k) + sf * tfc
-
+                  ! Add dispersion
+                  sf = sf + dc
+   
+                  ! Rep. factor
+                  sf  = sf * rf
+   
+                  tf2 = adp2.contract_with(kv)*HALF
+   
+                  sf_eq(k) = sf_eq(k) + sf * exp(-tf2)
+   
+               end
+   
             end
 
-         else
+         else ! NO dispersion
 
-            ! Make the (unique) matrix elements
-            do k = 1,n_k
+            ! This is (delta f',delta f'')
+            dc = COMPLEXIFY(atom_c.delta_f_r,atom_c.delta_f_i)
 
-               kv(1) = k1(k)
-               kv(2) = k2(k)
-               kv(3) = k3(k)
-
-               sf = (ZERO,ZERO)
-
-               do i = 1,n_pt
-                  kr = kv(1)*r1(i)+kv(2)*r2(i)+kv(3)*r3(i)
-                  sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+            ! Anharmonic temperature factor?
+            if (atom_c.has_ADP4s) then
+   
+               ! Get anharmonic constants
+               atom_c.put_ADP3_to(adp3)
+               atom_c.put_ADP4_to(adp4)
+   
+               ! Make the (unique) matrix elements
+               do k = 1,n_k
+   
+                  kv(1) = k1(k)
+                  kv(2) = k2(k)
+                  kv(3) = k3(k)
+   
+                  sf = (ZERO,ZERO)
+   
+                  do i = 1,n_pt
+                     kr = kv(1)*r1(i)+kv(2)*r2(i)+kv(3)*r3(i)
+                     sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+                  end
+   
+                  ! Temperature factor contributions
+                  tf2 = adp2.contract_with(kv)*HALF
+                  tf3 = adp3.contract_with(kv)*SIXTH
+                  tf4 = adp4.contract_with(kv)*SIXTH*QUARTER
+   
+                  tfc = exp(-tf2) * COMPLEXIFY(ONE + tf4,-tf3)
+   
+                  sf  = sf * rf
+   
+                  sf_eq(k) = sf_eq(k) + sf * tfc
+   
                end
-
-               sf  = sf * rf
-
-               tf2 = adp2.contract_with(kv)*HALF
-
-               sf_eq(k) = sf_eq(k) + sf * exp(-tf2)
-
+   
+            else
+   
+               ! Make the (unique) matrix elements
+               do k = 1,n_k
+   
+                  kv(1) = k1(k)
+                  kv(2) = k2(k)
+                  kv(3) = k3(k)
+   
+                  sf = (ZERO,ZERO)
+   
+                  do i = 1,n_pt
+                     kr = kv(1)*r1(i)+kv(2)*r2(i)+kv(3)*r3(i)
+                     sf = sf + rho(i)*COMPLEXIFY(cos(kr),sin(kr))
+                  end
+   
+                  sf  = sf * rf
+   
+                  tf2 = adp2.contract_with(kv)*HALF
+   
+                  sf_eq(k) = sf_eq(k) + sf * exp(-tf2)
+   
+               end
+   
             end
 
-         end
+         end ! dispersion
 
          ! Clean up atom "c" stuff
          rho.destroy
@@ -1926,14 +2018,6 @@ contains
       ! Sum the symmetry equivalent SF's
       .crystal.spacegroup.sum_unique_sf(Fc,sf_eq,.crystal.data.reflections)
       sf_eq.destroy
-
-      ! Dispersion correction
-      if (.crystal.correct_dispersion) then
-         k_pts.create(.crystal.n_refl,3)
-         .crystal.data.reflections.make_k_pts(k_pts,.crystal.unit_cell)
-         .XTAL:add_dispersion_correction(Fc,k_pts)
-         k_pts.destroy
-      end
 
       ! Set the calculated SF's
       .crystal.data.reflections.set_F_calc(Fc)
@@ -2253,14 +2337,6 @@ contains
       ! Sum the symmetry equivalent SF's
       .crystal.spacegroup.sum_unique_sf(Fc,sf_eq,.crystal.data.reflections)
       sf_eq.destroy
-
-      ! Dispersion correction
-      if (.crystal.correct_dispersion) then
-         k_pts.create(.crystal.n_refl,3)
-         .crystal.data.reflections.make_k_pts(k_pts,.crystal.unit_cell)
-         .XTAL:add_dispersion_correction(Fc,k_pts)
-         k_pts.destroy
-      end
 
       ! Set the calculated SF's
       .crystal.data.reflections.set_F_calc(Fc)
@@ -2768,13 +2844,6 @@ contains
       Fc.create(.crystal.n_refl)
       .crystal.spacegroup.sum_unique_sf(Fc,sf_eq,.crystal.data.reflections)
 
-      if (.crystal.correct_dispersion) then
-         k_pts.create(.crystal.n_refl,3)
-         .crystal.data.reflections.make_k_pts(k_pts,.crystal.unit_cell)
-         .::add_dispersion_correction(Fc,k_pts)
-         k_pts.destroy
-      end
-
       .crystal.data.reflections.set_F_calc(Fc)
 
       .crystal.data.make_F_predicted
@@ -2819,12 +2888,6 @@ contains
       k_pts.destroy
 
       .crystal.spacegroup.sum_unique_sf(Fc,sf_eq,.crystal.data.reflections)
-      if (.crystal.correct_dispersion) then
-         k_pts.create(.crystal.n_refl,3)
-         .crystal.data.reflections.make_k_pts(k_pts,.crystal.unit_cell)
-         .::add_dispersion_correction(Fc,k_pts)
-         k_pts.destroy
-      end
 
       .crystal.data.reflections.set_F_calc(Fc)
       Fc.destroy

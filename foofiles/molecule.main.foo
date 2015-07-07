@@ -185,7 +185,7 @@ contains
         case ("change_to_principal_axes      "); .BASE:change_to_principal_axes
         case ("change_to_principal_top_axes  "); .BASE:change_to_principal_top_axes
         case ("charge=                       "); .::read_charge
-        case ("check_dispersion_correction   "); .XTAL:check_dispersion_correction
+      ! case ("check_dispersion_correction   "); .XTAL:check_dispersion_correction
         case ("cif=                          "); .XTAL:read_CIF
         case ("cleanup_scf                   "); .SCF:cleanup_scf
         case ("cluster=                      "); .XTAL:read_cluster

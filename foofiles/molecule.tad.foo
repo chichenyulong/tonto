@@ -477,9 +477,10 @@ contains
          pt.destroy
 
          ! Add the dispersion correction
-         if (NOT .crystal.correct_dispersion) cycle
-         dc   = .atom(c).dispersion_correction(.crystal.wavelength)
-         sf_u = sf_u + dc
+         if (.atom(c).correct_dispersion) then
+            dc   = COMPLEXIFY(.atom(c).delta_f_r,.atom(c).delta_f_i)
+            sf_u = sf_u + dc
+         end
 
       end ! -- loop over atom "c"
 

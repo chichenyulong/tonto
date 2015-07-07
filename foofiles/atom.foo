@@ -1212,6 +1212,9 @@ contains
       .charge_polarisability = ZERO
       .dipole_polarisability = ZERO
 
+      .delta_f_r             = ZERO
+      .delta_f_i             = ZERO
+
       ! Basis
       .basis_label        = " "
       .basis_kind         = " "
@@ -2594,6 +2597,57 @@ contains
 
    end
 
+   set_dispersion_correction(wavelength)
+   ! Set dispersion correction from the wavelength
+      self :: INOUT
+      wavelength :: REAL, IN
+
+      val :: CPX
+
+      if (.atomic_number<1 OR .atomic_number>92) then
+         
+         .delta_f_r = ZERO
+         .delta_f_i = ZERO
+
+      else if (wavelength.is_zero) then
+         
+         .delta_f_r = ZERO
+         .delta_f_i = ZERO
+
+      else if (NOT .correct_dispersion) then
+
+         ! The ranges for deciding these wavelengths are a bit arbirary!
+         if      (wavelength < 1.15) then; val = dispersion_correction_Ag(.atomic_number) ! 0.559 A = 1.06 au
+         else if (wavelength < 2.1 ) then; val = dispersion_correction_Mo(.atomic_number) ! 0.709 A = 1.34 au
+         else if (wavelength < 3.6 ) then; val = dispersion_correction_Cu(.atomic_number) ! 1.541 A = 2.91 au
+         else;                             val = dispersion_correction_Cr(.atomic_number) ! 2.29  A = 4.33 au
+         end
+
+         .delta_f_r = RE(val)
+         .delta_f_i = IM(val)
+
+      end
+
+   end
+
+   set_delta_f_r(val)
+   ! Set only real dispersion correction to "val"
+      self :: INOUT
+      val :: REAL, IN
+
+      .delta_f_r = val
+
+   end
+
+   set_delta_f_i(val)
+   ! Set only imag dispersion correction to "val"
+      self :: INOUT
+      val :: REAL, IN
+
+      .delta_f_i = val
+
+   end
+
 !  ==============
 !  Set basis info
 !  ==============
@@ -2687,6 +2741,8 @@ contains
          case ("charge=                      "); .read_charge
          case ("coppensbasis_label=          "); .read_coppensbasis_label
          case ("dipole=                      "); .read_dipole
+         case ("delta_f_r=                   "); .read_delta_f_r
+         case ("delta_f_i=                   "); .read_delta_f_i
          case ("group=                       "); .read_group
          case ("junk=                        "); .read_junk
          case ("label=                       "); .read_label
@@ -2783,6 +2839,30 @@ contains
    read_dipole
    ! Read the dipole
       stdin.read_quantity(.dipole)
+   end
+
+   read_delta_f_r
+   ! Read the delta_f_r
+      self :: INOUT
+
+      val :: REAL
+
+      stdin.read(val)
+
+      .set_delta_f_r(val)
+
+   end
+
+   read_delta_f_i
+   ! Read the delta_f_i
+      self :: INOUT
+
+      val :: REAL
+
+      stdin.read(val)
+
+      .set_delta_f_i(val)
+
    end
 
    read_oxidation_state
@@ -3922,14 +4002,13 @@ contains
 
    end
 
-   neutron_scattering_length result (res) ::: pure
-   ! Return the neutron scattering length for this atom
+   correct_dispersion result (res) ::: pure
+   ! Apply a dispersion correction
       self :: IN
-      res :: REAL
+      res :: BIN
 
-      if (.atomic_number<1 OR .atomic_number>95) then; res = ZERO
-      else;                                            res = neutron_scattering_lengths(.atomic_number)
-      end
+      res = (NOT .delta_f_r.is_zero) AND &
+            (NOT .delta_f_i.is_zero)
 
    end
 
@@ -4185,25 +4264,6 @@ contains
 
             DIE("cannot assign for period "// trim(p.to_str))
 
-      end
-
-   end
-
-   dispersion_correction(wavelength) result (res)
-   ! The dispersion correction which best matches the wavelength.
-      self :: IN
-      wavelength :: REAL
-      res :: CPX
-
-      if (.atomic_number<1 OR .atomic_number>92) then
-         res = ZERO
-      else
-         ! The ranges for deciding these wavelengths are a bit arbirary!
-         if      (wavelength < 1.15) then; res = dispersion_correction_Ag(.atomic_number) ! 0.559 A = 1.06 au
-         else if (wavelength < 2.1 ) then; res = dispersion_correction_Mo(.atomic_number) ! 0.709 A = 1.34 au
-         else if (wavelength < 3.6 ) then; res = dispersion_correction_Cu(.atomic_number) ! 1.541 A = 2.91 au
-         else;                             res = dispersion_correction_Cr(.atomic_number) ! 2.29  A = 4.33 au
-         end
       end
 
    end

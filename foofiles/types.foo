@@ -2671,6 +2671,16 @@ module TYPES
      dipole_polarisability :: MAT{REAL}(3,3)  DEFAULT(ZERO), readonly
      ! The dipole polarisability on the atom; field is 2nd component.
 
+     ! =========
+     ! Anomalous
+     ! =========
+
+     delta_f_r :: REAL  DEFAULT(-ONE)
+     ! The real (prime) dispersion correction in electrons
+
+     delta_f_i :: REAL  DEFAULT(-ONE)
+     ! The imaginary (double-prime) dispersion correction in electrons
+
      ! ========
      ! QM bases
      ! ========
@@ -3428,9 +3438,6 @@ module TYPES
      extinction_factor :: REAL  DEFAULT(DIFFRACTION_DATA_EXTINCTION_FACTOR)
      ! Secondary extinction factor
 
-     correct_dispersion :: BIN  DEFAULT(DIFFRACTION_DATA_CORRECT_DISPERSION)
-     ! True if dispersion is to be corrected
-
      ! ====================
      ! Agreement statistics
      ! ====================
@@ -3803,8 +3810,8 @@ module TYPES
      ! Total no. of unit cell atoms.
 
      unit_cell_geometry :: MAT{REAL}*  DEFAULT_NULL
-     ! The full unit cell geometry, in the crystal coordiante system,
-     ! generated from the asymmetric_unit_geometry.
+     ! The full unit cell geometry, in the crystal (fractional)
+     ! coordinate system, generated from the asymmetric_unit_geometry.
 
      unique_unit_cell_atom :: VEC{INT}*  DEFAULT_NULL
      ! The list of unique (asymmetric unit) atoms in the
