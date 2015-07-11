@@ -1736,35 +1736,39 @@ contains
       if (fl) labels.destroy
       IDs.destroy
 
-      ! Read dispersion corrections?
+      ! Any dispersion corrections?
       cif.find_looped_item("_atom_type_symbol",fats)
       cif.find_looped_item("_atom_type_scat_dispersion_real",fatr)
       cif.find_looped_item("_atom_type_scat_dispersion_imag",fati)
+
+      ! Read dispersion corrections
       if (fats AND fatr AND fati) then
+
+         ! Find
          IDs.create(3)
          IDs = ["_atom_type_symbol              ", &
                 "_atom_type_scat_dispersion_real", &
                 "_atom_type_scat_dispersion_imag" ]
          cif.read_looped_items(IDs,dc)
-      end
-      IDs.destroy
 
-      ! Loop over number of eelements
-      do e = 1,dc.dim2
-         element = dc(1,e)
-         do i = 1,.dim
-            if (element==self(i).chemical_symbol) then
-               self(i).delta_f_r = dc(2,e).to_real
-               self(i).delta_f_i = dc(3,e).to_real
+         ! Loop over number of elements
+         do e = 1,dc.dim2
+            element = dc(1,e)
+            do i = 1,.dim
+               if (element==self(i).chemical_symbol) then
+                  self(i).delta_f_r = dc(2,e).to_real
+                  self(i).delta_f_i = dc(3,e).to_real
+               end
             end
+            stdout.show("element = ",element)
+            stdout.show("f'      = ",dc(2,e))
+            stdout.show("f''     = ",dc(3,e))
          end
-         stdout.show("element = ",element)
-         stdout.show("f'      = ",dc(2,e))
-         stdout.show("f''     = ",dc(3,e))
+
+         dc.destroy
+         IDs.destroy
+
       end
-
-      dc.destroy
-
 
       ! Update?
       .update
