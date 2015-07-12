@@ -64,6 +64,7 @@ contains
          case("deformation_h_dft_energy            "); .::make_def_H_dft_energy_grid
          case("deformation_h_from_virial           "); .::make_def_H_from_virial_grid
          case("deformation_h_kirzhnits             "); .::make_def_H_Kirzhnits_grid
+         case("deformation_ha_grid                 "); .::make_deformation_HA_grid
          case("deformation_k_kinetic_energy        "); .::make_def_K_kinetic_grid
          case("deformation_laplacian               "); .::make_def_laplacian_grid
          case("deformation_v_from_virial           "); .::make_def_V_from_virial_grid
@@ -156,6 +157,7 @@ contains
          case("deformation_electric_potential   "); .isosurface.cubify(::def_e_pot_grid)
          case("deformation_g_kinetic_energy     "); .isosurface.cubify(::def_G_kinetic_grid)
          case("deformation_h_dft_energy         "); .isosurface.cubify(::def_H_dft_energy_grid)
+         case("deformation_ha_grid              "); .isosurface.cubify(::deformation_HA_grid)
          case("deformation_k_kinetic_energy     "); .isosurface.cubify(::def_K_kinetic_grid)
          case("deformation_laplacian            "); .isosurface.cubify(::def_laplacian_grid)
          case("dft_eff_potential                "); .isosurface.cubify(::dft_eff_pot_grid)
@@ -169,6 +171,7 @@ contains
          case("grad_rho_on_rho                  "); .isosurface.cubify(::grad_rho_on_rho_grid)
          case("g_kinetic_energy                 "); .isosurface.cubify(::G_kinetic_energy_grid)
          case("h_dft_energy                     "); .isosurface.cubify(::H_dft_energy_grid)
+         case("hirshfeld_atom_grid              "); .isosurface.cubify(::Hirshfeld_atom_grid)
          case("hirshfeld_density                "); .isosurface.cubify(::Hirshfeld_density_grid)
          case("hirshfeld_weight                 "); .isosurface.cubify(::Hirshfeld_density_grid)
          case("k_kinetic_energy                 "); .isosurface.cubify(::K_kinetic_energy_grid)
@@ -180,6 +183,7 @@ contains
          case("orbital_density                  "); .isosurface.cubify(::orbital_density_grid)
          case("promolecule_density              "); .isosurface.cubify(::promolecule_density_grid)
          case("spin_density                     "); .isosurface.cubify(::spin_density_grid)
+         case("spherical_atom_density           "); .isosurface.cubify(::spherical_atom_grid)
          case("stockholder_density              "); .isosurface.cubify(::stockholder_density_grid)
          case("stockholder_weight               "); .isosurface.cubify(::Hirshfeld_density_grid)
          case("test_sphere_on_atom_1            "); .isosurface.cubify(::test_sphere_on_atom_1)
@@ -208,6 +212,7 @@ contains
          case("deformation_electric_potential  "); .isosurface.plot_function(::def_e_pot_grid)
          case("deformation_g_kinetic_energy    "); .isosurface.plot_function(::def_G_kinetic_grid)
          case("deformation_h_dft_energy        "); .isosurface.plot_function(::def_H_dft_energy_grid)
+         case("deformation_ha_grid             "); .isosurface.plot_function(::deformation_HA_grid)
          case("deformation_k_kinetic_energy    "); .isosurface.plot_function(::def_K_kinetic_grid)
          case("deformation_laplacian           "); .isosurface.plot_function(::def_laplacian_grid)
          case("dft_eff_potential               "); .isosurface.plot_function(::dft_eff_pot_grid)
@@ -236,6 +241,7 @@ contains
          case("product_e_field_grid            "); .isosurface.plot_function(::product_E_field_grid)
          case("product_esp_grid                "); .isosurface.plot_function(::product_ESP_grid)
          case("spin_density                    "); .isosurface.plot_function(::spin_density_grid)
+         case("spherical_atom_density          "); .isosurface.plot_function(::spherical_atom_grid)
          case("stockholder_density             "); .isosurface.plot_function(::stockholder_density_grid)
          case("stockholder_weight              "); .isosurface.plot_function(::Hirshfeld_density_grid)
          case("test_sphere_on_atom_1           "); .isosurface.plot_function(::test_sphere_on_atom_1)
@@ -5781,9 +5787,9 @@ contains
 
    end
 
-!  ===============
-!  Hirshfeld grids
-!  ===============
+!  ===================
+!  Hirshfeld atom grid
+!  ===================
 
    make_Hirshfeld_rho_grid(N0,pt,wt,c,D) ::: leaky
    ! Make the density "N0" on the Becke grid ("pt","wt") for atom
@@ -6013,6 +6019,478 @@ contains
       ya.destroy
       xa.destroy
       gridc0.destroy
+
+   end
+
+
+   make_Hirshfeld_atom_grid
+   ! Make the Hirshfeld atom density grid for atom
+   ! atom c = .plot_grid.center_atom i.e. the density 
+   ! is weighted by Hirshfeld weight for atom "c".
+   ENSURE(.plot_grid.center_atom>0,"no center_atom for ADP plot in .plot_grid")
+   ENSURE(.density_matrix.created("restricted"), "no restricted density matrix")
+
+      grid :: VEC{REAL}*
+      pt :: MAT{REAL}*
+      label :: STR
+
+      ! Make space for grid values and grid points
+      grid.create(.plot_grid.n_pt)
+      pt.create(.plot_grid.n_pt,3)
+
+      ! Make the grid points
+      .plot_grid.make_points(pt)
+
+      ! Make the hirshfeld atom density - for "plot" type plots
+      .::make_Hirshfeld_atom_grid_plt(grid,pt)
+
+      ! Make the plot label
+      label = "hirshfeld_atom_"
+      label = trim(label) // trim(.plot_grid.center_atom.to_str)
+      label = trim(label) // "_density_grid"
+
+      ! Print out
+      .::dump_plot_grid(grid,trim(label))
+
+      ! Clean up
+      pt.destroy
+      grid.destroy
+
+   end
+
+   make_Hirshfeld_atom_grid_plt(N0,pt)
+   ! Make the hirshfeld atom density grid "N0" for the grid "pt" for
+   ! the atom c = .plot_grid.center_atom i.e. the density from "N0"
+   ! is weighted by Hirshfeld partition weight for atom "c".
+      N0 :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+
+      .::make_Hirshfeld_atom_grid(N0,pt,.plot_grid.center_atom)
+
+   end
+
+   make_Hirshfeld_atom_grid_iso(N0,pt)
+   ! Make the hirshfeld atom density grid "N0" for the grid "pt" for
+   ! the atom c = .isosurface.plot_grid.center_atom i.e. the density
+   ! from "N0" is weighted by Hirshfeld partition weight for atom "c".
+      N0 :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+
+      .::make_Hirshfeld_atom_grid(N0,pt,.isosurface.plot_grid.center_atom)
+
+   end
+
+   make_Hirshfeld_atom_grid(N0,pt,c)
+   ! Make the hirshfeld atom density grid "N0" for the grid "pt" for
+   ! atom "c" given AO density matrix "D". Density "N0" weighted by
+   ! Hirshfeld partition weight for atom "c".
+      N0 :: VEC{REAL}
+      pt :: MAT{REAL}
+      c  :: INT, IN
+
+   ENSURE(.basis_info_made, "no basis info")
+   ENSURE(.atom.created,  "no atom list")
+   ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
+   ENSURE(.density_matrix.created("restricted"),"no restricted density_matrix")
+
+      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
+      ra :: VEC{REAL}(3)
+      overlapping_atom, pi,pj,pn :: VEC{INT}*
+      skipa0,skipab, skipa,skipb :: VEC{BIN}*
+      grida0,gridb0, D,DD :: MAT{REAL}*
+      sha :: SHELL1
+      bf_skip :: VEC{VEC_{BIN}}*
+      bf_grid0 :: VEC{MAT_{REAL}}*
+      cutoff, Dab, fac,val, ga,gb :: REAL
+      n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
+      sa,fa,la,na,ba, sb,fb,lb,nb, a,b,i,j,p,n :: INT
+
+      ! Density matrix
+      D => .density_matrix.restricted
+
+      ! Overlapping atoms
+      overlapping_atom => .overlapping_atoms_for_atom(c).element
+
+      ! Grid size
+      n_pt = pt.dim1
+
+      ! Initialise N0
+      N0 = ZERO
+
+      ! Basis function cutoff
+      cutoff = BECKE_GRID_BASIS_FUNCTION_CUTOFF
+
+      ! Atom "a" displaced points (from "c") and skip switches
+      xa.create(n_pt); ya.create(n_pt); za.create(n_pt); a2.create(n_pt)
+      skipa0.create(n_pt); skipab.create(n_pt)
+
+      ! Basis function grid and skip list
+      bf_skip.create(.n_shell)
+      bf_grid0.create(.n_shell)
+
+      ! Loop c-overlapping atoms "oa"
+      do ca = 1,overlapping_atom.dim
+
+         oa  = overlapping_atom(ca)
+         fsa = .first_shell_for_atom(oa)
+         lsa =  .last_shell_for_atom(oa)
+         ra  = .atom(oa).position
+
+         ! Make the displaced points for atom "oa"
+         .atom(oa).make_displaced_skip_pts(xa,ya,za,a2,skipa0,pt,n_pt,cutoff)
+
+         ! Loop shells on atom a
+         do sa = fsa,lsa
+
+            fa = .first_basis_fn_for_shell(sa)
+            la =  .last_basis_fn_for_shell(sa)
+            na = la - fa + 1
+            ba = .basis_shell_for_shell(sa)
+
+            ! Set shell "sa"
+            sha = .precomputed_basis_shellpair(ba,1).a
+            sha.position = ra
+
+            ! Make shell "sa" skipa list
+            skipa.create(n_pt)
+            sha.make_skip_list(skipa,n_keep,a2,skipa0,n_pt,cutoff)
+
+            ! Next shell "sa" if no sig. points
+            if (n_keep==0) then
+               skipa.destroy
+               cycle
+            end
+
+            ! Assign the "sa" skipa list
+            bf_skip(sa).element => skipa
+
+            ! Make/copy the "sa" basis function grida0
+            ! This must be copied since skipa could be TRUE
+            grida0.create(n_keep,na)
+            sha.make_skip_grid(grida0,n_keep,na,xa,ya,za,a2,skipa,n_pt)
+            bf_grid0(sa).element => grida0
+
+            ! Loop c-overlapping atoms b
+            do cb = 1,ca
+
+               ob  = overlapping_atom(cb)
+               fsb = .first_shell_for_atom(ob)
+               lsb =  .last_shell_for_atom(ob)
+
+               ! Loop shells on atom b
+               do sb = fsb,min(lsb,sa)
+
+                  if (bf_skip(sb).element.destroyed) cycle
+
+                  fb = .first_basis_fn_for_shell(sb)
+                  lb = .last_basis_fn_for_shell(sb)
+                  nb = lb - fb + 1
+
+                  ! Set the "sb" basis function grid
+                  skipb  => bf_skip(sb).element
+                  gridb0 => bf_grid0(sb).element
+
+                  ! How many points in common?
+                  skipab(1:n_pt) = skipa OR skipb
+                  n_keep = count(NOT skipab(1:n_pt))
+                  if (n_keep==0) cycle
+
+                  ! Factor
+                  fac = TWO
+                  if (sa==sb) fac = ONE
+
+                  ! Density block
+                  DD => D(fa:la,fb:lb)
+
+                  if (na*nb==1) then
+
+                     ga0 => grida0(:,1)
+                     gb0 => gridb0(:,1)
+                     Dab = fac*DD(1,1)
+                     i = 0; j = 0
+                     do n = 1,n_pt
+                        if (NOT skipa(n)) i = i + 1
+                        if (NOT skipb(n)) j = j + 1
+                        if (skipab(n)) cycle
+                        ga = ga0(i)
+                        gb = gb0(j)
+                        val = ga*gb*Dab
+                        N0(n) = N0(n) + val
+                     end
+
+                  else
+
+                     ! Create space for gathered index info
+                     pi.create(n_keep); pj.create(n_keep); pn.create(n_keep)
+
+                     ! Make mapper arrays
+                     p = 0; i = 0; j = 0
+                     do n = 1,n_pt
+                        if (NOT skipa(n)) i = i + 1
+                        if (NOT skipb(n)) j = j + 1
+                        if (skipab(n)) cycle
+                        p = p + 1
+                        pi(p) = i
+                        pj(p) = j
+                        pn(p) = n
+                     end
+
+                     ! Add density contribution to rho
+                     do a = 1,na
+                        ga0 => grida0(:,a)
+                        do b = 1,nb
+                           gb0 => gridb0(:,b)
+                           Dab = fac*DD(a,b)
+                           do p = 1,n_keep
+                              i = pi(p)
+                              j = pj(p)
+                              n = pn(p)
+                              ga = ga0(i)
+                              gb = gb0(j)
+                              val = ga*gb*Dab
+                              N0(n) = N0(n) + val
+                           end
+                        end
+                     end
+
+                     ! Clean up
+                     pn.destroy
+                     pj.destroy
+                     pi.destroy
+
+                  end
+
+               end ! -- loops sa,sb
+            end
+         end       ! -- lops ca,cb
+      end
+
+      ! Apply stockholder weight function for atom "c" to "N0".
+      ! If using interpolatators, then overlapping_atoms
+      ! are not needed ... otherwise nothing is skipped
+    ! N0 = ONE ! check if you get a HS
+      .::apply_stockholder_atom_weight(N0,c,pt)
+
+      ! Clean up
+      bf_grid0.destroy
+      bf_skip.destroy
+      skipab.destroy
+      skipa0.destroy
+      a2.destroy
+      za.destroy
+      ya.destroy
+      xa.destroy
+
+   end
+
+   Hirshfeld_atom_grid(g,pt) ::: selfless
+   ! Make the hirshfeld atom density grid "N0" for the grid "pt" for
+   ! atom "c" given AO density matrix "D". Density "N0" weighted by
+   ! Hirshfeld partition weight for atom "c".
+      g  :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+
+      self :: MOLECULE*
+
+      .BASE:set_from_saved_self
+      .::make_Hirshfeld_atom_grid_iso(g,pt)
+
+   end
+
+
+   ! WARNING ... below is only for isosurfaces
+
+   make_deformation_HA_grid ::: get_from(prop_grid, GRID=>::make_deformation_HA_grid, LABEL=>"deformation_HA_grid")
+   ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
+   ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
+   end
+
+   make_deformation_HA_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_Hirshfeld_atom_grid_iso, PRO=>::make_spherical_atom_grid_iso)
+   ! Make a Gnuplot ascii file containing the deformation density grid.
+   end
+
+   deformation_HA_grid(g,pt) ::: selfless
+   ! Work out the deformation Hirshfeld-atom grid "g" for a the points "pt".
+      g  :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+
+      self :: MOLECULE*
+
+      .BASE:set_from_saved_self
+      .::make_deformation_HA_grid(g,pt)
+
+   end
+
+
+!  =====================
+!  Stockholder atom grid
+!  =====================
+
+   apply_stockholder_atom_weight(grid,a,pt)
+   ! Apply i.e. multiply the "grid" by the stockholder weight function
+   ! for the atom with index "a" using supplied points "pt".
+   ! * If .use_interpolators is TRUE then interpolators are used.
+   ! * If .use_interpolators is FALSE then interpolators could still
+   !   be used if explicitly set for each atom (however the
+   !   overlapping_atoms array will not be used to eliminate work).
+   !   More likely the density will be explicitly evaluated.
+      self :: IN
+      grid :: VEC{REAL}, OUT
+      a  :: INT, IN
+      pt :: MAT{REAL}, IN
+
+   ENSURE(.atom.created,"no atoms")
+   ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
+   ENSURE(grid.dim==pt.dim1,"wrong size, grid")
+
+      Wa :: VEC{REAL}*
+      overlapping_atom :: VEC{INT}*
+      n_pt :: INT
+
+      ! Only needed for more than one atom
+      if (.n_atom>1) then
+
+         ! Get weights
+         n_pt = pt.dim1
+         Wa.create(n_pt)
+         if (.use_interpolators) then
+            DIE_IF(.overlapping_atoms_for_atom.destroyed,"no overlapping_atoms_for_atom!")
+            overlapping_atom => .overlapping_atoms_for_atom(a).element
+            .::make_stockholder_atom_grid_int(Wa,a,pt,overlapping_atom)
+         else
+            .::make_stockholder_atom_grid_acc(Wa,a,pt)
+         end
+
+         ! Apply them
+         grid = grid*Wa
+
+         ! Clean
+         Wa.destroy
+
+      end
+
+   end
+
+   make_stockholder_atom_grid(grid,a,pt,overlapping_atom)
+   ! Make the Hirshfeld stockholder density "grid" for the atom with
+   ! index "a" using supplied points "pt".
+   ! * If .use_interpolators is TRUE and "overlapping_atoms" is
+   !   supplised then interpolators are used.
+   ! * If .use_interpolators is FALSE then interpolators could still
+   !   be used if explicitly set for each atom. More likely the
+   !   density will be explicitly evaluated.
+      self :: IN
+      grid :: VEC{REAL}, OUT
+      a  :: INT, IN
+      pt :: MAT{REAL}, IN
+      overlapping_atom :: VEC{INT}, IN, optional
+
+   ENSURE(.atom.created,"no atoms")
+   ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
+   ENSURE(grid.dim==pt.dim1,"wrong size, grid")
+
+      if (.n_atom>1) then
+
+         if (.use_interpolators) then
+            ENSURE(present(overlapping_atom),"no overlapping_atom")
+            .::make_stockholder_atom_grid_int(grid,a,pt,overlapping_atom)
+         else
+            .::make_stockholder_atom_grid_acc(grid,a,pt)
+         end
+
+      else
+
+         grid = ONE
+
+      end
+
+   end
+
+   make_stockholder_atom_grid_acc(grid,a,pt) ::: private
+   ! Make the Hirshfeld stockholder desity "grid" for the atom with
+   ! index "a" using supplied points "pt".
+   ! NOTE: This DOES NOT USE an interpolated density for each atom
+   ! UNLESS use_interpolators is explicitly set. In this case you
+   ! should probably use the next routine which uses the
+   ! overlapping_atoms.
+      self :: IN
+      grid :: VEC{REAL}, OUT
+      a  :: INT, IN
+      pt :: MAT{REAL}, IN
+
+   ENSURE(.atom.created,"no atoms")
+   ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
+   ENSURE(grid.dim==pt.dim1,"wrong size, grid")
+
+      rho_a :: VEC{REAL}*
+      n_pt,i :: INT
+
+      ! Allocate temporary densities
+      n_pt = grid.dim
+      rho_a.create(n_pt)
+
+      ! Make density for atom "a"
+      .atom(a).make_density_grid(rho_a,pt)
+
+      ! Make total density in "grid"
+      grid = rho_a
+      do i = 1,.n_atom
+         if (i==a) cycle
+         .atom(i).add_density_grid(grid,pt)
+      end
+
+      ! Make the stockholder weight
+      do i = 1,n_pt
+         if (grid(i)>epsilon(ONE)) then; grid(i) = rho_a(i)/grid(i)
+         else;                           grid(i) = ZERO
+         end
+      end
+      rho_a.destroy
+
+   end
+
+   make_stockholder_atom_grid_int(grid,a,pt,overlapping_atom) ::: private
+   ! Make the Hirshfeld stockholder desity "grid" for the atom with
+   ! index "a" using supplied points "pt" and given a list of
+   ! "overlapping_atom". This makes use of a previously calculated
+   ! interpolated density for each atom.
+   ! NOTE: the CLUSTER_ATOM_DENSITY_CUTOFF must be the same as the
+   ! BECKE_GRID_BASIS_FUNCTION_CUTOFF
+      self :: IN
+      grid :: VEC{REAL}, OUT
+      a  :: INT, IN
+      pt :: MAT{REAL}, IN
+      overlapping_atom :: VEC{INT}, IN
+
+   ENSURE(.atom.created,"no atoms")
+   ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
+   ENSURE(grid.dim==pt.dim1,"wrong size, grid")
+
+      rho_a :: VEC{REAL}*
+      n_pt,i,j :: INT
+
+      ! Allocate temporary densities
+      n_pt = grid.dim
+      rho_a.create(n_pt)
+
+      ! Make density for atom "a"
+      .atom(a).make_interpolated_density(rho_a,pt)
+
+      ! Make total density in "grid"
+      grid = rho_a
+      do j = 1,overlapping_atom.dim
+         i = overlapping_atom(j)
+         if (i==a) cycle
+         .atom(i).add_interpolated_density(grid,pt)
+      end
+
+      ! Make the stockholder weight
+      do i = 1,n_pt
+         if (grid(i)>epsilon(ONE)) then; grid(i) = rho_a(i)/grid(i)
+         else;                           grid(i) = ZERO
+         end
+      end
+      rho_a.destroy
 
    end
 
@@ -7726,7 +8204,9 @@ contains
    prop_grid ::: template
    ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
    ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
+
    ENSURE(.plot_grid.created, "no grid")
+
       grid :: VEC{REAL}*
       pt :: MAT{REAL}*
 
@@ -8094,17 +8574,18 @@ contains
 
    make_deformation_density_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_density_grid, PRO=>::make_promolecule_density_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    deformation_density_grid(g,pt) ::: selfless
    ! Work out the electron deformation density grid "g" for a the points "pt".
       g  :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
+
       self :: MOLECULE*
+
       .BASE:set_from_saved_self
       .::make_deformation_density_grid(g,pt)
+
    end
 
 !  =========
@@ -9368,8 +9849,6 @@ contains
 
    make_def_laplacian_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_laplacian_grid, PRO=>::make_pro_laplacian_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_laplacian_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_laplacian_grid)
@@ -9579,8 +10058,6 @@ contains
 
    make_def_K_kinetic_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_K_kinetic_energy_grid, PRO=>::make_pro_K_kinetic_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_K_kinetic_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_K_kinetic_energy_grid)
@@ -9672,8 +10149,6 @@ contains
 
    make_def_rK_kinetic_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_rK_kinetic_energy_grid, PRO=>::make_pro_rK_kinetic_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_rK_kinetic_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_rK_kinetic_energy_grid)
@@ -9866,8 +10341,6 @@ contains
 
    make_def_G_kinetic_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_G_kinetic_energy_grid, PRO=>::make_pro_G_kinetic_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_G_kinetic_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_G_kinetic_energy_grid)
@@ -9891,8 +10364,6 @@ contains
 
    make_def_G_Kirzhnits_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_G_Kirzhnits_grid, PRO=>::make_pro_G_Kirzhnits_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_G_Kirzhnits_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_G_Kirzhnits_grid)
@@ -9973,8 +10444,6 @@ contains
 
    make_def_rG_kinetic_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_rG_kinetic_energy_grid, PRO=>::make_pro_rG_kinetic_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_rG_kinetic_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_rG_kinetic_energy_grid)
@@ -10170,8 +10639,6 @@ contains
 
    make_def_E_hf_from_rho_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_E_hf_dens_from_rho_grid, PRO=>::make_E_hf_dens_from_rho_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
 !  ========================================================
@@ -10237,8 +10704,6 @@ contains
 
    make_def_H_from_virial_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_H_from_virial_grid, PRO=>::make_pro_H_from_virial_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_H_from_virial_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_H_from_virial_grid)
@@ -10277,8 +10742,6 @@ contains
 
    make_def_H_Kirzhnits_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_H_Kirzhnits_grid, PRO=>::make_pro_H_Kirzhnits_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_H_Kirzhnits_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_H_Kirzhnits_grid)
@@ -10317,8 +10780,6 @@ contains
 
    make_def_rH_from_virial_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_rH_from_virial_grid, PRO=>::make_pro_rH_from_virial_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_rH_from_virial_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_rH_from_virial_grid)
@@ -10359,8 +10820,6 @@ contains
 
    make_def_V_from_virial_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_V_from_virial_grid, PRO=>::make_pro_V_from_virial_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_V_from_virial_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_V_from_virial_grid)
@@ -10397,8 +10856,6 @@ contains
 
    make_def_V_Kirzhnits_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_V_Kirzhnits_grid, PRO=>::make_pro_V_Kirzhnits_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_V_Kirzhnits_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_V_Kirzhnits_grid)
@@ -10435,8 +10892,6 @@ contains
 
    make_def_rV_from_virial_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_rV_from_virial_grid, PRO=>::make_pro_rV_from_virial_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_rV_from_virial_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_rV_from_virial_grid)
@@ -10722,8 +11177,6 @@ contains
 
    make_def_e_pot_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_electric_potential_grid, PRO=>::make_pro_e_pot_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_e_pot_grid(density_grid,pt) ::: get_from(pro_grid, GRID=>make_electric_potential_grid)
@@ -11257,8 +11710,6 @@ contains
 
    make_def_dft_xc_pot_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_dft_xc_pot_grid, PRO=>::make_pro_dft_xc_pot_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_dft_xc_pot_grid(density_grid,pt) ::: get_from(pro_dft_grid, GRID=>make_dft_xc_pot_grid)
@@ -11329,8 +11780,6 @@ contains
 
    make_def_dft_eff_pot_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_dft_eff_pot_grid, PRO=>::make_pro_dft_eff_pot_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_dft_eff_pot_grid(density_grid,pt) ::: get_from(pro_dft_grid, GRID=>make_dft_eff_pot_grid)
@@ -11405,8 +11854,6 @@ contains
 
    make_def_dft_energy_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_dft_energy_grid, PRO=>::make_pro_dft_energy_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_dft_energy_grid(density_grid,pt) ::: get_from(pro_dft_grid, GRID=>make_dft_energy_grid)
@@ -11473,8 +11920,6 @@ contains
 
    make_def_H_dft_energy_grid(grid,pt) ::: get_from(def_grid, GRID=>::make_H_dft_energy_grid, PRO=>::make_pro_H_dft_energy_grid)
    ! Make a Gnuplot ascii file containing the deformation density grid.
-      grid :: VEC{REAL}, OUT
-      pt :: MAT{REAL}, IN
    end
 
    make_pro_H_dft_energy_grid(density_grid,pt) ::: get_from(pro_dft_grid, GRID=>make_H_dft_energy_grid)
@@ -11764,416 +12209,6 @@ contains
       .::make_stockholder_density_grid(g,pt)
    end
 
-!  ===================
-!  Hirshfeld atom grid
-!  ===================
-
-   make_Hirshfeld_atom_grid
-   ! Work out the Hirshfeld atom density density on ".plot_grid"
-   ENSURE(.plot_grid.created, "no grid")
-   ENSURE(.plot_grid.center_atom>0, "no center_atom to plot")
-   ENSURE(.density_matrix.created("restricted"), "no restricted density matrix")
-
-      grid :: VEC{REAL}*
-      pt,D :: MAT{REAL}*
-      label :: STR
-
-      ! Make space for grid values and grid points
-      grid.create(.plot_grid.n_pt)
-      pt.create(.plot_grid.n_pt,3)
-
-      ! Make the grid points
-      .plot_grid.make_points(pt)
-
-      ! Make the hirshfeld atom density
-      D => .density_matrix.restricted
-      .::make_Hirshfeld_atom_grid(grid,pt,.plot_grid.center_atom,D)
-
-      ! Make the plot label
-      label = "hirshfeld_atom_"
-      label = trim(label) // trim(.plot_grid.center_atom.to_str)
-      label = trim(label) // "_density_grid"
-
-      ! Print out
-      .::dump_plot_grid(grid,trim(label))
-
-      ! Clean up
-      pt.destroy
-      grid.destroy
-
-   end
-
-   make_Hirshfeld_atom_grid(N0,pt,c,D)
-   ! Make the hirshfeld atom density grid "N0" for the grid "pt" for
-   ! atom "c" given AO density matrix "D". Density "N0" weighted by
-   ! Hirshfeld partition weight for atom "c".
-      N0 :: VEC{REAL}
-      pt :: MAT{REAL}
-      c  :: INT, IN
-      D  :: MAT{REAL}, target, IN
-
-   ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.atom.created,  "no atom list")
-   ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
-
-      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
-      ra :: VEC{REAL}(3)
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridb0, DD :: MAT{REAL}*
-      sha :: SHELL1
-      bf_skip :: VEC{VEC_{BIN}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
-      cutoff, Dab, fac,val, ga,gb :: REAL
-      n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
-      sa,fa,la,na,ba, sb,fb,lb,nb, a,b,i,j,p,n :: INT
-
-      ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
-
-      ! Grid size
-      n_pt = pt.dim1
-
-      ! Initialise N0
-      N0 = ZERO
-
-      ! Basis function cutoff
-      cutoff = BECKE_GRID_BASIS_FUNCTION_CUTOFF
-
-      ! Atom "a" displaced points (from "c") and skip switches
-      xa.create(n_pt); ya.create(n_pt); za.create(n_pt); a2.create(n_pt)
-      skipa0.create(n_pt); skipab.create(n_pt)
-
-      ! Basis function grid and skip list
-      bf_skip.create(.n_shell)
-      bf_grid0.create(.n_shell)
-
-      ! Loop c-overlapping atoms "oa"
-      do ca = 1,overlapping_atom.dim
-
-         oa  = overlapping_atom(ca)
-         fsa = .first_shell_for_atom(oa)
-         lsa =  .last_shell_for_atom(oa)
-         ra  = .atom(oa).position
-
-         ! Make the displaced points for atom "oa"
-         .atom(oa).make_displaced_skip_pts(xa,ya,za,a2,skipa0,pt,n_pt,cutoff)
-
-         ! Loop shells on atom a
-         do sa = fsa,lsa
-
-            fa = .first_basis_fn_for_shell(sa)
-            la =  .last_basis_fn_for_shell(sa)
-            na = la - fa + 1
-            ba = .basis_shell_for_shell(sa)
-
-            ! Set shell "sa"
-            sha = .precomputed_basis_shellpair(ba,1).a
-            sha.position = ra
-
-            ! Make shell "sa" skipa list
-            skipa.create(n_pt)
-            sha.make_skip_list(skipa,n_keep,a2,skipa0,n_pt,cutoff)
-
-            ! Next shell "sa" if no sig. points
-            if (n_keep==0) then
-               skipa.destroy
-               cycle
-            end
-
-            ! Assign the "sa" skipa list
-            bf_skip(sa).element => skipa
-
-            ! Make/copy the "sa" basis function grida0
-            ! This must be copied since skipa could be TRUE
-            grida0.create(n_keep,na)
-            sha.make_skip_grid(grida0,n_keep,na,xa,ya,za,a2,skipa,n_pt)
-            bf_grid0(sa).element => grida0
-
-            ! Loop c-overlapping atoms b
-            do cb = 1,ca
-
-               ob  = overlapping_atom(cb)
-               fsb = .first_shell_for_atom(ob)
-               lsb =  .last_shell_for_atom(ob)
-
-               ! Loop shells on atom b
-               do sb = fsb,min(lsb,sa)
-
-                  if (bf_skip(sb).element.destroyed) cycle
-
-                  fb = .first_basis_fn_for_shell(sb)
-                  lb = .last_basis_fn_for_shell(sb)
-                  nb = lb - fb + 1
-
-                  ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grid0(sb).element
-
-                  ! How many points in common?
-                  skipab(1:n_pt) = skipa OR skipb
-                  n_keep = count(NOT skipab(1:n_pt))
-                  if (n_keep==0) cycle
-
-                  ! Factor
-                  fac = TWO
-                  if (sa==sb) fac = ONE
-
-                  ! Density block
-                  DD => D(fa:la,fb:lb)
-
-                  if (na*nb==1) then
-
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
-                     Dab = fac*DD(1,1)
-                     i = 0; j = 0
-                     do n = 1,n_pt
-                        if (NOT skipa(n)) i = i + 1
-                        if (NOT skipb(n)) j = j + 1
-                        if (skipab(n)) cycle
-                        ga = ga0(i)
-                        gb = gb0(j)
-                        val = ga*gb*Dab
-                        N0(n) = N0(n) + val
-                     end
-
-                  else
-
-                     ! Create space for gathered index info
-                     pi.create(n_keep); pj.create(n_keep); pn.create(n_keep)
-
-                     ! Make mapper arrays
-                     p = 0; i = 0; j = 0
-                     do n = 1,n_pt
-                        if (NOT skipa(n)) i = i + 1
-                        if (NOT skipb(n)) j = j + 1
-                        if (skipab(n)) cycle
-                        p = p + 1
-                        pi(p) = i
-                        pj(p) = j
-                        pn(p) = n
-                     end
-
-                     ! Add density contribution to rho
-                     do a = 1,na
-                        ga0 => grida0(:,a)
-                        do b = 1,nb
-                           gb0 => gridb0(:,b)
-                           Dab = fac*DD(a,b)
-                           do p = 1,n_keep
-                              i = pi(p)
-                              j = pj(p)
-                              n = pn(p)
-                              ga = ga0(i)
-                              gb = gb0(j)
-                              val = ga*gb*Dab
-                              N0(n) = N0(n) + val
-                           end
-                        end
-                     end
-
-                     ! Clean up
-                     pn.destroy
-                     pj.destroy
-                     pi.destroy
-
-                  end
-
-               end ! -- loops sa,sb
-            end
-         end       ! -- lops ca,cb
-      end
-
-      ! Apply stockholder weight function for atom "c" to "N0".
-      ! If using interpolatators, then overlapping_atoms
-      ! are not needed ... otherwise nothing is skipped
-      .::apply_stockholder_atom_weight(N0,c,pt)
-
-      ! Clean up
-      bf_grid0.destroy
-      bf_skip.destroy
-      skipab.destroy
-      skipa0.destroy
-      a2.destroy
-      za.destroy
-      ya.destroy
-      xa.destroy
-
-   end
-
-!  =====================
-!  Stockholder atom grid
-!  =====================
-
-   apply_stockholder_atom_weight(grid,a,pt)
-   ! Apply i.e. multiply the "grid" by the stockholder weight function
-   ! for the atom with index "a" using supplied points "pt".
-   ! * If .use_interpolators is TRUE then interpolators are used.
-   ! * If .use_interpolators is FALSE then interpolators could still
-   !   be used if explicitly set for each atom (however the
-   !   overlapping_atoms array will not be used to eliminate work).
-   !   More likely the density will be explicitly evaluated.
-      self :: IN
-      grid :: VEC{REAL}, OUT
-      a  :: INT, IN
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.atom.created,"no atoms")
-   ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
-   ENSURE(grid.dim==pt.dim1,"wrong size, grid")
-
-      Wa :: VEC{REAL}*
-      overlapping_atom :: VEC{INT}*
-      n_pt :: INT
-
-      ! Only needed for more than one atom
-      if (.n_atom>1) then
-
-         ! Get weights
-         n_pt = pt.dim1
-         Wa.create(n_pt)
-         if (.use_interpolators) then
-            DIE_IF(.overlapping_atoms_for_atom.destroyed,"no overlapping_atoms_for_atom!")
-            overlapping_atom => .overlapping_atoms_for_atom(a).element
-            .::make_stockholder_atom_grid_int(Wa,a,pt,overlapping_atom)
-         else
-            .::make_stockholder_atom_grid_acc(Wa,a,pt)
-         end
-
-         ! Apply them
-         grid = grid*Wa
-
-         ! Clean
-         Wa.destroy
-
-      end
-
-   end
-
-   make_stockholder_atom_grid(grid,a,pt,overlapping_atom)
-   ! Make the Hirshfeld stockholder density "grid" for the atom with
-   ! index "a" using supplied points "pt".
-   ! * If .use_interpolators is TRUE and "overlapping_atoms" is
-   !   supplised then interpolators are used.
-   ! * If .use_interpolators is FALSE then interpolators could still
-   !   be used if explicitly set for each atom. More likely the
-   !   density will be explicitly evaluated.
-      self :: IN
-      grid :: VEC{REAL}, OUT
-      a  :: INT, IN
-      pt :: MAT{REAL}, IN
-      overlapping_atom :: VEC{INT}, IN, optional
-
-   ENSURE(.atom.created,"no atoms")
-   ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
-   ENSURE(grid.dim==pt.dim1,"wrong size, grid")
-
-      if (.n_atom>1) then
-
-         if (.use_interpolators) then
-            ENSURE(present(overlapping_atom),"no overlapping_atom")
-            .::make_stockholder_atom_grid_int(grid,a,pt,overlapping_atom)
-         else
-            .::make_stockholder_atom_grid_acc(grid,a,pt)
-         end
-
-      else
-
-         grid = ONE
-
-      end
-
-   end
-
-   make_stockholder_atom_grid_acc(grid,a,pt) ::: private
-   ! Make the Hirshfeld stockholder desity "grid" for the atom with
-   ! index "a" using supplied points "pt".
-   ! NOTE: This DOES NOT USE an interpolated density for each atom
-   ! UNLESS use_interpolators is explicitly set. In this case you
-   ! should probably use the next routine which uses the
-   ! overlapping_atoms.
-      self :: IN
-      grid :: VEC{REAL}, OUT
-      a  :: INT, IN
-      pt :: MAT{REAL}, IN
-
-   ENSURE(.atom.created,"no atoms")
-   ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
-   ENSURE(grid.dim==pt.dim1,"wrong size, grid")
-
-      rho_a :: VEC{REAL}*
-      n_pt,i :: INT
-
-      ! Allocate temporary densities
-      n_pt = grid.dim
-      rho_a.create(n_pt)
-
-      ! Make density for atom "a"
-      .atom(a).make_density_grid(rho_a,pt)
-
-      ! Make total density in "grid"
-      grid = rho_a
-      do i = 1,.n_atom
-         if (i==a) cycle
-         .atom(i).add_density_grid(grid,pt)
-      end
-
-      ! Make the stockholder weight
-      do i = 1,n_pt
-         if (grid(i)>epsilon(ONE)) then; grid(i) = rho_a(i)/grid(i)
-         else;                           grid(i) = ZERO
-         end
-      end
-      rho_a.destroy
-
-   end
-
-   make_stockholder_atom_grid_int(grid,a,pt,overlapping_atom) ::: private
-   ! Make the Hirshfeld stockholder desity "grid" for the atom with
-   ! index "a" using supplied points "pt" and given a list of
-   ! "overlapping_atom". This makes use of a previously calculated
-   ! interpolated density for each atom.
-   ! NOTE: the CLUSTER_ATOM_DENSITY_CUTOFF must be the same as the
-   ! BECKE_GRID_BASIS_FUNCTION_CUTOFF
-      self :: IN
-      grid :: VEC{REAL}, OUT
-      a  :: INT, IN
-      pt :: MAT{REAL}, IN
-      overlapping_atom :: VEC{INT}, IN
-
-   ENSURE(.atom.created,"no atoms")
-   ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
-   ENSURE(grid.dim==pt.dim1,"wrong size, grid")
-
-      rho_a :: VEC{REAL}*
-      n_pt,i,j :: INT
-
-      ! Allocate temporary densities
-      n_pt = grid.dim
-      rho_a.create(n_pt)
-
-      ! Make density for atom "a"
-      .atom(a).make_interpolated_density(rho_a,pt)
-
-      ! Make total density in "grid"
-      grid = rho_a
-      do j = 1,overlapping_atom.dim
-         i = overlapping_atom(j)
-         if (i==a) cycle
-         .atom(i).add_interpolated_density(grid,pt)
-      end
-
-      ! Make the stockholder weight
-      do i = 1,n_pt
-         if (grid(i)>epsilon(ONE)) then; grid(i) = rho_a(i)/grid(i)
-         else;                           grid(i) = ZERO
-         end
-      end
-      rho_a.destroy
-
-   end
-
 !  ================
 !  Promolecule grid
 !  ================
@@ -12191,28 +12226,59 @@ contains
    ! Work out the promolecule density grid "g" for a series of points.
       g  :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
+
       self :: MOLECULE*
+
       .BASE:set_from_saved_self
       .::make_promolecule_density_grid(g,pt)
+
    end
 
 
-   make_spherical_atom_grid ::: get_from(prop_grid, GRID=>::make_spherical_atom_grid, LABEL=>"spherical_atom_grid")
+   make_spherical_atom_grid ::: get_from(prop_grid, GRID=>::make_spherical_atom_grid_plt, LABEL=>"spherical_atom_grid")
    ! Work out the property density on ".plot_grid" using ".natural orbitals" and the
    ! ".occupation_numbers" vector. A Gnuplot ascii file is generated.
    end
 
-   make_spherical_atom_grid(density_grid,pt)
-   ! Work out the promolecule "density_grid" from the supplied points "pt".
+   make_spherical_atom_grid_plt(g,pt)
+   ! Work out the promolecule atom density grid "g" from the supplied
+   ! points "pt". Uses .plot_grid.center_atom.
       self :: IN
-      density_grid :: VEC{REAL}, OUT
+      g :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
 
    ENSURE(.atom.created,"no atoms")
    ENSURE(.plot_grid.created,"no plot_grid")
    ENSURE(.plot_grid.center_atom>0,"no plot_grid center atom")
 
-      .atom(.plot_grid.center_atom).make_density_grid(density_grid,pt)
+      .atom(.plot_grid.center_atom).make_density_grid(g,pt)
+
+   end
+
+   make_spherical_atom_grid_iso(g,pt)
+   ! Work out the promolecule atom density grid "g" from the supplied
+   ! points "pt". Uses .isosurface.plot_grid.center_atom.
+      self :: IN
+      g :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+
+   ENSURE(.atom.created,"no atoms")
+   ENSURE(.isosurface.plot_grid.created,"no plot_grid")
+   ENSURE(.isosurface.plot_grid.center_atom>0,"no plot_grid center atom")
+
+      .atom(.isosurface.plot_grid.center_atom).make_density_grid(g,pt)
+
+   end
+
+   spherical_atom_grid(g,pt) ::: selfless
+   ! Work out the promolecule density grid "g" for a series of points.
+      g  :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+
+      self :: MOLECULE*
+
+      .BASE:set_from_saved_self
+      .::make_spherical_atom_grid_iso(g,pt)
 
    end
 

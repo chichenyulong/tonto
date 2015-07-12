@@ -299,6 +299,7 @@ contains
          case("deformation_h_dft_energy            "); do_it = TRUE
          case("deformation_h_from_virial           "); do_it = TRUE
          case("deformation_h_kirzhnits             "); do_it = TRUE
+         case("deformation_ha_grid                 "); do_it = TRUE
          case("deformation_k_kinetic_energy        "); do_it = TRUE
          case("deformation_laplacian               "); do_it = TRUE
          case("deformation_v_from_virial           "); do_it = TRUE
@@ -328,7 +329,7 @@ contains
          case("h_dft_energy                        "); do_it = FALSE
          case("h_kirzhnits                         "); do_it = FALSE
          case("h_from_virial                       "); do_it = FALSE
-         case("hirshfeld_atom_grid                 "); do_it = FALSE
+         case("hirshfeld_atom_grid                 "); do_it = TRUE
          case("hirshfeld_density                   "); do_it = FALSE
          case("hirshfeld_weight                    "); do_it = FALSE
          case("j                                   "); do_it = FALSE
