@@ -307,13 +307,13 @@ contains
          H_bond_length(7) =  cif.NH_bond_length
          H_bond_length(8) =  cif.OH_bond_length
 
-         ! Remake fragment data?
+         ! Reset bond H lengths?
          .crystal.reset_H_bond_lengths_in(.atom,H_bond_length,reset)
 
          H_bond_length.destroy
 
          ! Return if nothing was done
-         if (NOT reset) return
+       ! if (NOT reset) return
 
          if (.atom.has_disorder) then
             WARN("DISORDERED ASYMMETRIC CELL MAY BE PRUNED")
