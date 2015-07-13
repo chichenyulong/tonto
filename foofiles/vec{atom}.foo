@@ -1736,15 +1736,15 @@ contains
       if (fl) labels.destroy
       IDs.destroy
 
-      ! Read dispersion corrections?
+      ! Any dispersion corrections?
       cif.find_looped_item("_atom_type_symbol",fats)
       cif.find_looped_item("_atom_type_scat_dispersion_real",fatr)
       cif.find_looped_item("_atom_type_scat_dispersion_imag",fati)
 
-      ! Read dispersion corrections?
+      ! Read dispersion corrections
       if (fats AND fatr AND fati) then
 
-         ! Get data
+         ! Find
          IDs.create(3)
          IDs = ["_atom_type_symbol              ", &
                 "_atom_type_scat_dispersion_real", &
@@ -1765,8 +1765,8 @@ contains
             stdout.show("f''     = ",dc(3,e))
          end
 
-         IDs.destroy
          dc.destroy
+         IDs.destroy
 
       end
 
