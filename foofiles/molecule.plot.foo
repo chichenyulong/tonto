@@ -299,6 +299,7 @@ contains
          case("deformation_h_dft_energy            "); do_it = TRUE
          case("deformation_h_from_virial           "); do_it = TRUE
          case("deformation_h_kirzhnits             "); do_it = TRUE
+         case("deformation_ha_grid                 "); do_it = FALSE
          case("deformation_k_kinetic_energy        "); do_it = TRUE
          case("deformation_laplacian               "); do_it = TRUE
          case("deformation_v_from_virial           "); do_it = TRUE
