@@ -74,6 +74,21 @@ contains
 
    end
 
+   create(dim1,dim2) ::: leaky, PURE
+   ! Create an allocatable matrix with the given dimensions
+      self :: allocatable, OUT
+      dim1,dim2 :: INT, IN
+
+      status :: INT
+
+      allocate(self(dim1,dim2),STAT=status)
+
+      ENSURE(status==0,"error in allocating memory")
+      status = status
+      status = 0
+
+   end
+
    create(bounds) ::: leaky, PURE
    ! Create a matrix with the specified "bounds" for each dimension
       self :: PTR
@@ -138,6 +153,22 @@ contains
       status :: INT
 
       if (.destroyed) return
+
+      deallocate(self,stat=status)
+
+      ENSURE(status==0,"error in deallocating memory")
+      status = status
+      status = 0
+
+   end
+
+   destroy ::: leaky, PURE
+   ! Destroy the allocatable object
+      self :: allocatable, OUT
+
+      status :: INT
+
+      if (.deallocated) return
 
       deallocate(self,stat=status)
 

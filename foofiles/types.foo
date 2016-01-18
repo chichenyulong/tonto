@@ -1128,13 +1128,17 @@ module TYPES
      ! No of quadrature points, or the order of the quadrature
 
      fold_weight_function_in :: BIN  DEFAULT(TRUE)
-     ! The quadrature of I = Int f(x) dx is I = Sum_i f(x_i) w_i, i.e. no weight
-     ! function appears in the integrand; it has been folded into w_i.  If this
-     ! switch is set FALSE then f(x) = F(x) W(x) and the quadrature is defined as
-     ! I = Int F(x) W(x) dx = Sum_i F(x_i) W_i i.e. the function F(x) to be
-     ! quadrated does *not* have the weight W(x) folded in, as does f(x). The
-     ! weights are related by w_i = W(x_i) W_i. Normally the program calculated
-     ! W_i but it delivers w_i.
+     ! The quadrature of:
+     !    I = Int f(x) dx is I = Sum_i f(x_i) w_i, 
+     ! i.e.  no weight function appears in the integrand; it has been
+     ! folded into w_i.  If this switch is set FALSE then:
+     !    f(x) = F(x) W(x) 
+     ! and the quadrature is defined as:
+     !    I = Int F(x) W(x) dx = Sum_i F(x_i) W_i 
+     ! i.e. the function F(x) to be quadrated does *not* have the
+     ! weight W(x) folded in, as does f(x). The weights are related by
+     ! w_i = W(x_i) W_i. Normally the program calculated W_i but it
+     ! delivers w_i.
 
      lower_limit :: REAL  DEFAULT(-ONE)
      ! Lower integration limit (if appropriate)
@@ -1196,28 +1200,28 @@ module TYPES
    type LEBEDEV
 
      n_points :: INT  DEFAULT(0)
-     ! No of quadrature points
+     ! No. of quadrature points
 
      l :: INT  DEFAULT(0)
      ! The angular momentum that this quadrature will integrate up to.
 
-     point :: MAT{REAL}*  DEFAULT_NULL
+     point :: MAT{REAL}@
      ! Coordinates of the quadrature points
 
-     weight :: VEC{REAL}*  DEFAULT_NULL
+     weight :: VEC{REAL}@
      ! The quadrature weights (normalized to unity)
 
-     n_points_per_shell :: VEC{INT}*  DEFAULT_NULL
-     ! No of ppoints per shell. This is used to save work when calculating the
-     ! atomic grids on each shell.
+     n_points_per_shell :: VEC{INT}@
+     ! No of points per shell. This is used to save work when
+     ! calculating the atomic grids on each shell.
 
      n :: INT, private DEFAULT(0)
-     ! Private counter to keep track of how many points have been added into the
-     ! quadrature grid.
+     ! Private counter to keep track of how many points have been
+     ! added into the quadrature grid.
 
      s :: INT, private DEFAULT(0)
-     ! Private counter to keep track of how many shells there are in the
-     ! quadrature grid.
+     ! Private counter to keep track of how many shells there are in
+     ! the quadrature grid.
 
    end
 
@@ -2846,25 +2850,25 @@ module TYPES
      radial_grid :: VEC{QUADRATURE}*  DEFAULT_NULL
      ! The radial quadrature points, one for every row of the periodic table.
 
-     lebedev_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_grid :: LEBEDEV@
      ! The angular quadrature points. We use a Lebedev grid.
 
-     lebedev_H_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_H_grid :: LEBEDEV@
      ! The angular quadrature points for the Hydrogen atom.
 
-     lebedev_L3_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L3_grid :: LEBEDEV@
      ! Angular quadrature points for L=3, used close to the atom.
 
-     lebedev_L5_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L5_grid :: LEBEDEV@
      ! Angular quadrature points for L=5, used close to the atom.
 
-     lebedev_L7_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L7_grid :: LEBEDEV@
      ! Angular quadrature points for L=7, used close to the atom.
 
-     lebedev_L9_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L9_grid :: LEBEDEV@
      ! Angular quadrature points for L=9, used close to the atom.
 
-     lebedev_L11_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L11_grid :: LEBEDEV@
      ! Angular quadrature points for L=11, used close to the atom.
 
      n_unscaled_points :: INT DEFAULT(0)

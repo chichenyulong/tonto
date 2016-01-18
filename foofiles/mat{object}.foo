@@ -145,16 +145,21 @@ contains
 
    nullify_ptr_part
    ! Nullify the pointer parts of self
+      self :: INOUT
+
       i,j :: INT
+
       do i = 1,.dim1
       do j = 1,.dim2
          self(i,j).nullify_ptr_part
       end
       end
+
    end
 
    destroy_ptr_part ::: leaky
    ! Destroy the pointer parts of self
+      self :: INOUT
 
       i,j :: INT
 
@@ -183,6 +188,7 @@ contains
 
    copy(matrix) ::: leaky
    ! Copy the "matrix".
+      self :: OUT
       matrix :: MAT{OBJECT}, IN
 
    ENSURE(.is_same_shape_as(matrix),"matrix shapes do not match")

@@ -31,6 +31,13 @@ module OPVECTOR
 
    implicit none
 
+   minimal_kinds :: VEC{STR}(len=12,3)
+
+   data minimal_kinds/ &
+      "restricted  ",  &
+      "unrestricted",  &
+      "general     "   /
+
    allowed_kinds :: VEC{STR}(len=12,5)
 
    data allowed_kinds/ &
@@ -40,30 +47,52 @@ module OPVECTOR
       "beta        ",  &
       "general     "   /
 
+   extended_kinds :: VEC{STR}(len=20,10)
+
+   data extended_kinds/ &
+      "restricted          ", &
+      "unrestricted        ", &
+      "alpha               ", &
+      "beta                ", &
+      "general             ", &
+      "restricted_complex  ", &
+      "unrestricted_complex", &
+      "alpha_complex       ", &
+      "beta_complex        ", &
+      "general_complex     "  /
+
 contains
 
-   create ::: get_from(OBJECT), leaky
+!  ======
+!  Memory
+!  ======
+
+   create ::: get_from(OBJECT), leaky, PURE
    ! Create an object
    end
 
-   create(n_bf) ::: leaky
+   create(n_bf) ::: leaky, PURE
    ! Create an opvector, in a basis set with "n_bf" spatial orbitals
       self :: PTR
       n_bf :: INT, IN
+
       .create
       .n_bf = n_bf
+
    end
 
-   create(n_bf,genre) ::: leaky
+   create(n_bf,genre) ::: leaky, PURE
    ! Create an opvector, in a basis set with "n_bf" spatial orbitals
       self :: PTR
       n_bf :: INT, IN
-      genre :: STR
+      genre :: STR, IN
+
       .create(n_bf)
       .create(genre)
+
    end
 
-   destroy
+   destroy ::: PURE
    ! Destroy an opmatrix object
       self :: PTR
 
@@ -75,167 +104,256 @@ contains
 
    end
 
-   create(genre) ::: leaky
+   create(genre) ::: leaky, PURE
    ! Create the appropriate spinorbital kind of the opvector
-      genre :: STR
+      self :: INOUT
+      genre :: STR, IN
+
+   ENSURE(.n_bf>=0,"number of basis functions is undefined")
+   ENSURE(genre.is_one_of(extended_kinds),"unknown genre, "//trim(genre))
+
       n_bf :: INT
+
       n_bf = .n_bf
-      ENSURE(.n_bf>=0,"number of basis functions is undefined")
+
       select case (genre)
-         case ("restricted","restricted_complex");     .restricted.create(n_bf)
-         case ("unrestricted","unrestricted_complex"); .alpha.create(n_bf)
-                                                       .beta.create(n_bf)
-         case ("alpha","alpha_complex");               .alpha.create(n_bf)
-         case ("beta","beta_complex");                 .beta.create(n_bf)
-         case ("general","general_complex");           .general.create(2*n_bf)
-         case default; DIE("unknown spinorbital kind, " // trim(genre))
+         case (  "restricted",  "restricted_complex"); .restricted.create(n_bf)
+         case ("unrestricted","unrestricted_complex");      .alpha.create(n_bf)
+                                                             .beta.create(n_bf)
+         case (       "alpha",       "alpha_complex");      .alpha.create(n_bf)
+         case (       " beta",        "beta_complex");       .beta.create(n_bf)
+         case (     "general",     "general_complex");    .general.create(2*n_bf)
+      !  case default; DIE("unknown spinorbital kind, " // trim(genre))
       end
+
    end
 
-   destroy(genre) ::: leaky
+   destroy(genre) ::: leaky, PURE
    ! Destroy the appropriate spinorbital kind of the opmatrix
-      genre :: STR
+      self :: INOUT
+      genre :: STR, IN
+
+   ENSURE(genre.is_one_of(extended_kinds),"unknown genre, "//trim(genre))
+
       select case (genre)
-         case ("restricted","restriced_complex");       .restricted.destroy
-         case ("unrestricted","unrestricted_complex");  .alpha.destroy; .beta.destroy
-         case ("alpha","alpha_complex");                .alpha.destroy
-         case ("beta","beta_complex");                  .beta.destroy
-         case ("general","general_complex");            .general.destroy
-         case default; DIE("unknown spinorbital kind, " // trim(genre))
+         case (  "restricted",  "restricted_complex"); .restricted.destroy
+         case ("unrestricted","unrestricted_complex");      .alpha.destroy
+                                                             .beta.destroy
+         case (       "alpha",       "alpha_complex");      .alpha.destroy
+         case (       " beta",        "beta_complex");       .beta.destroy
+         case (     "general",     "general_complex");    .general.destroy
+      !  case default; DIE("unknown spinorbital kind, " // trim(genre))
       end
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: pure
    ! Nullify the pointer parts of the opmatrix object
+      self :: INOUT
+
       nullify(.restricted)
       nullify(.alpha)
       nullify(.beta)
       nullify(.general)
+
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, PURE
    ! Destroy the pointer parts of the opmatrix object
+      self :: INOUT
+
       .restricted.destroy
       .alpha.destroy
       .beta.destroy
       .general.destroy
+
    end
 
    created result (res) ::: get_from(OBJECT), inlined_by_foo
    ! Returns true if self has been created
-      self :: PTR
-      res :: BIN
    end
 
    destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
    ! Returns true if self has *not* been created
-      self :: PTR
-      res :: BIN
    end
 
-   created(genre) result (res)
+   created(genre) result (res) ::: PURE
    ! Returns true if subkind "genre" of self has been created
       self :: PTR
-      genre :: STR
+      genre :: STR, IN
       res :: BIN
 
-      res = FALSE
+   ENSURE(genre.is_one_of(allowed_kinds),"unknown genre, "//trim(genre))
 
+      res = FALSE
+ 
       if (NOT associated(self)) then
+
          return
+
       else
+
          select case (genre)
-            case ("restricted");    res = .restricted.created
-            case ("unrestricted");  res = .alpha.created
-            case ("general");       res = .general.created
-            case default; DIE("unknown spinorbital kind, " // trim(genre))
+            case (  "restricted"); res = .restricted.created
+            case ("unrestricted"); res =      .alpha.created AND .beta.created
+            case (       "alpha"); res =      .alpha.created
+            case (        "beta"); res =                         .beta.created
+            case (     "general"); res =    .general.created
+          ! case default; DIE("unknown spinorbital kind, " // trim(genre))
          end
+
       end
 
    end
 
-   destroyed(genre) result (res)
+   destroyed(genre) result (res) ::: PURE
    ! Returns true if subkind "genre" of self has *not* been created
       self :: PTR
-      genre :: STR
+      genre :: STR, IN
       res :: BIN
+
+   ENSURE(genre.is_one_of(allowed_kinds),"unknown genre, "//trim(genre))
 
       res = TRUE
 
       if (NOT associated(self)) then
+
          return
+
       else
+
          select case (genre)
-            case ("restricted");    res = .restricted.destroyed
-            case ("unrestricted");  res = .alpha.destroyed
-            case ("general");       res = .general.destroyed
-            case default; DIE("unknown spinorbital kind, " // trim(genre))
+            case (  "restricted"); res = .restricted.destroyed
+            case ("unrestricted"); res =      .alpha.destroyed AND .beta.destroyed
+            case (       "alpha"); res =      .alpha.destroyed
+            case (        "beta"); res =                           .beta.destroyed
+            case (     "general"); res =    .general.destroyed
+          ! case default; DIE("unknown spinorbital kind, " // trim(genre))
          end
+
       end
 
    end
 
-   any_created result (res)
+   any_created result (res) ::: pure
    ! Returns true if any component of self has been created
+      self :: IN
       res :: BIN
-       c :: BIN, dimension(3)
+
+      c :: BIN, dimension(4)
+
       c(1) = .restricted.created
-      c(2) = .alpha.created
-      c(3) = .general.created
-      res = any(c)
+      c(2) =      .alpha.created
+      c(3) =       .beta.created
+      c(4) =    .general.created
+
+      res  = any(c)
+
    end
 
-   all_destroyed result (res)
+   all_destroyed result (res) ::: pure
    ! Returns true if all components of self have been destroyed
+      self :: IN
       res :: BIN
-       d :: BIN, dimension(3)
+
+      d :: BIN, dimension(4)
+
       d(1) = .restricted.destroyed
-      d(2) = .alpha.destroyed
-      d(3) = .general.destroyed
+      d(2) =      .alpha.destroyed
+      d(3) =       .beta.destroyed
+      d(4) =    .general.destroyed
+
       res = all(d)
+
    end
 
-   create_copy(v)
+   create_copy(v) ::: PURE
    ! Create an opvector object
       self :: PTR
-       v :: OPVECTOR, IN
+      v :: OPVECTOR, IN
+
       .create(v.n_bf)
       .set_to(v)
+
    end
 
-   set_defaults
+!  ===
+!  Set
+!  ===
+
+   set_defaults ::: pure
    ! Set defaults
+      self :: INOUT
+
       .n_bf = 0
+
    end
 
-   set(n_bf)
+   set(n_bf) ::: pure
    ! Set with "n_bf" spatial orbitals
+      self :: INOUT
       n_bf :: INT, IN
+
       .n_bf = n_bf
+
    end
 
-   set_to(v) ::: leaky
+   set_to(v) ::: leaky, PURE
    ! Set self to "v".
-       v :: OPVECTOR
-      .set( v.n_bf)
-      if ( v.all_destroyed) return
-      if ( v.restricted.created) then
-         .destroy("restricted"); .create("restricted")
+      self :: INOUT
+      v :: OPVECTOR, IN
+
+      .set(v.n_bf)
+
+      if (v.all_destroyed) return
+
+      if (v.restricted.created) then
+         .destroy("restricted")
+          .create("restricted")
          .restricted = v.restricted
       end
-      if ( v.alpha.created) then
-         .destroy("alpha"); .create("alpha")
+
+      if (v.alpha.created) then
+         .destroy("alpha")
+          .create("alpha")
           .alpha = v.alpha
       end
-      if ( v.beta.created) then
-         .destroy("beta"); .create("beta")
+
+      if (v.beta.created) then
+         .destroy("beta")
+          .create("beta")
          .beta = v.beta
       end
-      if ( v.general.created) then
-         .destroy("general"); .create("general")
+
+      if (v.general.created) then
+         .destroy("general")
+          .create("general")
          .general = v.general
       end
+
    end
+
+   set_to_zero ::: PURE
+   ! Set self to zero
+      self :: INOUT
+
+      genre :: STR
+
+      genre = .spinorbital_kind
+
+   ENSURE(genre.is_one_of(minimal_kinds),"unknown genre, "//trim(genre))
+
+      select case(genre)
+         case("restricted");      .restricted = ZERO
+         case("unrestricted");         .alpha = ZERO; .beta = ZERO
+         case("general");            .general = ZERO
+      !  case default; DIE("unknown spinorbital kind, " // trim(genre))
+      end
+
+   end
+
+!  =======
+!  Inquiry
+!  =======
 
    spinorbital_kind result (res) ::: pure
    ! Return the kind of spinorbitals used in the representation.
@@ -252,21 +370,52 @@ contains
 
    end
 
-   set_to_zero
-   ! Set self to zero
-      genre :: STR
-      genre = .spinorbital_kind
-      select case(genre)
-         case("restricted");      .restricted = ZERO
-         case("unrestricted");    .alpha = ZERO; .beta = ZERO
-         case("general");         .general = ZERO
-         case default; DIE("unknown spinorbital kind, " // trim(genre))
+   no_of_occupied(genre,tol) result (res) ::: PURE
+   ! Returns the number of non-zero "occupied" elements, i.e. all those elements
+   ! greater than TOL(7).  If "genre" is present, the number of occupied
+   ! elements is returned for that kind (the default is determined by the
+   ! .spinorbital_kind). if "tol" is present, it is used instead of TOL(7) to
+   ! determine what is occupied.
+      self :: IN
+      genre :: STR, optional, IN
+      tol :: REAL, optional, IN
+      res :: INT
+
+
+      itemkind :: STR
+      eps :: REAL
+
+      itemkind = .spinorbital_kind
+      if (present(genre)) itemkind = genre
+
+      eps = TOL(7)
+      if (present(tol)) eps = tol
+
+   ENSURE(itemkind.is_one_of(allowed_kinds),"unknown genre, "//trim(itemkind))
+   ENSURE(.created(itemkind),"not created, genre = "//trim(itemkind))
+
+      res = 0
+
+      select case (itemkind)
+
+         case (  "restricted"); res = count(.restricted>=eps)
+         case ("unrestricted"); res = count(     .alpha>=eps) + count(.beta>=eps)
+         case (       "alpha"); res = count(     .alpha>=eps)
+         case (        "beta"); res = count(      .beta>=eps)
+         case (     "general"); res = count(   .general>=eps)
+
       end
+
    end
+
+!  =======
+!  Methods
+!  =======
 
    convert_to(newkind) ::: leaky
    ! Convert self to a new basis kind "newkind"
-      newkind :: STR
+      self :: INOUT
+      newkind :: STR, IN
 
       oldkind :: STR
 
@@ -319,57 +468,6 @@ contains
 
       ! Clean
       .destroy(oldkind)
-
-   end
-
-   no_of_occupied(genre,tol) result (res) ::: PURE
-   ! Returns the number of non-zero "occupied" elements, i.e. all those elements
-   ! greater than TOL(7).  If "genre" is present, the number of occupied
-   ! elements is returned for that kind (the default is determined by the
-   ! .spinorbital_kind). if "tol" is present, it is used instead of TOL(7) to
-   ! determine what is occupied.
-      self :: IN
-      genre :: STR, optional, IN
-      tol :: REAL, optional, IN
-      res :: INT
-
-
-      itemkind :: STR
-      eps :: REAL
-
-      itemkind = .spinorbital_kind
-      if (present(genre)) itemkind = genre
-      ENSURE(itemkind.is_one_of(allowed_kinds),"unknown kind, "//trim(itemkind))
-
-      eps = TOL(7)
-      if (present(tol)) eps = tol
-
-      res = 0
-
-      select case (itemkind)
-
-         case ("restricted")
-            ENSURE(.restricted.created,"no restricted part")
-            res = count(.restricted>=eps)
-
-         case ("unrestricted")
-            ENSURE(.alpha.created,"no alpha part")
-            ENSURE(.beta.created, "no beta part")
-            res = count(.alpha>=eps) + count(.beta>=eps)
-
-         case ("alpha")
-            ENSURE(.alpha.created,"no alpha part")
-            res = count(.alpha>=eps)
-
-         case ("beta")
-            ENSURE(.beta.created, "no beta part")
-            res = count(.beta>=eps)
-
-         case ("general")
-            ENSURE(.general.created, "no general part")
-            res = count(.general>=eps)
-
-      end
 
    end
 

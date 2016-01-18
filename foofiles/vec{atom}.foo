@@ -297,7 +297,7 @@ contains
 !  Set
 !  ===
 
-   set_defaults ::: get_from(VEC{OBJECT}), leaky
+   set_defaults ::: get_from(VEC{OBJECT}), leaky, pure
    ! Set default values
    end
 
@@ -3176,9 +3176,12 @@ contains
 
    end
 
-   move_origin_to_center_of_atoms
+   move_origin_to_center_of_atoms ::: pure
    ! Move the origin to the center of atoms
+      self :: INOUT
+
       .translate_by(-.center_of_atoms)
+
    end
 
    bounding_cube_width result(width)
@@ -8545,7 +8548,7 @@ contains
 !  Crystal stuff
 !  =============
 
-   translate_by(v)
+   translate_by(v) ::: pure
    ! Translate self by vector.
       self :: INOUT
       v :: VEC{REAL}(3), IN
@@ -8562,7 +8565,7 @@ contains
 
    end
 
-   rotate_by(matrix)
+   rotate_by(matrix) ::: pure
    ! Rotate the atom positions by the rotation matrix
       self :: INOUT
       matrix :: MAT{REAL}(3,3), IN
@@ -8572,7 +8575,7 @@ contains
 
    end
 
-   rotate_positions_by(matrix)
+   rotate_positions_by(matrix) ::: PURE
    ! Rotate the atom positions by the rotation matrix
       self :: INOUT
       matrix :: MAT{REAL}(3,3), IN
@@ -8587,7 +8590,7 @@ contains
 
    end
 
-   rotate_ADP_tensors_by(matrix)
+   rotate_ADP_tensors_by(matrix) ::: PURE
    ! Rotate the atom ADP (thermal) tensors by the rotation matrix:
    ! this is the rotation matrix which transforms the cartesian
    ! position to a new position.
@@ -8605,7 +8608,7 @@ contains
 
    end
 
-   change_ADP_axis_system_to(axis_system,form,cell)
+   change_ADP_axis_system_to(axis_system,form,cell) ::: PURE
    ! Convert all ADP tensors into the desired "axis_system".
       self :: INOUT
       axis_system,form :: STR, IN

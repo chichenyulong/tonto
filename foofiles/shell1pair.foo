@@ -84,7 +84,7 @@ contains
       res :: BIN
    end
  
-   create_copy(ab) ::: leaky, PURE
+   create_copy(ab) ::: leaky
    ! Create a copy of the "ab" shellpair
       self :: PTR
       ab :: SHELL1PAIR, IN

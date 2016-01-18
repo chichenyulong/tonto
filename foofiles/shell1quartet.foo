@@ -628,11 +628,7 @@ contains
       C :: MAT4{REAL}*
       S :: MAT4{REAL}(.a.n_sph,.b.n_sph,.c.n_sph,.d.n_sph), OUT
 
-      UU  :: VEC{MAT_{REAL}}*
-      U :: MAT{REAL}*
       W,WW :: MAT4{REAL}*
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
 
       if (max(.ab_l_max,.cd_l_max)<2) then
 
@@ -644,33 +640,29 @@ contains
          W => C
 
          if (.a.l>=2) then
-            U => UU(.a.l).element
             WW.create(.a.n_sph,.b.n_comp,.c.n_comp,.d.n_comp)
-            W.change_index_1_to(WW,U)
+            W.change_index_1_to(WW, GAUSSIAN_DATA::spherical_harmonic_mx(.a.l)%element)
             W.destroy
             W => WW
          end
 
          if (.b.l>=2) then
-            U => UU(.b.l).element
             WW.create(.a.n_sph,.b.n_sph,.c.n_comp,.d.n_comp)
-            W.change_index_2_to(WW,U)
+            W.change_index_2_to(WW, GAUSSIAN_DATA::spherical_harmonic_mx(.b.l)%element)
             W.destroy
             W => WW
          end
 
          if (.c.l>=2) then
-            U => UU(.c.l).element
             WW.create(.a.n_sph,.b.n_sph,.c.n_sph,.d.n_comp)
-            W.change_index_3_to(WW,U)
+            W.change_index_3_to(WW, GAUSSIAN_DATA::spherical_harmonic_mx(.c.l)%element)
             W.destroy
             W => WW
          end
 
          if (.d.l>=2) then
-            U => UU(.d.l).element
             WW.create(.a.n_sph,.b.n_sph,.c.n_sph,.d.n_sph)
-            W.change_index_4_to(WW,U)
+            W.change_index_4_to(WW, GAUSSIAN_DATA::spherical_harmonic_mx(.d.l)%element)
             W.destroy
             W => WW
          end

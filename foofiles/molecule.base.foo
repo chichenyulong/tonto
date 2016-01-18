@@ -4378,8 +4378,10 @@ contains
 
    end
 
-   move_origin_to_center_of_atoms
+   move_origin_to_center_of_atoms ::: PURE
    ! Move the origin to the center of atoms
+      self :: INOUT
+
    ENSURE(.atom.created,"atom list required")
 
       .atom.move_origin_to_center_of_atoms
@@ -4390,8 +4392,11 @@ contains
 
    move_origin
    ! Move the origin by a user specified vector
+      self :: INOUT
+
    ENSURE(.atom.created,"atom list required")
    ENSURE(stdin.buffer.n_items==4 OR stdin.buffer.n_items==5,"origin shift needed on same line")
+
       shift :: VEC{REAL}(3)
 
       stdin.read_quantity(shift)
@@ -4402,39 +4407,54 @@ contains
    end
 
 
-   has_all_ANOs_made result (res)
+   has_all_ANOs_made result (res) ::: pure
    ! Return TRUE if the ANO data is made for every atom.
+      self :: IN
       res :: BIN
+
       res = .atom.created
       if (res) res = .atom.has_all_ANO_matrices
+
    end
 
-   has_all_ANO_interpolators result (res)
+   has_all_ANO_interpolators result (res) ::: pure
    ! Return TRUE if the ANO interpolators are made for every atom.
+      self :: IN
       res :: BIN
+
       res = .atom.created
       if (res) res = .atom.has_all_ANO_interpolators
+
    end
 
-   has_all_interpolators result (res)
+   has_all_interpolators result (res) ::: pure
    ! Return TRUE if the per-atom interpolators are made for every atom.
+      self :: IN
       res :: BIN
+
       res = .atom.created
       if (res) res = .atom.has_all_interpolators
+
    end
 
-   has_all_spherical_atom_data result (res)
+   has_all_spherical_atom_data result (res) ::: pure
    ! Return TRUE if the per-atom interpolators are made for every atom.
+      self :: IN
       res :: BIN
+
       res = .atom.created
       if (res) res = .atom.has_all_spherical_atom_data
+
    end
 
-   has_all_atom_shell_info result (res)
+   has_all_atom_shell_info result (res) ::: pure
    ! Return TRUE if the per-atom interpolators are made for every atom.
+      self :: IN
       res :: BIN
+
       res = .atom.created
       if (res) res = .atom.has_all_shell_info
+
    end
 
 !  ===============

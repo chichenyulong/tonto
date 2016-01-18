@@ -4968,7 +4968,6 @@ contains
    ! block of integrals.
    ! LBxxx first version can be made more if free (duplicit if testin
    ! this and the succeeding routine
-      self :: IN
       ab :: MAT{REAL}, INOUT
       mass_c :: REAL, IN
       pos_c :: VEC{REAL}(3), IN
@@ -4976,14 +4975,20 @@ contains
       W :: MAT{REAL}*
 
       if (NOT .is_spherical) then
+
          .get_nuc_c(ab,mass_c,pos_c)
+
       else if (.l_max<2) then
+
          .get_nuc_c(ab,mass_c,pos_c)
+
       else
+
          W.create(.a.n_comp,.b.n_comp)
          .get_nuc_c(W,mass_c,pos_c)
          .change_to_spherical(W,ab)
          W.destroy
+
       end
 
    end
@@ -6489,67 +6494,12 @@ contains
 ! Normalization routines and functions
 ! ====================================
 
-   change_to_spherical(C,S)
-   ! Change a cartesian integral block "C" to a spherical integral
-   ! block "S"
-      self :: IN
-      C :: MAT{REAL}, IN
-      S :: MAT{REAL}, OUT
-
-      UU  :: VEC{MAT_{REAL}}*
-      W,U :: MAT{REAL}*
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
-
-      if (.l_max<2) then
-         S = C             ! don't use this case
-      else if (.l_min>=2) then
-         W.create(.a.n_comp,.b.n_sph)
-         U => UU(.b.l).element
-         W.to_product_of(C,U)
-         U => UU(.a.l).element
-         S.to_product_of(U,W,transpose_a=TRUE)
-         W.destroy
-      else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
-         S.to_product_of(C,U)
-      else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
-         S.to_product_of(U,C,transpose_a=TRUE)
-      end
-
+   change_to_spherical(C,S) ::: get_from(GAUSSIAN2, TYPE?=>REAL)
+   ! Change cartesian integral block "C" to spherical integrals "S"
    end
 
-   change_to_spherical(C,S)
-   ! Change a cartesian integral block "C" to a spherical integral
-   ! block "S"
-      self :: IN
-      C :: MAT{CPX}, IN
-      S :: MAT{CPX}, OUT
-
-      UU  :: VEC{MAT_{REAL}}*
-      U :: MAT{REAL}*
-      W ::  MAT{CPX}*
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
-
-      if (.l_max<2) then
-         S = C             ! don't use this case
-      else if (.l_min>=2) then
-         W.create(.a.n_comp,.b.n_sph)
-         U => UU(.b.l).element
-         W.to_product_of(C,U)
-         U => UU(.a.l).element
-         S.to_product_of(U,W,transpose_a=TRUE)
-         W.destroy
-      else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
-         S.to_product_of(C,U)
-      else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
-         S.to_product_of(U,C,transpose_a=TRUE)
-      end
-
+   change_to_spherical(C,S) ::: get_from(GAUSSIAN2, TYPE?=>CPX)
+   ! Change cartesian integral block "C" to spherical integrals "S"
    end
 
    change_to_spherical(C,S)
@@ -6559,33 +6509,33 @@ contains
       C :: MAT3{CPX}, IN
       S :: MAT3{CPX}, OUT
 
-      UU  :: VEC{MAT_{REAL}}*
-      U :: MAT{REAL}*
-      W ::  MAT3{CPX}*
+      W :: MAT3{CPX}*
       i :: INT
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
 
       do i = 1,C.dim3
 
-      if (.l_max<2) then
-         S = C             ! don't use this case
-      else if (.l_min>=2) then
-         W.create(.a.n_comp,.b.n_sph,C.dim3)
-         U => UU(.b.l).element
-         W(:,:,i).to_product_of(C(:,:,i),U)
-         U => UU(.a.l).element
-         S(:,:,i).to_product_of(U,W(:,:,i),transpose_a=TRUE)
-         W.destroy
-      else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
-         S(:,:,i).to_product_of(C(:,:,i),U)
-      else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
-         S(:,:,i).to_product_of(U,C(:,:,i),transpose_a=TRUE)
-      end
+         if (.l_max<2) then
 
-      end do
+            S = C
+
+         else if (.l_min>=2) then
+
+            W.create(.a.n_comp,.b.n_sph,C.dim3)
+            W(:,:,i).to_product_of(C(:,:,i),GAUSSIAN_DATA::spherical_harmonic_mx(.b.l)%element)
+            S(:,:,i).to_product_of(         GAUSSIAN_DATA::spherical_harmonic_mx(.a.l)%element,W(:,:,i),transpose_a=TRUE)
+            W.destroy
+
+         else if (.b.l>=2) then
+
+            S(:,:,i).to_product_of(C(:,:,i),GAUSSIAN_DATA::spherical_harmonic_mx(.b.l)%element)
+
+         else if (.a.l>=2) then
+
+            S(:,:,i).to_product_of( GAUSSIAN_DATA::spherical_harmonic_mx(.a.l)%element,C(:,:,i),transpose_a=TRUE)
+
+         end
+
+      end
 
    end
 

@@ -105,9 +105,9 @@ module GAUSSIAN2
 
 contains
 
-!  =================
-!  Memory allocation
-!  =================
+!  ==========
+!  Allocation
+!  ==========
 
    create ::: get_from(OBJECT), leaky
    ! Create an object. This does not nullify point parts or set
@@ -1355,78 +1355,75 @@ contains
 
    end
 
+!  =======
+!  Inquiry
+!  =======
+
+   l_max result (res) ::: pure
+   ! Return the maximum of the angular momenta
+      self :: IN
+      res :: INT
+
+      res = max(.a.l,.b.l)
+
+   end
+
+   l_min result (res) ::: pure
+   ! Return the minimum of the angular momenta
+      self :: IN
+      res :: INT
+
+      res = min(.a.l,.b.l)
+
+   end
+
 !  ======================
 !  CADPAC-style integrals
 !  ======================
+
+   change_to_spherical(C,S) ::: template
+   ! Change cartesian integral block "C" to spherical integrals "S"
+      self :: IN
+      C :: MAT{TYPE?}, IN
+      S :: MAT{TYPE?}, OUT
+
+      W :: MAT{TYPE?}*
+
+      if (.l_max<2) then
+
+         S = C             
+
+      else if (.l_min>=2) then
+
+         W.create(.a.n_comp,.b.n_sph)
+         W.to_product_of(C, GAUSSIAN_DATA::spherical_harmonic_mx(.b.l)%element)
+         S.to_product_of(   GAUSSIAN_DATA::spherical_harmonic_mx(.a.l)%element,W,transpose_a=TRUE)
+         W.destroy
+
+      else if (.b.l>=2) then
+
+         S.to_product_of(C, GAUSSIAN_DATA::spherical_harmonic_mx(.b.l)%element)
+
+      else if (.a.l>=2) then
+
+         S.to_product_of(   GAUSSIAN_DATA::spherical_harmonic_mx(.a.l)%element,C,transpose_a=TRUE)
+
+      end
+
+   end
+
+   change_to_spherical(C,S) ::: get_from(GAUSSIAN2, TYPE?=>REAL)
+   ! Change cartesian integral block "C" to spherical integrals "S"
+   end
+
+   change_to_spherical(C,S) ::: get_from(GAUSSIAN2, TYPE?=>CPX)
+   ! Change cartesian integral block "C" to spherical integrals "S"
+   end
 
    normalisation_factor result (res)
    ! Return the normaliston factor assuming it is x^l
       res :: REAL
       res = .a.normalisation_factor * .b.normalisation_factor
-   end
-
-   change_to_spherical(C,S)
-   ! Transform a cartesian integral block "C" to a spherical integral
-   ! block "S"
-      self :: IN
-      C :: MAT{REAL}, IN
-      S :: MAT{REAL}, OUT
-
-      UU  :: VEC{MAT_{REAL}}*
-      W,U :: MAT{REAL}*
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
-
-      if ( .a.l<2 AND .b.l<2 ) then
-         S = C             ! don't use this case
-      else if ( .a.l>=2 AND .b.l>=2 ) then
-         W.create(.a.n_comp,.b.n_sph)
-         U => UU(.b.l).element
-         W.to_product_of(C,U)
-         U => UU(.a.l).element
-         S.to_product_of(U,W,transpose_a=TRUE)
-         W.destroy
-      else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
-         S.to_product_of(C,U)
-      else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
-         S.to_product_of(U,C,transpose_a=TRUE)
-      end
-
-   end
-
-   change_to_spherical(C,S)
-   ! Transform a cartesian integral block "C" to a spherical integral
-   ! block "S"
-      self :: IN
-      C :: MAT{CPX}, IN
-      S :: MAT{CPX}, OUT
-
-      UU  :: VEC{MAT_{REAL}}*
-      U :: MAT{REAL}*
-      W :: MAT{CPX}*
-
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
-
-      if ( .a.l<2 AND .b.l<2 ) then
-         S = C             ! don't use this case
-      else if ( .a.l>=2 AND .b.l>=2 ) then
-         W.create(.a.n_comp,.b.n_sph)
-         U => UU(.b.l).element
-         W.to_product_of(C,U)
-         U => UU(.a.l).element
-         S.to_product_of(U,W,transpose_a=TRUE)
-         W.destroy
-      else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
-         S.to_product_of(C,U)
-      else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
-         S.to_product_of(U,C,transpose_a=TRUE)
-      end
-
    end
 
    make_normalised_overlap_ints(S,spherical)

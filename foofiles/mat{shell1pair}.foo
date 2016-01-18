@@ -59,7 +59,7 @@ contains
    ! Destroy the pointer parts of self
    end
 
-   create_copy(matrix) ::: get_from(MAT{OBJECT}), leaky, PURE
+   create_copy(matrix) ::: get_from(MAT{OBJECT}), leaky
    ! Create a copy of matrix
    end
 

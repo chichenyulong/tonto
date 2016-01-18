@@ -51,6 +51,10 @@ contains
    ! Create a matrix with the given dimensions
    end
 
+   create(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   ! Create an allocatable matrix with the given dimensions
+   end
+
    create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
    ! Create a matrix with the specified "bounds" for each dimension
    end
@@ -73,6 +77,10 @@ contains
 
    destroy ::: get_from(MAT{INTRINSIC}), leaky, PURE
    ! Destroy the object
+   end
+
+   destroy ::: get_from(MAT{INTRINSIC}), leaky, PURE
+   ! Destroy the allocatable object
    end
 
    created result (res) ::: get_from(MAT{INTRINSIC}), inlined_by_foo, pure

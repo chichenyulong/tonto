@@ -1012,7 +1012,7 @@ contains
 
    end
 
-   destroy_shell_info ::: leaky
+   destroy_shell_info ::: leaky, PURE
    ! Destroy the (unique-atom) shell info
       self :: INOUT
 
@@ -1214,68 +1214,65 @@ contains
    ! Set a default atom
       self :: INOUT
 
-      .label = "?"
-      .tag = " "
-
-      .atomic_number   = 0
-      .nuclear_charge  = ZERO
-      .oxidation_state = 0
-
-      .mass_number     = 0
-      .mass            = ZERO
+      .label                      = "?"
+      .tag                        = " "
+      .atomic_number              = 0
+      .nuclear_charge             = ZERO
+      .oxidation_state            = 0
+      .mass_number                = 0
+      .mass                       = ZERO
 
       .set_position([ ZERO,ZERO,ZERO ])
       .set_position_error([ ZERO,ZERO,ZERO ])
 
-      .group  = 0
-
-      .site_occupancy = ONE
-      .site_disorder_group = 0
-
-      ! ADP
-      .U_iso = ZERO
-      .set_ADP_tensor(ZERO)
-      .pos_axis_system  = "cartesian"
-      .ADP_axis_system  = "cartesian"
-      .ADP3_axis_system = "cartesian"
-      .ADP4_axis_system = "cartesian"
-
-      ! Charges
-      .charge                = ZERO
-      .dipole                = ZERO
-      .quadrupole            = ZERO
-      .spin                  = ZERO
-      .spin_dipole           = ZERO
-      .spin_quadrupole       = ZERO
-      .charge_polarisability = ZERO
-      .dipole_polarisability = ZERO
+      .group                      = 0
+      .site_occupancy             = ONE
+      .site_disorder_group        = 0
+                                  
+      ! ADP                       
+      .U_iso                      = ZERO
+      .set_ADP_tensor(ZERO)       
+      .pos_axis_system            = "cartesian"
+      .ADP_axis_system            = "cartesian"
+      .ADP3_axis_system           = "cartesian"
+      .ADP4_axis_system           = "cartesian"
+                                  
+      ! Charges                   
+      .charge                     = ZERO
+      .dipole                     = ZERO
+      .quadrupole                 = ZERO
+      .spin                       = ZERO
+      .spin_dipole                = ZERO
+      .spin_quadrupole            = ZERO
+      .charge_polarisability      = ZERO
+      .dipole_polarisability      = ZERO
 
       ! Basis
-      .basis_label        = " "
-      .basis_kind         = " "
-      .slaterbasis_label  = " "
-      .coppensbasis_label = " "
-      .kind               = 0
-      .is_unique_kind     = FALSE
-
-      ! ANO
-      .energy                   = ZERO
-      .ANOs_made                = FALSE
-      .spherical_atom_data_made = FALSE
-
-      ! Interpolator
-      .use_interpolator       = TRUE
-      .ANO_interpolators_made = FALSE
-      .interpolators_made     = FALSE
-
-      .shell_info_made = FALSE
+      .basis_label                = " "
+      .basis_kind                 = " "
+      .slaterbasis_label          = " "
+      .coppensbasis_label         = " "
+      .kind                       = 0
+      .is_unique_kind             = FALSE
+                                  
+      ! ANO                       
+      .energy                     = ZERO
+      .ANOs_made                  = FALSE
+      .spherical_atom_data_made   = FALSE
+                                  
+      ! Interpolator              
+      .use_interpolator           = TRUE
+      .ANO_interpolators_made     = FALSE
+      .interpolators_made         = FALSE
+                                  
+      .shell_info_made            = FALSE
 
       ! Protien defaults
-      .invariom_label          = " "
-      .protein_strand          = 0
-      .residue_atom_code       = " "
-      .residue_code            = " "
-      .residue_sequence_number = 0
+      .invariom_label             = " "
+      .protein_strand             = 0
+      .residue_atom_code          = " "
+      .residue_code               = " "
+      .residue_sequence_number    = 0
 
       ! MM
       .mm_forcefield_name         = " "
@@ -3106,7 +3103,7 @@ contains
 
    end
 
-   change_ADP_axis_system_to(axis_system,form,cell)
+   change_ADP_axis_system_to(axis_system,form,cell) ::: PURE
    ! Change *all* ADP tensor to the desired "axis_system". The axes
    ! are described by the unit "cell". Specify the "form" of the
    ! anharmonic ADPs, either "g" or "u".
@@ -3120,11 +3117,13 @@ contains
 
    end
 
-   change_ADP2_tensor_to(axis_system,cell) ::: private
+   change_ADP2_tensor_to(axis_system,cell) ::: private, PURE
    ! Change ADP2/s axis system into the "axis_system" frame.
       self :: INOUT
       axis_system :: STR, IN
       cell :: UNIT_CELL, IN
+
+   ENSURE(axis_system.is_one_of(["cartesian","crystal  "]),"unknown axis_system, "//trim(axis_system))
 
       ADP :: MAT{REAL}(3,3)
       chk :: BIN
@@ -3183,14 +3182,11 @@ contains
             ! Set axis system
             .ADP_axis_system = "crystal"
 
-         case default
-            UNKNOWN(axis_system)
-
       end
 
    end
 
-   change_ADP3_tensor_to(axis_system,form,cell) ::: private
+   change_ADP3_tensor_to(axis_system,form,cell) ::: private, PURE
    ! Change ADP3 vector to the "axis_system" frame.
    ! NOTE: Unlike the ADP2's, in the "crystal" axis_system these are
    ! reported in dimensionless Gram-Charlier "g" form. For
@@ -3200,6 +3196,9 @@ contains
       self :: INOUT
       axis_system,form :: STR, IN
       cell :: UNIT_CELL, IN
+
+   ENSURE(       form.is_one_of(["g","u"]),"unknown form, "//trim(form))
+   ENSURE(axis_system.is_one_of(["cartesian","crystal  "]),"unknown axis_system, "//trim(axis_system))
 
       W :: MAT{REAL}*
       pADP :: VEC{REAL}(10)
@@ -3242,9 +3241,6 @@ contains
                   ! Set axis system
                   .ADP3_axis_system = "crystal"
 
-               case default
-                  UNKNOWN(axis_system)
-
             end
 
          ! Dimensioned U-style ADPs as is mor natural !!!!!
@@ -3280,19 +3276,13 @@ contains
                   ! Set axis system
                   .ADP3_axis_system = "crystal"
 
-               case default
-                  UNKNOWN(axis_system)
-
             end
-
-         case default
-            UNKNOWN(form)
 
       end
 
    end
 
-   change_ADP4_tensor_to(axis_system,form,cell) ::: private
+   change_ADP4_tensor_to(axis_system,form,cell) ::: private, PURE
    ! Change ADP4 vector to the "axis_system" frame.
    ! NOTE: Unlike the ADP2's, in the "crystal" axis_system these are
    ! reported in dimensionless Gram-Charlier "g" form. For
@@ -3302,6 +3292,9 @@ contains
       self :: INOUT
       axis_system,form :: STR, IN
       cell :: UNIT_CELL, IN
+
+   ENSURE(       form.is_one_of(["g","u"]),"unknown form, "//trim(form))
+   ENSURE(axis_system.is_one_of(["cartesian","crystal  "]),"unknown axis_system, "//trim(axis_system))
 
       W :: MAT{REAL}*
       pADP :: VEC{REAL}(15)
@@ -3343,9 +3336,6 @@ contains
                   ! Set axis system
                   .ADP4_axis_system = "crystal"
 
-               case default
-                  UNKNOWN(axis_system)
-
             end
 
          ! Dimensioned U-style ADPs as is mor natural !!!!!
@@ -3381,13 +3371,7 @@ contains
                   ! Set axis system
                   .ADP4_axis_system = "crystal"
 
-               case default
-                  UNKNOWN(axis_system)
-
             end
-
-         case default
-            UNKNOWN(form)
 
       end
 
@@ -6976,8 +6960,9 @@ contains
 
    make_electric_potential_grid(pot_grid,pt)
    ! Make the electric potential "pot_grid" on a series of points "pt"
-      pot_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      pot_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.restricted.created, "no restricted density matrix")
@@ -6993,16 +6978,20 @@ contains
    make_electric_potential_grid_r(pot_grid,pt,dens)
    ! Make the total electric potential "pot_grid" on a series of grid points
    ! "pt" using AO density matrix "dens"
-      pot_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-      dens :: MAT{REAL}
+      self :: IN
+      pot_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      dens :: MAT{REAL}, IN
 
       elec_grid :: VEC{REAL}*
 
       .nuclear_potential(pot_grid,pt)
+
       elec_grid.create(size(pot_grid))
       .make_electronic_pot_grid_r(elec_grid,pt,dens)
+
       pot_grid.plus(elec_grid)
+
       elec_grid.destroy
 
    end
@@ -7010,14 +6999,15 @@ contains
    make_electronic_pot_grid_r(pot_grid,pt,dens)
    ! Make the electronic potential "pot_grid" on a series of grid points "pt"
    ! using AO density matrix "dens"
-      pot_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-      dens :: MAT{REAL}, target
+      self :: IN
+      pot_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      dens :: MAT{REAL}, IN
 
    ENSURE(.basis.created,"no basis set")
 
-      Vab,Dba :: MAT{REAL}*
       sh :: SHELL2
+      Vab :: MAT{REAL}*
       n_pt,n_shell_pairs,q,fa,fb,la,lb,k :: INT
 
       n_pt = pt.dim1
@@ -7030,8 +7020,6 @@ contains
 
          .get_precomputed_shell_pair(sh,q,fa,la,fb,lb)
 
-         Dba => dens(fa:la,fb:lb)
-
          if (sh.is_spherical)then
            Vab.create(sh.a.n_sph,sh.b.n_sph)
          else
@@ -7042,14 +7030,16 @@ contains
 
            do k = 1,n_pt
               sh.get_nuc(Vab,ONE,pt(k,:))
-              pot_grid(k) = pot_grid(k) - TWO*MAT{REAL}:sum_elements(Vab*Dba)
+              pot_grid(k) = pot_grid(k) &
+                 - TWO*MAT{REAL}:sum_elements(Vab*dens(fa:la,fb:lb))
            end
 
          else
 
            do k = 1,n_pt
               sh.get_nuc(Vab,ONE,pt(k,:))
-              pot_grid(k) = pot_grid(k) -     MAT{REAL}:sum_elements(Vab*Dba)
+              pot_grid(k) = pot_grid(k) &
+                 -     MAT{REAL}:sum_elements(Vab*dens(fa:la,fb:lb))
            end
 
          end
@@ -7061,8 +7051,9 @@ contains
 
    end
 
-   nuclear_potential(values,pts)
+   nuclear_potential(values,pts) ::: pure
    ! Calculate the nuclear potential "values" of a given set of "pts".
+      self :: IN
       values :: VEC{REAL}, OUT
       pts :: MAT{REAL}, IN
 
@@ -7194,7 +7185,7 @@ contains
       self :: IN
       grid0 :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.created,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -7241,7 +7232,7 @@ contains
       self :: IN
       grid1 :: MAT3{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.created,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -7284,7 +7275,7 @@ contains
       grid1 :: MAT3{REAL}, OUT
       grid0 :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.created,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -7332,10 +7323,11 @@ contains
 !  Make point lists
 !  ================
 
-   make_logval(logval,r2,n_pt) ::: public
+   make_logval(logval,r2,n_pt) ::: public, PURE
    ! For a list of points with distances "r2" from an atom center,
    ! return the log of the mkaximuk value "logval" which can be used
    ! to implement a cutoff.
+      self :: IN
       n_pt :: INT, IN
       logval :: VEC{INT}(n_pt), OUT
       r2 :: VEC{REAL}(n_pt), IN
@@ -7357,9 +7349,10 @@ contains
    end
 
 
-   make_displaced_pts(dx,dy,dz,r2,pt,n_pt) ::: public
+   make_displaced_pts(dx,dy,dz,r2,pt,n_pt) ::: public, PURE
    ! For a list of points "pt" of length "n_pt", return displacements
    ! "dx", "dy", "dz", and their square "r2".
+      self :: IN
       n_pt :: INT, IN
       dx,dy,dz,r2 :: VEC{REAL}(n_pt), OUT
       pt :: MAT{REAL}(n_pt,3), IN
@@ -7389,10 +7382,11 @@ contains
 
    end
 
-   make_displaced_skip_pts(dx,dy,dz,r2,skip,pt,n_pt,cutoff) ::: public
+   make_displaced_skip_pts(dx,dy,dz,r2,skip,pt,n_pt,cutoff) ::: public, PURE
    ! For a list of points "pt" of length "n_pt", return displacements
    ! "dx", "dy", "dz", their square "r2" and "skip" which tells when
    ! the basis function is less than "cutoff".
+      self :: IN
       n_pt :: INT, IN
       dx,dy,dz,r2 :: VEC{REAL}(n_pt), OUT
       skip :: VEC{BIN}(n_pt), OUT
@@ -7428,11 +7422,12 @@ contains
    end
 
 
-   make_significant_points(x,y,z,r2,skip,pt,cutoff) ::: leaky
+   make_significant_points(x,y,z,r2,skip,pt,cutoff) ::: leaky, PURE
    ! From a given list of points "pt" return the significant displacements "x",
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE.
+      self :: IN
       x,y,z,r2 :: VEC{REAL}*
       skip :: VEC{BIN}*
       pt :: MAT{REAL}, IN
@@ -7483,15 +7478,17 @@ contains
 
    end
 
-   make_significant_points(x,y,z,r2,d2,skip,pt,cutoff) ::: leaky
+   make_significant_points(x,y,z,r2,d2,skip,pt,cutoff) ::: leaky, PURE
    ! From a given list of points "pt" return the significant displacements "x",
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE.
+      self :: IN
       x,y,z,r2,d2 :: VEC{REAL}*
       skip :: VEC{BIN}*
       pt :: MAT{REAL}, IN
       cutoff :: REAL, IN
+
    ENSURE(.basis.created,"no basis set")
 
       px,py,pz,xx,yy,zz,rr, r2_max :: REAL
@@ -7535,18 +7532,21 @@ contains
 
    end
 
-   make_significant_points(x,y,z,r2,skip,pt,skip2,cutoff) ::: leaky
+   make_significant_points(x,y,z,r2,skip,pt,skip2,cutoff) ::: leaky, PURE
    ! From a given list of points "pt" return the significant displacements "x",
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE. "skip2" is an array
    ! which skips (in addition) some preselcted points.
+      self :: IN
       x,y,z,r2 :: VEC{REAL}*
       skip :: VEC{BIN}*
       pt :: MAT{REAL}, IN
       skip2 :: VEC{BIN}, IN
       cutoff :: REAL, IN
+
    ENSURE(.basis.created,"no basis set")
+
       xx,yy,zz,rr, r2_max :: REAL
       n_pt,n,k :: INT
 
@@ -7604,7 +7604,7 @@ contains
 
       .make_precomputed_shellpairs
 
-      GAUSSIAN_DATA:set_indices(maxval(.basis.shell.l))
+    ! GAUSSIAN_DATA:set_indices(maxval(.basis.shell.l))
 
    end
 

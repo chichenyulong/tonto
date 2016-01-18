@@ -511,7 +511,6 @@ contains
             ENSURE(ccm.dim1==.n_prim,"wrong 1st dimension, ccm")
             ENSURE(ccm.dim2==.n_comp,"wrong 2nd dimension, ccm")
             ENSURE(.contraction.created,"no contraction coefficients")
-          ! GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
             do b = 1,.n_comp       ! do over basis components
                p = b               ! primitive p
                do i = 1,.n_cc      ! do over contractions

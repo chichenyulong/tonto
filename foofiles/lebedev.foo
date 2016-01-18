@@ -76,7 +76,6 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: lebedev.foo 3648 2012-02-21 01:19:03Z dylan_ $
 !-------------------------------------------------------------------------------
 
 module LEBEDEV
@@ -85,16 +84,16 @@ module LEBEDEV
 
 contains
 
-! =========================
-! Create and destroy object
-! =========================
+!  ======
+!  Memory
+!  ======
 
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
+   create ::: get_from(OBJECT), leaky, PURE
+   ! Create an allocatable object
    end
 
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Destroy an allocatable object
    end
 
    created result (res) ::: get_from(OBJECT), inlined_by_foo
@@ -105,53 +104,19 @@ contains
    ! Returns true if self has *not* been created
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
+!  ===
+!  Set
+!  ===
 
-   copy(l) ::: leaky
-   ! Copy a becke_grid "b"
-      l :: LEBEDEV
-      self = l
-      .nullify_ptr_part
-      if (l.point.created) .point.create_copy(l.point)
-      if (l.weight.created) .weight.create_copy(l.weight)
-      if (l.n_points_per_shell.created) .n_points_per_shell.create_copy(l.n_points_per_shell)
-   end
+   set_n_points(n_points) ::: leaky, PURE
+   ! Set the number of points. If it is not one of the allowed number
+   ! of points, it *increases* to the nearest number which is allowed.
+      self :: INOUT
+      n_points :: INT, IN
 
-   nullify_ptr_part
-   ! Nullify the shell parts of self
-      nullify(.point)
-      nullify(.weight)
-      nullify(.n_points_per_shell)
-   end
-
-   destroy_ptr_part  ::: leaky
-   ! Destroy the shell parts of self
-      .point.destroy
-      .weight.destroy
-      .n_points_per_shell.destroy
-   end
-
-   set_defaults
-   ! Set up a default dftgrid object
-      .n_points = 0
-      .l = 0
-      .n = 0
-      .s = 0
-   end
-
-! =================================================================
-! Set the number of points or desired L quantum number to integrate
-! =================================================================
-
-   set_n_points(n_points) ::: leaky
-   ! Set the number of points. If it is not one of the allowed number of points,
-   ! it *increases* to the nearest number which is allowed.
-      self :: PTR
-      n_points :: INT
-   ENSURE(n_points>=1,"n_points must be greater than 6")
+   ENSURE(n_points>=1,   "n_points must be greater than 1")
    ENSURE(n_points<=5810,"n_points must be less than 5810")
+
       select case (n_points)
          case (1:6);       .ld0006
          case (7:14);      .ld0014
@@ -185,16 +150,19 @@ contains
          case (4335:4802); .ld4802
          case (4803:5294); .ld5294
          case (5295:5810); .ld5810
-         case default; DIE("n_points must be between 1 and 5810")
       end
+
    end
 
-   set_l(l) ::: leaky
-   ! Set the angular momentum order "l" to integrate.  If the angular momentum
-   ! is not allowed the value of "l" used is the next largest one which is
-   ! allowed.
-      self :: PTR
-      l :: INT
+   set_l(l) ::: leaky, PURE
+   ! Set the angular momentum order "l" to integrate.  If the angular
+   ! momentum is not allowed the value of "l" used is the next largest
+   ! one which is allowed.
+      self :: INOUT
+      l :: INT, IN
+
+   ENSURE(l.is_in_range([1,131]),"l is out of range")
+
       select case (l)
          case (1:3);   .ld0006 ! ?
          case (4:5);   .ld0014 
@@ -228,46 +196,57 @@ contains
          case (114:119); .ld4802 ! ?
          case (120:125); .ld5294 ! ?
          case (126:131); .ld5810 ! ?
-         case default; DIE("l must be between 1 and 131")
+      !  case default; DIE("l must be between 1 and 131")
       end
    end
 
-   set(n_points,n_shell) ::: private, leaky
+   set(n_points,n_shell) ::: private, leaky, PURE
    ! Create the number of points, weights, shells
-      self :: PTR
+      self :: INOUT
       n_points,n_shell :: INT, IN
+
       .n_points = n_points
-      .point.create(n_points,3)
+
+       .point.create(n_points,3)
       .weight.create(n_points)
       .n_points_per_shell.create(n_shell)
-      .l = 0
+
       .n = 0
       .s = 0
+
    end
 
-! =================================================
-! The rest concerns defining the points and weights
-! =================================================
+! ===========================
+! Generate points and weights
+! ===========================
 
-   gen_oh(code,a,b,w) ::: private
+   gen_oh(code,a,b,w) ::: private, PURE
    ! Given a point on a sphere (specified by "a" and "b"), generate all the
    ! equivalent points under oh symmetry, making grid points with weight "w". 
    ! The variable ".n" is increased by the number of different points generated.
    ! Depending on "code", there are 6...48 different but equivalent points.
-   !    code=1:   (0,0,1) etc                                (  6 points)
-   !    code=2:   (0,a,a) etc, a=1/sqrt(2)                   ( 12 points)
-   !    code=3:   (a,a,a) etc, a=1/sqrt(3)                   (  8 points)
-   !    code=4:   (a,a,b) etc, b=sqrt(1-2 a^2)               ( 24 points)
-   !    code=5:   (a,b,0) etc, b=sqrt(1-a^2), a input        ( 24 points)
-   !    code=6:   (a,b,c) etc, c=sqrt(1-a^2-b^2), a/b input  ( 48 points)
-      code :: INT
-      a,b,w :: REAL
+   !    code=1:   (0,0,1) etc                                ( 6 points)
+   !    code=2:   (0,a,a) etc, a=1/sqrt(2)                   (12 points)
+   !    code=3:   (a,a,a) etc, a=1/sqrt(3)                   ( 8 points)
+   !    code=4:   (a,a,b) etc, b=sqrt(1-2 a^2)               (24 points)
+   !    code=5:   (a,b,0) etc, b=sqrt(1-a^2),     a   input  (24 points)
+   !    code=6:   (a,b,c) etc, c=sqrt(1-a^2-b^2), a/b input  (48 points)
+      self :: INOUT
+      code :: INT, IN
+      a,b,w :: REAL, INOUT
+
    ENSURE(code.is_in_range([1,6]),"code must be between 1 and 6")
+
       n :: INT
       c :: REAL
-      .s=.s+1
+
+      ! Increment shell
+      .s = .s + 1
+
       select case (code)
+
          case (1)
+
             n=.n
             .n=.n+6
             .n_points_per_shell(.s) = 6
@@ -278,7 +257,9 @@ contains
             .point(n+ 4,:) = [ZERO,-a,ZERO]; .weight(n+4) = w;    
             .point(n+ 5,:) = [ZERO,ZERO, a]; .weight(n+5) = w;    
             .point(n+ 6,:) = [ZERO,ZERO,-a]; .weight(n+6) = w;    
+
          case (2)
+
             n=.n
             .n=.n+12
             .n_points_per_shell(.s) = 12
@@ -295,7 +276,9 @@ contains
             .point(n+10,:) = [-a, a,ZERO]; .weight(n+10) = w;    
             .point(n+11,:) = [ a,-a,ZERO]; .weight(n+11) = w;    
             .point(n+12,:) = [-a,-a,ZERO]; .weight(n+12) = w;    
+
          case (3)
+
             n=.n
             .n=.n+8
             .n_points_per_shell(.s) = 8
@@ -308,7 +291,9 @@ contains
             .point(n+ 6,:) = [-a, a,-a]; .weight(n+ 6) = w;    
             .point(n+ 7,:) = [ a,-a,-a]; .weight(n+ 7) = w;    
             .point(n+ 8,:) = [-a,-a,-a]; .weight(n+ 8) = w;    
+
          case (4)
+
             n=.n
             .n=.n+24
             .n_points_per_shell(.s) = 24
@@ -337,7 +322,9 @@ contains
             .point(n+22,:) = [-b, a,-a]; .weight(n+22) = w;    
             .point(n+23,:) = [ b,-a,-a]; .weight(n+23) = w;    
             .point(n+24,:) = [-b,-a,-a]; .weight(n+24) = w;    
+
          case (5)
+
             n=.n
             .n=.n+24
             .n_points_per_shell(.s) = 24
@@ -366,7 +353,9 @@ contains
             .point(n+22,:) = [ZERO,-b, a]; .weight(n+22) = w;    
             .point(n+23,:) = [ZERO, b,-a]; .weight(n+23) = w;    
             .point(n+24,:) = [ZERO,-b,-a]; .weight(n+24) = w;    
+
          case (6)
+
             n=.n
             .n=.n+48
             .n_points_per_shell(.s) = 48
@@ -419,57 +408,76 @@ contains
             .point(n+46,:) = [-c, b,-a]; .weight(n+46) = w;    
             .point(n+47,:) = [ c,-b,-a]; .weight(n+47) = w;    
             .point(n+48,:) = [-c,-b,-a]; .weight(n+48) = w;    
-         case default
-            DIE("code must be between 1 and 6")
+
       end
+
    end
 
-   ld0006 ::: leaky
+   ld0006 ::: leaky, PURE
    ! Lebedev 6-point angular grid
    ! L=3?
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(6,1) 
+
       .l = 3
+
+      .set(6,1) 
+
+
       w=0.1666666666666667d+0
       .gen_oh(1,a,b,w)
+
    end
 
-   ld0014 ::: leaky
+   ld0014 ::: leaky, PURE
    ! Lebedev 14-point angular grid
    ! L=5
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(14,2) 
+
       .l = 5
+
+      .set(14,2) 
+
       w=0.6666666666666667d-1
       .gen_oh(1,a,b,w)
       w=0.7500000000000000d-1
       .gen_oh(3,a,b,w)
+
    end
 
-   ld0026 ::: leaky
+   ld0026 ::: leaky, PURE
    ! Lebedev 26-point angular grid
    ! L=7?
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(26,3) 
+
       .l = 7
+
+      .set(26,3) 
+
       w=0.4761904761904762d-1
       .gen_oh(1,a,b,w)
       w=0.3809523809523810d-1
       .gen_oh(2,a,b,w)
       w=0.3214285714285714d-1
       .gen_oh(3,a,b,w)
+
    end
 
-   ld0038 ::: leaky
+   ld0038 ::: leaky, PURE
    ! Lebedev 38-point angular grid
    ! L = 9
-      self  :: PTR
+      self :: INOUT
       a,b,w :: REAL
-      .set(38,3) 
+
       .l = 9
+
+      .set(38,3) 
+
       w=0.9523809523809524d-2
       .gen_oh(1,a,b,w)
       w=0.3214285714285714d-1
@@ -477,15 +485,19 @@ contains
       a=0.4597008433809831d+0
       w=0.2857142857142857d-1
       .gen_oh(5,a,b,w)
+
    end
 
-   ld0050 ::: leaky
+   ld0050 ::: leaky, PURE
    ! Lebedev 50-point angular grid
    ! L=11
-      self  :: PTR
+      self :: INOUT
       a,b,w :: REAL
-      .set(50,4) 
+
       .l = 11
+
+      .set(50,4) 
+
       w=0.1269841269841270d-1
       .gen_oh(1,a,b,w)
       w=0.2257495590828924d-1
@@ -495,15 +507,20 @@ contains
       a=0.3015113445777636d+0
       w=0.2017333553791887d-1
       .gen_oh(4,a,b,w)
+
    end
 
-   ld0074 ::: leaky
+   ld0074 ::: leaky, PURE
    ! Lebedev 74-point angular grid
    ! L=13?
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(74,5) 
+
       .l = 13
+
+      .set(74,5) 
+
       w=0.5130671797338464d-3
       .gen_oh(1,a,b,w)
       w=0.1660406956574204d-1
@@ -516,15 +533,20 @@ contains
       a=0.3207726489807764d+0
       w=0.1652217099371571d-1
       .gen_oh(5,a,b,w)
+
    end
 
-   ld0086 ::: leaky
+   ld0086 ::: leaky, PURE
    ! Lebedev 86-point angular grid
    ! L=15
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(86,5) 
+
       .l = 15
+
+      .set(86,5) 
+
       w=0.1154401154401154d-1
       .gen_oh(1,a,b,w)
       w=0.1194390908585628d-1
@@ -538,15 +560,20 @@ contains
       a=0.3742430390903412d+0
       w=0.1181230374690448d-1
       .gen_oh(5,a,b,w)
+
    end
 
-   ld0110 ::: leaky
+   ld0110 ::: leaky, PURE
    ! Lebedev 110-point angular grid
    ! L=17
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(110,6) 
+
       .l = 17
+
+      .set(110,6) 
+
       w=0.3828270494937162d-2
       .gen_oh(1,a,b,w)
       w=0.9793737512487512d-2
@@ -563,15 +590,20 @@ contains
       a=0.4783690288121502d+0
       w=0.9694996361663028d-2
       .gen_oh(5,a,b,w)
+
    end
 
-   ld0146 ::: leaky
+   ld0146 ::: leaky, PURE
    ! Lebedev 146-point angular grid
    ! L=19
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(146,7) 
+
       .l = 19
+
+      .set(146,7) 
+
       w=0.5996313688621381d-3
       .gen_oh(1,a,b,w)
       w=0.7372999718620756d-2
@@ -591,15 +623,20 @@ contains
       b=0.4493328323269557d+0
       w=0.6991087353303262d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0170 ::: leaky
+   ld0170 ::: leaky, PURE
    ! Lebedev 170-point angular grid
    ! L=21?
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(170,8) 
+
       .l = 21
+
+      .set(170,8) 
+
       w=0.5544842902037365d-2
       .gen_oh(1,a,b,w)
       w=0.6071332770670752d-2
@@ -622,15 +659,20 @@ contains
       b=0.1446630744325115d+0
       w=0.5968383987681156d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0194 ::: leaky
+   ld0194 ::: leaky, PURE
    ! Lebedev 194-point angular grid
    ! L=23
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(194,9) 
+
       .l = 23
+
+      .set(194,9) 
+
       w=0.1782340447244611d-2
       .gen_oh(1,a,b,w)
       w=0.5716905949977102d-2
@@ -656,15 +698,20 @@ contains
       b=0.8360360154824589d+0
       w=0.5530248916233094d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0230 ::: leaky
+   ld0230 ::: leaky, PURE
    ! Lebedev 230-point angular grid
    ! L=25
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(230,10) 
+
       .l = 25
+
+      .set(230,10) 
+
       w=-0.5522639919727325d-1
       .gen_oh(1,a,b,w)
       w=0.4450274607445226d-2
@@ -694,15 +741,20 @@ contains
       b=0.4864661535886647d+0
       w=0.4695720972568883d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0266 ::: leaky
+   ld0266 ::: leaky, PURE
    ! Lebedev 266-point angular grid
    ! L=27
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(266,11) 
+
       .l = 27
+
+      .set(266,11) 
+
       w=-0.1313769127326952d-2
       .gen_oh(1,a,b,w)
       w=-0.2522728704859336d-2
@@ -735,15 +787,20 @@ contains
       b=0.5244939240922365d+0
       w=0.4071467593830964d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0302 ::: leaky
+   ld0302 ::: leaky, PURE
    ! Lebedev 302-point angular grid
    ! L=29
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(302,12) 
+
       .l = 29
+
+      .set(302,12) 
+
       w=0.8545911725128148d-3
       .gen_oh(1,a,b,w)
       w=0.3599119285025571d-2
@@ -780,15 +837,20 @@ contains
       b=0.4127724083168531d+0
       w=0.3392312205006170d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0350 ::: leaky
+   ld0350 ::: leaky, PURE
    ! Lebedev 350-point angular grid
    ! L=31?
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(350,13) 
+
       .l = 31
+
+      .set(350,13) 
+
       w=0.3006796749453936d-2
       .gen_oh(1,a,b,w)
       w=0.3050627745650771d-2
@@ -829,15 +891,20 @@ contains
       b=0.9074658265305127d+0
       w=0.2832187403926303d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0434 ::: leaky
+   ld0434 ::: leaky, PURE
    ! Lebedev 434-point angular grid
    ! L=35
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(434,16) 
+
       .l = 35
+
+      .set(434,16) 
+
       w=0.5265897968224436d-3
       .gen_oh(1,a,b,w)
       w=0.2548219972002607d-2
@@ -887,15 +954,20 @@ contains
       b=0.3344363145343455d+0
       w=0.2236607760437849d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ta0434 ::: leaky
+   ta0434 ::: leaky, PURE
    ! Updated Treutler-Ahlrichs 434-point angular grid
    ! L=35
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(434,16) 
+
       .l = 35
+
+      .set(434,16) 
+
       w=0.52659765761428065d-3
       .gen_oh(1,a,b,w)
       w=0.25482199909403521d-2
@@ -945,15 +1017,20 @@ contains
       b=0.33443631695748371d+0
       w=0.22366077071364263d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0590 ::: leaky
+   ld0590 ::: leaky, PURE
    ! Lebedev 590-point angular grid
    ! L=41
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(590,20) 
+
       .l = 41
+
+      .set(590,20) 
+
       w=0.3095121295306187d-3
       .gen_oh(1,a,b,w)
       w=0.1852379698597489d-2
@@ -1018,15 +1095,20 @@ contains
       b=0.8999205842074875d-1
       w=0.1802239128008525d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0770 ::: leaky
+   ld0770 ::: leaky, PURE
    ! Lebedev 770-point angular grid
    ! L=47
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(770,25) 
+
       .l = 47
+
+      .set(770,25) 
+
       w=0.2192942088181184d-3
       .gen_oh(1,a,b,w)
       w=0.1436433617319080d-2
@@ -1108,15 +1190,20 @@ contains
       b=0.5648768149099500d+0
       w=0.1415914757466932d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0974 ::: leaky
+   ld0974 ::: leaky, PURE
    ! Lebedev 974-point angular grid
    ! L=53
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(974,30) 
+
       .l = 53
+
+      .set(974,30) 
+
       w=0.1438294190527431d-3
       .gen_oh(1,a,b,w)
       w=0.1125772288287004d-2
@@ -1217,15 +1304,20 @@ contains
       b=0.5674997546074373d+0
       w=0.1121780048519972d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld1202 ::: leaky
+   ld1202 ::: leaky, PURE
    ! Lebedev 1202-point angular grid
    ! L=59
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(1202,36) 
+
       .l = 59
+
+      .set(1202,36) 
+
       w=0.1105189233267572d-3
       .gen_oh(1,a,b,w)
       w=0.9205232738090741d-3
@@ -1347,14 +1439,19 @@ contains
       b=0.5693702498468441d+0
       w=0.9105760258970126d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld1454 ::: leaky
+   ld1454 ::: leaky, PURE
    ! Lebedev 1454-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(1454,42) 
+
       .l = 65
+
+      .set(1454,42) 
+
       w=0.7777160743261247d-4
       .gen_oh(1,a,b,w)
       w=0.7557646413004701d-3
@@ -1499,14 +1596,19 @@ contains
       b=0.5797589531445219d-1
       w=0.7489908329079234d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld1730 ::: leaky
+   ld1730 ::: leaky, PURE
    ! Lebedev 1730-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(1730,49) 
+
       .l = 71
+
+      .set(1730,49) 
+
       w=0.6309049437420976d-4
       .gen_oh(1,a,b,w)
       w=0.6398287705571748d-3
@@ -1676,14 +1778,19 @@ contains
       b=0.5354789536565540d-1
       w=0.6375414170333233d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld2030 ::: leaky
+   ld2030 ::: leaky, PURE
    ! Lebedev 2030-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(2030,56) 
+
       .l = 77
+
+      .set(2030,56) 
+
       w=0.4656031899197431d-4
       .gen_oh(1,a,b,w)
       w=0.5421549195295507d-3
@@ -1880,14 +1987,19 @@ contains
       b=0.9861621540127005d-1
       w=0.5433312705027845d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld2354 ::: leaky
+   ld2354 ::: leaky, PURE
    ! Lebedev 2354-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(2354,64) 
+
       .l = 83
+
+      .set(2354,64) 
+
       w=0.3922616270665292d-4
       .gen_oh(1,a,b,w)
       w=0.4703831750854424d-3
@@ -2113,14 +2225,19 @@ contains
       b=0.4589901487275583d-1
       w=0.4691445539106986d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld2702 ::: leaky
+   ld2702 ::: leaky, PURE
    ! Lebedev 2702-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(2702,72) 
+
       .l = 89
+
+      .set(2702,72) 
+
       w=0.2998675149888161d-4
       .gen_oh(1,a,b,w)
       w=0.4077860529495355d-3
@@ -2377,14 +2494,19 @@ contains
       b=0.8551925814238349d-1
       w=0.4087191292799671d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld3074 ::: leaky
+   ld3074 ::: leaky, PURE
    ! Lebedev 3074-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(3074,81) 
+
       .l = 95
+
+      .set(3074,81) 
+
       w=0.2599095953754734d-4
       .gen_oh(1,a,b,w)
       w=0.3603134089687541d-3
@@ -2674,14 +2796,19 @@ contains
       b=0.4015955957805969d-1
       w=0.3595855034661997d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld3470 ::: leaky
+   ld3470 ::: leaky, PURE
    ! Lebedev 3470-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(3470,90) 
+
       .l = 101
+
+      .set(3470,90) 
+
       w=0.2040382730826330d-4
       .gen_oh(1,a,b,w)
       w=0.3178149703889544d-3
@@ -3006,14 +3133,19 @@ contains
       b=0.7548443301360158d-1
       w=0.3185447944625510d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld3890 ::: leaky
+   ld3890 ::: leaky, PURE
    ! Lebedev 3890-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(3890,100) 
+
       .l = 107
+
+      .set(3890,100) 
+
       w=0.1807395252196920d-4
       .gen_oh(1,a,b,w)
       w=0.2848008782238827d-3
@@ -3375,14 +3507,19 @@ contains
       b=0.3569455268820809d-1
       w=0.2843455206008783d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld4334 ::: leaky
+   ld4334 ::: leaky, PURE
    ! Lebedev 4334-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(4334,110) 
+
       .l = 113
+
+      .set(4334,110) 
+
       w=0.1449063022537883d-4
       .gen_oh(1,a,b,w)
       w=0.2546377329828424d-3
@@ -3783,14 +3920,19 @@ contains
       b=0.6755249309678028d-1
       w=0.2552114127580376d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld4802 ::: leaky
+   ld4802 ::: leaky, PURE
    ! Lebedev 4802-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(4802,121) 
+
       .l = 119
+
+      .set(4802,121) 
+
       w=0.9687521879420705d-4
       .gen_oh(1,a,b,w)
       w=0.2307897895367918d-3
@@ -4232,14 +4374,19 @@ contains
       b=0.3211853196273233d-1
       w=0.2304831913227114d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld5294 ::: leaky
+   ld5294 ::: leaky, PURE
    ! Lebedev 5294-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(5294,132) 
+
       .l = 125
+
+      .set(5294,132) 
+
       w=0.9080510764308163d-4
       .gen_oh(1,a,b,w)
       w=0.2084824361987793d-3
@@ -4724,14 +4871,19 @@ contains
       b=0.6112185773983089d-1
       w=0.2090509712889637d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld5810 ::: leaky
+   ld5810 ::: leaky, PURE
    ! Lebedev 5810-point angular grid
-      self  :: PTR
+      self :: INOUT
+
       a,b,w :: REAL
-      .set(5810,144) 
+
       .l = 131
+
+      .set(5810,144) 
+
       w=0.9735347946175486d-5
       .gen_oh(1,a,b,w)
       w=0.1907581241803167d-3
@@ -5261,6 +5413,7 @@ contains
       b=0.2919946135808105d-1
       w=0.1905534498734563d-3
       .gen_oh(6,a,b,w)
+
    end
 
 end

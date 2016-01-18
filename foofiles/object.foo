@@ -52,6 +52,20 @@ contains
    end
 
    create ::: leaky
+   ! Create an allocatable object
+      self :: allocatable, OUT
+
+      status :: INT
+
+      allocate(self,stat=status)
+
+      ENSURE(status==0,"error in allocating memory")
+      status = status
+      status = 0
+
+   end
+
+   create ::: leaky
    ! Create an object. This version does not set defaults.
       self :: PTR
 
@@ -117,6 +131,22 @@ contains
       if (.:destroyed) return
 
       .:destroy_ptr_part
+
+      deallocate(self,stat=status)
+
+      ENSURE(status==0,"error in deallocating memory")
+      status = status
+      status = 0
+
+   end
+
+   destroy ::: leaky
+   ! Destroy an allocatable object
+      self :: allocatable, OUT
+
+      status :: INT
+
+      if (.:deallocated) return
 
       deallocate(self,stat=status)
 

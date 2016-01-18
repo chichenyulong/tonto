@@ -48,7 +48,7 @@ contains
    ! Nullify the pointer part of a shell object
    end
 
-   destroy_ptr_part ::: get_from(SHELL), leaky
+   destroy_ptr_part ::: get_from(SHELL), leaky, PURE
    ! Destroy pointer part of a shell object
    end
 
@@ -486,7 +486,7 @@ contains
          n_pt = x.dim
          Fc.create(n_pt,.n_comp)
          .make_grid_c(Fc,x,y,z)
-         F.to_product_of(Fc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(Fc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Fc.destroy
       end
 
@@ -498,15 +498,16 @@ contains
    ! Note: it is assumed that the shell is normalised to the component x^2; the
    ! appropriate double factorial normalising factors are introduced for each
    ! component (if required) so that each component is properly normalised.
-      f :: MAT{REAL}
-      x,y,z :: VEC{REAL}
+      self :: IN
+      f :: MAT{REAL}, OUT
+      x,y,z :: VEC{REAL}, IN
 
    ENSURE(f.dim1==x.dim,"inconsistent f and x")
    ENSURE(f.dim1==y.dim,"inconsistent f and x")
    ENSURE(f.dim1==z.dim,"inconsistent f and x")
 
       bx,by,bz :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b, ff,lf :: INT
       rr,xx,yy,zz,x0,y0,z0,f0,bxb,byb,bzb :: REAL
       xx2,yy2,zz2,xx3,yy3,zz3,zz_f0 :: REAL
@@ -521,6 +522,7 @@ contains
       select case (.l)
 
         case (0) ! S function ...........
+
           do n = 1,n_pt
              xx = x(n) - x0
              yy = y(n) - y0
@@ -530,6 +532,7 @@ contains
           end
 
         case (1) ! P function ...........
+
           do n = 1,n_pt
              xx = x(n) - x0
              yy = y(n) - y0
@@ -542,6 +545,7 @@ contains
           end
 
         case (2) ! D function ...........
+
           do n = 1,n_pt
              xx = x(n) - x0
              yy = y(n) - y0
@@ -558,7 +562,10 @@ contains
           end
 
         case (3) ! F function ...........
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           ff = .first_gaussian; lf = .last_gaussian
           do n = 1,n_pt
              xx = x(n) - x0
@@ -585,11 +592,14 @@ contains
           end
 
         case default ! General l function ...........
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l)
           by.create(0,.l)
           bz.create(0,.l)
@@ -637,7 +647,7 @@ contains
          n_pt = x.dim1
          Fc.create(n_pt,.n_comp)
          .make_grid_c(Fc,x,y,z,r2,cutoff)
-         F.to_product_of(Fc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(Fc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Fc.destroy
       end
 
@@ -659,7 +669,7 @@ contains
    ENSURE(f.dim1==z.dim,"inconsistent f and x")
 
       bx,by,bz :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b, ff,lf :: INT
       rr,xx,yy,zz,f0,bxb,byb,bzb :: REAL
       r2_max,xx2,yy2,zz2,xx3,yy3,zz3,zz_f0 :: REAL
@@ -672,6 +682,7 @@ contains
       select case (.l)
 
         case (0) ! S function ...........
+
           do n = 1,n_pt
              xx = x(n)
              yy = y(n)
@@ -682,6 +693,7 @@ contains
           end
 
         case (1) ! P function ...........
+
           do n = 1,n_pt
              xx = x(n)
              yy = y(n)
@@ -695,6 +707,7 @@ contains
           end
 
         case (2) ! D function ...........
+
           do n = 1,n_pt
              xx = x(n)
              yy = y(n)
@@ -712,7 +725,10 @@ contains
           end
 
         case (3) ! F function ...........
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           ff = .first_gaussian; lf = .last_gaussian
           do n = 1,n_pt
              xx = x(n)
@@ -741,9 +757,9 @@ contains
 
         case default ! General l function ...........
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l)
           by.create(0,.l)
           bz.create(0,.l)
@@ -796,7 +812,7 @@ contains
       else
          Fc.create(n_pt,.n_comp)
          .make_grid_c(Fc,n_pt,.n_comp,x,y,z,r2,lg)
-         F.to_product_of(Fc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(Fc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Fc.destroy
       end
 
@@ -817,7 +833,7 @@ contains
       lg       :: VEC{INT}(n_pt), OUT
 
       bx,by,bz :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n,b, ff,lf :: INT
       rr,xx,yy,zz,f0,bxb,byb,bzb :: REAL
       xx2,yy2,zz2,xx3,yy3,zz3,zz_f0 :: REAL
@@ -894,9 +910,9 @@ contains
         case default ! General l function ...........
           ff = .first_gaussian
           lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l)
           by.create(0,.l)
           bz.create(0,.l)
@@ -949,7 +965,7 @@ contains
       else
          Fc.create(n_keep,.n_comp)
          .make_skip_grid_c(Fc,n_keep,.n_comp,x,y,z,r2,skip,n_pt)
-         F.to_product_of(Fc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(Fc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Fc.destroy
       end
 
@@ -972,7 +988,7 @@ contains
  ! ENSURE(f.dim1==z.dim,"inconsistent f and x")
 
       bx,by,bz :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n,i,b, ff,lf :: INT
       rr,xx,yy,zz,f0,bxb,byb,bzb :: REAL
       xx2,yy2,zz2,xx3,yy3,zz3,zz_f0 :: REAL
@@ -1056,9 +1072,9 @@ contains
 
         case default ! General l function ...........
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l)
           by.create(0,.l)
           bz.create(0,.l)
@@ -1119,10 +1135,10 @@ contains
          Gyc.create(n_keep,.n_comp)
          Gzc.create(n_keep,.n_comp)
          .make_skip_nabla_grid_c(Gxc,Gyc,Gzc,Fc,n_keep,.n_comp,x,y,z,r2,skip,n_pt)
-         F0.to_product_of(Fc,       GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F0.to_product_of(Fc,       GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gzc.destroy
          Gyc.destroy
          Gxc.destroy
@@ -1155,7 +1171,7 @@ contains
  ! ENSURE(Gx.is_same_shape_as(F0),"Gx and F0 incompatible")
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n,i,b, nxb,nyb,nzb, ff,lf :: INT
       xx,yy,zz,rr,xx_g1x,yy_g1y,zz_g1z :: REAL
       g0,g1,g1x,g1y,g1z,bxb,byb,bzb,by_bz :: REAL
@@ -1222,9 +1238,9 @@ contains
          case default ! General case
 
             ff = .first_gaussian; lf = .last_gaussian
-            lx  => GAUSSIAN_DATA::px(ff:lf)
-            ly  => GAUSSIAN_DATA::py(ff:lf)
-            lz  => GAUSSIAN_DATA::pz(ff:lf)
+            lx = GAUSSIAN_DATA::px(ff:lf)
+            ly = GAUSSIAN_DATA::py(ff:lf)
+            lz = GAUSSIAN_DATA::pz(ff:lf)
             bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
             gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
 
@@ -1310,9 +1326,9 @@ contains
          n_pt = pt.dim1
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,pt)
-         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gc.destroy
       end
 
@@ -1329,7 +1345,7 @@ contains
    ENSURE(pt.dim2==3,"pt matrix incorrectly dimensioned")
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       xx,yy,zz,rr :: REAL
       g0,g1,g1x,g1y,g1z,x,y,z,bxb,byb,bzb :: REAL
@@ -1342,6 +1358,7 @@ contains
       select case (.l)
 
         case (0)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = pt(n,1) - x
              yy = pt(n,2) - y
@@ -1354,6 +1371,7 @@ contains
           end
 
         case (1)
+
           cc_exp_rr.create(.n_cc)
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = pt(n,1) - x
@@ -1379,12 +1397,15 @@ contains
           cc_exp_rr.destroy
 
         case default
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           cc_exp_rr.create(.n_cc)
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
           gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
           do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -1450,9 +1471,9 @@ contains
          n_pt = x.dim1
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,x,y,z,r2,cutoff)
-         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gc.destroy
       end
 
@@ -1464,10 +1485,10 @@ contains
       self :: IN
       G :: MAT3{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       g0,g1,g1x,g1y,g1z,bxb,byb,bzb :: REAL
       r2_max,xx,yy,zz,rr :: REAL
@@ -1493,6 +1514,7 @@ contains
           end
 
         case (1)
+
           cc_exp_rr.create(.n_cc)
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = x(n)
@@ -1519,12 +1541,15 @@ contains
           cc_exp_rr.destroy
 
         case default
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           cc_exp_rr.create(.n_cc)
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
           gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
           do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -1596,10 +1621,10 @@ contains
          Fc.create(n_pt,.n_comp)
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,Fc,pt)
-         F.to_product_of(       Fc,       GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(       Fc,       GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gc.destroy
          Fc.destroy
       end
@@ -1620,7 +1645,7 @@ contains
    ENSURE(pt.dim2==3,"pt matrix incorrectly dimensioned")
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       xx,yy,zz,rr,xx_g1x,yy_g1y,zz_g1z :: REAL
       g0,g1,g1x,g1y,g1z,x,y,z,bxb,byb,bzb,by_bz :: REAL
@@ -1634,6 +1659,7 @@ contains
       select case (.l)
 
         case (0)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = pt(n,1) - x
              yy = pt(n,2) - y
@@ -1648,6 +1674,7 @@ contains
           end
 
         case (1)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = pt(n,1) - x
              yy = pt(n,2) - y
@@ -1674,11 +1701,14 @@ contains
           end
 
         case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
           gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
           do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -1765,10 +1795,10 @@ contains
          Fc.create(n_pt,.n_comp)
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,Fc,x,y,z,r2)
-         F.to_product_of(       Fc,       GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(       Fc,       GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gc.destroy
          Fc.destroy
       end
@@ -1791,7 +1821,7 @@ contains
       x,y,z,r2 :: VEC{REAL}, IN
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       xx,yy,zz,rr,xx_g1x,yy_g1y,zz_g1z :: REAL
       g0,g1,g1x,g1y,g1z,bxb,byb,bzb,by_bz :: REAL
@@ -1804,6 +1834,7 @@ contains
       select case (.l)
 
         case (0)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = x(n)
              yy = y(n)
@@ -1818,6 +1849,7 @@ contains
           end
 
         case (1)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = x(n)
              yy = y(n)
@@ -1844,11 +1876,14 @@ contains
           end
 
         case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
           gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
           do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -1934,10 +1969,10 @@ contains
          Fc.create(n_pt,.n_comp)
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,Fc,x,y,z,r2,cutoff)
-         F.to_product_of(       Fc,       GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(       Fc,       GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gc.destroy
          Fc.destroy
       end
@@ -1961,7 +1996,7 @@ contains
       cutoff :: REAL, IN
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       r2_max,xx,yy,zz,rr,xx_g1x,yy_g1y,zz_g1z :: REAL
       g0,g1,g1x,g1y,g1z,bxb,byb,bzb,by_bz :: REAL
@@ -1975,6 +2010,7 @@ contains
       select case (.l)
 
         case (0)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = x(n)
              yy = y(n)
@@ -1990,6 +2026,7 @@ contains
           end
 
         case (1)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = x(n)
              yy = y(n)
@@ -2017,11 +2054,14 @@ contains
           end
 
         case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
           gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
           do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -2107,10 +2147,10 @@ contains
          Gyc.create(n_pt,.n_comp)
          Gzc.create(n_pt,.n_comp)
          .make_nabla_grid_c(Gxc,Gyc,Gzc,Fc,pt)
-          F.to_product_of(Fc, GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+          F.to_product_of(Fc, GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gzc.destroy
          Gyc.destroy
          Gxc.destroy
@@ -2137,7 +2177,7 @@ contains
    ENSURE(pt.dim2==3,"pt matrix incorrectly dimensioned")
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       xx,yy,zz,rr,xx_g1x,yy_g1y,zz_g1z :: REAL
       g0,g1,g1x,g1y,g1z,x,y,z,bxb,byb,bzb,by_bz :: REAL
@@ -2151,6 +2191,7 @@ contains
       select case (.l)
 
         case (0)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = pt(n,1) - x
              yy = pt(n,2) - y
@@ -2165,6 +2206,7 @@ contains
           end
 
         case (1)
+
           do n = 1,n_pt              ! Do the exponential part of the gaussian
              xx = pt(n,1) - x
              yy = pt(n,2) - y
@@ -2191,11 +2233,14 @@ contains
           end
 
         case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
           gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
           do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -2292,10 +2337,10 @@ contains
 
          .make_nabla_grid_c(Gxc,Gyc,Gzc,Fc,x,y,z,r2)
 
-         F.to_product_of(Fc  ,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(Fc  ,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
 
          Gzc.destroy
          Gyc.destroy
@@ -2319,6 +2364,7 @@ contains
    ! "pt" to ".position". These arrays can be efficiently precalculated
    ! under some circumstances, when shell belonging to a whole atom
    ! are being calculated.
+      self :: IN
       Gx,Gy,Gz,F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
 
@@ -2327,7 +2373,7 @@ contains
    ENSURE(Gx.is_same_shape_as(F) ,"Gx and F incompatible")
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       xx,yy,zz,rr,xx_g1x,yy_g1y,zz_g1z :: REAL
       g0,g1,g1x,g1y,g1z,bxb,byb,bzb,by_bz :: REAL
@@ -2340,7 +2386,9 @@ contains
       cc_exp_rr.create(.n_cc)
 
       select case (.l)
+
          case (0)
+
             do n = 1,n_pt              ! Do the exponential part of the gaussian
                xx = x(n); yy = y(n); zz = z(n)
                rr = r2(n)
@@ -2351,7 +2399,9 @@ contains
                Gy(n,1) = g1*yy
                Gz(n,1) = g1*zz
             end
+
          case (1)
+
             do n = 1,n_pt              ! Do the exponential part of the gaussian
                xx = x(n); yy = y(n); zz = z(n)
                rr = r2(n)
@@ -2374,12 +2424,16 @@ contains
                Gy(n,3) = zz*g1y
                Gz(n,3) = g0+zz*g1z
             end
+
          case default
-            GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
             ff = .first_gaussian; lf = .last_gaussian
-            lx  => GAUSSIAN_DATA::px(ff:lf)
-            ly  => GAUSSIAN_DATA::py(ff:lf)
-            lz  => GAUSSIAN_DATA::pz(ff:lf)
+            lx = GAUSSIAN_DATA::px(ff:lf)
+            ly = GAUSSIAN_DATA::py(ff:lf)
+            lz = GAUSSIAN_DATA::pz(ff:lf)
             bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
             gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
             do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -2464,10 +2518,10 @@ contains
          Gyc.create(n_pt,.n_comp)
          Gzc.create(n_pt,.n_comp)
          .make_nabla_grid_c(Gxc,Gyc,Gzc,Fc,skip_all,x,y,z,r2,cutoff)
-         F0.to_product_of(Fc, GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F0.to_product_of(Fc, GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gzc.destroy
          Gyc.destroy
          Gxc.destroy
@@ -2500,7 +2554,7 @@ contains
    ENSURE(Gx.is_same_shape_as(F0),"Gx and F0 incompatible")
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       r2_max,xx,yy,zz,rr,xx_g1x,yy_g1y,zz_g1z :: REAL
       g0,g1,g1x,g1y,g1z,bxb,byb,bzb,by_bz :: REAL
@@ -2515,7 +2569,9 @@ contains
       cc_exp_rr.create(.n_cc)
 
       select case (.l)
+
          case (0)
+
             do n = 1,n_pt              ! Do the exponential part of the gaussian
                xx = x(n); yy = y(n); zz = z(n)
                rr = r2(n)
@@ -2529,7 +2585,9 @@ contains
                Gy(n,1) = g1*yy
                Gz(n,1) = g1*zz
             end
+
          case (1)
+
             do n = 1,n_pt              ! Do the exponential part of the gaussian
                xx = x(n); yy = y(n); zz = z(n)
                rr = r2(n)
@@ -2557,12 +2615,16 @@ contains
                Gy(n,3) = zz*g1y
                Gz(n,3) = g0+zz*g1z
             end
+
          case default
-            GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
             ff = .first_gaussian; lf = .last_gaussian
-            lx  => GAUSSIAN_DATA::px(ff:lf)
-            ly  => GAUSSIAN_DATA::py(ff:lf)
-            lz  => GAUSSIAN_DATA::pz(ff:lf)
+            lx = GAUSSIAN_DATA::px(ff:lf)
+            ly = GAUSSIAN_DATA::py(ff:lf)
+            lz = GAUSSIAN_DATA::pz(ff:lf)
             bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
             gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
             do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -2657,10 +2719,10 @@ contains
 
          .make_nabla_grid_c(Gxc,Gyc,Gzc,Fc,x,y,z,r2,cutoff)
 
-         F.to_product_of(Fc  ,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         F.to_product_of(Fc  ,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gx.to_product_of(Gxc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gy.to_product_of(Gyc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         Gz.to_product_of(Gzc,GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
 
          Gzc.destroy
          Gyc.destroy
@@ -2694,7 +2756,7 @@ contains
    ENSURE(Gx.is_same_shape_as(F) ,"Gx and F incompatible")
 
       cc_exp_rr,bx,by,bz,gxb,gyb,gzb :: VEC{REAL}*
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,nxb,nyb,nzb, ff,lf :: INT
       r2_max,xx,yy,zz,rr,xx_g1x,yy_g1y,zz_g1z :: REAL
       g0,g1,g1x,g1y,g1z,bxb,byb,bzb,by_bz :: REAL
@@ -2708,7 +2770,9 @@ contains
       cc_exp_rr.create(.n_cc)
 
       select case (.l)
+
          case (0)
+
             do n = 1,n_pt              ! Do the exponential part of the gaussian
                rr = r2(n)
                if (rr>r2_max) cycle
@@ -2720,7 +2784,9 @@ contains
                Gy(n,1) = g1*yy
                Gz(n,1) = g1*zz
             end
+
          case (1)
+
             do n = 1,n_pt              ! Do the exponential part of the gaussian
                rr = r2(n)
                if (rr>r2_max) cycle
@@ -2744,12 +2810,16 @@ contains
                Gy(n,3) = zz*g1y
                Gz(n,3) = g0+zz*g1z
             end
+
          case default
-            GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
             ff = .first_gaussian; lf = .last_gaussian
-            lx  => GAUSSIAN_DATA::px(ff:lf)
-            ly  => GAUSSIAN_DATA::py(ff:lf)
-            lz  => GAUSSIAN_DATA::pz(ff:lf)
+            lx = GAUSSIAN_DATA::px(ff:lf)
+            ly = GAUSSIAN_DATA::py(ff:lf)
+            lz = GAUSSIAN_DATA::pz(ff:lf)
             bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
             gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
             do n = 1,n_pt              ! Do the exponential part of the gaussian
@@ -2820,9 +2890,9 @@ contains
          n_pt = pt.dim1
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,pt)
-         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Gc.destroy
       end
 
@@ -2854,13 +2924,13 @@ contains
          Hc.create(n_pt,.n_comp,3)
          Ic.create(n_pt,.n_comp)
          .make_laplacian_grid_c(Gc,Hc,Ic,pt)
-         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         H(:,:,1).to_product_of(Hc(:,:,1),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         H(:,:,2).to_product_of(Hc(:,:,2),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-         H(:,:,3).to_product_of(Hc(:,:,3),GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
-                I.to_product_of(Ic,       GAUSSIAN_DATA::spherical_harmonics_for(.l).element)
+         G(:,:,1).to_product_of(Gc(:,:,1),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,2).to_product_of(Gc(:,:,2),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         G(:,:,3).to_product_of(Gc(:,:,3),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         H(:,:,1).to_product_of(Hc(:,:,1),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         H(:,:,2).to_product_of(Hc(:,:,2),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+         H(:,:,3).to_product_of(Hc(:,:,3),GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
+                I.to_product_of(Ic,       GAUSSIAN_DATA::spherical_harmonic_mx(.l)%element)
          Ic.destroy
          Hc.destroy
          Gc.destroy
@@ -2881,7 +2951,7 @@ contains
 
    ENSURE(size(pt,2)==3,"pt matrix incorrectly dimensioned")
 
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,p,j,nxb,nyb,nzb, ff,lf :: INT
       aa,x,y,z,x0,y0,z0,rr,val :: REAL
       g0,g1,g2,g2x,g2y,g2z :: REAL
@@ -2900,6 +2970,7 @@ contains
       select case (.l)
 
         case (0)
+
           do n = 1,n_pt             ! Do the exponential part of the gaussian
             x = pt(n,1) - x0
             y = pt(n,2) - y0
@@ -2928,6 +2999,7 @@ contains
           end
 
         case (1)
+
           do n = 1,n_pt             ! Do the exponential part of the gaussian
             x = pt(n,1) - x0
             y = pt(n,2) - y0
@@ -2976,11 +3048,14 @@ contains
           end
 
         case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
           ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
+          lx = GAUSSIAN_DATA::px(ff:lf)
+          ly = GAUSSIAN_DATA::py(ff:lf)
+          lz = GAUSSIAN_DATA::pz(ff:lf)
           do n = 1,n_pt             ! Do the exponential part of the gaussian
             x = pt(n,1) - x0
             y = pt(n,2) - y0
@@ -3107,33 +3182,38 @@ contains
    end
 
 
-   make_oscillator_orbital_mask(f,c,l,n,pt) ::: PURE
+   make_oscillator_orbital_mask(f,c,l,n,pt) ::: selfless, PURE
    ! Return "f(i)", the value of the cartesian part of an oscillator function
    ! centered at "c", of angular momentum "l" and component "n", evaluated on
    ! grid point "i", which is "pt(i,1:3)". 
-      self :: IN
       f  :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-      c :: VEC{REAL}(3)
+      c  :: VEC{REAL}(3), IN
       l,n :: INT, IN
 
    ENSURE(n.is_in_range([1,GAUSSIAN_DATA:n_comp(l)]),"inconsistent l, n value")
 
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       nxn,nyn,nzn, ff,lf :: INT
 
       select case (l)
+
         case (0)
            f = ONE
+
         case (1)
            f = pt(:,n)-c(n)
+
       ! case (2)
+
       !    if      (n<=3) then; f = pt(:,n)-c(n)*c(n)
       !    else if (n==4) then; f = pt(:,n)-c(1)*c(2)
       !    else if (n==5) then; f = pt(:,n)-c(1)*c(3)
       !    else if (n==6) then; f = pt(:,n)-c(2)*c(3)
       !    end
+
       ! case (3)
+
       !    if      (n<=3)  then; f = pt(:,n)-c(n)*c(n)*c(n)
       !    else if (n==4)  then; f = pt(:,n)-c(1)*c(1)*c(2)
       !    else if (n==5)  then; f = pt(:,n)-c(1)*c(1)*c(3)
@@ -3143,15 +3223,20 @@ contains
       !    else if (n==9)  then; f = pt(:,n)-c(3)*c(3)*c(2)
       !    else if (n==10) then; f = pt(:,n)-c(1)*c(2)*c(3)
       !    end
+
         case default
-           GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-           ff  =  GAUSSIAN_DATA:n_comp_up_to(l-1) + 1
-           lf  =  GAUSSIAN_DATA:n_comp_up_to(l) 
-           lx  => GAUSSIAN_DATA::px(ff:lf)
-           ly  => GAUSSIAN_DATA::py(ff:lf)
-           lz  => GAUSSIAN_DATA::pz(ff:lf)
+
+          ! Make sure indices are there
+        ! GAUSSIAN_DATA:set_indices(.l)
+
+           ff = GAUSSIAN_DATA:n_comp_up_to(l-1) + 1
+           lf = GAUSSIAN_DATA:n_comp_up_to(l) 
+           lx = GAUSSIAN_DATA::px(ff:lf)
+           ly = GAUSSIAN_DATA::py(ff:lf)
+           lz = GAUSSIAN_DATA::pz(ff:lf)
            nxn = lx(n); nyn = ly(n); nzn = lz(n)
            f = (pt(:,1)-c(1))**nxn * (pt(:,2)-c(2))**nyn * (pt(:,3)-c(3))**nzn
+
       end
 
    end

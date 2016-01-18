@@ -51,6 +51,23 @@ contains
 
    end
 
+   create(dim) ::: leaky, PURE
+   ! Create space for an allocatable object
+      self :: allocatable, OUT
+      dim :: INT, IN
+
+   ENSURE(dim>=0, "dimension of array not 1 or greater")
+
+      status :: INT
+
+      allocate(self(dim),STAT=status)
+
+      ENSURE(status==0,"error in allocating memory")
+      status = status
+      status = 0
+
+   end
+
    create(lb,ub) ::: leaky, PURE
    ! Create the vector with lower bound "lb", upper bound "ub"
       self :: PTR
@@ -84,6 +101,22 @@ contains
       status :: INT
 
       if (.destroyed) return
+
+      deallocate(self,stat=status)
+
+      ENSURE(status==0,"error in allocating memory")
+      status = status
+      status = 0
+
+   end
+
+   destroy ::: leaky
+   ! Destroy space for an allocatable object
+      self :: allocatable, OUT
+
+      status :: INT
+
+      if (.deallocated) return
 
       deallocate(self,stat=status)
 
@@ -702,9 +735,12 @@ contains
       self :: IN
       eps :: REAL, IN, optional
       res :: BIN
+
       tmp :: REAL
+
       tmp = .norm
       res = tmp.is_zero(eps)
+
    end
 
    is_monotone result (res) ::: pure
