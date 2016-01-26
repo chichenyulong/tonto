@@ -33,6 +33,23 @@ contains
 ! =================
 
    create(dim) ::: leaky, PURE
+   ! Allocate object
+      self :: allocatable
+      dim :: INT, IN
+
+      status :: INT
+
+      allocate(self(dim),stat=status)
+
+      ENSURE(status==0,"error in allocating memory")
+      status = status
+      status = 0
+
+      .set_defaults
+
+   end
+
+   create(dim) ::: leaky, PURE
    ! Create space for object
       self :: PTR
       dim :: INT, IN
@@ -47,23 +64,6 @@ contains
       status = 0
 
       .nullify_ptr_part
-
-      .set_defaults
-
-   end
-
-   create(dim) ::: leaky, PURE
-   ! Create space for an allocatable object
-      self :: allocatable
-      dim :: INT, IN
-
-      status :: INT
-
-      allocate(self(dim),stat=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
 
       .set_defaults
 
@@ -155,14 +155,12 @@ contains
    end
 
    destroy ::: leaky, PURE
-   ! Destroy space for object
-      self :: PTR
+   ! Deallocate object
+      self :: allocatable
 
       status :: INT
 
       if (.destroyed) return
-
-      .destroy_ptr_part
 
       deallocate(self,stat=status)
 
@@ -173,12 +171,14 @@ contains
    end
 
    destroy ::: leaky, PURE
-   ! Destroy space for an allocatable object
-      self :: allocatable
+   ! Destroy space for object
+      self :: PTR
 
       status :: INT
 
       if (.destroyed) return
+
+      .destroy_ptr_part
 
       deallocate(self,stat=status)
 
@@ -285,6 +285,22 @@ contains
 
    end
 
+   copy(vec) ::: leaky
+   ! Copy "vec".
+      self :: OUT
+      vec :: VEC{OBJECT}, IN
+
+   ENSURE(.dim==vec.dim,"vec size does not match")
+
+      a :: INT
+
+      ! Copy element-by-element
+      do a = 1,.dim
+         self(a).copy(vec(a))
+      end
+
+   end
+
    copy(vec,list) ::: leaky
    ! Copy "vec" for the elements in "list".
       self :: OUT
@@ -353,6 +369,35 @@ contains
 ! =======================
 
    shrink(dim) ::: leaky
+   ! Shrink allocatable self to dimension "dim". Contents retained.
+      self :: allocatable
+      dim :: INT, IN
+
+   ENSURE(.created,"no self array")
+   ENSURE(dim<=.dim,"dim too large")
+   ENSURE(dim>=0,"dim must be non-negative")
+
+      old :: VEC{OBJECT}@
+      n :: INT
+
+      if (dim==.dim) return
+
+      ! Save self
+      old = self
+
+      ! Shrink
+      self.destroy
+      self.create(dim)
+
+      ! Copy old
+      self.copy(old(1:dim))
+
+      ! Clean
+      old.destroy
+
+   end
+
+   shrink(dim) ::: leaky
    ! Shrink self to dimension dim.  Contents are retained.
       self :: PTR
       dim :: INT, IN
@@ -380,6 +425,38 @@ contains
 
       ! Clean
       old.destroy
+
+   end
+
+   expand(dim) ::: leaky
+   ! Expand the allocatable vector "self" to "dim". 
+      self :: allocatable
+      dim :: INT, IN
+
+      old :: VEC{OBJECT}@
+
+      if (.destroyed) then
+
+         .create(dim)
+
+      else
+
+         ENSURE(dim>=.dim, "dim not large enough")
+         ENSURE(dim>=0,"dim must be non-negative")
+
+         ! Save old
+         old = self
+
+         ! Expand
+         self.create(dim)
+
+         ! Copy
+         self(1:old.dim).copy(old)
+
+         ! Clean
+         old.destroy
+
+      end
 
    end
 
@@ -419,6 +496,26 @@ contains
    end
 
    append(v) ::: leaky
+   ! Expands allocatable self and appends the contents of vector "v".
+      self :: allocatable
+      v :: VEC{OBJECT}, IN
+
+      dim :: INT
+
+      ! Original size
+      if (.destroyed) then; dim = 0
+      else;                 dim = .dim
+      end
+
+      ! Expand
+      .expand(dim+v.dim)
+
+      ! Append
+      self(dim+1:) = v
+
+   end
+
+   append(v) ::: leaky
    ! Expands self and appends the contents of vector "v".
       self :: PTR
       v :: VEC{OBJECT}, IN
@@ -435,6 +532,27 @@ contains
 
       ! Append
       self(dim+1:).copy(v)
+
+   end
+
+   append(value) ::: leaky
+   ! Expands allocatable self by 1, and appends the single scalar
+   ! "value" onto the end.
+      self :: allocatable
+      value :: OBJECT, IN
+
+      dim :: INT
+
+      ! Original size
+      if (.destroyed) then; dim = 0
+      else;                 dim = .dim
+      end
+
+      ! Expand by one
+      .expand(dim+1)
+
+      ! Append
+      self(dim+1).copy(value)
 
    end
 
@@ -890,9 +1008,62 @@ contains
 
    end
 
-! =======================
-! List-based I/O Routines
-! =======================
+! ===========================
+! Non-list based I/O routines
+! ===========================
+
+   read_keywords ::: recursive, leaky
+   ! Read in and process normal allocatable (non list-type) keywords
+   ! from "stdin".
+      self :: PTR
+
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
+
+      word :: STR
+
+      ! Read the opening brace
+      stdin.read(word)
+
+      ! Echo the brace if requested
+      if (tonto.keyword_echo) then
+         stdout.flush
+         stdout.text("keyword found --> " // trim(word))
+      end
+
+      do ! Loop over keywords within brace
+
+         ! Read a keyword
+         stdin.read(word)
+         
+         ! Unexpected end of file?
+         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+         
+         ! Lower case word
+         word.to_lower_case
+         
+         ! Is there an equals next? Then join it on
+         if (NOT stdin.buffer_exhausted) then 
+         if (stdin.next_item=="=") then
+            stdin.skip_next_item
+            word = trim(word) // "="
+         end
+         end
+         
+         ! Echo the keyword if requested
+         if (tonto.keyword_echo) then
+            stdout.flush
+            stdout.text("keyword found --> " // trim(word))
+         end
+         
+         ! Exit if it is a close brace
+         if (word=="}") exit
+         
+         ! Process the keyword
+         .process_keyword(word)
+
+      end
+
+   end
 
    read_keywords ::: recursive, leaky
    ! Read in and process normal (non list-type) keywords from "stdin".
@@ -941,6 +1112,66 @@ contains
          
          ! Process the keyword
          .process_keyword(word)
+
+      end
+
+   end
+
+! =======================
+! List-based I/O Routines
+! =======================
+
+   read_list_keywords ::: recursive, leaky
+   ! Read in and process allocatable list-based keywords from "stdin".
+   ! List-based keywords are those that are intended to apply to each
+   ! individual element of the list through a list of "keys" stored in
+   ! the associated list-element type module.
+   ! NOTE: this routine will create the list, if required.
+      self :: allocatable
+
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
+
+      word :: STR
+
+      ! Read the open brace
+      stdin.read(word)
+
+      ! Echo the brace if requested
+      if (tonto.keyword_echo) then
+         stdout.flush
+         stdout.text("keyword found --> " // trim(word))
+      end
+
+      do ! Loop over input list-type keywords
+
+         ! Read a keyword
+         stdin.read(word)
+        
+         ! Unexpected end of file?
+         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+        
+         ! Lower case the word
+         word.to_lower_case
+        
+         ! Is there an equals next? Then join it on
+         if (NOT stdin.buffer_exhausted) then 
+         if (stdin.next_item=="=") then 
+            stdin.skip_next_item
+            word = trim(word) // "="
+         end
+         end
+        
+         ! Echo the keyword if requested
+         if (tonto.keyword_echo) then
+            stdout.flush
+            stdout.text("keyword found --> " // trim(word))
+         end
+        
+         ! Exit if it is a close brace
+         if (word=="}") exit
+        
+         ! Process the list keyword
+         .process_list_keyword(word)
 
       end
 
@@ -1002,6 +1233,40 @@ contains
    end
 
    process_list_keyword(keyword) ::: leaky
+   ! Process an allocatable list-type "keyword", common to all
+   ! list-type objects.
+      self :: allocatable
+      keyword :: STR, IN
+
+      word :: STR
+
+      word = keyword
+      word.to_lower_case
+
+      select case (word)
+
+         ! Standard list-input keywords
+         case("altered_data=    "); .read_altered_data
+         case("append_data=     "); .read_append_data
+         case("data=            "); .read_data
+         case("do               "); .read_keywords
+         case("keys=            "); .read_keys
+         case("new_data=        "); .destroy; .read_data
+         case("process_keys     "); .process_keys
+         case("process_keys_once"); .process_keys_once
+         case("redirect         "); .redirect
+         case("revert           "); .revert
+
+         ! Backtrack & assume data= sans braces
+         case default 
+            stdin.move_to_previous_item
+            .read_data_sans_braces
+
+      end
+
+   end
+
+   process_list_keyword(keyword) ::: leaky
    ! Process a list-type "keyword", common to all list-type objects.
       self :: PTR
       keyword :: STR, IN
@@ -1035,6 +1300,26 @@ contains
    end
 
    read_data ::: leaky
+   ! Repeatedly process the "keys" to read in the allocatable list.
+   ! Opening and closing braces are needed.
+      self :: allocatable
+
+      word :: STR
+
+      ! Read open braces
+      stdin.read(word) ! move past open brace
+      ENSURE(word=="{","expecting open bracket symbol, {")
+
+      ! Read data (process keys)
+      .read_data_sans_braces
+
+      ! Read close brace
+      stdin.read(word)
+      ENSURE(word=="}","expecting close bracket symbol, }")
+
+   end
+
+   read_data ::: leaky
    ! Repeatedly process the "keys" to read in the data list. 
    ! Opening and closing braces are needed.
       self :: PTR
@@ -1051,6 +1336,29 @@ contains
       ! Read close brace
       stdin.read(word)
       ENSURE(word=="}","expecting close bracket symbol, }")
+
+   end
+
+   read_data_sans_braces ::: leaky
+   ! Repeatedly process the "keys" to read in the allocatable data
+   ! list. Opening and closing braces are not needed.
+      self :: allocatable
+
+      length :: INT
+
+      ! Get the vector length
+      length = .data_length
+
+      if (.allocated) then
+         ! If allocated, is dimension the same
+         ENSURE(length==.dim,"Mismatching new and old data lists")
+      else
+         ! If not allocated, allocate it
+         .allocate(length)
+      end
+
+      ! Process keys
+      .process_keys
 
    end
 
@@ -1074,6 +1382,34 @@ contains
 
       ! Process keys
       .process_keys
+
+   end
+
+   read_data_BL_terminated ::: leaky
+   ! Repeatedly process the "keys" to read in the allocatable data
+   ! list. Opening braces are not needed, but a blank line (BL) is
+   ! used as an end-of-list terminator.
+      self :: allocatable
+
+      length :: INT
+
+      ! Get the vector length
+      length = .data_length_BL_terminated
+
+      if (.created) then
+         ! If created, is dimension the same
+         ENSURE(length==.dim,"Mismatching new and old data lists")
+      else
+         ! If not created, create it
+         .create(length)
+      end
+
+      ! Process keys
+      .process_keys
+
+      ! Empty line there? Read it.
+      stdin.read_line
+      ENSURE(stdin.buffer.string==" ","expecting blank line")
 
    end
 
@@ -1106,6 +1442,60 @@ contains
    end
 
    data_length result (length)
+   ! Read ahead in stdin to get the "length" of the allocatable data
+   ! list, i.e. the number of data items in the list. The data must
+   ! begin with the first data item, *not* a "{" symbol.  The order of
+   ! data items comprising the list is given by keys defined in the
+   ! associated list-element type module. The data list must be
+   ! terminated by a "}" symbol.
+      self :: allocatable
+      length :: INT
+
+   ENSURE(stdin.next_item/="{","list begins with {")
+   ENSURE(stdin.next_item/="}","empty data list!")
+
+      tmp :: OBJECT@
+      word :: STR
+      line,item :: INT
+
+      ! Remove warning
+      if (FALSE) self = self
+
+      ! Initialize result
+      length = 0
+
+      ! Read first item, initialize line no & item no.
+      stdin.read(word)
+      line = stdin.line_number
+      item = stdin.previous_line_item
+
+      ! Get the length
+      do
+
+         ! Move just before
+         stdin.move_to_previous_item
+
+         ! Read a scalar & increment
+         tmp.create
+         tmp.process_keys
+         tmp.destroy
+         length = length + 1
+
+         ! Closing-brace there?
+         stdin.read(word)
+         word.to_lower_case
+         if (word=="}") exit
+         if (stdin.at_end_of_file) exit
+
+      end
+
+      ! Go back to start
+      stdin.move_to_line(line)
+      stdin.move_to_line_item(item)
+
+   end
+
+   data_length result (length)
    ! Read ahead in stdin to get the "length" of the data list, i.e. the number
    ! of data items in the list. The data must begin with the first data item,
    ! *not* a "{" symbol.  The order of data items comprising the list is given
@@ -1114,6 +1504,7 @@ contains
       self :: PTR
       length :: INT
 
+   ENSURE(stdin.next_item/="{","list begins with {")
    ENSURE(stdin.next_item/="}","empty data list!")
 
       tmp :: OBJECT*
@@ -1158,12 +1549,70 @@ contains
    end
 
    data_length_BL_terminated result (length)
+   ! Read ahead in stdin to get the "length" of the allocatable data
+   ! list, i.e. the number of data items in the list. The data must
+   ! begin with the first data item, *not* a "{" symbol.  The order of
+   ! data items comprising the list is given by keys defined in the
+   ! associated list-element type module. The data list must be
+   ! terminated by a "}" symbol.
+      self :: allocatable
+      length :: INT
+
+   ENSURE(stdin.next_item/="{","list begins with {")
+   ENSURE(stdin.next_item/="}","empty data list!")
+
+      tmp :: OBJECT@
+      word :: STR
+      line,item :: INT
+
+      ! Remove warning
+      if (FALSE) self = self
+
+      ! Initialize result
+      length = 0
+
+      ! Read first item, initialize line no & item no.
+      stdin.read(word)
+      line = stdin.line_number
+      item = stdin.previous_line_item
+
+      ! Get the length
+      do
+
+         ! Move just before
+         stdin.move_to_previous_item
+
+         ! Read a scalar & increment
+         tmp.create
+         tmp.process_keys
+         tmp.destroy
+         length = length + 1
+
+         ! Blank-line terminated?
+         stdin.read_line
+         if (stdin.buffer.string==" ") exit
+         if (stdin.at_end_of_file) exit
+
+         ! No blank line ... read first item
+         stdin.read(word)
+         if (stdin.at_end_of_file) exit ! Oops
+
+      end
+
+      ! Go back to start
+      stdin.move_to_line(line)
+      stdin.move_to_line_item(item)
+
+   end
+
+   data_length_BL_terminated result (length)
    ! Read ahead in stdin to get the "length" of the data list. The
    ! data list begins with the first data item, *not* a "{" symbol.
    ! The data list must be terminated by a blank line (BL).
       self :: PTR
       length :: INT
 
+   ENSURE(stdin.next_item/="{","list begins with {")
    ENSURE(stdin.next_item/="}","empty data list!")
 
       tmp :: OBJECT*
@@ -1211,6 +1660,43 @@ contains
    end
 
    read_altered_data ::: leaky
+   ! Read in a sublist of the complete list, and alter the
+   ! (allocatable) data list for that sublist.  The order of the data
+   ! items in the sublist is given by the "keys" defined in the
+   ! associated list-element type module.
+      self :: allocatable
+   
+   ENSURE(.allocated,"list does not exist yet")
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol: {")
+
+      word :: STR
+      s :: INT
+
+      ! Read brace {
+      stdin.read(word)
+
+      do
+
+         ! Read index
+         stdin.read(word)
+
+         ! End of indices
+         if (word=="}") exit
+
+         ! Get index
+         ENSURE(word.is_int,"expecting integer list-element index")
+         s = word.to_int
+         ENSURE(s<=.dim,"list-element too large")
+         ENSURE(s>0,"list-element must be positive")
+
+         ! Altered data for this index
+         self(s).process_keys
+
+      end
+
+   end
+
+   read_altered_data ::: leaky
    ! Read in a sublist of the complete list, and alter the data for that
    ! sublist.  The order of the data items in the sublist is given by the "keys"
    ! defined in the associated list-element type module.
@@ -1247,6 +1733,26 @@ contains
    end
 
    read_append_data ::: leaky
+   ! Read in a set of data to append to an allocated list.
+      self :: allocatable
+
+   ENSURE(.allocated,"list does not exist yet")
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol: {")
+
+      tmp :: VEC{OBJECT}@
+
+      ! Read data
+      tmp.read_data
+
+      ! Append it
+      .append(tmp)
+
+      ! Clean
+      tmp.destroy
+
+   end
+
+   read_append_data ::: leaky
    ! Read in a set of data to append to an existing set.
       self :: PTR
 
@@ -1264,6 +1770,24 @@ contains
 
       ! Clean
       tmp.destroy
+
+   end
+
+   process_keys ::: leaky
+   ! Process the "keys" on each element of the allocatable list.
+      self :: allocatable
+
+      s :: INT
+
+      if (.allocated) then
+         ! Process keys on each element
+         do s = 1,.dim
+            self(s).process_keys
+         end
+      else 
+         ! Process keys once on anonymous element
+         .process_keys_once
+      end
 
    end
 
@@ -1286,6 +1810,22 @@ contains
    end
 
    process_keys_once 
+   ! Process the "keys" just once on an anonymous allocatable object.
+   ! This is useful if the "keys" set global variables in the list
+   ! module (e.g. the default order of lists *within* the list data)
+   ! as opposed to being keys pertaining to each element of the list.
+      self :: allocatable
+
+      tmp :: OBJECT
+
+      if (FALSE) self = self
+
+      tmp.set_defaults
+      tmp.process_keys
+
+   end
+
+   process_keys_once 
    ! Process the "keys" just once on an anonymous object. This is useful if the
    ! "keys" set global variables in the list module (e.g. the default order of
    ! lists *within* the list data) as opposed to being keys pertaining to each
@@ -1298,6 +1838,19 @@ contains
 
       tmp.set_defaults
       tmp.process_keys
+
+   end
+
+   keys_created result (res)
+   ! Return TRUE if the list-element keys are allocated.
+      self :: allocatable
+      res :: BIN
+
+      tmp :: OBJECT@
+
+      if (FALSE) self = self
+
+      res = tmp.keys_created
 
    end
 
@@ -1316,6 +1869,19 @@ contains
    end
 
    set_keys(the_keys)
+   ! This is for setting the allocatable "keys" externally.
+      self :: allocatable
+      the_keys :: VEC{STR}
+
+      tmp :: OBJECT@
+
+      if (FALSE) self = self
+
+      tmp.set_keys(the_keys)
+
+   end
+
+   set_keys(the_keys)
    ! This is for setting the "keys" externally.
       self :: PTR
       the_keys :: VEC{STR}
@@ -1330,6 +1896,17 @@ contains
    end
 
    clear_keys ::: leaky
+   ! This is for deallocating the "keys" externally.
+
+      tmp :: OBJECT@
+
+      if (FALSE) self = self
+
+      tmp.clear_keys
+
+   end
+
+   clear_keys ::: leaky
    ! This is for destroying the "keys" externally.
 
       tmp :: OBJECT*
@@ -1338,6 +1915,18 @@ contains
 
       nullify(tmp)
       tmp.clear_keys
+
+   end
+
+   read_keys ::: leaky
+   ! Read a new set of allocatable keys
+      self :: PTR
+
+      tmp :: OBJECT@
+
+      if (FALSE) self = self
+
+      tmp.read_keys
 
    end
 

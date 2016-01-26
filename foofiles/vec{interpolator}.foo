@@ -80,19 +80,24 @@ contains
    ! Process a normal (non list-type) "keyword".
       self :: PTR
       keyword :: STR
+
       word :: STR
+
       word = keyword
+
       word.to_lower_case
+
       select case (word)
-       case("}") ! do nothing.
-       case("redirect          "); .redirect
-       case("revert            "); .revert
-       case default;               UNKNOWN(word)
+         case("}") ! do nothing.
+         case("redirect          "); .redirect
+         case("revert            "); .revert
+         case default;               UNKNOWN(word)
       end
+
    end
 
    redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
+   ! Redirect stdin to the file whose name is next in the input file
    end
 
    revert ::: get_from(OBJECT), leaky

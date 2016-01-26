@@ -133,7 +133,6 @@ contains
 
    read_keywords ::: get_from(OBJECT), recursive, leaky
    ! Read data from "stdin" using keyword style input.
-      self :: PTR
    end
 
    process_keyword(keyword) ::: recursive, leaky

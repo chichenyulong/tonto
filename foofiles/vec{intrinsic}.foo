@@ -33,15 +33,13 @@ contains
 !  =================
 
    create(dim) ::: leaky, PURE
-   ! Create space for object
-      self :: PTR
+   ! Allocate object
+      self :: allocatable, OUT
       dim :: INT, IN
 
    ENSURE(dim>=0, "dimension of array not 1 or greater")
 
       status :: INT
-
-      nullify(self)
 
       allocate(self(dim),STAT=status)
 
@@ -52,13 +50,15 @@ contains
    end
 
    create(dim) ::: leaky, PURE
-   ! Create space for an allocatable object
-      self :: allocatable, OUT
+   ! Create space for object
+      self :: PTR
       dim :: INT, IN
 
    ENSURE(dim>=0, "dimension of array not 1 or greater")
 
       status :: INT
+
+      nullify(self)
 
       allocate(self(dim),STAT=status)
 
@@ -94,13 +94,13 @@ contains
    
    end
 
-   destroy ::: leaky
-   ! Destroy space for object
-      self :: PTR
+   destroy ::: leaky, PURE
+   ! Deallocate object
+      self :: allocatable, OUT
 
       status :: INT
 
-      if (.destroyed) return
+      if (.deallocated) return
 
       deallocate(self,stat=status)
 
@@ -110,13 +110,13 @@ contains
 
    end
 
-   destroy ::: leaky
-   ! Destroy space for an allocatable object
-      self :: allocatable, OUT
+   destroy ::: leaky, PURE
+   ! Destroy space for object
+      self :: PTR
 
       status :: INT
 
-      if (.deallocated) return
+      if (.destroyed) return
 
       deallocate(self,stat=status)
 

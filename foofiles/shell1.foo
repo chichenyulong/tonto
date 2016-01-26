@@ -37,19 +37,11 @@ contains
 !  ==================
 
    create ::: get_from(OBJECT), leaky, PURE
-   ! Create an object
+   ! Create an object. This version does not nullify point parts.
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
-   ! Destroy an object
-   end
-
-   nullify_ptr_part ::: get_from(SHELL), pure
-   ! Nullify the pointer part of a shell object
-   end
-
-   destroy_ptr_part ::: get_from(SHELL), leaky, PURE
-   ! Destroy pointer part of a shell object
+   ! Destroy an object. This version does not destroy pointer parts.
    end
 
    created result (res) ::: get_from(OBJECT), inlined_by_foo
@@ -63,6 +55,10 @@ contains
       self :: PTR
       res :: BIN
    end
+
+!  ====
+!  Copy
+!  ====
 
    create_copy(object) ::: get_from(OBJECT), leaky, PURE
    ! Create a copy of object
@@ -79,13 +75,14 @@ contains
 
    end
 
-!  ====
-!  Copy
-!  ====
+   copy(shell) ::: leaky, PURE
+   ! Copy a shell object. 
+   ! REMOVE
+      self :: OUT
+      shell :: SHELL1, IN
 
-   copy(shell) ::: get_from(SHELL, SHELL=>SHELL1), leaky, PURE
-   ! Copy a shell object. Make sure pointer parts are nullified or
-   ! destroyed, as you like, before using this.
+      self = shell
+
    end
 
    copy(shell,pos) ::: leaky, PURE
@@ -101,39 +98,14 @@ contains
 
    end
 
-   copy(shell) ::: leaky, PURE
+   copy(shell,pos) ::: leaky, PURE
    ! Make a shell1 object from the shell. The position is *not* set.
    ! NOTE : ensure the ptr parts have been destroyed beforehand.
       self :: INOUT
       shell :: SHELL, IN
+      pos :: VEC{REAL}, optional, IN
 
-   ENSURE(.exponent.destroyed,"ex not destroyed")
-   ENSURE(.contraction.destroyed,"cc not destroyed")
-   ENSURE(.contraction_s.destroyed,"cc_s not destroyed")
-   ENSURE(.contraction_p.destroyed,"cc_p not destroyed")
-
-      .is_spherical = shell.is_spherical
-      .set_l(shell.l)
-      .n_cc = shell.n_cc
-
-      .nullify_ptr_part
-
-      if (shell.exponent.created)      .exponent.create_copy(shell.exponent)
-      if (shell.contraction.created)   .contraction.create_copy(shell.contraction)
-      if (shell.contraction_s.created) .contraction_s.create_copy(shell.contraction_s)
-      if (shell.contraction_p.created) .contraction_p.create_copy(shell.contraction_p)
-
-   end
-
-   copy(shell,pos) ::: leaky, PURE
-   ! Make a SHELL1 object from the SHELL "shell" and its position "pos".
-   ! NOTE : ensure the ptr parts have been destroyed beforehand.
-      self :: INOUT
-      shell :: SHELL, IN
-      pos :: VEC{REAL}, IN
-
-      .copy(shell)
-      .position = pos
+      .set(shell,pos)
 
    end
 
@@ -141,11 +113,11 @@ contains
 !  Set methods
 !  ===========
 
-   set(object) ::: get_from(OBJECT) ! IMPURE
+   set(object) ::: get_from(OBJECT), PURE
    ! Set the object. Pointer parts are assigned not copied.
    end
 
-   set(shell,pos) ! IMPURE
+   set(shell,pos) ::: PURE
    ! Set a shell1 object. Pointer parts are assigned not copied.
       self :: INOUT
       shell :: SHELL, optional, IN
@@ -160,13 +132,12 @@ contains
          .first_gaussian = shell.first_gaussian
          .last_gaussian  = shell.last_gaussian
          .n_cc           = shell.n_cc
-         .exponent      => shell.exponent
-         .contraction   => shell.contraction
-         .contraction_s => shell.contraction_s
-         .contraction_p => shell.contraction_p
+         .exponent       = shell.exponent
+         .contraction    = shell.contraction
       end
 
-      if (present(pos)) .position = pos
+      if (present(pos)) &
+         .position       = pos
 
    end
 
@@ -297,12 +268,8 @@ contains
       ! Check if basic arrays are created identically
       same = .l_chr==sh.l_chr &
          AND (.is_spherical EQV sh.is_spherical) &
-         AND (.exponent.created EQV sh.exponent.created) &
-         AND (.contraction.created EQV sh.contraction.created) &
-         AND (.contraction_s.created EQV sh.contraction_s.created) &
-         AND (.contraction_p.created EQV sh.contraction_p.created) 
-
-      ! If not, we are done
+         AND (.exponent.allocated EQV sh.exponent.allocated) &
+         AND (.contraction.allocated EQV sh.contraction.allocated) 
       if (NOT same) return
 
       ! Check position ...
@@ -310,17 +277,13 @@ contains
       if (NOT same) return
 
       ! Check exponents ..
-      if (.exponent.created AND sh.exponent.created) same = .exponent.same_as(sh.exponent) 
-      if (NOT same) return
+      if (.exponent.allocated AND sh.exponent.allocated) &
+         same = .exponent.same_as(sh.exponent) 
+         if (NOT same) return
 
       ! Check contractions ...
-      if (.l_chr/="L") then
-         if (.contraction.created   AND sh.contraction.created)   same = .contraction.same_as(sh.contraction) 
-      else
-         if (.contraction_s.created AND sh.contraction_s.created) same = .contraction_s.same_as(sh.contraction_s) 
-         if (NOT same) return
-         if (.contraction_p.created AND sh.contraction_p.created) same = .contraction_p.same_as(sh.contraction_p) 
-      end
+      if (.contraction.allocated AND sh.contraction.allocated) &
+         same = .contraction.same_as(sh.contraction) 
 
    end
 
@@ -3261,8 +3224,6 @@ contains
 
       stdout.dmpp("exponent",.exponent)
       stdout.dmpp("contraction",.contraction)
-      stdout.dmpp("contraction_s",.contraction_s)
-      stdout.dmpp("contraction_p",.contraction_p)
 
    end
 

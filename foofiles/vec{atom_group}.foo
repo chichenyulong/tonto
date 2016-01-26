@@ -143,7 +143,7 @@ contains
    end
 
    redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
+   ! Redirect stdin to the file whose name is next in the input file
    end
 
    revert ::: get_from(OBJECT), leaky

@@ -3036,7 +3036,6 @@ contains
 
    process_keys ::: get_from(OBJECT), leaky
    ! Process each of the words in the "keys" list.
-   ENSURE(keys.created,"no keys")
    end
 
    keys_created result (res) ::: get_from(OBJECT)

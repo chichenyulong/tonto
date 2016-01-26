@@ -1140,7 +1140,7 @@ contains
 !  ===================
 
    redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
+   ! Redirect stdin to the file whose name is next in the input file
    end
 
    redirect_stdout ::: leaky

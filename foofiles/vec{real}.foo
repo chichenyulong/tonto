@@ -39,11 +39,11 @@ contains
 !  =================
 
    create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create space for object
+   ! Allocate object
    end
 
    create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create space for an allocatable object
+   ! Create space for object
    end
 
    create(lb,ub) ::: get_from(VEC{INTRINSIC}), leaky, PURE
@@ -55,11 +55,11 @@ contains
    end
 
    destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Destroy space for object
+   ! Deallocate object
    end
 
    destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Destroy space for an allocatable object
+   ! Destroy space for object
    end
 
    create_copy(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE

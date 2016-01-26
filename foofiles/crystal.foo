@@ -605,12 +605,11 @@ contains
    end
 
    redirect ::: get_from(OBJECT), leaky
-   ! Redirect input. (This code is for non-pointer self objects).
+   ! Redirect stdin to the file whose name is next in the input file
    end
 
    revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file. (This code is for non-pointer self
-   ! objects).
+   ! Revert back to previous stdin file
    end
 
    read_kind

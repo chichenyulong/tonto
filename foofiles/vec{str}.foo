@@ -45,6 +45,10 @@ contains
 ! =================
 
    create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   ! Allocate object
+   end
+
+   create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
    ! Create space for object
    end
 
@@ -54,6 +58,10 @@ contains
 
    create(bounds) ::: get_from(VEC{INTRINSIC}), leaky, PURE
    ! Create the vector with "bounds"
+   end
+
+   destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   ! Deallocate object
    end
 
    destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE

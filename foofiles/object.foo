@@ -26,13 +26,29 @@ virtual module OBJECT
 
    implicit none
 
-   keys :: VEC{STR}*, private DEFAULT_NULL
+   keys :: VEC{STR}@, private
 
 contains
 
 !  =================
 !  Memory allocation
 !  =================
+
+   create ::: leaky
+   ! Allocate object
+      self :: allocatable, INOUT
+
+      status :: INT
+
+      allocate(self,stat=status)
+
+      ENSURE(status==0,"error in allocating memory")
+      status = status
+      status = 0
+
+      .:set_defaults
+
+   end
 
    create ::: leaky
    ! Create an object
@@ -119,6 +135,22 @@ contains
 
       .:create
       .:copy(object)
+
+   end
+
+   destroy ::: leaky
+   ! Deallocate object
+      self :: allocatable, INOUT
+
+      status :: INT
+
+      if (.:destroyed) return
+
+      deallocate(self,stat=status)
+
+      ENSURE(status==0,"error in deallocating memory")
+      status = status
+      status = 0
 
    end
 
@@ -235,8 +267,7 @@ contains
 !  ============
 
    redirect ::: leaky
-   ! Redirect input
-      self :: PTR
+   ! Redirect stdin to the file whose name is next in the input file
 
       filename :: STR
 
@@ -250,30 +281,6 @@ contains
 
    revert ::: leaky
    ! Revert back to previous stdin file
-      self :: PTR
-
-      if (FALSE) self = self
-
-      stdin.revert
-
-   end
-
-   redirect ::: leaky
-   ! Redirect input. (This code is for non-pointer self objects).
-
-      filename :: STR
-
-      if (FALSE) self = self
-
-      filename = stdin.next_str
-
-      stdin.redirect(trim(filename))
-
-   end
-
-   revert ::: leaky
-   ! Revert back to previous stdin file. (This code is for non-pointer self
-   ! objects).
 
       if (FALSE) self = self
 
@@ -283,6 +290,7 @@ contains
 
    read_keywords ::: recursive, leaky
    ! Read data from "stdin" using keyword style input.
+
    ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
 
       word :: STR
@@ -327,53 +335,6 @@ contains
 
    end
 
-   read_keywords ::: recursive, leaky
-   ! Read data from "stdin" using keyword style input.
-      self :: PTR
-   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
-
-      word :: STR
-
-      ! Read the open braces {
-      stdin.read(word)
-
-      ! Echo keyword if requested
-      if (tonto.keyword_echo) then
-         stdout.flush
-         stdout.text("keyword found --> " // trim(word))
-      end
-
-      do ! Loop over input keywords
-
-         ! Read the keyword
-         stdin.read(word)
-         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
-         word.to_lower_case
-
-         ! Append any lonely = sign
-         if (NOT stdin.buffer_exhausted) then 
-         if (stdin.next_item=="=") then ! assume this is an attached = sign
-            stdin.skip_next_item
-            word = trim(word) // "="
-         end
-         end
-
-         ! Echo keyword if requested
-         if (tonto.keyword_echo) then
-            stdout.flush
-            stdout.text("keyword found --> " // trim(word))
-         end
-
-         ! Exit if keyword is closing brace }
-         if (word=="}")      exit
-
-         ! Process the keyword 
-         .:process_keyword(word)
-
-      end
-
-   end
-
    read_units
    ! Read a string which describes the units to be used
 
@@ -394,6 +355,7 @@ contains
 
    read_and_set
    ! Generic read and set
+      self :: INOUT
       val :: VAL?
 
       stdin.read(val)
@@ -404,6 +366,7 @@ contains
 
    read_and_set
    ! Generic read and set a quantity with units
+      self :: INOUT
       val :: VAL?
 
       stdin.read_quantity(val)
@@ -417,7 +380,17 @@ contains
 !  ==========================
 
    read_keys ::: leaky
+   ! Read the allocatable "keys".
+
+      if (FALSE) self = self
+
+      stdin.read_ptr(keys)
+
+   end
+
+   read_keys ::: leaky
    ! Read the "keys".
+
       if (FALSE) self = self
 
       keys.destroy
@@ -426,7 +399,73 @@ contains
    end
 
    process_keys ::: leaky
+   ! Process each of the words in the allocatable "keys" list.
+      self :: INOUT
+
+   ENSURE(keys.created,"no keys")
+
+      k,l,n_key :: INT
+      keyword :: STR
+      keyword_echo :: BIN
+      internal :: VEC{STR}@
+
+      ! The number of keys
+      n_key = keys.dim
+
+      ! Keyword counter
+      k = 0
+
+      do ! Loop over keywords in "keys"
+
+         ! Get the next keyword
+         k = k + 1
+         keyword = keys(k)
+
+         ! Exit if close brace
+         if (keyword=="}") exit
+
+         if (keyword=="{") then ! embedded keyword
+
+            ! Turn off keyword echo
+            keyword_echo = tonto.keyword_echo
+            tonto.keyword_echo = FALSE
+
+            ! Find closing brace of embedded section
+            l = keys(k:).index_of_matching_bracket("{")
+            DIE_IF(l==0,"no matching closing brace in embedded keyword")
+
+            ! Set internal array
+            internal = keys(k:k+l-1)
+
+            ! Process internalized keywords
+            stdin.redirect(internal)
+            .:read_keywords
+            stdin.revert
+
+            ! Reset key counter
+            k = k + l - 1
+
+            ! Reset keyword echo
+            tonto.keyword_echo = keyword_echo
+
+         else ! plain-old keyword
+
+            ! Process plain-old keyword
+            .:process_keyword(keyword)
+
+         end
+
+         ! Exit if no keys left
+         if (k==n_key) exit
+
+      end
+
+   end
+
+   process_keys ::: leaky
    ! Process each of the words in the "keys" list.
+      self :: INOUT
+
    ENSURE(keys.created,"no keys")
 
       k,l,n_key :: INT
@@ -493,8 +532,18 @@ contains
 
       if (FALSE) self = self
 
-      res = keys.created
+      res = keys.allocated
       if (res) res = keys.dim>0
+
+   end
+
+   set_keys(the_keys) ::: leaky
+   ! Set the allocatable list-processing "keys".
+      the_keys :: VEC{STR}
+
+      if (FALSE) self = self
+
+      keys = the_keys
 
    end
 
@@ -506,6 +555,16 @@ contains
 
       keys.destroy
       keys.create_copy(the_keys)
+
+   end
+
+   clear_keys ::: leaky
+   ! Clear the allocatable list-processing "keys".
+
+      if (FALSE) self = self
+
+      keys.destroy
+      keys.create(0)
 
    end
 
@@ -547,6 +606,24 @@ contains
       stdout.flush
 
       stdout.text("}")
+
+   end
+
+   dmpa(object_name)
+   ! Dump an allocatable object data as text
+      self :: allocatable
+      object_name :: STR, IN
+
+      if (.destroyed) then
+
+         stdout.flush
+         stdout.text(trim(object_name)//":TYPE* = null")
+
+      else
+
+         .dump(trim(object_name),ptr=TRUE)
+
+      end
 
    end
 
