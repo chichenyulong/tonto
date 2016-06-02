@@ -1,6 +1,6 @@
 !---------------------------------------------------------------------------
 !
-! VEC{COPPENSORBITAL}: COPPENSORBITAL vectors
+! VEC{COPPENS_ORBITAL}: COPPENS_ORBITAL vectors
 !
 ! Copyright (C) Dylan Jayatilaka, 2002
 !
@@ -19,228 +19,119 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{coppensorbital}.foo 4071 2013-06-18 12:59:43Z dylan_ $
 !---------------------------------------------------------------------------
 
-module VEC{COPPENSORBITAL}
+module VEC{COPPENS_ORBITAL}
 
    implicit none
 
-   saved_self :: VEC{COPPENSORBITAL}*, private  DEFAULT_NULL
+   saved_self :: VEC{COPPENS_ORBITAL}*, private  DEFAULT_NULL
 
 contains
 
-! ==================
-! Allocation methods
-! ==================
+!  ==================
+!  Allocation methods
+!  ==================
 
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Create space for object
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
-   ! Destroy space for object
-   end
-
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
-   end
-
-   nullify_ptr_part ::: get_from(VEC{OBJECT})
-   ! Nullify the pointer parts of self
-   end
-
-   destroy_ptr_part ::: get_from(VEC{OBJECT}), leaky
-   ! Destroy the pointer parts of self
+   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Deallocate the vector
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
+   end
+
+!  =======================
+!  Shrinking and expansion 
+!  =======================
+
+   shrink(dim) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Shrink "self" to dimension "dim" from the end. Contents are
+   ! retained.
+   end
+
+   expand(dim) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Expand "self" to dimension "dim" from the end. New slots are
+   ! undefined. 
+   end
+
+   append(v) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Append the contents of vector "v" to "self".
+   end
+
+   append(value) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Appends the single scalar "value" onto the end of "self".
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set_defaults ::: get_from(VEC{OBJECT})
-   ! Set default values
-   end
+!   set_saved_self ::: get_from(VEC{OBJECT})
+!   ! Set saved_self
+!   end
 
-   set_saved_self ::: get_from(VEC{OBJECT})
-   ! Set saved_self
-   end
+!  ===============
+!  Inquiry methods
+!  ===============
 
-! =======================
-! List-based I/O Routines
-! =======================
-
-   read_list_keywords ::: get_from(VEC{OBJECT}), leaky
-   ! Read in and process list-based keywords from "stdin". List-based keywords
-   ! are those that are intended to apply to each individual element of the list
-   ! through a list of "keys" stored in the associated list-element type module.
-   ! NOTE: this routine will create the list, if required.
-   end
-
-   process_list_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
-   ! Process a list-type "keyword", common to all list-type objects.
-   end
-
-   read_data ::: get_from(VEC{OBJECT}), leaky
-   ! Repeatedly process the "keys" to read in the data list. 
-   ! Opening and closing braces are needed.
-   end
-
-   read_data_sans_braces ::: get_from(VEC{OBJECT}), leaky
-   ! Repeatedly process the "keys" to read in the data list. 
-   ! Opening and closing braces are not needed.
-   end
-
-   data_length result (length) ::: get_from(VEC{OBJECT})
-   ! Read ahead in stdin to get the "length" of the data list, i.e. the number
-   ! of data items in the list. The data must begin with the first data item,
-   ! *not* a "{" symbol.  The order of data items comprising the list is given
-   ! by keys defined in the associated list-element type module. The data list
-   ! must be terminated by a "}" symbol.
-   end
-
-   read_altered_data ::: get_from(VEC{OBJECT}), leaky
-   ! Read in a sublist of the complete list, and alter the data for that
-   ! sublist.  The order of the data items in the sublist is given by the "keys"
-   ! defined in the associated list-element type module.
-   end
-
-   read_append_data ::: get_from(VEC{OBJECT}), leaky
-   ! Read in a set of data to append to an existing set.
-   end
-
-   process_keys ::: get_from(VEC{OBJECT}), leaky
-   ! Process the "keys" on each element of the list.
-   end
-
-   process_keys_once ::: get_from(VEC{OBJECT})
-   ! Process the "keys" just once on an anonymous object. This is useful if the
-   ! "keys" set global variables in the list module (e.g. the default order of
-   ! lists *within* the list data) as opposed to being keys pertaining to each
-   ! element of the list.
-   end
-
-   keys_created result (res) ::: get_from(VEC{OBJECT})
-   ! Return TRUE if the list-element keys are created.
-   end
-
-   set_keys(the_keys) ::: get_from(VEC{OBJECT})
-   ! This is for setting the "keys" externally.
-   end
-
-   clear_keys ::: get_from(VEC{OBJECT}), leaky
-   ! This is for destroying the "keys" externally.
-   end
-
-   read_keys ::: get_from(VEC{OBJECT}), leaky
-   ! Read a new set of keys
-   end
-
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
-   end
-
-! ===========================
-! Non-list based I/O routines
-! ===========================
-
-   read_keywords ::: get_from(VEC{OBJECT}), leaky
-   ! Read in and process normal (non list-type) keywords from "stdin".
-   end
-
-   process_keyword(keyword)
-   ! Process a normal (non list-type) "keyword".
-      self :: PTR
-      keyword :: STR
-      word :: STR
-      word = keyword
-      word.to_lower_case
-      select case (word)
-       case("}") ! do nothing.
-       case("put               "); .put
-       case("redirect          "); .redirect
-       case("revert            "); .revert
-       case default;               UNKNOWN(word)
-      end
-   end
-
-! ===============
-! Inquiry methods
-! ===============
-
-   n_orbitals result (res)
+   n_orbitals result (res) ::: pure
    ! Return the number of orbitals
+      self :: IN
       res :: INT
+
       res = .dim
+
    end
 
-   maximum_orbital_n_value result (res)
+   maximum_orbital_n_value result (res) ::: pure
    ! Returns the maximum orbital n value
       self :: IN
       res :: INT
+
       i :: INT
+
       res = 0
       do i = 1,.dim
-        res = max(maxval(self(i).n),res)
+         res = max(maxval(self(i).n),res)
       end
+
    end
 
-   same_as(vec) result(same)
+   same_as(vec) result(same) ::: pure
    ! Return TRUE if the orbital vector "self" is the same as "vec".
-      vec :: VEC{COPPENSORBITAL}
+      self :: IN
+      vec :: VEC{COPPENS_ORBITAL}, IN
       same :: BIN
+
       i :: INT
-      if (.dim /= vec.dim) then
+      if (.dim/=vec.dim) then
+
          same = FALSE
-         return
+
       else
+
          same = TRUE
          do i = 1,.dim
             same = same AND self(i).same_as(vec(i))
             if (NOT same) exit
          end
+
       end
+
    end
 
-! ===============================
-! Shrinking, expanding, appending
-! ===============================
-
-   shrink(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Shrink self to dimension dim.  Contents are retained.
-   end
-
-   expand(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Expand the vector "self" to "dim". New slots are left undefined.
-   end
-
-   append(v) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(value) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
-   end
-
-! ==============================
-! Density and derivative density
-! ==============================
+!  ==============================
+!  Density and derivative density
+!  ==============================
 
    density_at_radius(R) result (res)
    ! Return the total coppens density values at the radial value "R".
@@ -270,7 +161,7 @@ contains
       R :: REAL, IN
       res :: REAL
       n :: INT
-      self :: VEC{COPPENSORBITAL}*
+      self :: VEC{COPPENS_ORBITAL}*
       self => saved_self
       res = ZERO ! Work out radial density here
       do n = 1,.dim
@@ -285,7 +176,7 @@ contains
       res :: REAL
       R :: REAL
       n :: INT
-      self :: VEC{COPPENSORBITAL}*
+      self :: VEC{COPPENS_ORBITAL}*
       self => saved_self
       R = sqrt(R2)
       res = ZERO ! Work out radial density here
@@ -300,7 +191,7 @@ contains
      R :: REAL, IN
      res :: REAL
      n :: INT
-     self :: VEC{COPPENSORBITAL}*
+     self :: VEC{COPPENS_ORBITAL}*
      self => saved_self
      res = ZERO ! Work out radial density here
      do n = 1,.dim
@@ -308,38 +199,98 @@ contains
      end
    end
 
-! =============
-! Normalisation
-! =============
+!  =============
+!  Normalisation
+!  =============
 
-   unnormalise
-   ! Set the value of the orbital coefficients to correspond to un-normalised
-   ! Slater functions -- assuming they are normalised. This saves computation.
-      i :: INT
-      do i = 1,.dim
-         self(i).unnormalise
-      end
+   unnormalise ::: get_from(VEC{BASIS}), pure
+   ! Take the normalisation factors out of the primitives, assuming
+   ! that the contraction coeff's refer to normalised basis functions
    end
 
-   renormalise
-   ! Set the value of the orbitals coefficients to correspond to normalised
-   ! Slater functions --- assuming they are w.r.t. unnormalised functions. 
-      i :: INT
-      do i = 1,.dim
-         self(i).renormalise
-      end
+   renormalise ::: get_from(VEC{BASIS}), pure
+   ! Put back in the normalisation factors of the primitives, assuming
+   ! that the contraction coeff's refer to unnormalised basis functions
    end
 
-! ======
-! Output
-! ======
+!  ====================
+!  Non-list based input
+!  ====================
+
+   read_keywords ::: get_from(VEC{OBJECT}), leaky
+   ! Read and process normal (non list-type) keywords from "stdin";
+   ! "self" allocatable here.
+   end
+
+   process_keyword(keyword) ::: get_from(VEC{BASIS})
+   ! Process a normal (non list-type) "keyword".
+   end
+
+!  ================
+!  List-based input
+!  ================
+
+   read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
+   ! Read and process list-data keywords from "stdin". List-based
+   ! keywords are those that apply to each individual element of the
+   ! list through a list of "keys" stored in the host module.
+   ! NOTE: this routine will create the list, if required.
+   ! NOTE: "self" allocatable here.
+   end
+
+   process_list_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
+   ! Process a list-data "keyword", common to all list-type objects.
+   ! "self" is allocatable here.
+   end
+
+   process_keys ::: get_from(VEC{OBJECT}), leaky
+   ! Process the keywords in the "keys" OBJECT module variable on each
+   ! element in the list "self".  "self" is allocatable here.
+   end
+
+   set_keys(the_keys) ::: get_from(VEC{OBJECT}), leaky
+   ! This is for setting the "keys" externally.
+   end
+
+   read_data ::: get_from(VEC{OBJECT}), leaky
+   ! Repeatedly process the keywords in the "keys" module variable
+   ! on each element of the lista-data "self". Opening and closing
+   ! braces are needed.
+   end
+
+   read_data_sans_braces ::: get_from(VEC{OBJECT}), leaky
+   ! Repeatedly process the items in the "keys" OBJECT module variable
+   ! to read in the list-data.  Opening and closing braces *not*
+   ! needed.  "self" is allocatable here.
+   end
+
+   data_length result (length) ::: get_from(VEC{OBJECT}), selfless, private
+   ! Read ahead in "stdin" to get the "length" of the list-data.  The
+   ! data must begin with the first data item, *not* a "{" symbol but
+   ! must be terminated by a "}" symbol.  The order of data items
+   ! comprising the list-data is given by the "keys" OBJECT module
+   ! variable.  The data list must be terminated by a "}".
+   end
+
+   data_length_BL_terminated result (length) ::: get_from(VEC{OBJECT}), selfless, private
+   ! defined in the associated list-element type module.
+   ! Read ahead in "stdin" to get the "length" of the list-data. The
+   ! data must begin with the first data item, *not* a "{" symbol but
+   ! must be terminated by a blank line (BL). The order of data items
+   ! comprising the list-data is given by the "keys" OBJECT module
+   ! variable.
+   end
+
+!  ======
+!  Output
+!  ======
 
    dump(object_name) ::: get_from(VEC{OBJECT})
    ! Dump a vector object
    end
 
-   dmpp(object_name) ::: get_from(VEC{OBJECT})
-   ! Dump a vector pointer object
+   dmpa(object_name) ::: get_from(VEC{OBJECT})
+   ! Dump an allocatable vector object
    end
 
    put ::: get_from(VEC{OBJECT})
