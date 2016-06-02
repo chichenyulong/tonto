@@ -164,7 +164,7 @@ contains
       .gauss_jacobi_beta = ONE
       .eps = QUADRATURE_EPS
       .maxit = QUADRATURE_MAXIT
-      .finalized = FALSE
+      .updated = FALSE
 
    end
 
@@ -244,7 +244,7 @@ contains
       if (.kind(1:5)=="gauss") then; .set_roots_and_weights
       else;                          .set_points_and_weights
       end
-      .finalized = TRUE
+      .updated = TRUE
 
    end
 
@@ -253,7 +253,7 @@ contains
       limits :: VEC{REAL}(2)
 
    ENSURE(limits(1)<=limits(2),"lower limit must be smaller than upper limit")
-   ENSURE(.finalized,"set limits after defining quadrature points and weights")
+   ENSURE(.updated,"not updated; set limits after defining quadrature points and weights")
 
       .lower_limit = limits(1)
       .upper_limit = limits(2)
@@ -267,7 +267,7 @@ contains
 
    ENSURE(.kind/=" ","the kind of quadrature has not been set")
    ENSURE(.n_points>0,"no points have been set")
-   ENSURE(.finalized,"set limits after defining quadrature points and weights")
+   ENSURE(.updated,"not updated; set limits after defining quadrature points and weights")
 
       select case (.kind)
          case ("gauss_chebyshev_1st"); .rescale_m1p1
@@ -290,7 +290,7 @@ contains
    ! range [-1,1] to the new range.
    ENSURE(.kind/=" ","the kind of quadrature has not been set")
    ENSURE(.n_points>0,"no points have been set")
-   ENSURE(.finalized,"set limits after defining quadrature points and weights")
+   ENSURE(.updated,"not updated; set limits after defining quadrature points and weights")
       s,m :: REAL
       i :: INT
       if (.lower_limit==-ONE AND .upper_limit==ONE) return
@@ -308,7 +308,7 @@ contains
 
    ENSURE(.kind/=" ","the kind of quadrature has not been set")
    ENSURE(.n_points>0,"no points have been set")
-   ENSURE(.finalized,"set limits after defining quadrature points and weights")
+   ENSURE(.updated,"not updated; set limits after defining quadrature points and weights")
 
       s,m :: REAL
       i :: INT

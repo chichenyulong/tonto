@@ -27,7 +27,7 @@ module GEMINAL_MF_SPECTRUM
 
    implicit none
 
-   keys :: VEC{STR}*, private DEFAULT_NULL
+   keys :: VEC{STR}@, private
 
 contains
 
@@ -1192,18 +1192,6 @@ contains
 
    process_keys ::: get_from(OBJECT), leaky
    ! Process each of the words in the "keys" list.
-   end
-
-   keys_created result (res) ::: get_from(OBJECT)
-   ! Return TRUE if the list-element keys are created.
-   end
-
-   set_keys(the_keys) ::: get_from(OBJECT)
-   ! This is for setting the "keys" externally.
-   end
-
-   clear_keys ::: get_from(OBJECT), leaky
-   ! This is for destroying the "keys" externally.
    end
 
 !  ===============

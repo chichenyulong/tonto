@@ -339,7 +339,7 @@ contains
 
       .data_kind                     = "?"
       .r_free_percentage             = 0
-      .finalize                      = TRUE
+      .update                      = TRUE
 
       ! Set xray_data defualts
       if (.xray_data.associated) then; .xray_data.set_defaults
@@ -516,7 +516,7 @@ contains
          case ("destroy_asymmetric_unit       "); .destroy_asymmetric_unit
          case ("destroy_spacegroup            "); .spacegroup.destroy
          case ("expand_unique_reflections     "); .expand_unique_reflections
-         case ("finalize=                     "); .read_finalize
+         case ("update=                      "); .read_update
          case ("junk=                         "); .read_junk
          case ("kind=                         "); .read_kind
          case ("merge_equivalents             "); .merge_equivalents
@@ -530,9 +530,9 @@ contains
          case ("put_reflection_data           "); .put_reflection_data
          case ("r_free_percentage=            "); .read_r_free_percentage
          case ("read_cif                      "); .read_CIF
-         case ("redirect                      "); .redirect
+         case ("redirect                      "); TEXTFILE:redirect
          case ("repetition_factors=           "); .read_repetition_factors
-         case ("revert                        "); .revert
+         case ("revert                        "); TEXTFILE:revert
          case ("spacegroup=                   "); .read_spacegroup
          case ("unit_cell=                    "); .read_unit_cell
          case ("units=                        "); .read_units
@@ -551,15 +551,6 @@ contains
    ! Read in a junk string, useful for ignoring a field
    end
 
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input. (This code is for non-pointer self objects).
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file. (This code is for non-pointer self
-   ! objects).
-   end
-
    read_kind
    ! Read the kind of crystal experiment
       stdin.read(.data_kind)
@@ -571,9 +562,9 @@ contains
       end
    end
 
-   read_finalize
-   ! Read whether to finalize the object.
-      stdin.read(.finalize)
+   read_update
+   ! Read whether to update the object.
+      stdin.read(.update)
    end
 
    read_r_free_percentage
@@ -6813,7 +6804,7 @@ contains
     ! stdout.dmpp("xray_r_free_data",.xray_r_free_data)
     ! stdout.dmpp("pnd_r_free_data",.pnd_r_free_data)
     ! stdout.dmpp("core_reflection",.core_reflection)
-      stdout.dump("finalize",.finalize)
+      stdout.dump("update",.finalize)
 
    end
 

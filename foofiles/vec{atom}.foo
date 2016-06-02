@@ -19,7 +19,6 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{atom}.foo 4409 2014-06-10 03:32:55Z durhammike $
 !---------------------------------------------------------------------------
 
 module VEC{ATOM}
@@ -35,6 +34,24 @@ contains
 !  Allocation methods
 !  ==================
 
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
+   end
+
+   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Deallocate the vector
+   end
+
+   created result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has been allocated
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has *not* been allocated
+   end
+
+! Old
+
    create(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Create space for object
    end
@@ -47,35 +64,50 @@ contains
    ! Nullify the pointer parts of self
    end
 
-   nullify_bases
-   ! Nullify all the bases
-      .nullify_basis_part
-      .nullify_slaterbasis_part
-      .nullify_coppensbasis_part
+   destroy_bases ::: PURE
+   ! Destroy all the bases
+      self :: INOUT
+
+      .destroy_basis_part
+      .destroy_slaterbasis_part
+      .destroy_coppensbasis_part
+
    end
 
-   nullify_basis_part
-   ! Nullify the basis parts of self
+   nullify_basis_part ::: PURE
+   ! Destroy the basis parts of self
+      self :: INOUT
+
       a :: INT
+
       do a = 1,.dim
-         nullify(self(a).basis)
+         self(a).basis.destroy
       end
+
    end
 
-   nullify_slaterbasis_part
-   ! Nullify the slaterbasis parts of self
+   destroy_slaterbasis_part ::: PURE
+   ! Destroy the slaterbasis parts of self
+      self :: INOUT
+
       a :: INT
+
       do a = 1,.dim
-         nullify(self(a).slaterbasis)
+         self(a).slaterbasis.destroy
       end
+
    end
 
-   nullify_coppensbasis_part
-   ! Nullify the coppensbasis parts of self
+   destroy_coppensbasis_part ::: PURE
+   ! Destroy the coppensbasis parts of self
+      self :: INOUT
+
       a :: INT
+
       do a = 1,.dim
-         nullify(self(a).coppensbasis)
+         self(a).coppensbasis.destroy
       end
+
    end
 
    destroy_ptr_part
@@ -85,7 +117,7 @@ contains
 
       ! Bases are never destroyed, they are always resolved externally
       ! to this module. (You just have to know that).
-      .nullify_bases
+      .destroy_bases
 
       ! Destroy unique ptr parts (made outside of this module)
       if (.has_all_ANOs_made)           .destroy_ANOs
@@ -205,6 +237,31 @@ contains
 !  ======================
 !  Shrink, expand, append
 !  ======================
+
+   shrink(dim) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Shrink "self" to dimension "dim" from the end. Contents are
+   ! retained.
+   end
+
+   expand(dim) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Expand "self" to dimension "dim" from the end. New slots are
+   ! undefined. 
+   end
+
+   append(v) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Append the contents of vector "v" to "self".
+   end
+
+   append(value) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Appends the single scalar "value" onto the end of "self".
+   end
+
+   prune_element(k) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Removes the single element at position "k" from "self".
+   ! Elements after that position are moved downward.
+   end
+
+! Old
 
    shrink(dim)
    ! Shrink the atomvec to dimension "dim", retaining contents.
@@ -1364,12 +1421,12 @@ contains
 
    end
 
-!  ========
-!  Finalize
-!  ========
+!  ======
+!  Update
+!  ======
 
    update
-   ! Update/finalize, as far as possible.
+   ! Update, as far as possible.
 
       ! Update the labels?
       .update_labels
@@ -1471,28 +1528,8 @@ contains
    ! element of the list.
    end
 
-   keys_created result (res) ::: get_from(VEC{OBJECT})
-   ! Return TRUE if the list-element keys are created.
-   end
-
-   set_keys(the_keys) ::: get_from(VEC{OBJECT})
-   ! This is for setting the "keys" externally.
-   end
-
-   clear_keys ::: get_from(VEC{OBJECT}), leaky
-   ! This is for destroying the "keys" externally.
-   end
-
    read_keys ::: get_from(VEC{OBJECT}), leaky
    ! Read a new set of keys
-   end
-
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
    end
 
 !  ===========================
@@ -1529,8 +1566,8 @@ contains
        case("put_protein_sequence          "); .put_protein_sequence
        case("put_restraint_atoms           "); .put_restraint_atoms
        case("read_cif                      "); .read_CIF
-       case("redirect                      "); .redirect
-       case("revert                        "); .revert
+       case("redirect                      "); TEXTFILE:redirect
+       case("revert                        "); TEXTFILE:revert
        case("set_covalent_radii_ccdc       "); ATOM:set_covalent_radii_ccdc
        case("use_interpolators=            "); .read_use_interpolators
        case default;               UNKNOWN(word)
@@ -2165,14 +2202,14 @@ contains
    ! symbol with the ":suffix" string.
    end
 
-   resolve_bases(basis,suffix) ::: get_from(VEC{ATOM}, BASIS?=>SLATERBASIS)
+   resolve_bases(basis,suffix) ::: get_from(VEC{ATOM}, BASIS?=>SLATER_BASIS)
    ! Resolve the basis sets for each atom -- by pointer assigning its basis to
    ! the element in "basis" which matches either the atoms .basis_label, or else
    ! matches a label constructed in a standard way, by joining the atom chemical
    ! symbol with the ":suffix" string.
    end
 
-   resolve_bases(basis,suffix) ::: get_from(VEC{ATOM}, BASIS?=>COPPENSBASIS)
+   resolve_bases(basis,suffix) ::: get_from(VEC{ATOM}, BASIS?=>COPPENS_BASIS)
    ! Resolve the basis sets for each atom -- by pointer assigning its basis to
    ! the element in "basis" which matches either the atoms .basis_label, or else
    ! matches a label constructed in a standard way, by joining the atom chemical
@@ -3758,17 +3795,23 @@ contains
       end
    end
 
-   library_basis_labels(suffix) result (labels) ::: leaky
-   ! Return a list of library basis set labels, the atoms element name with
-   ! ":suffix" appended to it. Only a unique list of basis labels is returned.
-      suffix :: STR
-      labels :: VEC{STR}*
+   library_basis_labels(suffix) result (labels) ::: PURE, leaky
+   ! Return a list of library basis set "labels", comprising the atoms
+   ! element name (e.g. "Al") with ":suffix" appended to it (e.g.
+   ! ":STO-3G"). Only a unique list of "labels" is returned.
+      self :: IN
+      suffix :: STR, IN
+      labels :: VEC{STR}@
+
       i :: INT
+
       labels.create(.dim)
       do i = 1,.dim
          labels(i) = self(i).library_basis_label(suffix)
       end
+
       labels.remove_repetitions
+
    end
 
    library_basis_labels(Z_max,suffix) result (labels) ::: selfless, leaky
@@ -3817,6 +3860,58 @@ contains
    ! Return TRUE if all shell info is there for every atom.
       res :: BIN
       res = all(self(:).shell_info_made)
+   end
+
+!  ========================
+!  Contraction Coefficients
+!  ========================
+
+   make_contraction_matrix(cc_mat) ::: PURE
+   ! Returns the matrix of complete contraction coefficients for each basis set
+   ! Size of cc_mat is [.n_prim,.n_bf].
+      self :: IN
+      cc_mat :: MAT{REAL}, OUT
+
+   ENSURE(cc_mat.dim1==.n_prim,"wrong shape, cc_mat")
+   ENSURE(cc_mat.dim2==.n_bf,  "wrong shape, cc_mat")
+
+      a,b,p,ap,ab :: INT
+
+      cc_mat = ZERO
+
+      b = 1
+      p = 1
+
+      do a = 1,.n_atom
+
+         ap = self(a).basis.n_prim
+         ab = self(a).basis.n_bf
+
+         self(a).basis.make_contraction_matrix(cc_mat(p:p+ap-1,b:b+ab-1))
+
+         p = p + ap
+         b = b + ab
+
+      end
+
+   end
+
+   make_normalised_contraction_mx(cc_mat) ::: PURE
+   ! Returns the matrix of complete contraction coefficients for each
+   ! basis set. Size of cc_mat is [.n_prim,.n_bf]. Primitive components
+   ! are properly normalised.
+      self :: INOUT
+      cc_mat :: MAT{REAL}, OUT
+
+   ENSURE(cc_mat.dim1==.n_prim,"wrong shape, cc_mat")
+   ENSURE(cc_mat.dim2==.n_bf,  "wrong shape, cc_mat")
+
+      .basis.renormalise
+
+      .make_contraction_matrix(cc_mat)
+
+      .basis.unnormalise
+
    end
 
 !  ======================
@@ -8351,6 +8446,7 @@ contains
    bases_are_resolved result (res) ::: template
    ! Return TRUE if all basis sets are associated AND their shell list
    ! parts are also associated, dummy-atoms excepted
+      self :: IN
       res :: BIN
 
       a :: INT
@@ -8359,9 +8455,13 @@ contains
 
       do a = 1,.dim
 
-         if (self(a).TEST?.is_created_and_resolved) cycle
+         ! Is it there?
+         if (self(a).BASIS?.is_created_and_resolved) cycle
+
+         ! Is it a dummy?
          if (self(a).has_a_dummy_label) cycle
 
+         ! Not resolved and not a dummy
          res = FALSE
          exit
 
@@ -8369,17 +8469,17 @@ contains
 
    end
 
-   bases_are_resolved result (res) ::: get_from(VEC{ATOM}:bases_are_resolved, TEST?=>basis)
+   gaussian_bases_are_resolved result (res) ::: get_from(VEC{ATOM}:bases_are_resolved, BASIS?=>basis)
    ! Return TRUE if all basis sets are associated AND their shell list
    ! parts are also associated, dummy-atoms excepted
    end
 
-   slaterbases_are_resolved result (res) ::: get_from(VEC{ATOM}:bases_are_resolved, TEST?=>slaterbasis)
+   slater_bases_are_resolved result (res) ::: get_from(VEC{ATOM}:bases_are_resolved, BASIS?=>slaterbasis)
    ! Return TRUE if all basis sets are associated AND their shell list
    ! parts are also associated, dummy-atoms excepted
    end
 
-   coppensbases_are_resolved result (res) ::: get_from(VEC{ATOM}:bases_are_resolved, TEST?=>coppensbasis)
+   coppens_bases_are_resolved result (res) ::: get_from(VEC{ATOM}:bases_are_resolved, BASIS?=>coppensbasis)
    ! Return TRUE if all basis sets are associated AND their shell list
    ! parts are also associated, dummy-atoms excepted
    end

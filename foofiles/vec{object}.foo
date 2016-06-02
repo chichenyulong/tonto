@@ -403,6 +403,109 @@ contains
 ! Shrinking and expansion
 ! =======================
 
+   shrink(dim) ::: leaky, PURE
+   ! Shrink "self" to dimension "dim" from the end. Contents are
+   ! retained.
+      self :: allocatable, INOUT
+      dim :: INT, IN
+
+   ENSURE(.created,"self is unallocated")
+   ENSURE(lbound(self,1)==1,"self must have lbound 1")
+   ENSURE(ubound(self,1)>dim,"dim is too small")
+
+      self = [ self(1:dim) ]
+
+   end
+
+   expand(dim) ::: leaky, PURE
+   ! Expand "self" to dimension "dim" from the end. New slots are
+   ! undefined. 
+      self :: allocatable, INOUT
+      dim :: INT, IN
+
+      old :: VEC{OBJECT}@
+
+      if (.destroyed) then
+
+         .create(dim)
+
+      else if (.dim==0) then
+
+         .destroy
+         .create(dim)
+
+      else
+
+         ENSURE(ubound(self,1)<dim,"dim is too small")
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
+         old = self
+
+         .destroy
+         .create(dim)
+         
+         self(1:old.dim) = old
+
+      end
+
+   end
+
+   append(v) ::: leaky, PURE
+   ! Append the contents of vector "v" to "self".
+      self :: allocatable, INOUT
+      v :: VEC{OBJECT}, IN
+
+      if (.destroyed) then
+
+         self = v
+
+      else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
+         self = [ self, v ]
+
+      end
+
+   end
+
+   append(value) ::: leaky, PURE
+   ! Appends the single scalar "value" onto the end of "self".
+      self :: allocatable, INOUT
+      value :: OBJECT, IN
+
+      if (.destroyed) then
+
+         self = [ value ]
+
+      else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
+         self = [ self, value ]
+
+      end
+
+
+   end
+
+   prune_element(k) ::: leaky, PURE
+   ! Removes the single element at position "k" from "self".
+   ! Elements after that position are moved downward.
+      self :: allocatable, INOUT
+      k :: INT, IN
+
+   ENSURE(.created,"self is unallocated")
+   ENSURE(lbound(self,1)==1,"self must have lbound 1")
+   ENSURE(ubound(self,1)>=k,"k is too big")
+   ENSURE(             k>=1,"k is too small")
+
+      self = [ self(1:k-1),self(k+1:.dim) ]
+
+   end
+
+! Old
+
    shrink(dim) ::: leaky
    ! Shrink self to dimension dim.  Contents are retained.
       self :: PTR
@@ -831,6 +934,46 @@ contains
 ! Repetition related operations
 ! =============================
 
+   remove_repetitions ::: leaky, PURE
+   ! Remove repeated elements in "self". The list may shrink.
+      self :: allocatable, INOUT
+
+   ENSURE(.created,"no self")
+   ENSURE(.dim>=1, "self too small")
+   ENSURE(lbound(self,1)==1,"must have lower bound 1")
+
+      unique :: VEC{OBJECT}@
+      i,j,n :: INT
+
+      if (.dim==1) return
+
+      ! First is unique ...
+      unique.create(.dim)
+      unique(1) = self(1)
+
+      ! Loop over others ...
+      n = 1
+      same: do i = 2,.dim
+
+         ! Same as any already found?
+         do j = 1,unique.dim
+            if (NOT self(i).same_as(unique(j))) cycle
+            cycle same
+         end
+
+         ! Not the same.
+         n = n + 1
+         unique(n) = self(i)
+
+      end do same
+
+      ! Shrink -- if needed
+      if (n<.dim) self = unique(1:n)
+
+   end
+
+! Old
+
    remove_repetitions ::: leaky
    ! Sort through the vector and remove repeated elements which come
    ! later in the list.  NOTE: the vector may shrink
@@ -907,6 +1050,7 @@ contains
 
          if (NOT self(i).same_as(self(j))) cycle
 
+         ! Same
          fi  = i
          fj  = j
          return
@@ -921,29 +1065,383 @@ contains
       self :: IN
       res :: INT
 
-      n,i :: INT
-      same :: BIN
+      i,j :: INT
 
       res = 1
 
-      do n = 2,.dim
+      same: do i = 2,.dim
 
-         same = FALSE
-         do i = 1,n-1
-            if (NOT self(n).same_as(self(i))) cycle
-            same = TRUE
-            exit
+         ! Same as any already found?
+         do j = 1,i-1
+            if (NOT self(i).same_as(self(j))) cycle
+            cycle same
          end
 
-         if (NOT same) res = res + 1
+         ! Not the same.
+         res = res + 1
 
-      end
+      end do same
 
    end
 
 ! =======================
 ! List-based I/O Routines
 ! =======================
+
+   read_keywords ::: recursive, leaky
+   ! Read and process normal (non list-type) keywords from "stdin";
+   ! "self" allocatable here.
+      self :: allocatable, INOUT
+
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
+
+      word :: STR
+
+      ! Read the opening brace
+      stdin.read(word)
+
+      ! Echo the brace if requested
+      if (tonto.keyword_echo) then
+         stdout.flush
+         stdout.text("keyword found --> " // trim(word))
+      end
+
+      do ! Loop over keywords within brace
+
+         ! Read a keyword
+         stdin.read(word)
+         
+         ! Unexpected end of file?
+         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+         
+         ! Lower case word
+         word.to_lower_case
+         
+         ! Is there an equals next? Then join it on
+         if (NOT stdin.buffer_exhausted) then 
+         if (stdin.next_item=="=") then
+            stdin.skip_next_item
+            word = trim(word) // "="
+         end
+         end
+         
+         ! Echo the keyword if requested
+         if (tonto.keyword_echo) then
+            stdout.flush
+            stdout.text("keyword found --> " // trim(word))
+         end
+         
+         ! Exit if it is a close brace
+         if (word=="}") exit
+         
+         ! Process the keyword
+         .process_keyword(word)
+
+      end
+
+   end
+
+   read_list_keywords ::: recursive, leaky
+   ! Read and process list-data keywords from "stdin". List-based
+   ! keywords are those that apply to each individual element of the
+   ! list through a list of "keys" stored in the host module.
+   ! NOTE: this routine will create the list, if required.
+   ! NOTE: "self" allocatable here.
+      self :: allocatable, INOUT
+
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
+
+      word :: STR
+
+      ! Read the open brace
+      stdin.read(word)
+
+      ! Echo the brace if requested
+      if (tonto.keyword_echo) then
+         stdout.flush
+         stdout.text("keyword found --> " // trim(word))
+      end
+
+      do ! Loop over input list-type keywords
+
+         ! Read a keyword
+         stdin.read(word)
+        
+         ! Unexpected end of file?
+         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+        
+         ! Lower case the word
+         word.to_lower_case
+        
+         ! Is there an equals next? Then join it on
+         if (NOT stdin.buffer_exhausted) then 
+         if (stdin.next_item=="=") then 
+            stdin.skip_next_item
+            word = trim(word) // "="
+         end
+         end
+        
+         ! Echo the keyword if requested
+         if (tonto.keyword_echo) then
+            stdout.flush
+            stdout.text("keyword found --> " // trim(word))
+         end
+        
+         ! Exit if it is a close brace
+         if (word=="}") exit
+        
+         ! Process the list keyword
+         .process_list_keyword(word)
+
+      end
+
+   end
+
+   process_list_keyword(keyword) ::: leaky
+   ! Process a list-data "keyword", common to all list-type objects.
+   ! "self" is allocatable here.
+      self :: allocatable, INOUT
+      keyword :: STR, IN
+
+      X :: OBJECT
+      word :: STR
+
+      word = keyword
+      word.to_lower_case
+
+      select case (word)
+      case("data=            ");  .read_data
+      case("destroy          ");  .destroy         ! Clean
+      case("do               ");  .read_keywords   ! Non-list keywords
+      case("keys=            ");  .read_keys       ! Define keys to apply to "self"
+      case("process_keys     ");  .process_keys    ! Process keys on list-data "self"
+      case("process_keys_once"); X.process_keys    ! Process keys once on default OBJECT
+      case("redirect         "); TEXTFILE:redirect ! New inout file
+      case("revert           "); TEXTFILE:revert   ! Back to old input
+      case default 
+         ! Backtrack & assume data= sans braces
+         stdin.move_to_previous_item
+         .read_data_sans_braces
+      end
+
+   end
+
+   process_keys ::: leaky
+   ! Process the keywords in the "keys" OBJECT module variable on each
+   ! element in the list "self".  "self" is allocatable here.
+      self :: allocatable, INOUT
+
+      tmp :: OBJECT
+      s :: INT
+
+      if (.created) then
+
+         ! Process keys on each element
+         do s = 1,.dim
+            self(s).process_keys
+         end
+
+      else 
+
+         ! Process keys once on an anonymous element
+         tmp.process_keys
+
+      end
+
+   end
+
+   set_keys(the_keys)
+   ! This is for setting the "keys" externally.
+      self :: allocatable, IN
+      the_keys :: VEC{STR}
+
+      tmp :: OBJECT@
+
+      ! Bind routine
+      if (.created) then
+      end
+
+      tmp.set_keys(the_keys)
+
+   end
+
+   read_data ::: leaky
+   ! Repeatedly process the keywords in the "keys" module variable
+   ! on each element of the lista-data "self". Opening and closing
+   ! braces are needed.
+      self :: allocatable, INOUT
+
+      word :: STR
+
+      ! Ppen brace
+      stdin.read(word)
+      ENSURE(word=="{","expecting open bracket symbol, {")
+
+      ! Read data (process keys)
+      .read_data_sans_braces
+
+      ! Close brace
+      stdin.read(word)
+      ENSURE(word=="}","expecting close bracket symbol, }")
+
+   end
+
+   read_data_sans_braces ::: leaky
+   ! Repeatedly process the items in the "keys" OBJECT module variable
+   ! to read in the list-data.  Opening and closing braces *not*
+   ! needed.  "self" is allocatable here.
+      self :: allocatable, INOUT
+
+      length :: INT
+
+      ! Get the vector length
+      length = ::data_length()
+
+      if (.created) then
+         ! If created, is dimension the same
+         ENSURE(length==.dim,"Mismatching new and old data lists")
+      else
+         ! If not created, create it
+         .create(length)
+      end
+
+      ! Process keys
+      .process_keys
+
+   end
+
+   data_length result (length) ::: selfless, private
+   ! Read ahead in "stdin" to get the "length" of the list-data.  The
+   ! data must begin with the first data item, *not* a "{" symbol but
+   ! must be terminated by a "}" symbol.  The order of data items
+   ! comprising the list-data is given by the "keys" OBJECT module
+   ! variable.  The data list must be terminated by a "}".
+      length :: INT
+
+   ENSURE(stdin.next_item/="}","empty data list!")
+
+      W :: OBJECT@
+      word :: STR
+      line,item :: INT
+
+      ! Initialize result
+      length = 0
+
+      ! Read first item, initialize line no & item no.
+      stdin.read(word)
+      line = stdin.line_number
+      item = stdin.previous_line_item
+
+      ! Get the length
+      do
+
+         ! Move just before
+         stdin.move_to_previous_item
+
+         ! Read a scalar & increment
+         W.create
+         W.process_keys
+         W.destroy
+         length = length + 1
+
+         ! Closing-brace there?
+         stdin.read(word)
+         word.to_lower_case
+         if (word=="}") exit
+         if (stdin.at_end_of_file) exit
+
+      end
+
+      ! Go back to start
+      stdin.move_to_line(line)
+      stdin.move_to_line_item(item)
+
+   end
+
+! These two not normally needed
+
+   read_data_BL_terminated ::: leaky
+   ! Repeatedly process the items in the "keys" module variable to
+   ! read in the list-data. Opening braces are not needed, but a
+   ! blank line (BL) is used as an end-of-list terminator.
+   ! "self" is allocatable here.
+      self :: allocatable, INOUT
+
+      length :: INT
+
+      ! Get the vector length
+      length = ::data_length_BL_terminated()
+
+      if (.created) then
+         ! If created, is dimension the same
+         ENSURE(length==.dim,"Mismatching new and old data lists")
+      else
+         ! If not created, create it
+         .create(length)
+      end
+
+      ! Process keys
+      .process_keys
+
+      ! Empty line there? Read it.
+      stdin.read_line
+      ENSURE(stdin.buffer.string==" ","expecting blank line")
+
+   end
+
+   data_length_BL_terminated result (length) ::: selfless, private
+   ! defined in the associated list-element type module.
+   ! Read ahead in "stdin" to get the "length" of the list-data. The
+   ! data must begin with the first data item, *not* a "{" symbol but
+   ! must be terminated by a blank line (BL). The order of data items
+   ! comprising the list-data is given by the "keys" OBJECT module
+   ! variable.
+      length :: INT
+
+   ENSURE(stdin.next_item/="}","empty data list!")
+
+      W :: OBJECT@
+      word :: STR
+      line,item :: INT
+
+      ! Initialize result
+      length = 0
+
+      ! Read first item, initialize line no & item no.
+      stdin.read(word)
+      line = stdin.line_number
+      item = stdin.previous_line_item
+
+      ! Get the length
+      do
+
+         ! Move just before
+         stdin.move_to_previous_item
+
+         ! Read a scalar & increment
+         W.create
+         W.process_keys
+         W.destroy
+         length = length + 1
+
+         ! Blank-line terminated?
+         stdin.read_line
+         if (stdin.buffer.string==" ") exit
+         if (stdin.at_end_of_file) exit
+
+         ! No blank line ... read first item
+         stdin.read(word)
+         if (stdin.at_end_of_file) exit ! Oops
+
+      end
+
+      ! Go back to start
+      stdin.move_to_line(line)
+      stdin.move_to_line_item(item)
+
+   end
+
+! Old
 
    read_keywords ::: recursive, leaky
    ! Read in and process normal (non list-type) keywords from "stdin".
@@ -1073,8 +1571,8 @@ contains
          case("new_data=        "); .destroy; .read_data
          case("process_keys     "); .process_keys
          case("process_keys_once"); .process_keys_once
-         case("redirect         "); .redirect
-         case("revert           "); .revert
+         case("redirect         "); TEXTFILE:redirect
+         case("revert           "); TEXTFILE:revert
 
          ! Backtrack & assume data= sans braces
          case default 
@@ -1318,7 +1816,7 @@ contains
 
    end
 
-   process_keys ::: leaky
+   process_keys ::: leaky, selfless
    ! Process the "keys" on each element of the list.
       self :: PTR
 
@@ -1336,7 +1834,7 @@ contains
 
    end
 
-   process_keys_once 
+   process_keys_once ::: leaky
    ! Process the "keys" just once on an anonymous object. This is useful if the
    ! "keys" set global variables in the list module (e.g. the default order of
    ! lists *within* the list data) as opposed to being keys pertaining to each
@@ -1345,50 +1843,11 @@ contains
 
       tmp :: OBJECT
 
-      if (FALSE) self = self
+      ! Bind routine
+      if (.created) then
+      end
 
-      tmp.set_defaults
       tmp.process_keys
-
-   end
-
-   keys_created result (res)
-   ! Return TRUE if the list-element keys are created.
-      self :: PTR
-      res :: BIN
-
-      tmp :: OBJECT*
-
-      if (FALSE) self = self
-
-      nullify(tmp)
-      res = tmp.keys_created
-
-   end
-
-   set_keys(the_keys)
-   ! This is for setting the "keys" externally.
-      self :: PTR
-      the_keys :: VEC{STR}
-
-      tmp :: OBJECT*
-
-      if (FALSE) self = self
-
-      nullify(tmp)
-      tmp.set_keys(the_keys)
-
-   end
-
-   clear_keys ::: leaky
-   ! This is for destroying the "keys" externally.
-
-      tmp :: OBJECT*
-
-      if (FALSE) self = self
-
-      nullify(tmp)
-      tmp.clear_keys
 
    end
 
@@ -1398,7 +1857,9 @@ contains
 
       tmp :: OBJECT*
 
-      if (FALSE) self = self
+      ! Bind routine
+      if (.created) then
+      end
 
       nullify(tmp)
       tmp.read_keys
@@ -1459,6 +1920,47 @@ contains
       else
 
          val = trim(object_name)//":VEC{OBJECT}* = {"
+         stdout.text(trim(val))
+
+         stdout.increment_margin_width(1)
+         stdout.flush
+
+         stdout.put("dimension =",width=11)
+         stdout.put(.dim,width=0)
+         stdout.flush
+         
+         do i = 1,.dim
+            val = trim(object_name)//"("//trim(i.to_str)//")"
+            self(i).dump(trim(val))
+         end
+
+         stdout.increment_margin_width(-1)
+         stdout.flush
+
+         stdout.text("}")
+
+      end
+
+   end
+
+   dmpa(object_name)
+   ! Dump an allocatable vector object
+      self :: allocatable, IN
+      object_name :: STR, IN
+    
+      val :: STR
+      i :: INT
+
+      stdout.flush
+
+      if (.destroyed) then
+
+         val = trim(object_name)//":VEC{OBJECT}@ = null"
+         stdout.text(trim(val))
+
+      else
+
+         val = trim(object_name)//":VEC{OBJECT}@ = {"
          stdout.text(trim(val))
 
          stdout.increment_margin_width(1)

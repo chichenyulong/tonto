@@ -186,8 +186,8 @@ contains
         case ("name=                "); .read_name
         case ("output_style_options="); .read_output_style_options
         case ("put                  "); .put
-        case ("redirect             "); .redirect
-        case ("revert               "); .revert
+        case ("redirect             "); TEXTFILE:redirect
+        case ("revert               "); TEXTFILE:revert
         case ("series_expansion=    "); .read_series_expansion
         case  default ;               UNKNOWN(keyword)
 
@@ -217,14 +217,6 @@ contains
    ! Read new output style options, for example change the
    ! width and number of field, or precision of output.
       stdout.read_keywords(TEXTFILE::stdin)
-   end
-
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
    end
 
 ! ============

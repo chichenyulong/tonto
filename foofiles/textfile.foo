@@ -380,6 +380,29 @@ contains
 !  File redirect and revert
 !  ========================
 
+   redirect_stdout ::: selfless, leaky
+   ! Redirect stdout to the file whose name is the following string
+   ! in the current input file.
+
+      name :: STR
+
+      stdin.read(name)
+
+      stdout.redirect(name)
+
+   end
+
+   redirect ::: selfless, leaky
+   ! Redirect input to a "filename" given on "stdin"
+
+      filename :: STR
+
+      filename = stdin.next_str
+
+      stdin.redirect(trim(filename))
+
+   end
+
    redirect(name) ::: leaky
    ! Save all the info for the current file in ".saved", and open a
    ! new textfile.  This is used for input, or output redirection.
@@ -435,6 +458,21 @@ contains
 
    end
 
+
+   revert_stdout ::: selfless, leaky
+   ! Revert stdout back to the previously stored input file
+
+      stdout.revert
+
+   end
+
+   revert ::: selfless, leaky
+   ! Revert back to previous stdin file
+
+      stdin.revert
+
+   end
+
    revert ::: leaky
    ! Revert to the previously redirected textfile, but keep current
    ! style settings, including (for example) any default_units settings.
@@ -474,6 +512,7 @@ contains
       end
 
    end
+
 
    use_style(saved) ::: private
    ! Revert to the previously saved style settings, including any

@@ -182,28 +182,25 @@ contains
       dim :: INT, IN
       chop_start :: BIN, optional, IN
 
-   ENSURE(.allocated,"no self array")
-   ENSURE(dim<.dim,"dim too large")
-   ENSURE(dim>0, "dim is not +ve")
+   ENSURE(.created,"self is unallocated")
+   ENSURE(lbound(self,1)==1,"self must have lbound 1")
+   ENSURE(ubound(self,1)>dim,"dim is too small")
 
-      lb,ub :: INT
+      ub :: INT
       chop_end :: BIN
 
       ! Chop from start or end?
       chop_end = TRUE
       if (present(chop_start)) chop_end = NOT chop_start
 
-      ! Bounds
-      lb = lbound(self,dim=1)
-      ub = ubound(self,dim=1)
-
       if (chop_end) then
 
-         self(lb:) = [ self(lb:lb+dim-1) ]
+         self = [ self(1:dim) ]
 
       else 
 
-         self(lb:) = [ self(ub-dim+1:ub) ]
+         ub = ubound(self,dim=1)
+         self = [ self(ub-dim+1:ub) ]
 
       end
 
@@ -219,7 +216,7 @@ contains
       init :: INTRINSIC, optional, IN
       grow_start :: BIN, optional, IN
 
-      lb,nc :: INT
+      nc :: INT
       grow_end :: BIN
       val :: INTRINSIC
 
@@ -234,147 +231,180 @@ contains
       if (.deallocated) then
 
          .create(dim)
-         self = init
+         self = val
 
       else
 
-         ENSURE(dim>.dim, "dim not large enough")
-         ENSURE(dim>0, "dim is not +ve")
-        
-         ! Bounds
+         ENSURE(ubound(self,1)<dim,"dim is too small")
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
+         ! No. of extra copies
          nc = dim - .dim
-         lb = lbound(self,dim=1)
 
          ! Grow it
          if (grow_end) then
-            self(lb:) = [ self, spread(val,dim=1,ncopies=nc) ]
+            self = [ self, spread(val,dim=1,ncopies=nc) ]
          else 
-            self(lb:) = [ spread(val,dim=1,ncopies=nc), self ]
+            self = [ spread(val,dim=1,ncopies=nc), self ]
          end
         
       end
 
    end
 
-   append(v) ::: leaky, pure
+   append(v) ::: leaky, PURE
    ! Append the contents of vector "v" to "self".
       self :: allocatable, INOUT
       v :: VEC{INTRINSIC}, IN
 
       if (self.destroyed) then
+
          self = v
+
       else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
          self = [ self, v ]
+
       end
 
    end
 
-   append(v1,v2) ::: leaky, pure
+   append(v1,v2) ::: leaky, PURE
    ! Appends the contents of vectors "v1" and "v2" to "self".
       self :: allocatable, INOUT
       v1,v2 :: VEC{INTRINSIC}, IN
 
       if (self.destroyed) then
+
          self = [ v1, v2 ]
+
       else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
          self = [ self, v1, v2 ]
+
       end
 
    end
 
-   append(value) ::: leaky, pure
+   append(value) ::: leaky, PURE
    ! Appends the single scalar "value" onto the end of "self".
       self :: allocatable, INOUT
       value :: INTRINSIC, IN
 
       if (self.destroyed) then
+
          self = [ value ]
+
       else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
          self = [ self, value ]
+
       end
 
    end
 
-   append_only_if_unique(value) ::: leaky, pure
+   append_only_if_unique(value) ::: leaky, PURE
    ! Appends the single scalar "value" onto the end "self", but only
    ! if the "value" does not already occur in "self"
       self :: allocatable, INOUT
       value :: INTRINSIC, IN
 
       if (self.destroyed) then
+
          self = [ value ]
+
       else if (all(self/=value)) then
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
          self = [ self, value ]
+
       end
 
    end
 
-   prepend(v) ::: leaky, pure
+   prepend(v) ::: leaky, PURE
    ! Prepend vector "v" to "self".
       self :: allocatable, INOUT
       v :: VEC{INTRINSIC}, IN
 
       if (self.destroyed) then
+
          self = [ v ]
+
       else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
          self = [ v, self ]
+
       end
 
    end
 
-   prepend(value) ::: leaky, pure
+   prepend(value) ::: leaky, PURE
    ! Prepend a single "value" to "self".
       self :: allocatable, INOUT
       value :: INTRINSIC, IN
 
       if (self.destroyed) then
+
          self = [ value ]
+
       else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
          self = [ value, self ]
+
       end
 
    end
 
-   prune(values) ::: leaky, pure
+   prune(values) ::: leaky, PURE
    ! Removes the scalar "values" from "self" (if they are there).
    ! The order of the elements is otherwise unchanged.
       self :: allocatable, INOUT
       values :: VEC{INTRINSIC}, IN
 
-      lb :: INT
+   ENSURE(.created,"self is unallocated")
+   ENSURE(lbound(self,1)==1,"self must have lbound 1")
 
-      lb = lbound(self,dim=1)
-
-      self(lb:) = pack(self,mask=any(spread(self,2,values.dim)==spread(values,1,.dim),dim=1))
+      self = pack(self,mask=any(spread(self,2,values.dim)==spread(values,1,.dim),dim=1))
 
    end
 
-   prune(value) ::: leaky, pure
+   prune(value) ::: leaky, PURE
    ! Remove the single scalar "value" from "self" (if it is there).
    ! The order of the elements is otherwise unchanged.
       self :: allocatable, INOUT
       value :: INTRINSIC, IN
 
-      lb :: INT
+   ENSURE(.created,"self is unallocated")
+   ENSURE(lbound(self,1)==1,"self must have lbound 1")
 
-      lb = lbound(self,dim=1)
-
-      self(lb:) = pack(self,mask = self/=value)
+      self = pack(self,mask = self/=value)
 
    end
 
-   prune_element(k) ::: leaky, pure
+   prune_element(k) ::: leaky, PURE
    ! Removes the single element at position "k" from "self".
    ! Elements after that position are moved downward.
       self :: allocatable, INOUT
       k :: INT, IN
 
-      lb,ub :: INT
+   ENSURE(.created,"self is unallocated")
+   ENSURE(lbound(self,1)==1,"self must have lbound 1")
+   ENSURE(ubound(self,1)>=k,"k is too big")
+   ENSURE(             k>=1,"k is too small")
 
-      lb = lbound(self,dim=1)
-      ub = ubound(self,dim=1)
-
-      self(lb:ub-1) = [ self(lb:k-1),self(k+1:ub) ]
+      self = [ self(1:k-1),self(k+1:.dim) ]
 
    end
 
@@ -1159,6 +1189,45 @@ contains
 !  =============================
 
    remove_repetitions ::: leaky, PURE
+   ! Remove repeated elements from "self".
+   ! NOTE: the vector may shrink. 
+   ! NOTE: this version for bin, str, int
+      self :: allocatable, INOUT
+
+   ENSURE(.created,"no self")
+   ENSURE(.dim>=1, "self too small")
+   ENSURE(lbound(self,1)==1,"must have lower bound 1")
+
+      unique :: VEC{INTRINSIC}(len=len(self(1)))@
+      i,n :: INT
+      found :: BIN
+
+      if (.dim==1) return
+
+      unique.create(.dim)
+      unique(1) = self(1)
+
+      n = 1
+
+      same: do i = 2,.dim
+
+         ! Any the same?
+         if (any(self(i)==unique(1:n)) cycle same
+
+         ! Not the same
+         n = n + 1
+         unique(n) = self(i)
+
+      end do same
+
+      ! Shrink -- if needed
+      if (n<.dim) self = unique(1:n)
+
+   end
+
+! Old
+
+   remove_repetitions ::: leaky, PURE
    ! Remove repeated elements which come later in the list. 
    ! NOTE: the vector may shrink. 
    ! NOTE: this version for bin, str, int
@@ -1239,6 +1308,7 @@ contains
 
    end
 
+
    has_repetitions result (res) ::: pure
    ! Return TRUE if self has at least one repeated element.
    ! NOTE: this version for bin, str, int
@@ -1272,18 +1342,18 @@ contains
 
       res = 1
 
-      do n = 2,.dim
+      same: do n = 2,.dim
 
-         same = FALSE
+         ! Same as any already found?
          do i = 1,n-1
             if (self(n)/=self(i)) cycle
-            same = TRUE
-            exit
+            cycle same
          end
 
-         if (NOT same) res = res + 1
+         ! Not the same
+         res = res + 1
 
-      end
+      end do same
 
    end
 

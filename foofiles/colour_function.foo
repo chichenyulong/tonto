@@ -129,7 +129,7 @@ contains
 
       if (present(range)) .rescale_data(range)
 
-      .finalized = TRUE
+      .updated = TRUE
 
    end
 
@@ -146,7 +146,7 @@ contains
       .RGB(:,2) = [ZERO, ONE,ZERO]
       .RGB(:,3) = [ZERO,ZERO, ONE]
       if (present(range)) .rescale_data(range)
-      .finalized = TRUE
+      .updated = TRUE
    end
 
 !  =============
@@ -240,7 +240,7 @@ contains
 !      ENSURE(word=="}","expecting a }")
 !   end
 
-   finalize ::: leaky
+   update ::: leaky
    ! Check everything is OK after reading data. Saturation must exist but it is
    ! applied into the RGB triples and then destroyed.
    ENSURE(.data.associated,"no data values")
@@ -257,7 +257,7 @@ contains
       .data       = .data(order)
       .RGB        = .RGB(:,order)
       order.destroy
-      .finalized = TRUE
+      .updated = TRUE
    end
 
 !  ============
@@ -265,14 +265,14 @@ contains
 !  ============
 
    set_data(data) ::: leaky
-   ! Set the data. Make sure that .finalize is called after all set routines.
+   ! Set the data. Make sure that .update is called after all set routines.
       data :: VEC{REAL}
       .data.destroy
       .data.create_copy(data)
    end
 
    set_RGB(RGB) ::: leaky
-   ! Set the RGB's. Make sure that .finalize is called after all set routines.
+   ! Set the RGB's. Make sure that .update is called after all set routines.
       RGB :: MAT{REAL}
       .RGB.destroy
       .RGB.create_copy(RGB)
@@ -289,7 +289,7 @@ contains
       truncate_to_range :: BIN, optional, IN
       res :: VEC{REAL}(3)
 
-   ENSURE(.finalized,"not finalized")
+   ENSURE(.updated,"not updated")
 
       colour :: VEC{REAL}(3)
       frac,thevalue :: REAL
@@ -323,7 +323,7 @@ contains
       value :: REAL
       res :: VEC{INT}(3)
 
-   ENSURE(.finalized,"not finalized")
+   ENSURE(.updated,"not updated")
    ENSURE(value.is_in_range(.data.element_range),"value out of range")
 
       colour :: VEC{REAL}(3)
@@ -344,7 +344,7 @@ contains
    ! Return the "RGB" triples corresponding to a set of "values".
       values :: VEC{REAL}
       RGB :: MAT{REAL}
-   ENSURE(.finalized,"not finalized")
+   ENSURE(.updated,"not updated")
    ENSURE(RGB.dim1==3,"first dimension of RGB array must be 3")
    ENSURE(RGB.dim2==values.dim,"values and RGB are incompatible")
       i,n :: INT
@@ -358,7 +358,7 @@ contains
    ! Return the "RGB" triples corresponding to a set of "values".
       values :: VEC{REAL}
       RGB :: MAT{INT}
-   ENSURE(.finalized,"not finalized")
+   ENSURE(.updated,"not updated")
    ENSURE(RGB.dim1==3,"first dimension of RGB array must be 3")
    ENSURE(RGB.dim2==values.dim,"values and RGB are incompatible")
       i,n :: INT
@@ -372,7 +372,7 @@ contains
    ! Return the "RGB" triples corresponding to a set of "values".
       values :: MAT{REAL}
       RGB :: MAT3{INT}
-   ENSURE(.finalized,"not finalized")
+   ENSURE(.updated,"not updated")
    ENSURE(RGB.dim1==3,"first dimension of RGB array must be 3")
    ENSURE(RGB.dim2==values.dim1,"values and RGB are incompatible")
    ENSURE(RGB.dim3==values.dim2,"values and RGB are incompatible")
@@ -391,7 +391,7 @@ contains
       values :: VEC{REAL}
       RGB255 :: MAT{INT}
 
-   ENSURE(.finalized,"not finalized")
+   ENSURE(.updated,"not updated")
    ENSURE(RGB255.dim2==values.dim,"values and RGB255 are incompatible")
 
       i,n :: INT

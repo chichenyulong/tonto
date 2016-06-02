@@ -26,13 +26,29 @@ module VEC{REFLECTION}
 
    implicit none
 
- ! saved_self :: VEC{REFLECTION}*, private  DEFAULT_NULL
-
 contains
 
-!  ==========
-!  Allocation
-!  ==========
+!  ==================
+!  Allocation methods
+!  ==================
+
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
+   end
+
+   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Deallocate the vector
+   end
+
+   created result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has been allocated
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has *not* been allocated
+   end
+
+! Old
 
    create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
    ! Create space for object. This version does not nullify ptr parts.
@@ -65,6 +81,26 @@ contains
 !  =======================
 !  Shrinking and expansion
 !  =======================
+
+   shrink(dim) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Shrink "self" to dimension "dim" from the end. Contents are
+   ! retained.
+   end
+
+   expand(dim) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Expand "self" to dimension "dim" from the end. New slots are
+   ! undefined. 
+   end
+
+   append(v) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Append the contents of vector "v" to "self".
+   end
+
+   append(value) ::: get_from(VEC{OBJECT}, leaky, PURE
+   ! Appends the single scalar "value" onto the end of "self".
+   end
+
+! Old
 
    shrink(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Shrink self to dimension dim.  Contents are retained.
@@ -1341,28 +1377,8 @@ contains
    ! element of the list.
    end
 
-   keys_created result (res) ::: get_from(VEC{OBJECT})
-   ! Return TRUE if the list-element keys are created.
-   end
-
-   set_keys(the_keys) ::: get_from(VEC{OBJECT})
-   ! This is for setting the "keys" externally.
-   end
-
-   clear_keys ::: get_from(VEC{OBJECT}), leaky
-   ! This is for destroying the "keys" externally.
-   end
-
    read_keys ::: get_from(VEC{OBJECT}), leaky
    ! Read a new set of keys
-   end
-
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
    end
 
 !  ===========================
@@ -1394,8 +1410,8 @@ contains
          case("put_i_statistics         "); .put_I_statistics
          case("put_intensity_data       "); .put_intensity_data
          case("put_structure_factor_data"); .put_structure_factor_data
-         case("redirect                 "); .redirect
-         case("revert                   "); .revert
+         case("redirect                 "); TEXTFILE:redirect
+         case("revert                   "); TEXTFILE:revert
          case("simulate_new_f_exp       "); .simulate_new_F_exp
          case default;     UNKNOWN(word)
       end

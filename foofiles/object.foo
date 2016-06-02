@@ -280,6 +280,15 @@ contains
 !  ============
 
    set(object) ::: pure
+   ! Set the object.
+      self   :: OUT
+      object :: OBJECT, IN
+
+      self = object
+
+   end
+
+   set(object) ::: pure
    ! Set the object. Pointer parts are assigned not copied.
       self   :: OUT
       object :: OBJECT, IN
@@ -300,53 +309,6 @@ contains
 !  ============
 !  I/O routines
 !  ============
-
-   redirect ::: leaky
-   ! Redirect input
-      self :: PTR
-
-      filename :: STR
-
-      if (FALSE) self = self
-
-      filename = stdin.next_str
-
-      stdin.redirect(trim(filename))
-
-   end
-
-   revert ::: leaky
-   ! Revert back to previous stdin file
-      self :: PTR
-
-      if (FALSE) self = self
-
-      stdin.revert
-
-   end
-
-   redirect ::: leaky
-   ! Redirect input. (This code is for non-pointer self objects).
-
-      filename :: STR
-
-      if (FALSE) self = self
-
-      filename = stdin.next_str
-
-      stdin.redirect(trim(filename))
-
-   end
-
-   revert ::: leaky
-   ! Revert back to previous stdin file. (This code is for non-pointer self
-   ! objects).
-
-      if (FALSE) self = self
-
-      stdin.revert
-
-   end
 
    read_keywords ::: recursive, leaky
    ! Read data from "stdin" using keyword style input.
@@ -486,9 +448,98 @@ contains
 !  Input key related routines
 !  ==========================
 
+   read_keys ::: selfless, leaky
+   ! Read the "keys" module variable.
+
+      keys.destroy
+      stdin.read_ptr(keys)
+
+   end
+
+   process_keys ::: leaky
+   ! Process each keyword in the "keys" module variable.
+      self :: INOUT
+
+   ENSURE(keys.created,"no keys")
+
+      k,l,n_key :: INT
+      keyword :: STR
+      keyword_echo :: BIN
+
+      ! The number of keys
+      n_key = keys.dim
+
+      ! Keyword counter
+      k = 0
+
+      do ! Loop over keywords in "keys"
+
+         ! Get the next keyword
+         k = k + 1
+         keyword = keys(k)
+
+         ! Exit if close brace
+         if (keyword=="}") exit
+
+         if (keyword=="{") then ! embedded keyword
+
+            ! Turn off keyword echo
+            keyword_echo = tonto.keyword_echo
+            tonto.keyword_echo = FALSE
+
+            ! Find closing brace of embedded section
+            l = keys(k:).index_of_matching_bracket("{")
+            DIE_IF(l==0,"no matching closing brace in embedded keyword")
+
+            ! Set internal array
+
+            ! Process internalized keywords
+            stdin.redirect(keys(k:k+l-1))
+            .:read_keywords
+            stdin.revert
+
+            ! Reset key counter
+            k = k + l - 1
+
+            ! Reset keyword echo
+            tonto.keyword_echo = keyword_echo
+
+         else ! plain-old keyword
+
+            ! Process plain-old keyword
+            .:process_keyword(keyword)
+
+         end
+
+         ! Exit if no keys left
+         if (k==n_key) exit
+
+      end
+
+   end
+
+   set_keys(the_keys) ::: leaky
+   ! Set the "keys" module variable.
+      self :: allocatable, IN
+      the_keys :: VEC{STR}, IN
+
+      ! Bind the routine
+      if (.created) then
+      end
+
+      keys = the_keys
+
+   end
+
+! Old
+
    read_keys ::: leaky
    ! Read the "keys".
-      if (FALSE) self = self
+      self :: PTR
+
+      ! Bind the routine
+      if (.created) then
+      end
 
       keys.destroy
       stdin.read_ptr(keys)
@@ -557,35 +608,17 @@ contains
 
    end
 
-   keys_created result (res)
-   ! Return TRUE if the list-element keys are created.
-      res :: BIN
-
-      if (FALSE) self = self
-
-      res = keys.associated
-      if (res) res = keys.dim>0
-
-   end
-
    set_keys(the_keys) ::: leaky
    ! This is for setting the "keys" externally.
-      the_keys :: VEC{STR}
+      self :: PTR
+      the_keys :: VEC{STR}, IN
 
-      if (FALSE) self = self
+      ! Bind the routine
+      if (.created) then
+      end
 
       keys.destroy
       keys.create_copy(the_keys)
-
-   end
-
-   clear_keys ::: leaky
-   ! This is for destroying the "keys" externally.
-
-      if (FALSE) self = self
-
-      keys.destroy
-      keys.create(0)
 
    end
 
@@ -605,7 +638,7 @@ contains
 
       stdout.flush
 
-      if (is_ptr) then; stdout.text(trim(object_name)//":TYPE* = { ")
+      if (is_ptr) then; stdout.text(trim(object_name)//":TYPE@ = { ")
       else;             stdout.text(trim(object_name)//":TYPE = { ")
       end
 
@@ -626,6 +659,24 @@ contains
       object_name :: STR, IN
 
       if (.disassociated) then
+
+         stdout.flush
+         stdout.text(trim(object_name)//":TYPE* = null")
+
+      else
+
+         .dump(trim(object_name),ptr=TRUE)
+
+      end
+
+   end
+
+   dmpp(object_name)
+   ! Dump an allocatable object data as text
+      self :: allocatable, IN
+      object_name :: STR, IN
+
+      if (.destroyed) then
 
          stdout.flush
          stdout.text(trim(object_name)//":TYPE* = null")

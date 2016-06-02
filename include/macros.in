@@ -541,7 +541,7 @@
 # define CLUSTER_UA_FROM_CODE(X)                   BITS_FROM_POS_IN(X,CLUSTER_N_INDX_BITS*3,CLUSTER_N_ATOM_BITS)
 # define CLUSTER_HC_FROM_CODE(X)                   BITS_FROM_POS_IN(X,CLUSTER_N_INDX_BITS*0,CLUSTER_N_INDX_BITS*3)
 
-# define COPPENSORBITAL_VALUES_CUTOFF              TOL(6)
+# define COPPENS_ORBITAL_VALUES_CUTOFF             TOL(6)
 
 # define CRYSTAL_SAME_ATOM_TOL                     TOL(3)
 # define CRYSTAL_UNIT_CELL_TOL                     TOL(6)

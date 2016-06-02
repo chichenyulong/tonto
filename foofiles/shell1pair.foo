@@ -65,42 +65,28 @@ contains
  
    nullify_ptr_part
    ! Nullify the pointer parts of self
+
       .a.nullify_ptr_part
       .b.nullify_ptr_part
+
       nullify(.exponent_sum)
       nullify(.exponent_inv)
       nullify(.contraction_prefactor)
-      nullify(.contraction_s_prefactor)
-      nullify(.contraction_p_prefactor)
       nullify(.pair_center)
-   ! nullify(.hrr_comp_to_use)
-   ! nullify(.hrr_components)
-   ! nullify(.hrr_index_smaller)
-   ! nullify(.hrr_index_larger)
-   ! nullify(.form_3dints_x_indices)
-   ! nullify(.form_3dints_y_indices)
-   ! nullify(.form_3dints_z_indices)
-   ! nullify(.form_3dints_yz_rms_indices)
+
    end
  
    destroy_ptr_part ::: leaky
    ! Destroy the pointer parts of self
+
       .a.destroy_ptr_part
       .b.destroy_ptr_part
+
       .exponent_sum.destroy
       .exponent_inv.destroy
       .contraction_prefactor.destroy
-      .contraction_s_prefactor.destroy
-      .contraction_p_prefactor.destroy
       .pair_center.destroy
-   ! .hrr_comp_to_use.destroy
-   ! .hrr_components.destroy
-   ! .hrr_index_smaller.destroy
-   ! .hrr_index_larger.destroy
-   ! .form_3dints_x_indices.destroy
-   ! .form_3dints_y_indices.destroy
-   ! .form_3dints_z_indices.destroy
-   ! .form_3dints_yz_rms_indices.destroy
+
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -138,8 +124,6 @@ contains
       if (ab.exponent_sum.associated)            .exponent_sum.create_copy(ab.exponent_sum)
       if (ab.exponent_inv.associated)            .exponent_inv.create_copy(ab.exponent_inv)
       if (ab.contraction_prefactor.associated)   .contraction_prefactor.create_copy(ab.contraction_prefactor)
-      if (ab.contraction_s_prefactor.associated) .contraction_s_prefactor.create_copy(ab.contraction_s_prefactor)
-      if (ab.contraction_p_prefactor.associated) .contraction_p_prefactor.create_copy(ab.contraction_p_prefactor)
       if (ab.pair_center.associated)             .pair_center.create_copy(ab.pair_center)
 
    end
@@ -256,8 +240,6 @@ contains
       stdout.dmpp("exponent_sum",.exponent_sum)
       stdout.dmpp("exponent_inv",.exponent_inv)
       stdout.dmpp("contraction_prefactor",.contraction_prefactor)
-      stdout.dmpp("contraction_s_prefactor",.contraction_s_prefactor)
-      stdout.dmpp("contraction_p_prefactor",.contraction_p_prefactor)
       stdout.dmpp("pair_center",.pair_center)
 
    end

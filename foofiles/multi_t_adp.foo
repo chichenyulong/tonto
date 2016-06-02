@@ -1256,7 +1256,7 @@ contains
  
       end
 
-      ! Banner and finalize refinement
+      ! Banner and update refinement
       .put_iteration_footer
 
       ! Clean

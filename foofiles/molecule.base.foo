@@ -639,7 +639,7 @@ contains
       .scfdata.nuclear_repulsion_energy = .:nuclear_repulsion_energy
 
       ! Finalise
-      .scfdata.finalize
+      .scfdata.update
 
    end
 
@@ -766,65 +766,70 @@ contains
    ! Match the basis set labels for every atom with the actual atomic basis set.
    ! Also perform any finalization procedures to fully define all objects.
    ! This version is supposed to work for multiple bases.
-      .:resolve_coppensbases
-      .:resolve_slaterbases
-      .:resolve_gaussianbases
+      .:resolve_coppens_bases
+      .:resolve_slater_bases
+      .:resolve_gaussian_bases
    end
 
-   resolve_gaussianbases ::: leaky
+   resolve_gaussian_bases ::: leaky
    ! Match the basis set labels for every atom with the actual atomic
    ! basis set.
-      library_basis_labels :: VEC{STR}*
+      self :: INOUT
+
       n_unique :: INT
-      library :: STR
+      lib_basis_labels :: VEC{STR}@
+      lib_file_name :: STR
 
       if (.atom.disassociated) return
 
       if (.n_atom<1) return
 
-      if (.atom.bases_are_resolved) return
+      if (.atom.gaussian_bases_are_resolved) return
 
-      ! Resolve from a library .....
       if (.basis_name/=" ") then
 
-         ! Renormalise basis sets. (The library is in normalised form)
-         if (.basis.associated) .basis.renormalise
+         ! Resolve from basis set library
+         ! Renormalise basis sets
+         ! (library is in normalised form)
+         if (.basis.created) .basis.renormalise
+
+         ! Get basis library file name and basis labels
+         lib_file_name    = .basis.library_file_name(.basis_name)
+         lib_basis_labels = .atom.library_basis_labels(.basis_name)
 
          ! Read the basis from the library
-         library = .basis.library_file(.basis_name)
-         library_basis_labels => .atom.library_basis_labels(.basis_name)
+         .basis.read_library_data(lib_file_name,lib_basis_labels,n_unique)
 
-         .basis.read_library_data(library,library_basis_labels,n_unique)
-         library_basis_labels.destroy
+         lib_basis_labels.destroy
 
-         ! Resolve atom bases afresh i.e. point atom.basis to .basis
-         if (.basis.associated) then
+         ! Resolve atom bases afresh
+         if (.basis.created) then
 
             .basis.set_spherical(.use_spherical_basis)
             .atom.resolve_bases(.basis,.basis_name)
             .atom.set_basis_kind("gaussian")
 
-            ! Unnormalise if completely done
+            ! Unnormalise basis - the default
             .basis.unnormalise
 
             .:set_basis_info
 
          end
 
-      ! Resolve from existing .basis .....
-      else if (.basis.associated) then
+      else if (.basis.created) then
 
+            ! Resolve from existing .basis .....
             .basis.set_spherical(.use_spherical_basis)
             .atom.resolve_bases(.basis)
             .atom.set_basis_kind("gaussian")
 
             ! Unnormalise if completely done
-            if (.atom.bases_are_resolved) .:set_basis_info
+            if (.atom.gaussian_bases_are_resolved) .:set_basis_info
 
       end
 
-      if (.basis.associated) then
-      if (NOT .atom.bases_are_resolved) then
+      if (.basis.created) then
+      if (NOT .atom.gaussian_bases_are_resolved) then
          stdout.flush
          WARN("not all Gaussian bases were resolved")
       end
@@ -832,7 +837,7 @@ contains
 
    end
 
-   resolve_slaterbases ::: leaky
+   resolve_slater_bases ::: leaky
    ! Match the basis set labels for every atom with the actual atomic
    ! basis set.
       library_basis_labels :: VEC{STR}*
@@ -843,7 +848,7 @@ contains
 
       if (.n_atom<1) return
 
-      if (.atom.slaterbases_are_resolved) return
+      if (.atom.slater_bases_are_resolved) return
 
       ! Resolve from a library .....
       if (.slaterbasis_name/=" ") then
@@ -875,7 +880,7 @@ contains
       end
 
       if (.slaterbasis.associated) then
-      if (NOT .atom.slaterbases_are_resolved) then
+      if (NOT .atom.slater_bases_are_resolved) then
          stdout.flush
          WARN("not all Slater bases were resolved")
       end
@@ -883,7 +888,7 @@ contains
 
    end
 
-   resolve_coppensbases ::: leaky
+   resolve_coppens_bases ::: leaky
    ! Match the basis set labels for every atom with the actual atomic
    ! basis set.
       library_basis_labels :: VEC{STR}*
@@ -894,7 +899,7 @@ contains
 
       if (.n_atom<1) return
 
-      if (.atom.coppensbases_are_resolved) return
+      if (.atom.coppens_bases_are_resolved) return
 
       ! Resolve from a library .....
       if (.coppensbasis_name/=" ") then
@@ -926,7 +931,7 @@ contains
       end
 
       if (.coppensbasis.associated) then
-      if (NOT .atom.coppensbases_are_resolved) then
+      if (NOT .atom.coppens_bases_are_resolved) then
          stdout.flush
          WARN("not all Coppens bases were resolved")
       end
@@ -936,11 +941,12 @@ contains
 
    set_basis_directory(directory)
    ! Set the basis directory (for all kinds of bases)
+      self :: IN
       directory :: STR, IN
 
-      .basis.set_library_directory(directory)
-      .slaterbasis.set_library_directory(directory)
-      .coppensbasis.set_library_directory(directory)
+      .basis.set_library_dir_name(directory)
+      .slaterbasis.set_library_dir_name(directory)
+      .coppensbasis.set_library_dir_name(directory)
 
    end
 
@@ -973,15 +979,8 @@ contains
 
    set_basis_name(name) ::: leaky
    ! Set a gaussian *library* basis set name
+      self :: INOUT
       name :: STR
-
- ! DIE_IF(any(name==non_gaussian),"basis "//trim(name)//"is not a gaussian basis")
-
- !    non_gaussian :: VEC{STR}(len=17,4) = &
- !       ["Clementi-Roetti  ", &
- !        "Thakkar          ", &
- !        "vanLenthe-Barends", &
- !        "Coppens          "  ]
 
       ! Set the basis kind
       .basis_name = name
@@ -991,7 +990,7 @@ contains
       .basis.destroy
 
       ! Make fresh basis set links (might be leaky)
-      .:resolve_gaussianbases
+      .:resolve_gaussian_bases
 
    end
 
@@ -1137,10 +1136,6 @@ contains
 !  Redirect and revert
 !  ===================
 
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
    redirect_stdout ::: leaky
    ! Redirect stdout to the file whose name is the following string
    ! in the current input file.
@@ -1152,10 +1147,6 @@ contains
       stdin.read(name)
       stdout.redirect(name)
 
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
    end
 
    revert_stdout ::: leaky
@@ -1557,7 +1548,7 @@ contains
 
       ! Finally: set atom info & basis info
       .:set_atom_info
-      .:finalize_atom_groups
+      .:update_atom_groups
       .:resolve_basis_info
 
       .atom.put
@@ -1865,7 +1856,7 @@ contains
 
       ! Finally: set atom info & basis info (leaky)
       .:set_atom_info
-      .:finalize_atom_groups
+      .:update_atom_groups
       .:resolve_basis_info
 
       ! Create MO arrays (leaky)
@@ -2419,7 +2410,7 @@ contains
 
       ! .basis.unnormalise ! NOTE this
       .:set_atom_info
-      .:finalize_atom_groups
+      .:update_atom_groups
       .:resolve_basis_info
 
       ! Read in orbital energies.
@@ -2762,7 +2753,7 @@ contains
 
       ! Set atom/basis info
       .:set_atom_info
-      .:finalize_atom_groups
+      .:update_atom_groups
       .:resolve_basis_info
 
       ! Read in orbital energies.
@@ -3114,7 +3105,7 @@ contains
 
       ! .basis.unnormalise ! NOTE this
       .:set_atom_info
-      .:finalize_atom_groups
+      .:update_atom_groups
       .:resolve_basis_info
 
       ! Read in orbital energies.
@@ -4012,9 +4003,9 @@ contains
       list :: VEC{INT}, IN
 
    ENSURE(.atom.associated,"no atoms")
-   ENSURE(.n_atom_kind>0,"atoms not finalized")
+   ENSURE(.n_atom_kind>0,"atoms not updated")
    ENSURE(mol.atom.associated,"mol has no atoms")
-   ENSURE(mol.n_atom_kind>0,"mol atoms not finalized")
+   ENSURE(mol.n_atom_kind>0,"mol atoms not updated")
    ENSURE(list.dim==.atom.dim,"inconsistent list length")
 
       a,b :: INT
@@ -4068,7 +4059,7 @@ contains
 !  Atom group info
 !  ===============
 
-   finalize_atom_groups ::: leaky
+   update_atom_groups ::: leaky
    ! Finalize the .atom_group information
       self :: INOUT
 
@@ -4078,7 +4069,7 @@ contains
 
          if      (.atom_group.has_fchk_files)   then; .:make_groups_from_fchk
          else if (.atom_group.has_atom_indices) then; .:make_groups_from_self
-         else;          DIE("Can't finalize atom groups")
+         else;          DIE("Can't update atom groups")
          end
 
       else if (.atom.associated AND .atom.has_groups) then
@@ -4136,7 +4127,7 @@ contains
       g :: INT
 
       ! Check is indices are sensible
-      .atom_group.finalize(.atom)
+      .atom_group.update(.atom)
 
       ! Create each group from "self"
       do g = 1,.atom_group.dim
@@ -5431,7 +5422,7 @@ contains
    ENSURE(.basis.associated,"no basis set")
 
       ! Set basis l_max before anything else
-      .basis_l_max = .basis.maximum_basis_set_l_value
+      .basis_l_max = .basis.shell.maximum_l_value
       GAUSSIAN_DATA:set_indices(.basis_l_max)
 
       ! Set atom for shell
@@ -5467,15 +5458,15 @@ contains
    end
 
    make_precomputed_shellpairs ::: leaky
-   ! Make a SHELLPAIR vector "shellpair" which includes precomputed data for the
-   ! basis set.
+   ! Make a SHELLPAIR vector "shellpair" which includes precomputed
+   ! data for the basis set.
    ! NOTE for later: n_unique_shells should be a basisvec routine.
    ! NOTE for later: precomputed_basis_shellpair should be a MAT{REAL} type
 
    ENSURE(.basis.associated,"no basis set")
       i,j,a,b,p,q :: INT
 
-      .n_unique_shells = .basis.no_of_shells
+      .n_unique_shells = .basis.shell.dim
 
       ! Recreate
       .precomputed_basis_shellpair.destroy
@@ -5617,59 +5608,6 @@ contains
       end
 
       .atom.set_shell_info_made(TRUE)
-
-   end
-
-!  ========================
-!  Contraction Coefficients
-!  ========================
-
-   make_contraction_matrix(cc_mat)
-   ! Returns the matrix of complete contraction coefficients for each basis set
-   ! Size of cc_mat is [.n_prim,.n_bf].
-      cc_mat :: MAT{REAL}, OUT
-   ENSURE(cc_mat.dim1==.n_prim,"wrong shape, cc_mat")
-   ENSURE(cc_mat.dim2==.n_bf,  "wrong shape, cc_mat")
-
-      a,b,p,ap,ab :: INT
-
-      b = 1
-      p = 1
-      cc_mat = ZERO
-      do a = 1,.n_atom
-         ap = .atom(a).basis.n_prim
-         ab = .atom(a).basis.n_bf
-         .atom(a).basis.make_contraction_matrix(cc_mat(p:p+ap-1,b:b+ab-1))
-         p = p + ap
-         b = b + ab
-      end
-
-   end
-
-   make_normalised_contraction_mx(cc_mat)
-   ! Returns the matrix of complete contraction coefficients for each
-   ! basis set. Size of cc_mat is [.n_prim,.n_bf]. Primitive components
-   ! are properly normalised.
-      cc_mat :: MAT{REAL}, OUT
-   ENSURE(cc_mat.dim1==.n_prim,"wrong shape, cc_mat")
-   ENSURE(cc_mat.dim2==.n_bf,  "wrong shape, cc_mat")
-
-      a,b,p,ap,ab :: INT
-
-      .basis.renormalise
-
-      b = 1
-      p = 1
-      cc_mat = ZERO
-      do a = 1,.n_atom
-         ap = .atom(a).basis.n_prim
-         ab = .atom(a).basis.n_bf
-         .atom(a).basis.make_normalised_contraction_mx(cc_mat(p:p+ap-1,b:b+ab-1))
-         p = p + ap
-         b = b + ab
-      end
-
-      .basis.unnormalise
 
    end
 
@@ -8316,22 +8254,32 @@ contains
    put_slaterbases
    ! Output the molecule slaterbasis set information, if the bases are all
    ! resolved.
+      self :: IN
+
    ENSURE(.atom.associated,"no atom list")
    ENSURE(.slaterbasis.associated,"no basis set list")
-      if (NOT .atom.slaterbases_are_resolved) return
+
+      if (NOT .atom.slater_bases_are_resolved) return
+
       stdout.flush
       stdout.text("Molecule atom slaterbasis set information:")
       stdout.flush
       stdout.show("No. of basis sets =",.slaterbasis.dim)
+
       .slaterbasis.put
+
    end
 
    put_coppensbases
    ! Output the molecule coppensbasis set information, if the bases are all
    ! resolved.
+      self :: IN
+
    ENSURE(.atom.associated,"no atom list")
    ENSURE(.coppensbasis.associated,"no basis set list")
-      if (NOT .atom.coppensbases_are_resolved) return
+
+      if (NOT .atom.coppens_bases_are_resolved) return
+
       stdout.flush
       stdout.text("Molecule atom coppensbasis set information:")
       stdout.flush
@@ -8339,7 +8287,9 @@ contains
       stdout.show("Maximum N value   =",.coppensbasis.maximum_basis_n_value)
       stdout.show("No. of orbitals   =",.coppensbasis.no_of_orbitals)
       stdout.show("No. of primitives =",.coppensbasis.no_of_primitives)
+
       .coppensbasis.put
+
    end
 
 !   put_atom_ADP_tensors
@@ -8875,7 +8825,7 @@ contains
       if (.use_spherical_basis) psi(4) = "spherical-harmonic"
 
       ! Basis max L
-      L = .basis.maximum_basis_set_l_value
+      L = .basis.shell.maximum_l_value
       psi(5) = trim(L.to_str)
 
       ! Becke grid

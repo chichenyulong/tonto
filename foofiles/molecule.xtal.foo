@@ -54,7 +54,7 @@ contains
       .crystal.read_keywords
 
       ! Finalize
-      if (.crystal.finalize) then
+      if (.crystal.update) then
          .crystal.update
          if (.atom.associated) then
             .BASE:resolve_axis_system
@@ -63,8 +63,8 @@ contains
 
       end
 
-      ! Reset to finalize next time
-      .crystal.finalize = TRUE
+      ! Set to update next time
+      .crystal.update = TRUE
 
    end
 
@@ -96,7 +96,7 @@ contains
 
       if (.cif.disassociated) .cif.create
       .cif.read_keywords
-      .cif.finalize
+      .cif.update
 
    end
 
@@ -122,7 +122,7 @@ contains
 
       ! Finalize
       .BASE:set_atom_info
-      .BASE:finalize_atom_groups
+      .BASE:update_atom_groups
       .BASE:resolve_basis_info
 
    end
@@ -367,7 +367,7 @@ contains
 
       ! Finalize basis on new .atom list
       .BASE:set_atom_info
-      .BASE:finalize_atom_groups
+      .BASE:update_atom_groups
       .BASE:resolve_basis_info
       .crystal.make_fragment_data(.atom,assign_atom=TRUE)
 
@@ -394,7 +394,7 @@ contains
 
       ! Finalize atom info
       .BASE:set_atom_info
-      .BASE:finalize_atom_groups
+      .BASE:update_atom_groups
 
       ! Create basis sets
       if (.saved.basis.associated)               .basis.create_copy(.saved.basis)
@@ -455,7 +455,7 @@ contains
 
       ! Finalize basis on new .atom list
       .BASE:set_atom_info
-      .BASE:finalize_atom_groups
+      .BASE:update_atom_groups
       .BASE:resolve_basis_info
 
       ! Make new crystal mapping info for this fragment
@@ -534,7 +534,7 @@ contains
       ! Finalize atom info
       .atom.nullify_bases
       .BASE:set_atom_info
-      .BASE:finalize_atom_groups
+      .BASE:update_atom_groups
       .BASE:resolve_basis_info
 
       ! Set basis info

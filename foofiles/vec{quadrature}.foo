@@ -32,6 +32,24 @@ contains
 !  Allocation methods
 !  ==================
 
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
+   end
+
+   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Deallocate the vector
+   end
+
+   created result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has been allocated
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has *not* been allocated
+   end
+
+! Old
+
    create(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Create space for object
    end

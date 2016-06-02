@@ -92,8 +92,8 @@ set(FOO_SRC
     ${FOO_DIR}/colour.foo
     ${FOO_DIR}/colour_function.foo
     ${FOO_DIR}/command_line.foo
-    ${FOO_DIR}/coppensbasis.foo
-    ${FOO_DIR}/coppensorbital.foo
+    ${FOO_DIR}/coppens_basis.foo
+    ${FOO_DIR}/coppens_orbital.foo
     ${FOO_DIR}/cpx.foo
     ${FOO_DIR}/crystal.foo
     ${FOO_DIR}/debug.foo
@@ -187,8 +187,8 @@ set(FOO_SRC
     ${FOO_DIR}/shell1quartet.foo
     ${FOO_DIR}/shell2.foo
     ${FOO_DIR}/shell4.foo
-    ${FOO_DIR}/slaterbasis.foo
-    ${FOO_DIR}/slatershell.foo
+    ${FOO_DIR}/slater_basis.foo
+    ${FOO_DIR}/slater_shell.foo
     ${FOO_DIR}/spacegroup.foo
     ${FOO_DIR}/spherical.foo
     ${FOO_DIR}/str.foo
@@ -204,8 +204,8 @@ set(FOO_SRC
     ${FOO_DIR}/vec{atom}.foo
     ${FOO_DIR}/vec{basis}.foo
     ${FOO_DIR}/vec{bin}.foo
-    ${FOO_DIR}/vec{coppensbasis}.foo
-    ${FOO_DIR}/vec{coppensorbital}.foo
+    ${FOO_DIR}/vec{coppens_basis}.foo
+    ${FOO_DIR}/vec{coppens_orbital}.foo
     ${FOO_DIR}/vec{cpx}.foo
     ${FOO_DIR}/vec{diis}.foo
     ${FOO_DIR}/vec{interpolator}.foo
@@ -223,8 +223,8 @@ set(FOO_SRC
     ${FOO_DIR}/vec{real}.foo
     ${FOO_DIR}/vec{reflection}.foo
     ${FOO_DIR}/vec{shell}.foo
-    ${FOO_DIR}/vec{slaterbasis}.foo
-    ${FOO_DIR}/vec{slatershell}.foo
+    ${FOO_DIR}/vec{slater_basis}.foo
+    ${FOO_DIR}/vec{slater_shell}.foo
     ${FOO_DIR}/vec{str}.foo
     ${FOO_DIR}/vec{table_column}.foo
     ${FOO_DIR}/vec{unit_cell}.foo
@@ -253,8 +253,8 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/colour.F90
     ${CMAKE_CURRENT_BINARY_DIR}/colour_function.F90
     ${CMAKE_CURRENT_BINARY_DIR}/command_line.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/coppensbasis.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/coppensorbital.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/coppens_basis.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/coppens_orbital.F90
     ${CMAKE_CURRENT_BINARY_DIR}/cpx.F90
     ${CMAKE_CURRENT_BINARY_DIR}/crystal.F90
     ${CMAKE_CURRENT_BINARY_DIR}/dft_functional.F90
@@ -326,8 +326,8 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/shell1quartet.F90
     ${CMAKE_CURRENT_BINARY_DIR}/shell2.F90
     ${CMAKE_CURRENT_BINARY_DIR}/shell4.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/slaterbasis.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/slatershell.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/slater_basis.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/slater_shell.F90
     ${CMAKE_CURRENT_BINARY_DIR}/spacegroup.F90
     ${CMAKE_CURRENT_BINARY_DIR}/spherical.F90
     ${CMAKE_CURRENT_BINARY_DIR}/str.F90
@@ -342,8 +342,8 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/vec_atom.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_basis.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_bin.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_coppensbasis.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_coppensorbital.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec_coppens_basis.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec_coppens_orbital.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_cpx.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_diis.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_interpolator.F90
@@ -355,8 +355,8 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/vec_real.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_reflection.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_shell.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_slaterbasis.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_slatershell.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec_slater_basis.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec_slater_shell.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_str.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_table_column.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec_vec_bin.F90

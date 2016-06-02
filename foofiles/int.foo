@@ -176,21 +176,21 @@ contains
       i :: INT
 
       select case (self)
-         case (0); res = 1.0d0
-         case (1); res = 1.0d0
-         case (2); res = 3.0d0
-         case (3); res = 15.0d0
-         case (4); res = 105.0d0
-         case (5); res = 945.0d0
-         case (6); res = 10395.0d0
-         case (7); res = 135135.0d0
-         case (8); res = 2027025.0d0
-         case (9); res = 34459425.0d0
-         case default
-           res = 654729075.0d0
-           do i=11,self
-             res = res * (2*i - 1)
-           end
+      case (0); res = 1.0d0
+      case (1); res = 1.0d0
+      case (2); res = 3.0d0
+      case (3); res = 15.0d0
+      case (4); res = 105.0d0
+      case (5); res = 945.0d0
+      case (6); res = 10395.0d0
+      case (7); res = 135135.0d0
+      case (8); res = 2027025.0d0
+      case (9); res = 34459425.0d0
+      case default
+        res = 654729075.0d0
+        do i=11,self
+          res = res * (2*i - 1)
+        end
       end
 
    end

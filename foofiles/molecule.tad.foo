@@ -137,7 +137,7 @@ contains
 
    ENSURE(.atom.associated, "no atoms to fit")
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"becke_grid not finalized")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.crystal.associated, "no crystal")
    ENSURE(.crystal.data.associated,"no crystal data")
    ENSURE(.crystal.xray_data.associated,"no crystal xray data")
@@ -185,7 +185,7 @@ contains
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"becke_grid not finalized")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.density_matrix.associated, "no density matrix")
    ENSURE(.crystal.associated, "no crystal")
    ENSURE(.crystal.data.associated, "no reflection data")
@@ -1139,7 +1139,7 @@ contains
          ! Transfer averaged values to atoms and interpolators
          do a = 1,.n_atom
             interpolator(a).set_data_values(rho_av(a).element)
-            interpolator(a).finalize
+            interpolator(a).update
          end
 
          ! Spherically avereaged Hirshfeld atoms obtained?
@@ -1349,7 +1349,7 @@ contains
          ! Transfer averaged values to atoms and interpolators
          do a = 1,.n_atom
             interpolator(a).set_data_values(rho_av(a).element)
-            interpolator(a).finalize
+            interpolator(a).update
             .atom(a).interpolator => interpolator(a)
           ! interpolator(a).put
          end
@@ -1644,7 +1644,7 @@ contains
    ENSURE(.molecular_orbitals.associated, "no MO's")
    ENSURE(.molecular_orbitals.restricted.associated, "no restricted MO's")
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"no updated becke_grid")
    ENSURE(H.is_square,"H is not square")
    ENSURE(G.dim==H.dim1,"G and H are inconsistent")
 

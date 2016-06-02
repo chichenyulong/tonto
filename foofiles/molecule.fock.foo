@@ -3463,7 +3463,7 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
 
       ga0,gb0 :: VEC{REAL}*
       pi,pj,pn :: VEC{INT}*
@@ -3725,7 +3725,7 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
 
       ga0,gax,gay,gaz :: VEC{REAL}*
@@ -4098,7 +4098,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
 
       ga0,gb0 :: VEC{REAL}*
@@ -4405,7 +4405,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
 
       ga0,gax,gay,gaz :: VEC{REAL}*

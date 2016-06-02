@@ -5631,7 +5631,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms")
 
       xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
@@ -5879,7 +5879,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms")
 
       xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
@@ -6089,7 +6089,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms")
 
       xa,ya,za,a2 :: VEC{REAL}*
@@ -6329,7 +6329,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms")
 
       xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
@@ -6545,7 +6545,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.associated, "no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms")
 
       xa,ya,za,a2 :: VEC{REAL}*

@@ -33,7 +33,7 @@ module TERM
 
    implicit none
 
-   keys :: VEC{STR}*, private DEFAULT_NULL
+   keys :: VEC{STR}@, private
 
    saved_self :: TERM*, private
 
@@ -145,82 +145,6 @@ contains
 
    set_descriptor(val) ::: get_from(OBJECT:set, VAL?=>STR, ARG?=>.descriptor)
    ! Generic set
-   end
-
-!  =====================
-!  Read/process keywords
-!  =====================
-
-   read_keywords ::: get_from(OBJECT), recursive, leaky
-   ! Read data from "stdin" using keyword style input.
-   end
-
-   process_keyword(keyword) ::: recursive, leaky
-   ! Process a keyword "word". Data is inputted from "stdin", unless
-   ! "word" is a sequence of blank separated strings. In this case,
-   ! the sequence is processed as if it were a separate file.
-      keyword :: STR
-      timer :: TIME
-
-      timer.start_timing
-
-      select case (keyword(1:30))
-
-        case ("}                             "); ! exit case
-        case ("coefficient=                  "); .read_coefficient
-        case ("debug_on                      "); .read_debug_on
-        case ("debug_off                     "); .read_debug_off
-        case ("descriptor=                   "); .read_descriptor
-        case ("redirect                      "); .redirect
-        case ("revert                        "); .revert
-
-        case  default ;               UNKNOWN(keyword)
-      end
-   end
-
-!  ============
-!  Read methods
-!  ============
-
-   read_coefficient ::: get_from(OBJECT:read_and_set, VAL?=>REAL, SET?=>.set_coefficient), private
-   ! Generic read and set a quantity with units
-   end
-
-   read_descriptor ::: get_from(OBJECT:read_and_set, VAL?=>STR, SET?=>.set_descriptor), private
-   ! Generic read and set
-   end
-
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
-   end
-
-! ====================
-! Key related routines
-! ====================
-
-   read_keys ::: get_from(OBJECT), leaky
-   ! Read the "keys".
-   end
-
-   process_keys ::: get_from(OBJECT), leaky
-   ! Process each of the words in the "keys" list.
-   ENSURE(keys.associated,"no keys")
-   end
-
-   keys_created result (res) ::: get_from(OBJECT)
-   ! Return TRUE if the list-element keys are created.
-   end
-
-   set_keys(the_keys) ::: get_from(OBJECT)
-   ! This is for setting the "keys" externally.
-   end
-
-   clear_keys ::: get_from(OBJECT), leaky
-   ! This is for destroying the "keys" externally.
    end
 
 !  =======
@@ -393,6 +317,62 @@ contains
          exit
       end
 
+   end
+
+!  =====================
+!  Read/process keywords
+!  =====================
+
+   read_keywords ::: get_from(OBJECT), recursive, leaky
+   ! Read data from "stdin" using keyword style input.
+   end
+
+   process_keyword(keyword) ::: recursive, leaky
+   ! Process a keyword "word". Data is inputted from "stdin", unless
+   ! "word" is a sequence of blank separated strings. In this case,
+   ! the sequence is processed as if it were a separate file.
+      keyword :: STR
+      timer :: TIME
+
+      timer.start_timing
+
+      select case (keyword(1:30))
+
+        case ("}                             "); ! exit case
+        case ("coefficient=                  "); .read_coefficient
+        case ("debug_on                      "); .read_debug_on
+        case ("debug_off                     "); .read_debug_off
+        case ("descriptor=                   "); .read_descriptor
+        case ("redirect                      "); TEXTFILE:redirect
+        case ("revert                        "); TEXTFILE:revert
+
+        case  default ;               UNKNOWN(keyword)
+      end
+   end
+
+!  ============
+!  Read methods
+!  ============
+
+   read_coefficient ::: get_from(OBJECT:read_and_set, VAL?=>REAL, SET?=>.set_coefficient), private
+   ! Generic read and set a quantity with units
+   end
+
+   read_descriptor ::: get_from(OBJECT:read_and_set, VAL?=>STR, SET?=>.set_descriptor), private
+   ! Generic read and set
+   end
+
+!  ====================
+!  Key related routines
+!  ====================
+
+   read_keys ::: get_from(OBJECT), leaky
+   ! Read the "keys".
+   end
+
+   process_keys ::: get_from(OBJECT), leaky
+   ! Process each of the words in the "keys" list.
+   ENSURE(keys.associated,"no keys")
    end
 
 end

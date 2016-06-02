@@ -271,7 +271,7 @@ contains
 
    end
 
-   finalize ::: selfless, leaky ::: PURE
+   update ::: selfless, leaky ::: PURE
    ! Make sure the input satisfies sanity checks and generate any other
    ! missing data
 

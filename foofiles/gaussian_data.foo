@@ -731,7 +731,9 @@ contains
    ! No. of cartesian components in a gaussian shell of momentum "l".
       l :: INT, IN
       res :: INT
+
       res = (l+1)*(l+2)/2
+
    end
 
    n_comp_up_to(l) result (res) ::: selfless, public, pure
@@ -739,14 +741,18 @@ contains
    ! with momentum "l".
       l :: INT, IN
       res :: INT
+
       res = (l+1)*(l+2)*(l+3)/6
+
    end
 
    n_sph(l) result (res) ::: selfless, public, pure
    ! No. of spherical components in a gaussian shell of momentum "l".
       l :: INT, IN
       res :: INT
+
       res = 2*l+1
+
    end
 
    n_sph_up_to(l) result (res) ::: selfless, public, pure
@@ -754,7 +760,9 @@ contains
    ! with momentum "l".
       l :: INT, IN
       res :: INT
+
       res = (l+1)*(l+1)
+
    end
 
 ! Make the cartesian to spherical harmonic transformation

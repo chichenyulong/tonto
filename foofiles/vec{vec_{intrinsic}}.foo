@@ -125,8 +125,9 @@ contains
       self :: allocatable, INOUT
       dim :: INT, IN
 
-   ENSURE(ubound(self,1)>dim,"dim is too small")
+   ENSURE(.created,"self is unallocated")
    ENSURE(lbound(self,1)==1,"self must have lbound 1")
+   ENSURE(ubound(self,1)>dim,"dim is too small")
 
       self = [ self(1:dim) ]
 
@@ -172,9 +173,15 @@ contains
       v :: VEC{VEC_{INTRINSIC}}, IN
 
       if (.destroyed) then
+
          self = v
+
       else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
          self = [ self, v ]
+
       end
 
    end
@@ -190,9 +197,15 @@ contains
       val.element = [ value ]
 
       if (.destroyed) then
+
          self = [ val ]
+
       else
+
+         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+
          self = [ self, val ]
+
       end
 
    end

@@ -20,14 +20,13 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: atom.foo 4409 2014-06-10 03:32:55Z durhammike $
 !-------------------------------------------------------------------------------
 
 module ATOM
 
    implicit none
 
-   keys :: VEC{STR}*, private DEFAULT_NULL
+   keys :: VEC{STR}@, private
 
 !  ===============
 !  Data statements
@@ -3161,18 +3160,6 @@ contains
    ! Process each of the words in the "keys" list.
    end
 
-   keys_created result (res) ::: get_from(OBJECT)
-   ! Return TRUE if the list-element keys are created.
-   end
-
-   set_keys(the_keys) ::: get_from(OBJECT)
-   ! This is for setting the "keys" externally.
-   end
-
-   clear_keys ::: get_from(OBJECT), leaky
-   ! This is for destroying the "keys" externally.
-   end
-
 !  ===================
 !  Axis change methods
 !  ===================
@@ -3549,7 +3536,7 @@ contains
    !   program, like gaussian.
    end
 
-   resolve_basis(basis,suffix,found) ::: get_from(ATOM, BASIS?=>SLATERBASIS, TO?=>.slaterbasis, LABEL?=>.slaterbasis_label)
+   resolve_basis(basis,suffix,found) ::: get_from(ATOM, BASIS?=>SLATER_BASIS, TO?=>.slaterbasis, LABEL?=>.slaterbasis_label)
    ! Resolve the BASIS from the list of them in "basis"
    ! . First, if "suffix" is present and not blank, generate a
    !   library basis label by concatenating the element symbol with
@@ -3562,7 +3549,7 @@ contains
    !   program, like gaussian.
    end
 
-   resolve_basis(basis,suffix,found) ::: get_from(ATOM, BASIS?=>COPPENSBASIS, TO?=>.coppensbasis, LABEL?=>.coppensbasis_label)
+   resolve_basis(basis,suffix,found) ::: get_from(ATOM, BASIS?=>COPPENS_BASIS, TO?=>.coppensbasis, LABEL?=>.coppensbasis_label)
    ! Resolve the BASIS from the list of them in "basis"
    ! . First, if "suffix" is present and not blank, generate a
    !   library basis label by concatenating the element symbol with
@@ -3757,10 +3744,11 @@ contains
    ! atom is a dummy or a ghost.
    end
 
-   library_basis_label(suffix) result (label)
+   library_basis_label(suffix) result (label) ::: PURE
    ! Return a library basis set label by appending "suffix" to the
    ! chemical symbol.
-      suffix :: STR
+      self :: IN
+      suffix :: STR, IN
 
       label :: STR
       symbol :: STR
@@ -3769,30 +3757,30 @@ contains
 
       select case (suffix)
 
-         case ("Coppens","Clementi-Roetti")
+      case ("Coppens","Clementi-Roetti")
 
-            ! Replace bases for high atomic numbers
-            ! where bases do not exist
-            if (.atomic_number>55) then
+         ! Replace bases for high atomic numbers
+         ! where bases do not exist
+         if (.atomic_number>55) then
 
-               select case (.atomic_number)
-                  case (56);     symbol = "Sr"
-                  case (57:71);  symbol = "Y"
-                  case (72:86);  symbol = ATOM:generic_chemical_symbol(.atomic_number-32)
-                  case (87);     symbol = "Rb"
-                  case (88);     symbol = "Sr"
-                  case (89:103); symbol = "Y"
-               end
-
-               WARN("Atom "//trim(.generic_chemical_symbol)//" basis is now "//trim(symbol))
-
+            select case (.atomic_number)
+               case (56);     symbol = "Sr"
+               case (57:71);  symbol = "Y"
+               case (72:86);  symbol = ATOM:generic_chemical_symbol(.atomic_number-32)
+               case (87);     symbol = "Rb"
+               case (88);     symbol = "Sr"
+               case (89:103); symbol = "Y"
             end
 
-            label = trim(symbol)//trim(.oxidation_state_str)//":"//trim(suffix)
+            WARN("Atom "//trim(.generic_chemical_symbol)//" basis is now "//trim(symbol))
 
-         case default
+         end
 
-            label = trim(symbol)//":"//trim(suffix)
+         label = trim(symbol)//trim(.oxidation_state_str)//":"//trim(suffix)
+
+      case default
+
+         label = trim(symbol)//":"//trim(suffix)
 
       end
 
@@ -3826,70 +3814,6 @@ contains
          case default
             label = trim(symbol)//":"//trim(suffix)
       end
-
-   end
-
-
-   no_of_shells result (res) ::: pure
-   ! Return the no of shells
-      self :: IN
-      res :: INT
-
-      res = .basis.no_of_shells
-
-   end
-
-   no_of_basis_functions result (res) ::: pure
-   ! Evaluate and return the no. of basis functions
-      self :: IN
-      res :: INT
-
-      res = .basis.no_of_basis_functions
-
-   end
-
-   no_of_sph_basis_functions result (res) ::: pure
-   ! Evaluate and return the no. of spherical basis functions
-      self :: IN
-      res :: INT
-
-      res = .basis.no_of_sph_basis_functions
-
-   end
-
-   n_bf result (res) ::: pure
-   ! Return the no. of basis functions
-      self :: IN
-      res :: INT
-
-      res = .basis.n_bf
-
-   end
-
-   no_of_primitives result (res) ::: pure
-   ! Return the no of primitives for this atom
-      self :: IN
-      res :: INT
-
-      res = .basis.no_of_primitives
-
-   end
-
-   no_of_sph_primitives result (res) ::: pure
-   ! Return the no of primitives for this atom
-      self :: IN
-      res :: INT
-
-      res = .basis.no_of_sph_primitives
-
-   end
-
-   n_prim result (res) ::: pure
-   ! Return the no of primitives for this atom
-      self :: IN
-      res :: INT
-
-      res = .basis.n_prim
 
    end
 
@@ -5806,7 +5730,7 @@ contains
       sh :: SHELL1
       n_shell,f,l,s :: INT
 
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       l = 0
 
@@ -5852,7 +5776,7 @@ contains
       if (present(square)) sq = square
 
       n_pt = pt.dim1
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       g = ZERO
       l = 0
@@ -5907,7 +5831,7 @@ contains
       if (present(square)) sq = square
 
       n_pt = pt.dim1
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       g = ZERO
       l = 0
@@ -6279,7 +6203,7 @@ contains
       n_shell,n_pt,f,l,a :: INT
 
       n_pt = pt.dim1
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       g = ZERO
       h = ZERO
@@ -6400,7 +6324,7 @@ contains
       n_pt,f,l,a,n_shell :: INT
 
       n_pt = pt.dim1
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       g = ZERO
       h = ZERO
@@ -7055,7 +6979,7 @@ contains
       n_pt,n_shell_pairs,q,fa,fb,la,lb,k :: INT
 
       n_pt = pt.dim1
-      n_shell_pairs = .basis.no_of_shells
+      n_shell_pairs = .basis.shell.dim
       n_shell_pairs = n_shell_pairs.triangle_number
 
       pot_grid = ZERO
@@ -7139,7 +7063,7 @@ contains
       sh :: SHELL1
       s,f,l,n_shell :: INT
 
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       l = 0
       do s = 1,n_shell
@@ -7175,7 +7099,7 @@ contains
       sh :: SHELL1
       s,n_shell :: INT
 
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       do s = 1,n_shell
          sh.set(.basis.shell(s),.position)
@@ -7205,7 +7129,7 @@ contains
       sh :: SHELL1
       s,f,l,n_shell :: INT
 
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       l = 0
       do s = 1,n_shell
@@ -7248,7 +7172,7 @@ contains
 
       .make_displaced_pts(x,y,z,r2,pt,n_pt)
 
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       l = 0
       do s = 1,n_shell
@@ -7296,7 +7220,7 @@ contains
 
       .make_displaced_pts(x,y,z,r2,pt,n_pt)
 
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       do s = 1,n_shell
          sh.set(.basis.shell(s),.position)
@@ -7341,7 +7265,7 @@ contains
 
       .make_displaced_pts(x,y,z,r2,pt,n_pt)
 
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
 
       l = 0
       do s = 1,n_shell
@@ -7650,7 +7574,7 @@ contains
 
       n_shell,f,l,s :: INT
 
-      n_shell = .basis.no_of_shells
+      n_shell = .basis.shell.dim
       first.create(n_shell)
       last.create(n_shell)
 
@@ -7675,7 +7599,7 @@ contains
 
       n,a,b :: INT
 
-      n = .basis.no_of_shells
+      n = .basis.shell.dim
 
       .precomputed_basis_shellpair.destroy
       .precomputed_basis_shellpair.create(n,n)

@@ -28,9 +28,27 @@ module VEC{ATOM_GROUP}
 
 contains
 
-!  ===================
-!  Allocation routines
-!  ===================
+!  ==================
+!  Allocation methods
+!  ==================
+
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
+   end
+
+   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Deallocate the vector
+   end
+
+   created result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has been allocated
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has *not* been allocated
+   end
+
+! Old
 
    create(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Create space for object
@@ -70,6 +88,20 @@ contains
 
    set_defaults ::: get_from(VEC{OBJECT})
    ! Set default values
+   end
+
+   update(atom) ::: leaky
+   ! Do all the sanity checks and default settings
+      atom :: VEC{ATOM}*
+
+      g :: INT
+
+      ! Finalize checks on each group
+      do g = 1,.dim
+         self(g).update(atom)
+         if (self(g).name==" ") self(g).set_name("group_"//trim(g.to_str))
+      end
+
    end
 
 !  =======================
@@ -119,49 +151,15 @@ contains
    ! Process the "keys" on each element of the list.
    end
 
-   process_keys_once ::: get_from(VEC{OBJECT})
+   process_keys_once ::: get_from(VEC{OBJECT}), leaky, selfless
    ! Process the "keys" just once on an anonymous object. This is useful if the
    ! "keys" set global variables in the list module (e.g. the default order of
    ! lists *within* the list data) as opposed to being keys pertaining to each
    ! element of the list.
    end
 
-   keys_created result (res) ::: get_from(VEC{OBJECT})
-   ! Return TRUE if the list-element keys are created.
-   end
-
-   set_keys(the_keys) ::: get_from(VEC{OBJECT})
-   ! This is for setting the "keys" externally.
-   end
-
-   clear_keys ::: get_from(VEC{OBJECT}), leaky
-   ! This is for destroying the "keys" externally.
-   end
-
-   read_keys ::: get_from(VEC{OBJECT}), leaky
+   read_keys ::: get_from(VEC{OBJECT}), selfless, leaky
    ! Read a new set of keys
-   end
-
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
-   end
-
-   finalize(atom) ::: leaky
-   ! Do all the sanity checks and default settings
-      atom :: VEC{ATOM}*
-
-      g :: INT
-
-      ! Finalize checks on each group
-      do g = 1,.dim
-         self(g).finalize(atom)
-         if (self(g).name==" ") self(g).set_name("group_"//trim(g.to_str))
-      end
-
    end
 
 !  ===========================
@@ -183,27 +181,11 @@ contains
       word.to_lower_case
       select case (word)
          case("}") ! do nothing.
-         case("redirect                 "); .redirect
-         case("revert                   "); .revert
+         case("redirect                 "); TEXTFILE:redirect
+         case("revert                   "); TEXTFILE:revert
          case default;     UNKNOWN(word)
       end
 
-   end
-
-   shrink(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Shrink self to dimension dim.  Contents are retained.
-   end
-
-   expand(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Expand the vector "self" to "dim". New slots are left undefined.
-   end
-
-   append(v) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(value) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
    end
 
 !  =======

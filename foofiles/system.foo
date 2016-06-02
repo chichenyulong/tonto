@@ -131,7 +131,7 @@ contains
 
       if (.disassociated) return
 
-      .finalize
+      .update
       deallocate(self)
 
    end
@@ -216,7 +216,7 @@ contains
 
    end
 
-   finalize
+   update
    ! Finalise the system object
       self :: INOUT
 

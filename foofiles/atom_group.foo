@@ -30,7 +30,7 @@ module ATOM_GROUP
 
    implicit none
 
-   keys :: VEC{STR}*, private DEFAULT_NULL
+   keys :: VEC{STR}@, private
 
 contains
 
@@ -328,7 +328,7 @@ contains
 
    end
 
-   finalize(atom) ::: leaky
+   update(atom) ::: leaky
    ! Do all the sanity checks and default settings
       self :: INOUT
       atom :: VEC{ATOM}*
@@ -359,18 +359,6 @@ contains
    process_keys ::: get_from(OBJECT), leaky
    ! Process each of the words in the "keys" list.
    ENSURE(keys.associated,"no keys")
-   end
-
-   keys_created result (res) ::: get_from(OBJECT)
-   ! Return TRUE if the list-element keys are created.
-   end
-
-   set_keys(the_keys) ::: get_from(OBJECT)
-   ! This is for setting the "keys" externally.
-   end
-
-   clear_keys ::: get_from(OBJECT), leaky
-   ! This is for destroying the "keys" externally.
    end
 
 end

@@ -1053,7 +1053,7 @@ module TYPES
      data_value :: VEC{REAL}*  DEFAULT_NULL
      ! The list of values corresponding to each data value.
 
-     finalized :: BIN  DEFAULT(FALSE)
+     updated :: BIN  DEFAULT(FALSE)
      ! Set TRUE if the object is ready for use
 
      y2 :: VEC{REAL}*  DEFAULT_NULL
@@ -1167,7 +1167,7 @@ module TYPES
      weight :: VEC{REAL}*  DEFAULT_NULL
      ! The quadrature weight
 
-     finalized :: BIN  DEFAULT(FALSE)
+     updated :: BIN  DEFAULT(FALSE)
      ! Set TRUE when all initialisations are completed.
 
    end
@@ -1696,7 +1696,8 @@ module TYPES
      ! No. of spherical components for the gaussian shell
 
      n_bf :: INT, readonly  DEFAULT(0)
-     ! No. of basis functions in the shell
+     ! No. of basis functions in the shell, either n_comp, or n_sph
+     ! if is_spherical is TRUE.
 
      first_gaussian :: INT, readonly  DEFAULT(0)
      ! Lexical index of the first gaussian in the shell. For lookups.
@@ -1707,17 +1708,11 @@ module TYPES
      n_cc :: INT  DEFAULT(0)
      ! No. of contractions for the gaussian shell
 
-     exponent :: VEC{REAL}* DEFAULT_NULL
+     exponent :: VEC{REAL}@
      ! Exponent vector
 
-     contraction :: VEC{REAL}* DEFAULT_NULL
+     contraction :: VEC{REAL}@
      ! Contraction coefficient vector
-
-     contraction_s :: VEC{REAL}* DEFAULT_NULL
-     ! Contraction coefficient vector for s functions in an L shell
-
-     contraction_p :: VEC{REAL}* DEFAULT_NULL
-     ! Contraction coefficient vector for p functions in an L shell
 
    end
 
@@ -1759,26 +1754,20 @@ module TYPES
      position :: VEC{REAL}(3)  DEFAULT(ZERO)
      ! Position of the shell
 
-     exponent :: VEC{REAL}* DEFAULT_NULL
+     exponent :: VEC{REAL}@
      ! Exponent vector
 
-     contraction :: VEC{REAL}* DEFAULT_NULL
+     contraction :: VEC{REAL}@
      ! Contraction coefficient vector
-
-     contraction_s :: VEC{REAL}* DEFAULT_NULL
-     ! Contraction coefficient vector for s functions in an L shell
-
-     contraction_p :: VEC{REAL}* DEFAULT_NULL
-     ! Contraction coefficient vector for p functions in an L shell
 
    end
 
    type SHELL2
 
-     a :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     a :: SHELL1, readonly
      ! Shell "a" of the pair
 
-     b :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     b :: SHELL1, readonly
      ! Shell "b" of the pair
 
      is_spherical :: BIN, readonly  DEFAULT(SHELL_IS_SPHERICAL)
@@ -1848,64 +1837,58 @@ module TYPES
 
    type SHELL1PAIR
 
-     a :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     a :: SHELL1, readonly
      ! Shell "a" of the pair
 
-     b :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     b :: SHELL1, readonly
      ! Shell "b" of the pair
 
-     n_gaussian_pairs :: INT, readonly
+     n_gaussian_pairs :: INT, readonly  DEFAULT(0)
      ! The number of gaussian pair products in the shell pair, .a.n_cc*.b.n_cc
 
-     n_comp_pairs :: INT, readonly
+     n_comp_pairs :: INT, readonly  DEFAULT(0)
      ! The number of cartesian gaussian component pairs in the shell
      ! pair, i.e.  .a.n_comp*.b.n_comp
 
-     n_sph_pairs :: INT, readonly
+     n_sph_pairs :: INT, readonly  DEFAULT(0)
      ! The number of spherical gaussian component pairs in the shell
      ! pair, i.e.  .a.n_sph*.b.n_sph
 
-     n_bf_pairs :: INT, readonly
+     n_bf_pairs :: INT, readonly  DEFAULT(0)
      ! The number of basis function component pairs in the shell pair,
 
-     l_max :: INT, readonly
+     l_max :: INT, readonly  DEFAULT(0)
      ! Maximum of the angular momenta on each shell, max(.a.l,.b.l)
 
-     l_min :: INT, readonly
+     l_min :: INT, readonly  DEFAULT(0)
      ! Minimum of the angular momenta on each shell, min(.a.l,.b.l)
 
-     l_sum :: INT, readonly
+     l_sum :: INT, readonly  DEFAULT(0)
      ! Sum of the angular momenta on each shell
 
-     first_gaussian :: INT, readonly
+     first_gaussian :: INT, readonly  DEFAULT(0)
      ! Lexical index of the first gaussian in the shell with momentum .l_max
 
-     last_gaussian :: INT, readonly
+     last_gaussian :: INT, readonly  DEFAULT(0)
      ! Lexical index of the last gaussian in the shell with momentum .l_sum
 
-     n_gaussian :: INT, readonly
+     n_gaussian :: INT, readonly  DEFAULT(0)
      ! The number of gaussians in the source integral list.
 
-     exponent_sum :: VEC{REAL}* DEFAULT_NULL
+     exponent_sum :: VEC{REAL}@
      ! The sum of all gaussian pair exponents as a flattened array with shell "a"
      ! exponents incrementing most rapidly, .a.ex(:)+.b.ex(:)
 
-     exponent_inv :: VEC{REAL}* DEFAULT_NULL
+     exponent_inv :: VEC{REAL}@
      ! The inverse of the sum of the gaussian pair exponents, as a flattened
      ! array, 1/(.a.ex(:)+.b.ex(:))
 
-     contraction_prefactor :: VEC{REAL}* DEFAULT_NULL
+     contraction_prefactor :: VEC{REAL}@
      ! The contraction coefficient product with an exponential part for each
      ! gaussian pair as a flattened array with shell "a" gaussian components
      ! incrementing most rapidly. Useful for integral evaluation.
 
-     contraction_s_prefactor :: VEC{REAL}* DEFAULT_NULL
-     ! As above, for the s-function part of an L shell
-
-     contraction_p_prefactor :: VEC{REAL}* DEFAULT_NULL
-     ! As above, for the p-function part of an L shell
-
-     pair_center :: MAT{REAL}* DEFAULT_NULL
+     pair_center :: MAT{REAL}@
      ! The center of the product gaussian of gaussians .a and .b.
 
    end
@@ -1918,16 +1901,16 @@ module TYPES
 
    type SHELL4
 
-     a :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     a :: SHELL1, readonly
      ! Shell "a" of the pair
 
-     b :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     b :: SHELL1, readonly
      ! Shell "b" of the pair
 
-     c :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     c :: SHELL1, readonly
      ! Shell "c" of the pair
 
-     d :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     d :: SHELL1, readonly
      ! Shell "d" of the pair
 
      is_spherical :: BIN, readonly  DEFAULT(SHELL_IS_SPHERICAL)
@@ -1938,16 +1921,16 @@ module TYPES
 
    type SHELL1QUARTET
 
-     a :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     a :: SHELL1, readonly
      ! Shell "a" of the pair
 
-     b :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     b :: SHELL1, readonly
      ! Shell "b" of the pair
 
-     c :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     c :: SHELL1, readonly
      ! Shell "c" of the pair
 
-     d :: SHELL1, readonly  DEFAULT(SHELL1_TYPE(0," ",SHELL_IS_SPHERICAL,0,0,0,0,0,0,ZERO,NULL,NULL,NULL,NULL))
+     d :: SHELL1, readonly
      ! Shell "d" of the pair
 
      is_spherical :: BIN, readonly  DEFAULT(SHELL_IS_SPHERICAL)
@@ -1995,31 +1978,31 @@ module TYPES
      n_ab :: INT  DEFAULT(0)
      ! The number of ab gaussian functions required for the source integrals.
 
-     ab_exponent_sum :: VEC{REAL}* DEFAULT_NULL
+     ab_exponent_sum :: VEC{REAL}@
      ! The sum of all gaussian pair exponents as a flattened array with shell "a"
      ! exponents incrementing most rapidly, .a.ex(:)+.b.ex(:)
 
-     ab_exponent_inv :: VEC{REAL}* DEFAULT_NULL
+     ab_exponent_inv :: VEC{REAL}@
      ! The inverse of ab_exponent_sum.
 
-     ab_contraction_prefactor :: VEC{REAL}* DEFAULT_NULL
+     ab_contraction_prefactor :: VEC{REAL}@
      ! The contraction coefficient product with an exponential part for each
      ! gaussian pair as a flattened array with shell "a" gaussian components
      ! incrementing most rapidly. Useful for integral evaluation.
 
-     ab_contraction_s_prefactor :: VEC{REAL}* DEFAULT_NULL
+     ab_contraction_s_prefactor :: VEC{REAL}@
      ! As above, for the s-function part of an L shell
 
-     ab_contraction_p_prefactor :: VEC{REAL}* DEFAULT_NULL
+     ab_contraction_p_prefactor :: VEC{REAL}@
      ! As above, for the p-function part of an L shell
 
      ab_same_center :: BIN  DEFAULT(FALSE)
      ! Whether centers of a and b are the same.
 
-     ab_pair_center :: MAT{REAL}* DEFAULT_NULL
+     ab_pair_center :: MAT{REAL}@
      ! The center of the product gaussian of gaussians .a and .b.
 
-     ab_center_diff :: MAT{REAL}* DEFAULT_NULL
+     ab_center_diff :: MAT{REAL}@
      ! The difference between ab_pair_center and the position of the gaussian of
      ! higher angular momentum out of .a and .b.
 
@@ -2056,65 +2039,65 @@ module TYPES
      n_cd :: INT  DEFAULT(0)
      ! The number of cd gaussian functions required for the source integrals.
 
-     cd_exponent_sum :: VEC{REAL}* DEFAULT_NULL
+     cd_exponent_sum :: VEC{REAL}@
      ! The sum of all gaussian pair exponents as a flattened array with shell "c"
      ! exponents incrementing most rapidly, .c.ex(:)+.d.ex(:)
 
-     cd_exponent_inv :: VEC{REAL}* DEFAULT_NULL
+     cd_exponent_inv :: VEC{REAL}@
      ! The inverse of ab_exponent_sum.
 
-     cd_contraction_prefactor :: VEC{REAL}* DEFAULT_NULL
+     cd_contraction_prefactor :: VEC{REAL}@
      ! The contraction coefficient product with an exponential part for each
      ! gaussian pair as a flattened array with shell "c" gaussian components
      ! incrementing most rapidly. Useful for integral evaluation.
 
-     cd_contraction_s_prefactor :: VEC{REAL}* DEFAULT_NULL
+     cd_contraction_s_prefactor :: VEC{REAL}@
      ! As above, for the s-function part of an L shell
 
-     cd_contraction_p_prefactor :: VEC{REAL}* DEFAULT_NULL
+     cd_contraction_p_prefactor :: VEC{REAL}@
      ! As above, for the p-function part of an L shell
 
      cd_same_center :: BIN  DEFAULT(FALSE)
      ! Whether centers of c and c are the same.
 
-     cd_pair_center :: MAT{REAL}* DEFAULT_NULL
+     cd_pair_center :: MAT{REAL}@
      ! The center of the product gaussian of gaussians .c and .d.
 
-     cd_center_diff :: MAT{REAL}* DEFAULT_NULL
+     cd_center_diff :: MAT{REAL}@
      ! The difference between cd_pair_center and the position of the gaussian of
      ! higher angular momentum out of .c and .d.
 
-     ab_form_3dints_x_indices :: VEC{INT}* DEFAULT_NULL
+     ab_form_3dints_x_indices :: VEC{INT}@
      ! Which indices to use for combining the 2d ERIs to 3d ERIS, for the
      ! angular momenta from .ab_l_max up to .a.l+.b.l.
 
-     ab_form_3dints_y_indices :: VEC{INT}* DEFAULT_NULL
+     ab_form_3dints_y_indices :: VEC{INT}@
      ! Which indices to use for combining the 2d ERIs to 3d ERIS, for the
      ! angular momenta from .ab_l_max up to .a.l+.b.l.
 
-     ab_form_3dints_z_indices :: VEC{INT}* DEFAULT_NULL
+     ab_form_3dints_z_indices :: VEC{INT}@
      ! Which indices to use for combining the 2d ERIs to 3d ERIS, for the
      ! angular momenta from .ab_l_max up to .a.l+.b.l.
 
-     ab_form_3dints_yz_rms_indices :: VEC{INT}* DEFAULT_NULL
+     ab_form_3dints_yz_rms_indices :: VEC{INT}@
      ! Which indices to use for combining the 2d ERIs to 3d ERIS, for the
      ! angular momenta from .ab_l_max up to .a.l+.b.l.  This version is for the
      ! reduced multiplication scheme, where the y and z arrays have been collapsed
      ! into one product array.
 
-     cd_form_3dints_x_indices :: VEC{INT}* DEFAULT_NULL
+     cd_form_3dints_x_indices :: VEC{INT}@
      ! Which indices to use for combining the 2d ERIs to 3d ERIS, for the
      ! angular momenta from .cd_l_max up to .c.l+.d.l.
 
-     cd_form_3dints_y_indices :: VEC{INT}* DEFAULT_NULL
+     cd_form_3dints_y_indices :: VEC{INT}@
      ! Which indices to use for combining the 2d ERIs to 3d ERIS, for the
      ! angular momenta from .cd_l_max up to .c.l+.d.l.
 
-     cd_form_3dints_z_indices :: VEC{INT}* DEFAULT_NULL
+     cd_form_3dints_z_indices :: VEC{INT}@
      ! Which indices to use for combining the 2d ERIs to 3d ERIS, for the
      ! angular momenta from .cd_l_max up to .c.l+.d.l.
 
-     cd_form_3dints_yz_rms_indices :: VEC{INT}* DEFAULT_NULL
+     cd_form_3dints_yz_rms_indices :: VEC{INT}@
      ! Which indices to use for combining the 2d ERIs to 3d ERIS, for the
      ! angular momenta from .cd_l_max up to .c.l+.d.l.  This version is for the
      ! reduced multiplication scheme, where the y and z arrays have been collapsed
@@ -2150,7 +2133,7 @@ module TYPES
      n_prim :: INT  DEFAULT(0)
      ! No. of primitives for the shell
 
-     shell :: VEC{SHELL}* DEFAULT_NULL
+     shell :: VEC{SHELL}@
      ! The list of gaussian shells in the basis set
 
    end
@@ -2161,7 +2144,7 @@ module TYPES
 
    end
 
-   type SLATERSHELL
+   type SLATER_SHELL
 
      l :: INT, readonly  DEFAULT(0)
      ! l quantum number
@@ -2180,33 +2163,33 @@ module TYPES
      ! No. of exponents/contractions (i.e. the number of primitives for one
      ! *single* angular momentum shell component, e.g. p_x).
 
-     n :: VEC{INT}* DEFAULT_NULL
+     n :: VEC{INT}@
      ! The n quantum numbers.
 
-     z :: VEC{REAL}* DEFAULT_NULL
+     z :: VEC{REAL}@
      ! The exponent zeta for each slater function
 
-     c :: MAT{REAL}* DEFAULT_NULL
+     c :: MAT{REAL}@
      ! The contraction coefficient matrix == this is a generally contracted slater
      ! shell. The size of .dim1 is "n_cc". The size of .dim2 is "n_orb".
 
-     orb_kind :: VEC{STR}* DEFAULT_NULL
+     orb_kind :: VEC{STR}@
      ! The orbital kinds (1s, 2s, 2p, etc.), if available.
      ! It's length is "n_orb".
 
-     occupancy :: VEC{INT}* DEFAULT_NULL
+     occupancy :: VEC{INT}@
      ! The occupany number of each contracted orbital, if available.
      ! It's length is "n_orb".
 
    end
 
-   array type VEC{SLATERSHELL}
+   array type VEC{SLATER_SHELL}
 
-     ! A 1-D array of SLATERSHELL objects
+     ! A 1-D array of SLATER_SHELL objects
 
    end
 
-   type SLATERBASIS
+   type SLATER_BASIS
 
      label :: STR  DEFAULT(" ")
      ! Unique label for the basis set
@@ -2223,31 +2206,31 @@ module TYPES
      n_prim :: INT  DEFAULT(0)
      ! No. of primitives for the shell
 
-     shell :: VEC{SLATERSHELL}*  DEFAULT_NULL
+     shell :: VEC{SLATER_SHELL}@
      ! The list of gaussian shells in the basis set
 
      use_interpolator :: BIN  DEFAULT(TRUE)
      ! Whether to use interpolators
 
-     interpolator :: INTERPOLATOR*  DEFAULT_NULL
+     interpolator :: INTERPOLATOR@
      ! An interpolator object, used for calculating the atomic density at a
      ! certain radius, from the slater "shell" of orbitals
 
-     d1_interpolator :: INTERPOLATOR*  DEFAULT_NULL
+     d1_interpolator :: INTERPOLATOR@
      ! The same as above, but for the 1st derivative of the density.
 
-     d2_interpolator :: INTERPOLATOR*  DEFAULT_NULL
+     d2_interpolator :: INTERPOLATOR@
      ! The same as above, but for the 2nd derivative of the density.
 
    end
 
-   array type VEC{SLATERBASIS}
+   array type VEC{SLATER_BASIS}
 
-     ! A 1-D array of SLATERBASIS objects
+     ! A 1-D array of SLATER_BASIS objects
 
    end
 
-   type COPPENSORBITAL
+   type COPPENS_ORBITAL
 
      orb_kind :: STR, readonly  DEFAULT(" ")
      ! The kind of the orbital (1s, 2s, 2p, etc.)
@@ -2258,24 +2241,24 @@ module TYPES
      n_fun :: INT, readonly  DEFAULT(0)
      ! The number of contracted fitting functions
 
-     n :: VEC{INT}* DEFAULT_NULL
+     n :: VEC{INT}@
      ! The n quantum numbers
 
-     c :: VEC{REAL}* DEFAULT_NULL
+     c :: VEC{REAL}@
      ! The contraction coefficient
 
-     z :: VEC{REAL}* DEFAULT_NULL
+     z :: VEC{REAL}@
      ! The exponent zeta for each slater function
 
    end
 
-   array type VEC{COPPENSORBITAL}
+   array type VEC{COPPENS_ORBITAL}
 
-     ! A 1-D array of COPPENSORBITAL objects
+     ! A 1-D array of COPPENS_ORBITAL objects
 
    end
 
-   type COPPENSBASIS
+   type COPPENS_BASIS
 
      label :: STR  DEFAULT(" ")
      ! The basis label
@@ -2286,21 +2269,21 @@ module TYPES
      n_prim :: INT  DEFAULT(0)
      ! The number of primitive functions in the basis
 
-     orbital :: VEC{COPPENSORBITAL}*  DEFAULT_NULL
+     orbital :: VEC{COPPENS_ORBITAL}@
      ! The list of fitted Slater atomic orbitals, Coppens style.
 
      use_interpolator :: BIN  DEFAULT(TRUE)
      ! Whether to use interpolators
 
-     interpolator :: INTERPOLATOR*  DEFAULT_NULL
+     interpolator :: INTERPOLATOR@
      ! An interpolator object, used for calculating the atomic density at a
      ! certain radius, from e.g. the coppensbasis
 
    end
 
-   array type VEC{COPPENSBASIS}
+   array type VEC{COPPENS_BASIS}
 
-     ! A 1-D array of COPPENSBASIS objects
+     ! A 1-D array of COPPENS_BASIS objects
 
    end
 
@@ -2443,13 +2426,13 @@ module TYPES
      ! calculations. Note that there may be more than one type of
      ! basis present for an atom.
 
-     basis :: BASIS* DEFAULT_NULL
+     basis :: BASIS@
      ! The basis for the atom
 
      slaterbasis_label :: STR  DEFAULT(" "), readonly
      ! The label of the slater basis set to match to.
 
-     slaterbasis :: SLATERBASIS* DEFAULT_NULL
+     slaterbasis :: SLATER_BASIS@
      ! The Slater function basis set for the atom. This includes
      ! occupancies and can be used for Hirshfeld surface plots and
      ! sum-of-spherical atoms densities.
@@ -2457,7 +2440,7 @@ module TYPES
      coppensbasis_label :: STR  DEFAULT(" "), readonly
      ! The label of the coppens basis set to match to.
 
-     coppensbasis :: COPPENSBASIS* DEFAULT_NULL
+     coppensbasis :: COPPENS_BASIS@
      ! The Coppens-style fitted relativistic orbital basis for the
      ! atom. This is used for Hirshfeld surface plots and
      ! sum-of-spherical atoms densities.
@@ -2762,7 +2745,7 @@ module TYPES
      ! the radii is used). Treutler and Ahlrichs recommended using the square root
      ! of the ratio of Bragg Slater radii.
 
-     finalized :: BIN  DEFAULT(FALSE)
+     updated :: BIN  DEFAULT(FALSE)
      ! Set to true if the grid has been "set" using set_grid_data
 
      n_points_for_row :: VEC{INT}*, private  DEFAULT_NULL
@@ -3823,7 +3806,7 @@ module TYPES
      ! Form factors for the core only ... for working out R(val)
      ! for example
 
-     finalize :: BIN  DEFAULT(TRUE)
+     update :: BIN  DEFAULT(TRUE)
      ! Finalize or update self after reading ...
 
    end
@@ -4264,7 +4247,7 @@ module TYPES
      ! The RGB values corresponding to each data value. Their norm should be
      ! between zero and 3.
 
-     finalized :: BIN  DEFAULT(TRUE)
+     updated :: BIN  DEFAULT(TRUE)
      ! Set TRUE if the object is ready for use
 
    end
@@ -4541,7 +4524,7 @@ module TYPES
      ! A (3 x 0:7) dimensioned list of the interpolated triangle vertex
      ! coordinates on each edge of the cube (if that edge is needed).
 
-     cap_vertex_flag :: VEC{BIN}(0:3)  DEFAULT(0)
+     cap_vertex_flag :: VEC{BIN}(0:3)  DEFAULT(FALSE)
      ! Used to flag vertices of capping square which belong to caps
      ! and therefore need to be triangulated.
 
@@ -5894,7 +5877,7 @@ module TYPES
      basis_l_max :: INT  DEFAULT(-1)
      ! The maximum l value for the basis set
 
-     basis :: VEC{BASIS}* DEFAULT_NULL
+     basis :: VEC{BASIS}@
      ! List of basis sets used
 
      use_spherical_basis :: BIN   DEFAULT(FALSE)
@@ -5915,14 +5898,14 @@ module TYPES
      ! A string representing the name of the Slater basis set class
      ! to be used for each atom
 
-     slaterbasis :: VEC{SLATERBASIS}* DEFAULT_NULL
+     slaterbasis :: VEC{SLATER_BASIS}* DEFAULT_NULL
      ! List of Slater basis sets used
 
      coppensbasis_name :: STR  DEFAULT(" ")
      ! A string representing the name of the Coppens basis set class
      ! to be used for each atom
 
-     coppensbasis :: VEC{COPPENSBASIS}* DEFAULT_NULL
+     coppensbasis :: VEC{COPPENS_BASIS}* DEFAULT_NULL
      ! List of coppens basis sets used
 
      basis_info_made :: BIN  DEFAULT(FALSE)

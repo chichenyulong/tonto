@@ -32,6 +32,24 @@ contains
 !  Allocation methods
 !  ==================
 
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
+   end
+
+   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Deallocate the vector
+   end
+
+   created result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has been allocated
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has *not* been allocated
+   end
+
+! Old
+
    create(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Create space for object
    end
@@ -85,18 +103,10 @@ contains
       word.to_lower_case
       select case (word)
        case("}") ! do nothing.
-       case("redirect          "); .redirect
-       case("revert            "); .revert
+       case("redirect          "); TEXTFILE:redirect
+       case("revert            "); TEXTFILE:revert
        case default;               UNKNOWN(word)
       end
-   end
-
-   redirect ::: get_from(OBJECT), leaky
-   ! Redirect input
-   end
-
-   revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file
    end
 
 end

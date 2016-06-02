@@ -237,7 +237,7 @@ contains
 !  Input methods
 !  =============
 
-   ! NOTE : this must be finalized after the call.
+   ! NOTE : this must be updated after the call.
 
    read_keywords ::: get_from(OBJECT), recursive, leaky
    ! Read data from "stdin" using keyword style input.
@@ -277,7 +277,7 @@ contains
 
    end
 
-   finalize
+   update
    ! Make sure the input satisfies sanity checks.
       self :: INOUT
 

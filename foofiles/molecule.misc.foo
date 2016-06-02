@@ -3210,7 +3210,7 @@ contains
       self :: PTR
 
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
 
       b :: BECKE_GRID*
       pt, Z :: MAT{REAL}*
@@ -3291,7 +3291,7 @@ contains
       self :: PTR
 
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
 
       b :: BECKE_GRID*
       pt :: MAT{REAL}*
@@ -3344,7 +3344,7 @@ contains
       self :: PTR
 
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
 
       b :: BECKE_GRID*
       pt :: MAT{REAL}*
@@ -3396,7 +3396,7 @@ contains
       self :: PTR
 
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
 
       b :: BECKE_GRID*
       pt :: MAT{REAL}*
@@ -4983,7 +4983,7 @@ contains
    ENSURE(.molecular_orbitals.associated, "no MO's")
    ENSURE(.molecular_orbitals.restricted.associated, "no restricted MO's")
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(kappa.dim==.n_atom,"wrong size, kappa")
 
       pt :: MAT{REAL}*
@@ -5070,7 +5070,7 @@ contains
    ENSURE(.molecular_orbitals.associated, "no MO's")
    ENSURE(.molecular_orbitals.restricted.associated, "no restricted MO's")
    ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.becke_grid.finalized,"no finalized becke_grid")
+   ENSURE(.becke_grid.updated,"becke_grid not updated")
 
       pt :: MAT{REAL}*
       E_G,E_K,wt,Wa,G_grid,K_grid :: VEC{REAL}*
@@ -5283,7 +5283,7 @@ contains
    ENSURE(stdin.buffer.item_index==1,"must be at 2nd item on the input line")
 
       interpolator :: INTERPOLATOR*
-      slaterbasis  :: VEC{SLATERBASIS}*
+      slaterbasis  :: VEC{SLATER_BASIS}*
       labels :: VEC{STR}*
       word,basis_kind,plotfile :: STR
       density_cutoff :: REAL
@@ -5354,7 +5354,7 @@ contains
 
    end
 
-   put_coppens_interpolators ::: get_from(put_slater_interpolators, SLATERBASIS=>COPPENSBASIS)
+   put_coppens_interpolators ::: get_from(put_slater_interpolators, SLATER_BASIS=>COPPENS_BASIS)
    ! Print out the slaterbasis interpolator tables for a certain
    ! "basis_kind" for all interpolators up to "Z_max" and up to a
    ! certain "density_cutoff", all these as read from stdin.
@@ -5370,7 +5370,7 @@ contains
    ENSURE(stdin.buffer.item_index==1,"must be at 2nd item on the input line")
 
       interpolator :: INTERPOLATOR*
-      slater1basis,slater2basis :: VEC{SLATERBASIS}*
+      slater1basis,slater2basis :: VEC{SLATER_BASIS}*
       labels :: VEC{STR}*
       basis1,basis2,plotfile :: STR
       density_cutoff :: REAL
@@ -5437,8 +5437,8 @@ contains
    ENSURE(stdin.buffer.item_index==1,"must be at 2nd item on the input line")
 
       interpolator :: INTERPOLATOR*
-      coppensbasis :: VEC{COPPENSBASIS}*
-      slaterbasis  :: VEC{SLATERBASIS}*
+      coppensbasis :: VEC{COPPENS_BASIS}*
+      slaterbasis  :: VEC{SLATER_BASIS}*
       labels :: VEC{STR}*
       basis1,basis2,plotfile :: STR
       density_cutoff :: REAL
