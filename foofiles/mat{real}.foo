@@ -3302,11 +3302,12 @@ contains
 !  Gaussian function rotation representation matrices
 !  =================================================
 
-   gaussian_d_xyz_matrix result (dtr)
+   gaussian_d_xyz_matrix result (dtr) ::: PURE
    ! Return the representation matrix for a d-type xyz product found in gaussian
    ! shells, induced by an xyz rotation matrix "self". The matrix representation
    ! induced is: d = d' * dtr, when the coordinates r of the gaussian shell
    ! functions are written in terms of new coordinates r' as: r = self^T * r'.
+      self :: IN
       dtr :: MAT{REAL}(6,6)
 
    ENSURE(.is_square,"self not square")
@@ -3332,9 +3333,10 @@ contains
 
    end
 
-   gaussian_f_xyz_matrix result (ftr)
+   gaussian_f_xyz_matrix result (ftr) ::: PURE
    ! Return the representation matrix for an f xyz product found in gaussian
    ! shells from a p-type xyz matrix
+      self :: IN
       ftr :: MAT{REAL}(10,10)
 
    ENSURE(.is_square,"self not square")
@@ -3380,9 +3382,10 @@ contains
 
    end
 
-   gaussian_g_xyz_matrix result (gtr)
+   gaussian_g_xyz_matrix result (gtr) ::: PURE
    ! Return the representation matrix for a g xyz product found in gaussian
    ! shells from a p-type xyz matrix
+      self :: IN
       gtr :: MAT{REAL}(15,15)
 
    ENSURE(.is_square,"self not square")
@@ -3488,7 +3491,7 @@ contains
 ! Binning and histograms
 ! ======================
 
-   to_histogram_from_data(data,X,Y,X_min,X_max,X_bin,Y_min,Y_max,Y_bin) ::: leaky
+   to_histogram_from_data(data,X,Y,X_min,X_max,X_bin,Y_min,Y_max,Y_bin) ::: leaky, PURE
    ! Set "self" to a histogram matrix whose ij-th element contains the
    ! *sum* of the values in array "data" whose elements correspond to
    ! the ij-th bin in "X" and "Y", where a 2D bin is a range of
@@ -3542,40 +3545,46 @@ contains
 !  Misc stuff
 !  ==========
 
-   make_enclosing_sphere(pos,radius)
+   make_enclosing_sphere(pos,radius) ::: PURE
    ! Determine the position and radius of a sphere that encloses all points in
    ! the grid.
       self :: IN
       radius :: REAL, OUT
       pos :: VEC{REAL}(3), OUT
+
    ENSURE(.dim2==3,"Second dimension of matrix is not 3.")
+
       diff :: VEC{REAL}(3)
       dist :: REAL
       n,n_pts :: INT
       n_pts = .dim2
-      ! Get the center of the sphere.  Should use a better algorithm than just the
-      ! average.
+
+      ! Get the center of the sphere.  Should use a better algorithm
+      ! than just the average.
       pos = ZERO
       do n = 1,n_pts
-       pos = pos + self(n,:)
+         pos = pos + self(n,:)
       end
-      pos = pos / n_pts
+      pos = pos/n_pts
+
       ! The radius is the distance to the furthest point.
       radius = 0
       do n = 1,n_pts
-       diff = self(n,:) - pos
-       dist = dot_product(diff,diff)
-       if (dist > radius) radius = dist
+         diff = self(n,:) - pos
+         dist = dot_product(diff,diff)
+         if (dist > radius) radius = dist
       end
+
       radius = sqrt(radius)
+
    end
 
    make_corresponding_orbitals(left,right,theta,p)
    ! This algorithm from Camp and King, J. Chem Phys. Vol 75(1), pp 268-274.
    ! p is the dimenstion of the first block of the partitioned matrices.
    ! Works best if "left" and "right" matrices are nonzero.
-      self :: target
-      left,right :: MAT{REAL}, target
+      self :: target, IN
+      left,right :: MAT{REAL}, target, OUT
       theta :: VEC{REAL}, OUT
       p :: INT, IN
 
@@ -3607,8 +3616,6 @@ contains
       right(p+1: ,   :p) = ZERO
       left(    :p,p+1: ) = ZERO
       left( p+1:,    :p) = ZERO
-
-      .zero_small_values(TOL(10))
 
       ! get eigenvalues and Wq.
       lambda.create(q)                       
@@ -3651,14 +3658,14 @@ contains
 
    end
 
-   to_multipole_W_translation_mx(R,l_max)
+   to_multipole_W_translation_mx(R,l_max) ::: PURE
    ! Make the multipole translation matrix W(lm,jk)(R) evaluated at position "R"
    ! where the maximum values of l is "l_max". See the book by Helgaker, Olsen,
    ! and Simons, equations (9.13.58)--(9.13.61) and (9.13.65), pp. 413-414.
    ! NOTE: self is created.
-      self :: allocatable, INOUT
-      R :: VEC{REAL}(3)
-      l_max :: INT
+      self :: allocatable, OUT
+      R :: VEC{REAL}(3), IN
+      l_max :: INT, IN
 
    ENSURE(l_max>=0," l_max must be non-negative")
    ENSURE(.is_square,"self must be square")
@@ -3773,14 +3780,14 @@ contains
 
    end
 
-   add_multipole_W_translation_mx(R,l_max)
+   add_multipole_W_translation_mx(R,l_max) ::: PURE
    ! Add the multipole translation matrix W(lm,jk)(R) evaluated at position "R"
    ! where the maximum values of l is "l_max". See the book by Helgaker, Olsen,
    ! and Simons, equations (9.13.58)--(9.13.61) and (9.13.65), pp. 413-414.
    ! NOTE: self is created.
       self :: allocatable, INOUT
-      R :: VEC{REAL}(3)
-      l_max :: INT
+      R :: VEC{REAL}(3), IN
+      l_max :: INT, IN
 
    ENSURE(l_max>=0,"l_max must be non-negative")
    ENSURE(.is_square,"self must be square")
@@ -3888,14 +3895,14 @@ contains
 
    end
 
-   to_multipole_T_interaction_mx(R,l_max,j_max)
+   to_multipole_T_interaction_mx(R,l_max,j_max) ::: PURE
    ! Make the multipole translation matrix T(lm,jk)(R) evaluated at position "R"
    ! where the maximum value of l and j are, respectoively, "l_max" and "j_max".
    ! See the book by Helgaker, Olsen, and Simons, equation (9.13.75), p. 415.
    ! NOTE: self is created.
-      self :: allocatable, INOUT
-      R :: VEC{REAL}(3)
-      l_max,j_max :: INT
+      self :: allocatable, OUT
+      R :: VEC{REAL}(3), IN
+      l_max,j_max :: INT, IN
 
    ENSURE(l_max>=0,"l_max must be non-negative")
    ENSURE(.dim1==(l_max+1)*(l_max+1),"self has wrong 1st (l_max) dimension")
@@ -4016,8 +4023,8 @@ contains
    ! See the book by Helgaker, Olsen, and Simons, equation (9.13.75), p. 415.
    ! NOTE: self is created.
       self :: allocatable, INOUT
-      R :: VEC{REAL}(3)
-      l_max,j_max :: INT
+      R :: VEC{REAL}(3), IN
+      l_max,j_max :: INT, IN
 
    ENSURE(l_max>=0,"l_max must be non-negative")
    ENSURE(.dim1==(l_max+1)*(l_max+1),"self has wrong 1st (l_max) dimension")
@@ -4131,7 +4138,7 @@ contains
 
    end
 
-   to_R_mu_multipole_mx(points,l_max)
+   to_R_mu_multipole_mx(points,l_max) ::: PURE
    ! Make the R_mu multipole matrix, self(i,j), which is the scaled regular
    ! mu-type solid harmonic evaluated at point P_i = "points(:,i)" for moment
    ! (L,M), where index j is L*L + M + L + 1, and where L is less than "l_max".
@@ -4139,15 +4146,20 @@ contains
    ! potential at the given points P_i from multipoles at Q,
    !     potential(i) = self * T(Q-P_i) * multipoles(Q).
    ! Reference: the book by Helgaker, Simons and Olsen, p. 407.
+      self :: OUT
       points :: MAT{REAL}, IN
-      l_max :: INT
+      l_max :: INT, IN
+
    ENSURE(points.dim2==3,"wrong 2nd dimension, points arrays")
    ENSURE(l_max>=0,"l_max must be non-negative")
    ENSURE(.dim1==points.dim1,"wrong 1st dimension, self")
    ENSURE(.dim2==(l_max+1)*(l_max+1),"wrong 2nd dimension, self")
+
       Rm :: VEC{VEC_{VEC_{REAL}}}@
       L,M,lm :: INT
+
       VEC{REAL}:make_R_mu_harmonics(Rm,points,l_max)
+
       lm = 0
       do L = 0,l_max
          do M = -L,L ! note the canonoical order here
@@ -4155,13 +4167,16 @@ contains
             self(:,lm) = Rm(L)[M][:]
          end
       end
+
       do L = l_max,0,-1
          do M = L,-L,-1
             deallocate(Rm(L)[M].element)
          end
          deallocate(Rm(L).element)
       end
+
       deallocate(Rm)
+
    end
 
 end

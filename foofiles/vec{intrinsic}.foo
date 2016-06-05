@@ -1110,7 +1110,6 @@ contains
 
       unique :: VEC{INTRINSIC}(len=len(self(1)))@
       i,n :: INT
-      found :: BIN
 
       if (.dim==1) return
 
@@ -1145,7 +1144,6 @@ contains
 
       unique :: VEC{INTRINSIC}@
       i,j,n :: INT
-      found :: BIN
 
       if (.dim==1) return
 
@@ -1154,22 +1152,20 @@ contains
       n = 1
       unique(1) = self(1)
 
-      do i = 2,.dim
+      same: do i = 2,.dim
 
-         found = FALSE
+         ! Any the same?
          do j = 1,n
             if (NOT self(i).same_as(unique(j))) cycle
-            found = TRUE
+            cycle same
          end
-         if (found) cycle
 
+         ! Not the same
          n = n + 1
          unique(n) = self(i)
 
-      end
+      end do same
 
-      .destroy
-      .create(n)
       self = unique(1:n)
 
       unique.destroy
@@ -2477,12 +2473,16 @@ contains
    ! Zero elements of the vector which are less than "tol" in magnitude
       self :: INOUT
       eps :: REAL, optional, IN
+
       tol :: REAL
+
       tol = REAL_EPSILON
       if (present(eps)) tol = eps
+
       where (abs(self)<tol)
-        self = ZERO
+         self = ZERO
       end
+
    end
 
    largest_value result (res) ::: pure

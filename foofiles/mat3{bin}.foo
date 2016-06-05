@@ -28,37 +28,33 @@ module MAT3{BIN}
 
 contains
 
-   create(dim1,dim2,dim3) ::: get_from(MAT3{INTRINSIC}), leaky
-   ! Create the object with the desired bounds
+!  ==========
+!  Allocation
+!  ==========
+
+   create(dim1,dim2,dim3) ::: get_from(MAT3{INTRINSIC}), leaky, PURE
+   ! Allocate "self" with the given dimensions
    end
 
-   create(lb1,ub1,lb2,ub2,lb3,ub3) ::: get_from(MAT3{INTRINSIC}), leaky
-   ! Create the object with the desired bounds
+   create(lb1,ub1,lb2,ub2,lb3,ub3) ::: get_from(MAT3{INTRINSIC}), leaky, PURE
+   ! Allocate "self" with the given bounds
    end
 
-   create(bounds1,bounds2,bounds3) ::: get_from(MAT3{INTRINSIC}), leaky
-   ! Create the object with the desired bounds
-   end
-
-   create(bounds) ::: get_from(MAT3{INTRINSIC}), leaky
-   ! Create the object with the desired bounds
-   end
-
-   create_copy(c) ::: get_from(MAT3{INTRINSIC}), leaky
-   ! Create a copy of matrix "c"
-   end
-
-   destroy ::: get_from(MAT3{INTRINSIC})
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
    end
 
-   created result (res) ::: get_from(MAT3{INTRINSIC}), pure
+   created result (res) ::: get_from(OBJECT), pure
    ! Returns true if self has been created
    end
 
-   destroyed result (res) ::: get_from(MAT3{INTRINSIC}), pure
+   destroyed result (res) ::: get_from(OBJECT), pure
    ! Returns true if self has *not* been created
    end
+
+!  ============================
+!  Size-of and shape operations
+!  ============================
 
    size result (res) ::: get_from(MAT3{INTRINSIC}), inlined_by_foo
    ! Return the size of the array
@@ -80,14 +76,18 @@ contains
    ! Returns TRUE if the matrix "b" has the same shape as self
    end
 
-   set_to(b) ::: get_from(MAT3{INTRINSIC})
-   ! Set "self" to "b"
+   is_cube result (res) ::: get_frim(MAT3{INTRINSIC}), pure
+   ! Returns TRUE if self is a cube
    end
 
-   set_to(b) ::: get_from(MAT3{INTRINSIC})
+   set_to(b) ::: get_frim(MAT3{INTRINSIC}), pure
    ! Set "self" to vector "b" in standard order
    end
 
+   set_to_reverse_of(b) ::: get_from(MAT3{INTRINSIC}), PURE
+   ! Set "self" to the reverse of vector "b" i.e. the standard order is
+   ! reversed.
+   end
 
 !  =============
 !  String widths

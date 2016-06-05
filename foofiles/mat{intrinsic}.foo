@@ -52,7 +52,6 @@ virtual module MAT{INTRINSIC}
 
 contains
 
-
 !  =================
 !  Memory allocation
 !  =================
@@ -1468,9 +1467,11 @@ contains
    ! Zero elements of the matrix which are less than "eps" in magnitude
       self :: INOUT
       eps :: REAL, IN
+
       where (abs(self)<eps)
-        self = ZERO
+         self = ZERO
       end
+
    end
 
 
@@ -3967,7 +3968,7 @@ contains
 
    end
 
-   similarity_transform(V)
+   similarity_transform(V) ::: PURE
    ! Do a similarity transform of "self" using vectors "V": self = V self V^-1
       self :: INOUT
       V :: V?, IN
@@ -3980,11 +3981,16 @@ contains
       n :: INT
 
       n = .dim1
+
       V1.create(n,n)
-      V1.to_inverse_of(V)
       W.create(n,n)
+
+      V1.to_inverse_of(V)
+
       W.to_product_of(self,V1)
-      .to_product_of(V,W)
+
+       .to_product_of(V,W)
+
       W.destroy
       V1.destroy
 

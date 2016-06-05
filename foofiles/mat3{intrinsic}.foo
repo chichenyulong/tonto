@@ -30,103 +30,48 @@ virtual module MAT3{INTRINSIC}
 
 contains
 
-
-!  =================
-!  Memory allocation
-!  =================
+!  ==========
+!  Allocation
+!  ==========
 
    create(dim1,dim2,dim3) ::: leaky, PURE
-   ! Create the object with the desired bounds
+   ! Allocate "self" with the given dimensions
       self :: allocatable, INOUT
       dim1,dim2,dim3 :: INT, IN
 
+#ifdef USE_PRECONDITIONS
       status :: INT
+#endif
 
-      nullify(self)
-
-      allocate(self(dim1,dim2,dim3),STAT=status)
-
+#ifdef USE_PRECONDITIONS
+      allocate(self(dim1,dim2,dim3),stat=status)
       ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-   end
-
-   create(dim) ::: leaky, PURE
-   ! Create the object with the desired dimensions "dim"
-      self :: allocatable, INOUT
-      dim :: VEC{INT}(3), IN
-
-      .create(dim(1),dim(2),dim(3))
+#else
+      allocate(self(dim1,dim2,dim3))
+#endif
 
    end
 
    create(lb1,ub1,lb2,ub2,lb3,ub3) ::: leaky, PURE
-   ! Create the object with the desired bounds
+   ! Allocate "self" with the given bounds
       self :: allocatable, INOUT
       lb1,lb2,lb3,ub1,ub2,ub3 :: INT, IN
 
+#ifdef USE_PRECONDITIONS
       status :: INT
+#endif
 
-      nullify(self)
-
-      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3),STAT=status)
-
+#ifdef USE_PRECONDITIONS
+      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3),stat=status)
       ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
+#else
+      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3))
+#endif
 
    end
 
-   create(bounds1,bounds2,bounds3) ::: leaky, PURE
-   ! Create the object with the desired bounds
-      self :: allocatable, INOUT
-      bounds1,bounds2,bounds3 :: VEC{INT}(2), IN
-
-      .create(bounds1(1),bounds1(2), &
-              bounds2(1),bounds2(2), &
-              bounds3(1),bounds3(2)  )
-
-   end
-
-   create(bounds) ::: leaky, PURE
-   ! Create the object with the desired bounds
-      self :: allocatable, INOUT
-      bounds :: MAT{INT}(3,2), IN
-
-      .create(bounds(1,1),bounds(1,2), &
-              bounds(2,1),bounds(2,2), &
-              bounds(3,1),bounds(3,2)  )
-
-   end
-
-   create_copy(c) ::: leaky, PURE
-   ! Create a copy of matrix "c"
-      self :: allocatable, INOUT
-      c :: MAT3{INTRINSIC}, IN
-
-      .create(lbound(c,1),ubound(c,1), &
-              lbound(c,2),ubound(c,2), &
-              lbound(c,3),ubound(c,3)  )
-
-      self = c
-
-   end
-
-   destroy ::: leaky, PURE
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
-      self :: allocatable, INOUT
-
-      status :: INT
-
-      if (.destroyed) return
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -186,15 +131,6 @@ contains
    end
 
    set_to(b) ::: pure
-   ! Set "self" to "b"
-      self :: INOUT
-      b :: MAT3{INTRINSIC}, IN
-
-      self = b
-
-   end
-
-   set_to(b) ::: pure
    ! Set "self" to vector "b" in standard order
       self :: INOUT
       b :: VEC{INTRINSIC}, IN
@@ -225,107 +161,31 @@ contains
 
    end
 
+   is_square_23 result (res) ::: pure
+   ! Checks to see that the matrix formed by the 2nd and 3rd columns is square.
+      self :: IN
+      res :: BIN
+
+      res = .dim2==.dim3
+
+   end
+
+   tri_size_23 result (ltr) ::: PURE
+   ! Returns the size of the lower triangle needed to store the matrix self.
+   ! Assumes the matrix formed by columns 2 and 3 is the symmetric one.
+      self :: IN
+      ltr :: INT
+
+   ENSURE(.is_square_23,"2nd and 3rd dimensions not equal")
+
+      ltr = .dim1*.dim2*(.dim2+1)/2
+
+   end
+
 
 !  ========================
 !  Change of basis routines
 !  ========================
-
-!   change_basis_using(V) ::: PURE
-!   ! Change the basis of "self" using vectors "V"; self = self ... V
-!      self :: INOUT
-!      V :: MAT{INTRINSIC}, IN
-!
-!   ENSURE( .is_cube,    "Non-cube matrix")
-!   ENSURE(V.is_square,  "Non-square matrix")
-!   ENSURE(.dim1==V.dim1,"wrong shapes")
-!
-!      i,j :: INT
-!
-!      do i = 1,.dim3
-!         self(:,:,i).change_basis_using(V)
-!      end
-!
-!      do i = 1,.dim3
-!      do j = 1,.dim3
-!         self(i,j,:) = matmul(self(i,j,:),V)
-!      end
-!      end
-!
-!   end
-!
-!   change_basis_to(new,V) ::: PURE
-!   ! Change the basis of "self" using vectors "V", and place the result in
-!   ! "new".  new = self ... V
-!      self :: IN
-!      new :: MAT3{INTRINSIC}, OUT
-!      V :: MAT{INTRINSIC}, IN
-!
-!   ENSURE(   .is_cube,"Non-cube matrix")
-!   ENSURE(new.is_cube,"Non-cube new matrix")
-!   ENSURE(V.dim1==   .dim1,"wrong shapes")
-!   ENSURE(V.dim2==new.dim1,"wrong shapes")
-!
-!      i,j :: INT
-!
-!      do i = 1,.dim3
-!         self(:,:,i).change_basis_to(new(:,:,i),V)
-!      end
-!
-!      do i = 1,.dim3
-!      do j = 1,.dim3
-!         new(i,j,:) = matmul(new(i,j,:),V)
-!      end
-!      end
-!   end
-!
-!   back_transform_using(V) ::: PURE
-!   ! Change the basis of "self" using vectors "V"; self = self ... V^T
-!      self :: INOUT
-!      V :: MAT{INTRINSIC}, IN
-!
-!   ENSURE( .is_cube,    "Non-cube matrix")
-!   ENSURE(V.is_square,  "Non-square matrix")
-!   ENSURE(.dim1==V.dim1,"wrong shapes")
-!
-!      i,j :: INT
-!
-!      do i = 1,.dim3
-!         self(:,:,i).back_transform_using(V)
-!      end
-!
-!      do i = 1,.dim3
-!      do j = 1,.dim3
-!         self(i,j,:) = matmul(new(i,j,:),transpose(V))
-!      end
-!      end
-!
-!   end
-!
-!   back_transform_to(new,V) ::: PURE
-!   ! Change the basis of "self" using vectors "V", and place the result in
-!   ! "new".  new = self ... V^T
-!      self :: IN
-!      new :: MAT3{INTRINSIC}, OUT
-!      V :: MAT{INTRINSIC}, IN
-!
-!   ENSURE(   .is_cube,"Non-cube matrix")
-!   ENSURE(new.is_cube,"Non-cube new matrix")
-!   ENSURE(V.dim1==   .dim1,"wrong shapes")
-!   ENSURE(V.dim2==new.dim1,"wrong shapes")
-!
-!      i,j :: INT
-!
-!      do i = 1,.dim3
-!         self(:,:,i).back_transform_to(new(:,:,i),V)
-!      end
-!
-!      do i = 1,.dim3
-!      do j = 1,.dim3
-!         new(i,j,:) = matmul(new(i,j,:),transpose(V))
-!      end
-!      end
-!
-!   end
 
    change_basis_using(V) ::: PURE
    ! Change the basis of "self" using vectors "V"; self = self ... V
@@ -382,38 +242,6 @@ contains
 
    end
 
-!   change_basis_to(new,V) ::: PURE
-!   ! Change the basis of "self" using vectors "V", and place the result in
-!   ! "new".  new = self ... V
-!      self :: IN
-!      new :: MAT3{INTRINSIC}, OUT
-!      V :: MAT{INTRINSIC}, IN
-!
-!   ENSURE(   .is_cube,"Non-cube matrix")
-!   ENSURE(new.is_cube,"Non-cube new matrix")
-!   ENSURE(V.dim1==   .dim1,"wrong shapes")
-!   ENSURE(V.dim2==new.dim1,"wrong shapes")
-!
-!      i,j,k, p,q,r :: INT
-!
-!      new = ZERO
-!
-!      do i = 1,.dim1
-!      do j = 1,.dim1
-!      do k = 1,.dim1
-!         do p = 1,.dim1
-!         do q = 1,.dim1
-!         do r = 1,.dim1
-!             new(i,j,k) = new(i,j,k) + self(p,q,r)*V(p,i)*V(q,j)*V(r,k)
-!         end
-!         end
-!         end
-!      end
-!      end
-!      end
-!
-!   end
-
    back_transform_using(V) ::: PURE
    ! Change the basis of "self" using vectors "V"; self = self ... V^T
       self :: INOUT
@@ -468,38 +296,6 @@ contains
       end
 
    end
-
-!   back_transform_to(new,V) ::: PURE
-!   ! Change the basis of "self" using vectors "V", and place the result in
-!   ! "new".  new = self ... V^T
-!      self :: IN
-!      new :: MAT3{INTRINSIC}, OUT
-!      V :: MAT{INTRINSIC}, IN
-!
-!   ENSURE(   .is_cube,"Non-cube matrix")
-!   ENSURE(new.is_cube,"Non-cube new matrix")
-!   ENSURE(V.dim1==   .dim1,"wrong shapes")
-!   ENSURE(V.dim2==new.dim1,"wrong shapes")
-!
-!      i,j,k, p,q,r :: INT
-!
-!      new = ZERO
-!
-!      do i = 1,.dim1
-!      do j = 1,.dim1
-!      do k = 1,.dim1
-!         do p = 1,.dim1
-!         do q = 1,.dim1
-!         do r = 1,.dim1
-!             new(i,j,k) = new(i,j,k) + self(p,q,r)*V(i,p)*V(j,q)*V(k,r)
-!         end
-!         end
-!         end
-!      end
-!      end
-!      end
-!
-!   end
 
 
    make_symmetric ::: pure
