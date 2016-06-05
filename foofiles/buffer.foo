@@ -182,8 +182,7 @@ contains
 
    ENSURE(replacement_list.created,"replacement_list destroyed")
 
-      .replacement_list.destroy
-      .replacement_list.create_copy(replacement_list)
+      .replacement_list = replacement_list
 
    end
 
