@@ -163,7 +163,7 @@ contains
    end
 
 
-   created(genre) result (res) ::: pure
+   created(genre) result (res) ::: PURE
    ! Returns FALSE if "self" is not created.
    ! Returns FALSE, unless kind "genre" of self has been created.
       self :: allocatable, INOUT
@@ -177,7 +177,7 @@ contains
 
    end
 
-   destroyed(genre) result (res) ::: pure
+   destroyed(genre) result (res) ::: PURE
    ! Returns true if kind "genre" of self has *not* been created
       self :: allocatable, INOUT
       genre :: STR, IN
@@ -212,7 +212,7 @@ contains
    all_destroyed result (res) ::: pure
    ! Returns true if all components of self have been destroyed
    ! NOTE: the beta parts are NOT tested.
-      self :: allocatable, INOUT
+      self :: allocatable, IN
       res :: BIN
 
       d :: BIN, dimension(6)
@@ -282,7 +282,7 @@ contains
       case ("restricted          "); res = .restricted.created
       case ("unrestricted        "); res = .alpha.created AND .beta.created
       case ("alpha               "); res = .alpha.created
-      case ("alpha               "); res =  .beta.created
+      case ("beta                "); res =  .beta.created
       case ("general             "); res = .general.created
       case ("restricted_complex  "); res = .restricted_complex.created
       case ("unrestricted_complex"); res = .alpha_complex.created
@@ -361,7 +361,7 @@ contains
 
    end
 
-   is_compatible_with(X,genre) result (res) ::: pure
+   is_compatible_with(X,genre) result (res) ::: PURE
    ! Returns TRUE if the "self" and "X" are compatible
       self :: IN
       X :: OPMATRIX, IN
