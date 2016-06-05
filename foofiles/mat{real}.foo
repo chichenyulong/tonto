@@ -3003,7 +3003,8 @@ contains
    ENSURE(.dim1==actual.dim1,"self incompatible with actual")
    ENSURE(reference.dim2==actual.dim2,"reference incompatible with actual")
 
-      U,X,Rd :: MAT{REAL}@
+      Rd :: MAT{REAL}@, target
+      U,X :: MAT{REAL}@
       X0,Xv :: VEC{REAL}@
       d,iteration :: INT
       big :: REAL
@@ -3061,6 +3062,7 @@ contains
       end
 
       ! Clean up
+      nullify(saved_actual)
       Rd.destroy
       U.destroy
       Xv.destroy
@@ -3076,6 +3078,7 @@ contains
       Xv :: VEC{REAL}, IN
       L :: REAL, OUT
       dL :: VEC{REAL}, optional, OUT
+
       X,U,Rd :: MAT{REAL}@
       d,n,p,q,pq,i :: INT
       val :: REAL
@@ -3113,7 +3116,10 @@ contains
       end
 
       ! Clean up
-      Rd.destroy; U.destroy; X.destroy
+      Rd.destroy
+      U.destroy
+      X.destroy
+
    end
 
 !  =============

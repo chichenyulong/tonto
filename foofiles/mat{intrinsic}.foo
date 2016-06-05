@@ -5771,7 +5771,7 @@ contains
    ENSURE(X.is_square,"X is non-square matrix")
 
       offset, ns,nx,nb, i,j,ix,ib,jx,jb :: INT
-      list :: VEC{INT}* ! ptr ok
+      list :: VEC{INT}@
 
       ! Convenient dimensions
       ns = block_dim
@@ -5779,8 +5779,8 @@ contains
 
       ! Assume all blocks
       if (present(block_list)) then
-         nb = block_list.dim
-         list => block_list
+         nb   = block_list.dim
+         list = block_list
       else
          nb = .dim1/block_dim
          list.create(nb)
@@ -5807,9 +5807,7 @@ contains
       end
 
       ! Clean
-      if (NOT present(block_list)) then
-         list.destroy
-      end
+      list.destroy
 
    end
 
