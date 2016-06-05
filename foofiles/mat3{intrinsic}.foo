@@ -36,7 +36,7 @@ contains
 
    create(dim1,dim2,dim3) ::: leaky, PURE
    ! Allocate "self" with the given dimensions
-      self :: allocatable, INOUT
+      self :: allocatable, OUT
       dim1,dim2,dim3 :: INT, IN
 
 #ifdef USE_PRECONDITIONS
@@ -54,7 +54,7 @@ contains
 
    create(lb1,ub1,lb2,ub2,lb3,ub3) ::: leaky, PURE
    ! Allocate "self" with the given bounds
-      self :: allocatable, INOUT
+      self :: allocatable, OUT
       lb1,lb2,lb3,ub1,ub2,ub3 :: INT, IN
 
 #ifdef USE_PRECONDITIONS
@@ -75,11 +75,11 @@ contains
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
 

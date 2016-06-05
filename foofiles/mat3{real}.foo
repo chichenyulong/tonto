@@ -45,11 +45,11 @@ contains
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
 !  ============================
@@ -76,11 +76,15 @@ contains
    ! Returns TRUE if the matrix "b" has the same shape as self
    end
 
-   is_cube result (res) ::: get_frim(MAT3{INTRINSIC}), pure
+   is_cube result (res) ::: get_from(MAT3{INTRINSIC}), pure
    ! Returns TRUE if self is a cube
    end
 
-   set_to(b) ::: get_frim(MAT3{INTRINSIC}), pure
+!  ======================
+!  Set and change methods
+!  ======================
+
+   set_to(b) ::: get_from(MAT3{INTRINSIC}), pure
    ! Set "self" to vector "b" in standard order
    end
 
@@ -96,63 +100,6 @@ contains
    tri_size_23 result (ltr) ::: get_from(MAT3{INTRINSIC}), PURE
    ! Returns the size of the lower triangle needed to store the matrix self.
    ! Assumes the matrix formed by columns 2 and 3 is the symmetric one.
-   end
-
-!  ======================
-!  Set and change methods
-!  ======================
-
-   set_to(b) ::: get_from(MAT3{INTRINSIC})
-   ! Set "self" to vector "b" in standard order
-   end
-
-   to_tri_23(tr) ::: PURE
-   ! Converts the matrix self to the lower triangle tr.
-   ! Assumes the matrix formed by columns 2 and 3 is the symmetric one.
-      self :: IN
-      tr :: VEC{REAL}, OUT
-
-   ENSURE(size(tr)>=.tri_size_23,"tr array too small")
-   ENSURE(.is_square_23,"2nd and 3rd dimensions not equal")
-
-      h,i,j,ij :: INT
-
-      ij = 0
-
-      do h = 1,.dim1
-      do i = 1,.dim2
-      do j = 1,i
-         ij = ij+1
-         tr(ij) = self(h,j,i)
-      end
-      end
-      end
-
-   end
-
-   from_tri_23(tr) ::: PURE
-   ! Converts the matrix self to the lower triangle tr.
-   ! Assumes the matrix formed by columns 2 and 3 is the symmetric one.
-      self :: OUT
-      tr :: VEC{REAL}, IN
-
-   ENSURE(size(tr)>=.tri_size_23,"tr array too small")
-   ENSURE(.is_square_23,"2nd and 3rd dimensions not equal")
-
-      h,i,j,ij :: INT
-
-      ij = 0
-
-      do h = 1,.dim1
-      do i = 1,.dim2
-      do j = 1,i
-         ij = ij+1
-         self(h,j,i) = tr(ij)
-         self(h,i,j) = tr(ij)
-      end
-      end
-      end
-
    end
 
 !  ==============

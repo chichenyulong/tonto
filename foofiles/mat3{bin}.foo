@@ -45,11 +45,11 @@ contains
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
 !  ============================
@@ -76,11 +76,11 @@ contains
    ! Returns TRUE if the matrix "b" has the same shape as self
    end
 
-   is_cube result (res) ::: get_frim(MAT3{INTRINSIC}), pure
+   is_cube result (res) ::: get_from(MAT3{INTRINSIC}), pure
    ! Returns TRUE if self is a cube
    end
 
-   set_to(b) ::: get_frim(MAT3{INTRINSIC}), pure
+   set_to(b) ::: get_from(MAT3{INTRINSIC}), pure
    ! Set "self" to vector "b" in standard order
    end
 
