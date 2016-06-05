@@ -1122,7 +1122,7 @@ contains
       same: do i = 2,.dim
 
          ! Any the same?
-         if (any(self(i)==unique(1:n)) cycle same
+         if (any(self(i)==unique(1:n))) cycle same
 
          ! Not the same
          n = n + 1
@@ -1132,48 +1132,6 @@ contains
 
       ! Shrink -- if needed
       if (n<.dim) self = unique(1:n)
-
-   end
-
-! Old
-
-   remove_repetitions ::: leaky, PURE
-   ! Remove repeated elements which come later in the list. 
-   ! NOTE: the vector may shrink. 
-   ! NOTE: this version for bin, str, int
-      self :: allocatable, INOUT
-
-   ENSURE(.created,"no vector")
-
-      unique :: VEC{INTRINSIC}(len=len(self(1)))*
-      i,j,n :: INT
-      found :: BIN
-
-      if (.dim==1) return
-
-      unique.create(.dim)
-      n = 1
-      unique(1) = self(1)
-
-      do i = 2,.dim
-
-         found = FALSE
-         do j = 1,n
-            if (self(i)/=unique(j)) cycle
-            found = TRUE
-         end
-         if (found) cycle
-
-         n = n + 1
-         unique(n) = self(i)
-
-      end
-
-      .destroy
-      .create(n)
-      self = unique(1:n)
-
-      unique.destroy
 
    end
 
@@ -1271,7 +1229,7 @@ contains
    ! Sort through the vector and return the unique elements
    ! NOTE: this version for bin, str, int
       self :: IN
-      unique :: VEC{INTRINSIC}(len=len(self(1)))*
+      unique :: VEC{INTRINSIC}(len=len(self(1)))@
 
    ENSURE(.dim>0,"no zero-size vector")
 

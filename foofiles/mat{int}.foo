@@ -574,7 +574,7 @@ contains
       self :: allocatable, INOUT
       X,Y :: VEC{REAL}, IN
       bin_side_length :: REAL, IN
-      data_count :: VEC{INT}*, optional
+      data_count :: VEC{INT}@, optional, OUT
 
    ENSURE(X.dim==Y.dim,"incompatible data points")
 
@@ -640,7 +640,7 @@ contains
       self :: allocatable, INOUT
       X,Y :: VEC{REAL}, IN
       XY_min,XY_max,bin_side_length :: REAL, IN
-      data_count :: VEC{INT}*, optional
+      data_count :: VEC{INT}@, optional, OUT
 
    ENSURE(X.dim==Y.dim,"incompatible data points")
 

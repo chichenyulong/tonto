@@ -191,7 +191,7 @@ contains
 ! =============================
 
    remove_repetitions ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Remove repeated elements which come later in the list. 
+   ! Remove repeated elements from "self".
    ! NOTE: the vector may shrink. 
    ! NOTE: this version for bin, str, int
    end

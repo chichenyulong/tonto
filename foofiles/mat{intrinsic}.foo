@@ -4572,7 +4572,7 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-     old,new :: VEC{INTRINSIC}@
+     old,new :: VEC{INTRINSIC}* ! ptr ok
      fac :: INTRINSIC
      n,o :: INT
      norm,norm2 :: REAL
@@ -4588,10 +4588,10 @@ contains
         end
 
         norm2     = S.dot(new,new)
-        norm      = sqrt(norm_sq)
+        norm      = sqrt(norm2)
         scales(n) = norm
 
-        if(norm_sq>MAT_LINEAR_DEPENDENCE_TOL) new = new/norm
+        if(norm2>MAT_LINEAR_DEPENDENCE_TOL) new = new/norm
 
      end
 
@@ -4612,8 +4612,8 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-      cols :: MAT{INTRINSIC}@
-      old,new :: VEC{INTRINSIC}@
+      cols :: MAT{INTRINSIC}@, target
+      old,new :: VEC{INTRINSIC}* ! ptr ok
       fac :: INTRINSIC
       n,o :: INT
       test,norm,norm0 :: REAL
@@ -4668,7 +4668,7 @@ contains
 
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-     old,new :: VEC{INTRINSIC}@
+     old,new :: VEC{INTRINSIC}* ! ptr ok
      fac :: INTRINSIC
      n,o :: INT
      norm :: REAL
@@ -4711,7 +4711,7 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-      old,new :: VEC{INTRINSIC}@
+      old,new :: VEC{INTRINSIC}* ! ptr ok
       fac :: INTRINSIC
       n,o :: INT
       norm :: REAL
@@ -4759,7 +4759,7 @@ contains
    ENSURE(from>to,"from must be greater than to")
    ENSURE(from<=.dim2,"from to large")
 
-      old,new :: VEC{INTRINSIC}@
+      old,new :: VEC{INTRINSIC}* ! ptr ok
       fac :: INTRINSIC
       n,o :: INT
       norm :: REAL
@@ -4798,7 +4798,7 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-      old,new :: VEC{INTRINSIC}@
+      old,new :: VEC{INTRINSIC}* ! ptr ok
       fac :: INTRINSIC
       n,o :: INT
       norm :: REAL
@@ -4838,7 +4838,7 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero, "self is zero matrix")
 
-      new,old :: VEC{INTRINSIC}@
+      new,old :: VEC{INTRINSIC}* ! ptr ok
       fac :: INTRINSIC
       n,o :: INT
       norm :: REAL
@@ -4868,7 +4868,7 @@ contains
 
    ENSURE(.dim1>=.dim2,"more vectors than dimension of vector space")
 
-      new,old :: VEC{INTRINSIC}@
+      new,old :: VEC{INTRINSIC}* ! ptr ok
       fac :: INTRINSIC
       norm :: REAL
       n,k :: INT
@@ -5182,7 +5182,7 @@ contains
       W :: MAT{INTRINSIC}@
       dim,k :: INT
       e,e2,cs,sn :: REAL
-      v_k :: MAT{INTRINSIC}@
+      v_k :: MAT{INTRINSIC}* ! ptr ok
 
       dim = .dim1
 
@@ -5349,7 +5349,7 @@ contains
    alpha_alpha result (res)
    ! return the alpha-alpha sector of the matrix
       self :: target
-      res :: MAT{INTRINSIC}@
+      res :: MAT{INTRINSIC}* ! ptr ok
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1.is_even,"not even-dimensioned")
@@ -5364,7 +5364,7 @@ contains
    beta_alpha result (res)
    ! return the beta-alpha sector of the matrix
       self :: target
-      res :: MAT{INTRINSIC}@
+      res :: MAT{INTRINSIC}* ! ptr ok
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1.is_even,"not even-dimensioned")
@@ -5379,7 +5379,7 @@ contains
    alpha_beta result (res)
    ! return the alpha-beta sector of the matrix
       self :: target
-      res :: MAT{INTRINSIC}@
+      res :: MAT{INTRINSIC}* ! ptr ok
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1.is_even,"not even-dimensioned")
@@ -5394,7 +5394,7 @@ contains
    beta_beta result (res)
    ! return the beta-beta sector of the matrix
       self :: target
-      res :: MAT{INTRINSIC}@
+      res :: MAT{INTRINSIC}* ! ptr ok
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1.is_even,"not even-dimensioned")
@@ -5771,7 +5771,7 @@ contains
    ENSURE(X.is_square,"X is non-square matrix")
 
       offset, ns,nx,nb, i,j,ix,ib,jx,jb :: INT
-      list :: VEC{INT}@
+      list :: VEC{INT}* ! ptr ok
 
       ! Convenient dimensions
       ns = block_dim

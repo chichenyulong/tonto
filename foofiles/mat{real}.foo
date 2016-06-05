@@ -38,8 +38,8 @@ module MAT{REAL}
    end
 
    ! For getting rotation matrix to match vectors
-   saved_reference :: MAT{REAL}*, private   DEFAULT_NULL
-   saved_actual    :: MAT{REAL}*, private   DEFAULT_NULL
+   saved_reference :: MAT{REAL}*, private DEFAULT_NULL
+   saved_actual    :: MAT{REAL}*, private DEFAULT_NULL
 
 contains
 
@@ -1240,7 +1240,7 @@ contains
    ENSURE(size(lambda)>=.dim2,"not enough eigenvalues")
    ENSURE(.dim1>=.dim2,"more vectors than dimension of vector space")
 
-     new,old :: VEC{REAL}@
+     new,old :: VEC{REAL}* ! ptr ok
      fac,norm :: REAL
      dim1,dim2,n,k,x,y,j :: INT
 
@@ -1306,7 +1306,7 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
 
      decreasing_vec :: MAT{REAL}@
-     old,new :: VEC{REAL}@
+     old,new :: VEC{REAL}* ! ptr ok
      keep :: VEC{REAL}@
      fac :: REAL
      tol :: REAL
@@ -1406,7 +1406,7 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
 
      decreasing_vec :: MAT{REAL}@
-     old,new :: VEC{REAL}@
+     old,new :: VEC{REAL}* ! ptr ok
      keep :: VEC{REAL}@
      fac :: REAL
      tol :: REAL
@@ -2033,7 +2033,7 @@ contains
    ! yeilding vector "solution" as the answer
       rhs :: VEC{REAL}, IN
       solution :: VEC{REAL}, OUT
-      fail :: BIN, OUT, optional
+      fail :: BIN, optional, OUT
 
       .solve_linear_equation_LAPACK(rhs,solution,fail)
 
@@ -2045,7 +2045,7 @@ contains
       self :: INOUT
       rhs :: VEC{REAL}, IN
       solution :: VEC{REAL}, OUT
-      fail :: BIN, OUT, optional
+      fail :: BIN, optional, OUT
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(rhs.dim==.dim1,"incompatible rhs")
@@ -2057,8 +2057,9 @@ contains
 
       dim = rhs.dim
       nrhs = 1
-      nullify(LU); LU.create(dim,dim)
-      nullify(pivot); pivot.create(dim)
+
+      LU.create(dim,dim)
+      pivot.create(dim)
 
       LU = self
       solution = rhs
@@ -2142,8 +2143,8 @@ contains
       rhs :: VEC{REAL}, IN
       solution :: VEC{REAL}, OUT
       plist :: VEC{INT}, IN
-      keep0,keep1 :: VEC{INT}, IN, optional
-      fail :: BIN, OUT, optional
+      keep0,keep1 :: VEC{INT}, optional, IN
+      fail :: BIN, optional, OUT
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(rhs.dim==.dim1,"incompatible rhs")
@@ -2159,117 +2160,87 @@ contains
       e,e0 :: REAL
       found_one,even :: BIN
 
-!      if (.dim1==6) then
-!      list.create(4)
-!      sol.create(.dim1)
-!      sol = ZERO
-!      sol(1) = 0.3
-!      sol(2) = 0.7
-!      sol(4) = 0.4
-!      sol(5) = 0.6
-!      list = [1,2,4,5]
-!            e0 = dot_product(rhs(list),sol(list)) &
-!               - HALF*dot_product(sol(list),matmul(self(list,list),sol(list)))
-!      print *, "===in MAT, average energy =",e0
-!      sol.destroy
-!      list.destroy
-!      end
-!!      if (.dim1==3) then
-!!      list.create(2)
-!!      sol.create(.dim1)
-!!      sol = ZERO
-!!      sol(1) = 0.3
-!!      sol(2) = 0.7
-!!      list = [1,2]
-!!            e0 = dot_product(rhs(list),sol(list)) &
-!!               - HALF*dot_product(sol(list),matmul(self(list,list),sol(list)))
-!!      print *, "===in MAT, average energy =",e0
-!!      sol.destroy
-!!      list.destroy
-!!      end
       even = FALSE
       if (present(keep0)) then
          ENSURE(keep0.has_all_elements_common_with(plist),"keep0 not in plist")
          kdim = keep0.dim
          even = kdim.is_even
       end
+
       if (present(keep1)) then
          ENSURE(keep1.has_all_elements_common_with(plist),"keep1 not in plist")
          kdim = keep1.dim
          even = kdim.is_even
       end
+
       pdim = plist.dim
       WARN_IF(pdim>=20,"LHS dimension may be too large")
+
       found_one = FALSE
       e = huge(ONE)
+
       sol.create(.dim1)
-      ulist.create(.dim1); ulist = [(k,k=1,.dim1)]
+      ulist.create(.dim1)
+      ulist = [(k,k=1,.dim1)]
       ulist.prune(plist)                          ! ulist = all - plist = unconstrained
-    ! print *, "-----------start------------"
-    ! print *, "even =",even
-    ! print *, "plist:"
-    ! print *, plist
-    ! print *, "ulist:"
-    ! print *, ulist
-      do k = pdim,1,-1 ! Loop over indice groups of length "k" which are non-zero
-    ! print *, "---> combinations of length k =", k
+
+      ! Loop over indice groups of length "k" which are non-zero
+      do k = pdim,1,-1 
+
          if (present(keep1)) then
             if (k>2*kdim) cycle
          end
+
          n_combinations = int(pdim.choose(k))
          combination.create(k,n_combinations)
          plist.make_combinations_of_length(k,combination)
+
          rdim = k + .dim1 - pdim
          rhs0.create(rdim)
          sol0.create(rdim)
          list.create(rdim)                        ! list = comb(plist) + ulist
+
          do n = 1,n_combinations                  ! Loop over a particular "k" length combo
-    ! print *, "combination:"
-    ! print *, combination(:,n)
+
             if (present(keep1)) then               ! if present, keep only these elements
                if (NOT keep1.has_all_elements_common_with(combination(:,n))) cycle
             end
+
             if (present(keep0)) then               ! if present, keep only these elements
-    ! print *, "keep0:"
-    ! print *, keep0
              ! if (NOT keep0.has_all_elements_common_with(combination(:,n))) cycle
                if (NOT keep0.has_elements_common_with(combination(:,n))) cycle
                if (even AND all(combination(:,n)> .dim1/2)) cycle
                if (even AND all(combination(:,n)<=.dim1/2)) cycle
             end
+
             list(1:k)  = combination(:,n)         ! The "list" of non-zero solution elements
             list(k+1:) = ulist                    ! Always add the list of unconstrained elements
-    ! print *, "list:"
-    ! print *, list
-    ! print *, "rhs:"
-    ! print *, rhs
             rhs0 = rhs(list)
-    ! print *, "rhs0:"
-    ! print *, rhs0
-    ! print *, "lhs0:"
-    ! print *, self(list,list)
             self(list,list).solve_linear_equation(rhs0,sol0) ! Find the subset solution, "sol"
             sol(list) = sol0
-    ! print *, "sol0:"
-    ! print *, sol0
-    ! print *, "sol:"
-    ! print *, sol
-            if (NOT present(keep1) AND any(sol(list(1:k))<ZERO)) cycle  ! Unacceptable ..............
+
+            ! Unacceptable ..............
+            if (NOT present(keep1) AND any(sol(list(1:k))<ZERO)) cycle  
+
             e0 = dot_product(rhs(list),sol(list)) &
                - HALF*dot_product(sol(list),matmul(self(list,list),sol(list)))
-    ! print *, "e0 = ",e0
+
             if (e0>=e) cycle                      ! Found a better solution before
+
             solution = ZERO                       ! Zero non-"list" solution elements
             solution(list) = sol(list)            ! Keep this solutions
-    ! print *, "new solution found:"
-    ! print *, solution
             e = e0                                ! Keep this E value
             found_one = TRUE
+
          end
+
          list.destroy
-         sol0.destroy; rhs0.destroy
+         sol0.destroy
+         rhs0.destroy
          combination.destroy
+
       end
+
       ulist.destroy
       sol.destroy
       if (present(fail)) then
@@ -2279,6 +2250,7 @@ contains
       else
          DIE_IF(NOT found_one,"acceptable solution was not found")
       end
+
    end
 
    solve_ill_linear_equations(rhs,solution,tol_0,n_0,tol_near_0,n_near_0,eval_near_0,evec_near_0,inverse,CM) ::: leaky
@@ -2286,11 +2258,11 @@ contains
    ! "self" less than "tol_near_0" are ignored.
       rhs :: VEC{REAL}, IN
       solution :: VEC{REAL}, OUT
-      tol_0,tol_near_0 :: REAL, IN, optional
-      n_0,n_near_0 :: INT, OUT, optional
-      eval_near_0 :: VEC{REAL}*, optional
-      evec_near_0 :: MAT{REAL}*, optional
-      inverse,CM :: MAT{REAL}, OUT, optional
+      tol_0,tol_near_0 :: REAL, optional, IN
+      n_0,n_near_0 :: INT, optional, OUT
+      eval_near_0 :: VEC{REAL}@, optional, OUT
+      evec_near_0 :: MAT{REAL}@, optional, OUT
+      inverse,CM :: MAT{REAL}, optional, OUT
 
    ENSURE(.is_square,"not square")
    ENSURE(present(tol_0)       EQV present(n_0),        "tol/n_0 not both present")
@@ -2505,7 +2477,7 @@ contains
       tol :: REAL, optional, IN
       n_small :: INT, optional, OUT
 
-      eval :: VEC{REAL}* DEFAULT_NULL
+      eval :: VEC{REAL}@
       d,i,j,k,n :: INT
       val :: STR
       eps,temp :: REAL
@@ -2562,11 +2534,10 @@ contains
       self :: OUT
       R :: MAT{REAL}, IN
 
- ! Looks like compiler problem for gfortran on 3/3/09
- ! ENSURE(.is_symmetric,"not symmetric")
+   ENSURE(.is_symmetric,"not symmetric")
 
-      evec :: MAT{REAL}* DEFAULT_NULL
-      eval :: VEC{REAL}* DEFAULT_NULL
+      evec :: MAT{REAL}@
+      eval :: VEC{REAL}@
       d,i,j,k :: INT
       temp :: REAL
 
@@ -2609,7 +2580,7 @@ contains
       R_evec :: MAT{REAL}, target, IN
       tol :: REAL, optional, IN
 
-      eval :: VEC{REAL}* DEFAULT_NULL
+      eval :: VEC{REAL}@
       d,i,j,k :: INT
       val :: STR
       eps,temp :: REAL
@@ -3607,7 +3578,8 @@ contains
    ENSURE(.is_same_shape_as(left),"left is incompatible")
    ENSURE(size(theta)==min(.dim1,.dim1-p),"theta has wrong size")
 
-      Vp,Vq,Wp,Wq,M,MWq,Hq,Up,Uq :: MAT{REAL}@
+      Vp,Vq,Wp,Wq,M,Up,Uq :: MAT{REAL}* ! ptr ok
+      MWq,Hq :: MAT{REAL}@
       lambda :: VEC{REAL}@
       minpq,q,n :: INT
 
@@ -3624,10 +3596,12 @@ contains
       M  => self(:p,p+1:)
       Up => self(:p,:p)
       Uq => self(p+1:,p+1:)
-      right(:p,p+1:)=ZERO
-      right(p+1:,:p)=ZERO
-      left(:p,p+1:)=ZERO
-      left(p+1:,:p)=ZERO
+
+      right(   :p,p+1: ) = ZERO
+      right(p+1: ,   :p) = ZERO
+      left(    :p,p+1: ) = ZERO
+      left( p+1:,    :p) = ZERO
+
       .zero_small_values(TOL(10))
 
       ! get eigenvalues and Wq.
@@ -3685,7 +3659,7 @@ contains
    ENSURE(.dim1==(l_max+1)*(l_max+1),"self has wrong dimension")
 
       Rc,Rs :: VEC{VEC_{REAL}}@, target
-      Rc_lj,Rs_lj :: VEC{REAL}@
+      Rc_lj,Rs_lj :: VEC{REAL}* ! ptr ok
       j,k,jk,l,m,lm,sk,lj,mmk,mpk :: INT
       fac :: REAL
 
@@ -3807,7 +3781,7 @@ contains
    ENSURE(.dim1==(l_max+1)*(l_max+1),"self has wrong dimension")
 
       Rc,Rs :: VEC{VEC_{REAL}}@, target
-      Rc_lj,Rs_lj :: VEC{REAL}@
+      Rc_lj,Rs_lj :: VEC{REAL}* ! ptr ok
       j,k,jk,l,m,lm,sk,lj,mmk,mpk :: INT
       fac :: REAL
 
@@ -3922,7 +3896,7 @@ contains
    ENSURE(.dim2==(j_max+1)*(j_max+1),"self has wrong 1st (j_max) dimension")
 
       Ic,Is :: VEC{VEC_{REAL}}@, target
-      Ic_lj,Is_lj :: VEC{REAL}@
+      Ic_lj,Is_lj :: VEC{REAL}* ! ptr ok
       j,k,jk,sj,l,m,lm,sk,lj,mmk,mpk :: INT
       fac,fk,fm :: REAL
 
@@ -4044,7 +4018,7 @@ contains
    ENSURE(.dim2==(j_max+1)*(j_max+1),"self has wrong 1st (j_max) dimension")
 
       Ic,Is :: VEC{VEC_{REAL}}@, target
-      Ic_lj,Is_lj :: VEC{REAL}@
+      Ic_lj,Is_lj :: VEC{REAL}* ! ptr ok
       j,k,jk,sj,l,m,lm,sk,lj,mmk,mpk :: INT
       fac,fk,fm :: REAL
 

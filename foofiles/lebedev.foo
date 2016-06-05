@@ -39,7 +39,7 @@
 !       Russian Acad. Sci. Dokl. Math., vol. 50, 1995, pp. 283-286. 
 !
 !   [3] V.I. Lebedev, and A.L. Skorokhodov
-!       "Quadrature formulas of orders 41, 47, and 53 for the sphere"
+      self :: allocatable, INOUT
 !       Russian Acad. Sci. Dokl. Math., vol. 45, 1992, pp. 587-592. 
 !
 !   [4] V.I. Lebedev
@@ -115,8 +115,10 @@ contains
    ! it *increases* to the nearest number which is allowed.
       self :: allocatable, INOUT
       n_points :: INT
+
    ENSURE(n_points>=1,"n_points must be greater than 6")
    ENSURE(n_points<=5810,"n_points must be less than 5810")
+
       select case (n_points)
          case (1:6);       .ld0006
          case (7:14);      .ld0014
@@ -392,7 +394,7 @@ contains
    ld0006 ::: leaky
    ! Lebedev 6-point angular grid
    ! L=3?
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(6,1) 
       .l = 3
@@ -403,7 +405,7 @@ contains
    ld0014 ::: leaky
    ! Lebedev 14-point angular grid
    ! L=5
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(14,2) 
       .l = 5
@@ -416,7 +418,7 @@ contains
    ld0026 ::: leaky
    ! Lebedev 26-point angular grid
    ! L=7?
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(26,3) 
       .l = 7
@@ -431,7 +433,7 @@ contains
    ld0038 ::: leaky
    ! Lebedev 38-point angular grid
    ! L = 9
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(38,3) 
       .l = 9
@@ -447,7 +449,7 @@ contains
    ld0050 ::: leaky
    ! Lebedev 50-point angular grid
    ! L=11
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(50,4) 
       .l = 11
@@ -465,7 +467,7 @@ contains
    ld0074 ::: leaky
    ! Lebedev 74-point angular grid
    ! L=13?
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(74,5) 
       .l = 13
@@ -486,7 +488,7 @@ contains
    ld0086 ::: leaky
    ! Lebedev 86-point angular grid
    ! L=15
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(86,5) 
       .l = 15
@@ -508,7 +510,7 @@ contains
    ld0110 ::: leaky
    ! Lebedev 110-point angular grid
    ! L=17
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(110,6) 
       .l = 17
@@ -533,7 +535,7 @@ contains
    ld0146 ::: leaky
    ! Lebedev 146-point angular grid
    ! L=19
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(146,7) 
       .l = 19
@@ -561,7 +563,7 @@ contains
    ld0170 ::: leaky
    ! Lebedev 170-point angular grid
    ! L=21?
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(170,8) 
       .l = 21
@@ -592,7 +594,7 @@ contains
    ld0194 ::: leaky
    ! Lebedev 194-point angular grid
    ! L=23
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(194,9) 
       .l = 23
@@ -626,7 +628,7 @@ contains
    ld0230 ::: leaky
    ! Lebedev 230-point angular grid
    ! L=25
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(230,10) 
       .l = 25
@@ -664,7 +666,7 @@ contains
    ld0266 ::: leaky
    ! Lebedev 266-point angular grid
    ! L=27
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(266,11) 
       .l = 27
@@ -705,7 +707,7 @@ contains
    ld0302 ::: leaky
    ! Lebedev 302-point angular grid
    ! L=29
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(302,12) 
       .l = 29
@@ -750,7 +752,7 @@ contains
    ld0350 ::: leaky
    ! Lebedev 350-point angular grid
    ! L=31?
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(350,13) 
       .l = 31
@@ -799,7 +801,7 @@ contains
    ld0434 ::: leaky
    ! Lebedev 434-point angular grid
    ! L=35
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(434,16) 
       .l = 35
@@ -857,7 +859,7 @@ contains
    ta0434 ::: leaky
    ! Updated Treutler-Ahlrichs 434-point angular grid
    ! L=35
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(434,16) 
       .l = 35
@@ -915,7 +917,7 @@ contains
    ld0590 ::: leaky
    ! Lebedev 590-point angular grid
    ! L=41
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(590,20) 
       .l = 41
@@ -988,7 +990,7 @@ contains
    ld0770 ::: leaky
    ! Lebedev 770-point angular grid
    ! L=47
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(770,25) 
       .l = 47
@@ -1078,7 +1080,7 @@ contains
    ld0974 ::: leaky
    ! Lebedev 974-point angular grid
    ! L=53
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(974,30) 
       .l = 53
@@ -1187,7 +1189,7 @@ contains
    ld1202 ::: leaky
    ! Lebedev 1202-point angular grid
    ! L=59
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(1202,36) 
       .l = 59
@@ -1316,7 +1318,7 @@ contains
 
    ld1454 ::: leaky
    ! Lebedev 1454-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(1454,42) 
       .l = 65
@@ -1468,7 +1470,7 @@ contains
 
    ld1730 ::: leaky
    ! Lebedev 1730-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(1730,49) 
       .l = 71
@@ -1645,7 +1647,7 @@ contains
 
    ld2030 ::: leaky
    ! Lebedev 2030-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(2030,56) 
       .l = 77
@@ -1849,7 +1851,7 @@ contains
 
    ld2354 ::: leaky
    ! Lebedev 2354-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(2354,64) 
       .l = 83
@@ -2082,7 +2084,7 @@ contains
 
    ld2702 ::: leaky
    ! Lebedev 2702-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(2702,72) 
       .l = 89
@@ -2346,7 +2348,7 @@ contains
 
    ld3074 ::: leaky
    ! Lebedev 3074-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(3074,81) 
       .l = 95
@@ -2643,7 +2645,7 @@ contains
 
    ld3470 ::: leaky
    ! Lebedev 3470-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(3470,90) 
       .l = 101
@@ -2975,7 +2977,7 @@ contains
 
    ld3890 ::: leaky
    ! Lebedev 3890-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(3890,100) 
       .l = 107
@@ -3344,7 +3346,7 @@ contains
 
    ld4334 ::: leaky
    ! Lebedev 4334-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(4334,110) 
       .l = 113
@@ -3752,7 +3754,7 @@ contains
 
    ld4802 ::: leaky
    ! Lebedev 4802-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(4802,121) 
       .l = 119
@@ -4201,7 +4203,7 @@ contains
 
    ld5294 ::: leaky
    ! Lebedev 5294-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(5294,132) 
       .l = 125
@@ -4693,7 +4695,7 @@ contains
 
    ld5810 ::: leaky
    ! Lebedev 5810-point angular grid
-      self  :: PTR
+      self :: allocatable, INOUT
       a,b,w :: REAL
       .set(5810,144) 
       .l = 131
