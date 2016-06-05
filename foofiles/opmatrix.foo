@@ -55,13 +55,26 @@ module OPMATRIX
 
 contains
 
-! ==========
-! Allocation
-! ==========
+!  ==========
+!  Allocation
+!  ==========
 
    create ::: get_from(OBJECT), leaky, PURE
-   ! Create an object
+   ! Allocate an object and set defaults
    end
+
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
+   end
+
+   created result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has been allocated
+   end
+
+   destroyed result (res) ::: get_from(OBJECT), pure
+   ! Returns true if self has *not* been allocated
+   end
+
 
    create(n_bf) ::: leaky, PURE
    ! Create an opmatrix object, in a basis set with "n_bf" spatial orbitals
@@ -82,10 +95,6 @@ contains
       .create(n_bf)
       .create(genre)
 
-   end
-
-   destroy ::: get_from(OBJECT), leaky, PURE
-   ! Deallocate "self"
    end
 
    create(genre) ::: leaky, PURE
@@ -121,36 +130,18 @@ contains
    ENSURE(genre.is_one_of(allowed_kinds), "unknown genre, "//trim(genre))
 
       select case (genre)
-         case ("restricted");           .restricted.destroy
-         case ("unrestricted");         .alpha.destroy; .beta.destroy
-         case ("alpha");                .alpha.destroy
-         case ("beta");                 .beta.destroy
-         case ("general");              .general.destroy
-         case ("restricted_complex");   .restricted_complex.destroy
-         case ("unrestricted_complex"); .alpha_complex.destroy
-                                        .beta_complex.destroy
-         case ("alpha_complex");        .alpha_complex.destroy
-         case ("beta_complex");         .beta_complex.destroy
-         case ("general_complex");      .general_complex.destroy
-         case ("all");                  .destroy_ptr_part
+      case ("restricted");           .restricted.destroy
+      case ("unrestricted");         .alpha.destroy; .beta.destroy
+      case ("alpha");                .alpha.destroy
+      case ("beta");                 .beta.destroy
+      case ("general");              .general.destroy
+      case ("restricted_complex");   .restricted_complex.destroy
+      case ("unrestricted_complex"); .alpha_complex.destroy
+                                     .beta_complex.destroy
+      case ("alpha_complex");        .alpha_complex.destroy
+      case ("beta_complex");         .beta_complex.destroy
+      case ("general_complex");      .general_complex.destroy
       end
-
-   end
-
-   nullify_ptr_part ::: pure
-   ! Nullify the pointer parts of the opmatrix object
-      self :: INOUT
-
-      nullify(.restricted)
-      nullify(.alpha)
-      nullify(.beta)
-      nullify(.general)
-      nullify(.restricted_complex)
-      nullify(.alpha_complex)
-      nullify(.beta_complex)
-      nullify(.general_complex)
-      nullify(.triangle)
-      nullify(.square)
 
    end
 
@@ -171,13 +162,6 @@ contains
 
    end
 
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
 
    created(genre) result (res) ::: pure
    ! Returns FALSE if "self" is not created.
@@ -187,8 +171,8 @@ contains
       res :: BIN
 
       res = FALSE
-      if (NOT associated(self)) then; res = FALSE
-      else;                           res = .has_genre(genre)
+      if (NOT .created) then; res = FALSE
+      else;                   res = .has_genre(genre)
       end
 
    end
@@ -200,7 +184,7 @@ contains
       res :: BIN
 
       res = FALSE
-      if (NOT associated(self)) then; res = TRUE
+      if (NOT .created) then; res = TRUE
       else;                           res = NOT .has_genre(genre)
       end
 
@@ -251,51 +235,9 @@ contains
 
    end
 
-! ====
-! Copy
-! ====
-
-   create_copy(mx) ::: leaky, PURE
-   ! Create an opmatrix object
-      self :: allocatable, INOUT
-      mx :: OPMATRIX, IN
-
-      .create(mx.n_bf)
-      .set_to(mx)
-
-   end
-
-   set_to(mx) ::: leaky, PURE
-   ! Set "self" to "mx".
-      self :: INOUT
-      mx :: OPMATRIX, IN
-
-      .set(mx.n_bf)
-
-      .destroy_ptr_part
-
-      if (mx.restricted.created)         .restricted.create_copy(mx.restricted)
-      if (mx.alpha.created)              .alpha.create_copy(mx.alpha)
-      if (mx.beta.created)               .beta.create_copy(mx.beta)
-      if (mx.general.created)            .general.create_copy(mx.general)
-      if (mx.restricted_complex.created) .restricted_complex.create_copy(mx.restricted_complex)
-      if (mx.alpha_complex.created)      .alpha_complex.create_copy(mx.alpha_complex)
-      if (mx.beta_complex.created)       .beta_complex.create_copy(mx.beta_complex)
-      if (mx.general_complex.created)    .general_complex.create_copy(mx.general_complex)
-
-   end
-
-! ===========
-! Set methods
-! ===========
-
-   set_defaults ::: pure
-   ! Set defaults
-      self :: INOUT
-
-      .n_bf = 0
-
-   end
+!  ===========
+!  Set methods
+!  ===========
 
    set(n_bf) ::: pure
    ! Set with "n_bf" spatial orbitals
@@ -322,25 +264,31 @@ contains
 
    end
 
-! ===============
-! Inquiry methods
-! ===============
+!  ===============
+!  Inquiry methods
+!  ===============
 
-   has_genre(genre) result (res) ::: pure
+   has_genre(genre) result (res) ::: PURE
    ! Returns FALSE if self is not created.
    ! Returns FALSE, unless subkind "genre" of self has been created.
       self :: IN
       genre :: STR, IN
       res :: BIN
 
+   ENSURE(genre.is_one_of(allowed_kinds), "unknown genre, "//trim(genre))
+
       res = FALSE
       select case (genre)
-         case ("restricted");           res = .restricted.created
-         case ("unrestricted");         res = .alpha.created AND .beta.created
-         case ("general");              res = .general.created
-         case ("restricted_complex");   res = .restricted_complex.created
-         case ("unrestricted_complex"); res = .alpha_complex.created
-         case ("general_complex");      res = .general_complex.created
+      case ("restricted          "); res = .restricted.created
+      case ("unrestricted        "); res = .alpha.created AND .beta.created
+      case ("alpha               "); res = .alpha.created
+      case ("alpha               "); res =  .beta.created
+      case ("general             "); res = .general.created
+      case ("restricted_complex  "); res = .restricted_complex.created
+      case ("unrestricted_complex"); res = .alpha_complex.created
+      case ("alpha_complex       "); res = .alpha_complex.created
+      case ("beta_complex        "); res =  .beta_complex.created
+      case ("general_complex     "); res = .general_complex.created
       end
 
    end
@@ -520,9 +468,7 @@ contains
    spinorbital_kind(genre) result (res) ::: PURE
    ! Return the kind of spinorbitals used in the representation
    ! NOTE: The *simplest* spinorbital kind in use is the one returned.
-   ! ****************************************************************
-   ! NOTE: Use as a last resort. Use the scfdata.scf_kind if possible.
-   ! ****************************************************************
+   ! NOTE: =Use as last resort. Use the scfdata.scf_kind if possible=
       self :: IN
       genre :: STR, IN, optional
       res :: STR
@@ -550,10 +496,8 @@ contains
    end
 
    guess_scf_kind result (res) ::: pure
-   ! Guess the kind of SCF to be used from the spinorbitals used in the
-   ! ****************************************************************
-   ! representation. WARNING: use as a last resort.
-   ! ****************************************************************
+   ! Guess the kind of SCF to be used from the spinorbitals used in
+   ! the representation. WARNING: use as a last resort.
       self :: IN
       res :: STR
 
@@ -576,9 +520,9 @@ contains
    ! Convert self to a new basis kind "newkind".  To convert MO's
    ! please use the next routine.
       self :: INOUT
-      newkind :: STR
-      factor :: REAL, optional
-      destroy_original :: BIN, optional
+      newkind :: STR, IN
+      factor :: REAL, optional, IN
+      destroy_original :: BIN, optional, IN
 
       oldkind :: STR
       destroy_oldkind :: BIN
@@ -704,9 +648,10 @@ contains
    convert_to(newkind,na,nb,quantization_axis) ::: leaky
    ! Convert self (which is regarded to be a set of MO's) to a
    ! new basis kind "newkind"
-      newkind :: STR
-      na,nb :: INT
-      quantization_axis :: VEC{REAL}(3), optional
+      self :: INOUT
+      newkind :: STR, IN
+      na,nb :: INT, IN
+      quantization_axis :: VEC{REAL}(3), optional, IN
 
       quantize :: BIN
       oldkind :: STR
@@ -724,136 +669,136 @@ contains
 
       select case (oldkind)
 
-         case("restricted")
+      case("restricted")
   
-            select case (newkind)
+         select case (newkind)
 
-               case("unrestricted")
-                  .alpha = .restricted
-                  .beta  = .restricted
-
-               case("general")
-                  .general = ZERO
-                  .general(  1:d,     1:2*nb-1:2) = .restricted(:,   1:nb)
-                  .general(d+1: ,     2:2*nb  :2) = .restricted(:,   1:nb)
-                  .general(  1:d,2*nb+1:ne      ) = .restricted(:,nb+1:na)
-                  .general(d+1: ,  ne+1:2*na    ) = .restricted(:,nb+1:na)
-                  .general(1:d  ,2*na+1:2*d -1:2) = .restricted(:,na+1: d)
-                  .general(d+1: ,2*na+2:2*d   :2) = .restricted(:,na+1: d)
-
-               case("restricted_complex")
-                  .restricted_complex = .restricted
-
-               case("unrestricted_complex")
-                  .alpha_complex = .restricted
-                  .beta_complex  = .restricted
-
-               case("general_complex")
-                  .general_complex = ZERO
-                  .general_complex(  1:d,     1:2*nb-1:2) = .restricted(:,   1:nb)
-                  .general_complex(d+1: ,     2:2*nb  :2) = .restricted(:,   1:nb)
-                  .general_complex(  1:d,2*nb+1:ne      ) = .restricted(:,nb+1:na)
-                  .general_complex(d+1: ,  ne+1:2*na    ) = .restricted(:,nb+1:na)
-                  .general_complex(  1:d,2*na+1:2*d -1:2) = .restricted(:,na+1: d)
-                  .general_complex(d+1: ,2*na+2:2*d   :2) = .restricted(:,na+1: d)
-
-               case default
-                  DIE("cant convert kind "//trim(oldkind)//" to kind "//trim(newkind))
-
-            end
-  
          case("unrestricted")
-  
-            select case (newkind)
+            .alpha = .restricted
+            .beta  = .restricted
 
-               case("restricted","alpha")
-                  .restricted = .alpha ! Loss of information here
-                  WARN("Conversion from unrestricted to restricted ignores beta orbitals")
-
-               case("beta")
-                  .restricted = .beta  ! Loss of information here
-                  WARN("Conversion from unrestricted to restricted ignores alpha orbitals")
-
-               case("general")
-                  .general = ZERO
-                  .general(  1:d,     1:2*nb-1:2) = .alpha(:,   1:nb)
-                  .general(d+1: ,     2:2*nb  :2) = .beta (:,   1:nb)
-                  .general(  1:d,2*nb+1:ne      ) = .alpha(:,nb+1:na)
-                  .general(d+1: ,  ne+1:2*na    ) = .beta (:,nb+1:na)
-                  .general(  1:d,2*na+1:2*d -1:2) = .alpha(:,na+1: d)
-                  .general(d+1: ,2*na+2:2*d   :2) = .beta (:,na+1: d)
-
-               case("unrestricted_complex")
-                  .alpha_complex = .alpha
-                  .beta_complex  = .beta
-
-               case("general_complex")
-
-                  .general_complex = ZERO
-
-                  quantize = FALSE
-                  if (present(quantization_axis)) &
-                     quantize = NOT quantization_axis.equals((/ZERO,ZERO,ONE/))
-
-                  if (quantize) then
-
-                     lam = quantization_axis.norm
-                     tmp = abs(quantization_axis(3)+lam) ! always positive anyway
-                     if (tmp.equals(ZERO)) then
-                        ar = ZERO
-                        br = ONE
-                        bi = ZERO
-                     else
-                        ar = sqrt(tmp/(TWO*lam))
-                        br = ONE/sqrt(TWO*lam*tmp)
-                        bi = br
-                        br = br*quantization_axis(1)
-                        bi = bi*quantization_axis(2)
-                     end
-                     .general_complex(d+1: ,     1:  na) = cmplx(br,bi,kind=CPX_KIND)*.alpha(:,   1:na)
-                     .general_complex(  1:d,     1:  na) =           ar*.alpha(:,   1:na)
-                     .general_complex(d+1: ,  ne+1:nb+d) = cmplx(br,bi,kind=CPX_KIND)*.alpha(:,na+1: d)
-                     .general_complex(  1:d,  ne+1:nb+d) =           ar*.alpha(:,na+1: d)
-                     br = -br
-                     .general_complex(  1:d,  na+1:ne  ) = cmplx(br,bi,kind=CPX_KIND)*.beta (:,   1:nb)
-                     .general_complex(d+1: ,  na+1:ne  ) =           ar*.beta (:,   1:nb)
-                     .general_complex(  1:d,nb+d+1:    ) = cmplx(br,bi,kind=CPX_KIND)*.beta (:,nb+1: d)
-                     .general_complex(d+1: ,nb+d+1:    ) =           ar*.beta (:,nb+1: d)
-
-                  else
-
-                     .general_complex(  1:d,     1:na  ) = .alpha(:,   1:na)
-                     .general_complex(d+1: ,  na+1:ne  ) = .beta (:,   1:nb)
-                     .general_complex(  1:d,  ne+1:nb+d) = .alpha(:,na+1:  )
-                     .general_complex(d+1: ,nb+d+1:    ) = .beta (:,nb+1:  )
-                  end
-
-               case default
-
-                  DIE("cant convert kind "//trim(oldkind)//" to kind "//trim(newkind))
-
-            end
-  
          case("general")
+            .general = ZERO
+            .general(  1:d,     1:2*nb-1:2) = .restricted(:,   1:nb)
+            .general(d+1: ,     2:2*nb  :2) = .restricted(:,   1:nb)
+            .general(  1:d,2*nb+1:ne      ) = .restricted(:,nb+1:na)
+            .general(d+1: ,  ne+1:2*na    ) = .restricted(:,nb+1:na)
+            .general(1:d  ,2*na+1:2*d -1:2) = .restricted(:,na+1: d)
+            .general(d+1: ,2*na+2:2*d   :2) = .restricted(:,na+1: d)
+
+         case("restricted_complex")
+            .restricted_complex = .restricted
+
+         case("unrestricted_complex")
+            .alpha_complex = .restricted
+            .beta_complex  = .restricted
+
+         case("general_complex")
+            .general_complex = ZERO
+            .general_complex(  1:d,     1:2*nb-1:2) = .restricted(:,   1:nb)
+            .general_complex(d+1: ,     2:2*nb  :2) = .restricted(:,   1:nb)
+            .general_complex(  1:d,2*nb+1:ne      ) = .restricted(:,nb+1:na)
+            .general_complex(d+1: ,  ne+1:2*na    ) = .restricted(:,nb+1:na)
+            .general_complex(  1:d,2*na+1:2*d -1:2) = .restricted(:,na+1: d)
+            .general_complex(d+1: ,2*na+2:2*d   :2) = .restricted(:,na+1: d)
+
+         case default
+            DIE("cant convert kind "//trim(oldkind)//" to kind "//trim(newkind))
+
+         end
   
-            select case (newkind)
+      case("unrestricted")
+  
+         select case (newkind)
 
-               case("unrestricted")
-                  .general.alpha_alpha_put_to(.alpha)
-                  .general.beta_beta_put_to(.beta)
-                  WARN("Conversion from general to unrestricted not recommended!")
+         case("restricted","alpha")
+            .restricted = .alpha ! Loss of information here
+            WARN("Conversion from unrestricted to restricted ignores beta orbitals")
 
-               case("general_complex")
-                  .general_complex = .general
+         case("beta")
+            .restricted = .beta  ! Loss of information here
+            WARN("Conversion from unrestricted to restricted ignores alpha orbitals")
 
-               case default
-                  DIE("cant convert kind "//trim(oldkind)//" to kind "//trim(newkind))
+         case("general")
+            .general = ZERO
+            .general(  1:d,     1:2*nb-1:2) = .alpha(:,   1:nb)
+            .general(d+1: ,     2:2*nb  :2) = .beta (:,   1:nb)
+            .general(  1:d,2*nb+1:ne      ) = .alpha(:,nb+1:na)
+            .general(d+1: ,  ne+1:2*na    ) = .beta (:,nb+1:na)
+            .general(  1:d,2*na+1:2*d -1:2) = .alpha(:,na+1: d)
+            .general(d+1: ,2*na+2:2*d   :2) = .beta (:,na+1: d)
 
+         case("unrestricted_complex")
+            .alpha_complex = .alpha
+            .beta_complex  = .beta
+
+         case("general_complex")
+
+            .general_complex = ZERO
+
+            quantize = FALSE
+            if (present(quantization_axis)) &
+               quantize = NOT quantization_axis.equals((/ZERO,ZERO,ONE/))
+
+            if (quantize) then
+
+               lam = quantization_axis.norm
+               tmp = abs(quantization_axis(3)+lam) ! always positive anyway
+               if (tmp.equals(ZERO)) then
+                  ar = ZERO
+                  br = ONE
+                  bi = ZERO
+               else
+                  ar = sqrt(tmp/(TWO*lam))
+                  br = ONE/sqrt(TWO*lam*tmp)
+                  bi = br
+                  br = br*quantization_axis(1)
+                  bi = bi*quantization_axis(2)
+               end
+               .general_complex(d+1: ,     1:  na) = cmplx(br,bi,kind=CPX_KIND)*.alpha(:,   1:na)
+               .general_complex(  1:d,     1:  na) =           ar*.alpha(:,   1:na)
+               .general_complex(d+1: ,  ne+1:nb+d) = cmplx(br,bi,kind=CPX_KIND)*.alpha(:,na+1: d)
+               .general_complex(  1:d,  ne+1:nb+d) =           ar*.alpha(:,na+1: d)
+               br = -br
+               .general_complex(  1:d,  na+1:ne  ) = cmplx(br,bi,kind=CPX_KIND)*.beta (:,   1:nb)
+               .general_complex(d+1: ,  na+1:ne  ) =           ar*.beta (:,   1:nb)
+               .general_complex(  1:d,nb+d+1:    ) = cmplx(br,bi,kind=CPX_KIND)*.beta (:,nb+1: d)
+               .general_complex(d+1: ,nb+d+1:    ) =           ar*.beta (:,nb+1: d)
+
+            else
+
+               .general_complex(  1:d,     1:na  ) = .alpha(:,   1:na)
+               .general_complex(d+1: ,  na+1:ne  ) = .beta (:,   1:nb)
+               .general_complex(  1:d,  ne+1:nb+d) = .alpha(:,na+1:  )
+               .general_complex(d+1: ,nb+d+1:    ) = .beta (:,nb+1:  )
             end
-  
+
          case default
 
-            DIE("cant convert old kind "//trim(oldkind))
+            DIE("cant convert kind "//trim(oldkind)//" to kind "//trim(newkind))
+
+         end
+  
+      case("general")
+  
+         select case (newkind)
+
+         case("unrestricted")
+            .general.alpha_alpha_put_to(.alpha)
+            .general.beta_beta_put_to(.beta)
+            WARN("Conversion from general to unrestricted not recommended!")
+
+         case("general_complex")
+            .general_complex = .general
+
+         case default
+            DIE("cant convert kind "//trim(oldkind)//" to kind "//trim(newkind))
+
+         end
+  
+      case default
+
+         DIE("cant convert old kind "//trim(oldkind))
 
       end
 
@@ -874,15 +819,16 @@ contains
       end
 
       res = 0
+
       select case (k)
-         case("restricted          "); res = int(HALF*.n_bf*(.n_bf+1))
-         case("unrestricted        "); res =   .n_bf*(  .n_bf+1)
-         case("alpha               "); res =   .n_bf*(  .n_bf+1)/2
-         case("beta                "); res =   .n_bf*(  .n_bf+1)/2
-         case("general             "); res =   .n_bf*(2*.n_bf+1)
-         case("restricted_complex  "); res =   .n_bf*.n_bf
-         case("unrestricted_complex"); res = 2*.n_bf*.n_bf
-         case("general_complex     "); res = 4*.n_bf*.n_bf
+      case("restricted          "); res = int(HALF*.n_bf*(.n_bf+1))
+      case("unrestricted        "); res =   .n_bf*(  .n_bf+1)
+      case("alpha               "); res =   .n_bf*(  .n_bf+1)/2
+      case("beta                "); res =   .n_bf*(  .n_bf+1)/2
+      case("general             "); res =   .n_bf*(2*.n_bf+1)
+      case("restricted_complex  "); res =   .n_bf*.n_bf
+      case("unrestricted_complex"); res = 2*.n_bf*.n_bf
+      case("general_complex     "); res = 4*.n_bf*.n_bf
       end
 
    end
@@ -901,68 +847,68 @@ contains
 
       select case (k)
 
-         case("restricted")
-            .triangle.destroy
-            .triangle.create(.l_compress(k))
-            .restricted.zip_lower_triangle_to(.triangle)
-            .restricted.destroy
+      case("restricted")
+         .triangle.destroy
+         .triangle.create(.l_compress(k))
+         .restricted.zip_lower_triangle_to(.triangle)
+         .restricted.destroy
 
-         case("unrestricted")
-            l = .l_compress(k)
-            .triangle.destroy
-            .triangle.create(l)
-            W.create(l/2)
-            .alpha.zip_lower_triangle_to(W); .triangle.alpha_set_to(W)
-             .beta.zip_lower_triangle_to(W);  .triangle.beta_set_to(W)
-            W.destroy
-            .alpha.destroy
-            .beta.destroy
+      case("unrestricted")
+         l = .l_compress(k)
+         .triangle.destroy
+         .triangle.create(l)
+         W.create(l/2)
+         .alpha.zip_lower_triangle_to(W); .triangle.alpha_set_to(W)
+          .beta.zip_lower_triangle_to(W);  .triangle.beta_set_to(W)
+         W.destroy
+         .alpha.destroy
+         .beta.destroy
 
-         case("alpha")
-            l = .l_compress(k)
-            .triangle.destroy
-            .triangle.create(l)
-            W.create(l)
-            .alpha.zip_lower_triangle_to(W); .triangle.set_to(W)
-            W.destroy
-            .alpha.destroy
+      case("alpha")
+         l = .l_compress(k)
+         .triangle.destroy
+         .triangle.create(l)
+         W.create(l)
+         .alpha.zip_lower_triangle_to(W); .triangle.set_to(W)
+         W.destroy
+         .alpha.destroy
 
-         case("beta")
-            l = .l_compress(k)
-            .triangle.destroy
-            .triangle.create(l)
-            W.create(l)
-            .beta.zip_lower_triangle_to(W); .triangle.set_to(W)
-            W.destroy
-            .beta.destroy
+      case("beta")
+         l = .l_compress(k)
+         .triangle.destroy
+         .triangle.create(l)
+         W.create(l)
+         .beta.zip_lower_triangle_to(W); .triangle.set_to(W)
+         W.destroy
+         .beta.destroy
 
-         case("general")
-            .triangle.destroy
-            .triangle.create(.l_compress(k))
-            .general.zip_lower_triangle_to(.triangle)
+      case("general")
+         .triangle.destroy
+         .triangle.create(.l_compress(k))
+         .general.zip_lower_triangle_to(.triangle)
 
-         case("restricted_complex")
-            .square.destroy
-            .square.create(.l_compress(k))
-            .restricted_complex.zip_lower_triangles_to(.square)
-            .restricted_complex.destroy
+      case("restricted_complex")
+         .square.destroy
+         .square.create(.l_compress(k))
+         .restricted_complex.zip_lower_triangles_to(.square)
+         .restricted_complex.destroy
 
-         case("unrestricted_complex")
-            .square.destroy
-            l = .l_compress(k)
-            .square.create(l)
-            allocate(W(l/2))
-            .alpha_complex.zip_lower_triangles_to(W); .square.alpha_set_to(W)
-             .beta_complex.zip_lower_triangles_to(W);  .square.beta_set_to(W)
-            deallocate(W)
-            .alpha_complex.destroy
-            .beta_complex.destroy
+      case("unrestricted_complex")
+         .square.destroy
+         l = .l_compress(k)
+         .square.create(l)
+         allocate(W(l/2))
+         .alpha_complex.zip_lower_triangles_to(W); .square.alpha_set_to(W)
+          .beta_complex.zip_lower_triangles_to(W);  .square.beta_set_to(W)
+         deallocate(W)
+         .alpha_complex.destroy
+         .beta_complex.destroy
 
-         case("general_complex")
-            .square.destroy
-            .square.create(.l_compress(k))
-            .general_complex.zip_lower_triangles_to(.square)
-            .general_complex.destroy
+      case("general_complex")
+         .square.destroy
+         .square.create(.l_compress(k))
+         .general_complex.zip_lower_triangles_to(.square)
+         .general_complex.destroy
 
       end
 
@@ -971,6 +917,7 @@ contains
    uncompress ::: leaky, PURE
    ! Uncompress the opmatrix
       self :: INOUT
+
       l :: INT
 
       l = -1
@@ -1055,30 +1002,30 @@ contains
 
       select case (genus)
 
-         case ("restricted        ")
+      case ("restricted        ")
 
-             .create("restricted")
+          .create("restricted")
 
-             Pr.create(.n_bf,.n_bf)
+          Pr.create(.n_bf,.n_bf)
 
-             Pr.to_product_with_diagonal(NO.restricted,occ.restricted)
-             self.restricted.to_product_of(Pr,NO.restricted,transpose_b=TRUE)
+          Pr.to_product_with_diagonal(NO.restricted,occ.restricted)
+          self.restricted.to_product_of(Pr,NO.restricted,transpose_b=TRUE)
 
-             Pr.destroy
+          Pr.destroy
 
-         case ("unrestricted      ")
+      case ("unrestricted      ")
 
-             .create("unrestricted")
+          .create("unrestricted")
 
-             Pr.create(.n_bf,.n_bf)
+          Pr.create(.n_bf,.n_bf)
 
-             Pr.to_product_with_diagonal(NO.alpha,occ.alpha)
-             .alpha.to_product_of(Pr,NO.alpha,transpose_b=TRUE)
+          Pr.to_product_with_diagonal(NO.alpha,occ.alpha)
+          .alpha.to_product_of(Pr,NO.alpha,transpose_b=TRUE)
 
-             Pr.to_product_with_diagonal(NO.beta,occ.beta)
-             .beta.to_product_of(Pr,NO.beta,transpose_b=TRUE)
+          Pr.to_product_with_diagonal(NO.beta,occ.beta)
+          .beta.to_product_of(Pr,NO.beta,transpose_b=TRUE)
 
-             Pr.destroy
+          Pr.destroy
 
       end
 
@@ -1118,33 +1065,33 @@ contains
 
       select case (genus)
 
-         case ("restricted        ")
+      case ("restricted        ")
 
-             .create("restricted")
+          .create("restricted")
 
-             Pr.create(.n_bf,.n_bf)
+          Pr.create(.n_bf,.n_bf)
 
-             occ_eig = occ.restricted * eig.restricted
-             Pr.to_product_with_diagonal(NO.restricted,occ_eig)
-             .restricted.to_product_of(Pr,NO.restricted,transpose_b=TRUE)
+          occ_eig = occ.restricted * eig.restricted
+          Pr.to_product_with_diagonal(NO.restricted,occ_eig)
+          .restricted.to_product_of(Pr,NO.restricted,transpose_b=TRUE)
 
-             Pr.destroy
+          Pr.destroy
 
-         case ("unrestricted      ")
+      case ("unrestricted      ")
 
-             .create("unrestricted")
+          .create("unrestricted")
 
-             Pr.create(.n_bf,.n_bf)
+          Pr.create(.n_bf,.n_bf)
 
-             occ_eig = occ.alpha * eig.alpha
-             Pr.to_product_with_diagonal(NO.alpha,occ_eig)
-             .alpha.to_product_of(Pr,NO.alpha,transpose_b=TRUE)
+          occ_eig = occ.alpha * eig.alpha
+          Pr.to_product_with_diagonal(NO.alpha,occ_eig)
+          .alpha.to_product_of(Pr,NO.alpha,transpose_b=TRUE)
 
-             occ_eig = occ.beta  * eig.beta
-             Pr.to_product_with_diagonal(NO.beta,occ_eig)
-             .beta.to_product_of(Pr,NO.beta,transpose_b=TRUE)
+          occ_eig = occ.beta  * eig.beta
+          Pr.to_product_with_diagonal(NO.beta,occ_eig)
+          .beta.to_product_of(Pr,NO.beta,transpose_b=TRUE)
 
-             Pr.destroy
+          Pr.destroy
 
       end
 
@@ -1177,18 +1124,18 @@ contains
 
          select case(genre)
    
-            case("restricted");                    .restricted.plus(X.restricted)
-            case("unrestricted");                       .alpha.plus(X.alpha)
-                                                         .beta.plus(X.beta)
-            case("alpha");                              .alpha.plus(X.alpha)
-            case("beta");                                .beta.plus(X.beta)
-            case("general");                          .general.plus(X.general)
-            case(  "restricted_complex");  .restricted_complex.plus(X.restricted_complex)
-            case("unrestricted_complex");       .alpha_complex.plus(X.alpha_complex)
-                                                 .beta_complex.plus(X.beta_complex)
-            case(       "alpha_complex");       .alpha_complex.plus(X.alpha_complex)
-            case(       "beta_complex");         .beta_complex.plus(X.beta_complex)
-            case(    "general_complex");      .general_complex.plus(X.general_complex)
+         case(  "restricted");                  .restricted.plus(X.restricted)
+         case("unrestricted");                       .alpha.plus(X.alpha)
+                                                      .beta.plus(X.beta)
+         case(       "alpha");                       .alpha.plus(X.alpha)
+         case(        "beta");                        .beta.plus(X.beta)
+         case(     "general");                     .general.plus(X.general)
+         case(  "restricted_complex");  .restricted_complex.plus(X.restricted_complex)
+         case("unrestricted_complex");       .alpha_complex.plus(X.alpha_complex)
+                                              .beta_complex.plus(X.beta_complex)
+         case(       "alpha_complex");       .alpha_complex.plus(X.alpha_complex)
+         case(        "beta_complex");        .beta_complex.plus(X.beta_complex)
+         case(     "general_complex");     .general_complex.plus(X.general_complex)
    
          end
 
