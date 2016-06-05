@@ -82,7 +82,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-
 !  ============================
 !  Size-of and shape operations
 !  ============================
@@ -130,6 +129,31 @@ contains
 
    end
 
+   is_square_23 result (res) ::: pure
+   ! Checks to see that the matrix formed by the 2nd and 3rd columns is square.
+      self :: IN
+      res :: BIN
+
+      res = .dim2==.dim3
+
+   end
+
+   tri_size_23 result (ltr) ::: PURE
+   ! Returns the size of the lower triangle needed to store the matrix self.
+   ! Assumes the matrix formed by columns 2 and 3 is the symmetric one.
+      self :: IN
+      ltr :: INT
+
+   ENSURE(.is_square_23,"2nd and 3rd dimensions not equal")
+
+      ltr = .dim1*.dim2*(.dim2+1)/2
+
+   end
+
+!  ===========
+!  Set methods
+!  ===========
+
    set_to(b) ::: pure
    ! Set "self" to vector "b" in standard order
       self :: INOUT
@@ -158,27 +182,6 @@ contains
       end
       end
       end
-
-   end
-
-   is_square_23 result (res) ::: pure
-   ! Checks to see that the matrix formed by the 2nd and 3rd columns is square.
-      self :: IN
-      res :: BIN
-
-      res = .dim2==.dim3
-
-   end
-
-   tri_size_23 result (ltr) ::: PURE
-   ! Returns the size of the lower triangle needed to store the matrix self.
-   ! Assumes the matrix formed by columns 2 and 3 is the symmetric one.
-      self :: IN
-      ltr :: INT
-
-   ENSURE(.is_square_23,"2nd and 3rd dimensions not equal")
-
-      ltr = .dim1*.dim2*(.dim2+1)/2
 
    end
 
