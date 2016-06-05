@@ -79,8 +79,8 @@ contains
       name :: STR
 
       .create
+
       .name = name
-      UNIT_NUMBER:get_available_unit_number(.unit)
 
    end
 
@@ -155,10 +155,10 @@ contains
       if (present(action)) then
 
         select case (action)
-           case("rw        ","readwrite ","read-write") ;              .action = "readwrite"
-           case("r         ","read      ","reading   ","read-only ") ; .action = "read"
-           case("w         ","write     ","writing   ","write-only") ; .action = "write"
-           case default; UNKNOWN(action)
+        case("rw        ","readwrite ","read-write") ;              .action = "readwrite"
+        case("r         ","read      ","reading   ","read-only ") ; .action = "read"
+        case("w         ","write     ","writing   ","write-only") ; .action = "write"
+        case default; UNKNOWN(action)
         end
 
       end
@@ -167,15 +167,21 @@ contains
       if (.exists) .file_status = "old"
 
       if (IO_IS_ALLOWED) then
-         open(unit   = .unit,         &
-              file   = .name,         &
-              status = .file_status,  &
-              access = "sequential",  &
-              form   = "unformatted", & ! <---------
-              action = .action,       &
-              iostat = .io_status)
+         open(newunit = .unit,         &
+              file    = .name,         &
+              status  = .file_status,  &
+              access  = "sequential",  &
+              form    = "unformatted", & ! <---------
+              action  = .action,       &
+              iostat  = .io_status)
       end
+
+      ! Fail?
       DIE_IF(.io_status/=0,"error opening "//trim(.file_status)//" file "//.name)
+
+      ! Broadcast
+      PARALLEL_BROADCAST(.unit,0)
+      PARALLEL_BROADCAST(.io_status,0)
 
       .buffered = FALSE
       if (present(buffered)) .buffered = buffered

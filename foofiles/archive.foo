@@ -3143,31 +3143,34 @@ contains
    write_vapor(density,n_x,n_y,n_z)
    ! Write a "density" vector corresponding to a grid with dimensions "n_x",
    ! "n_y", "n_z" in VAPOR format
+      self :: IN
+      density :: VEC{REAL}(n_x*n_y*n_z), IN
       n_x,n_y,n_z :: INT, IN
-      density :: VEC{REAL}(n_x*n_y*n_z)
 
-      u :: INT
-
-      ! Get a free unit number
-      UNIT_NUMBER:get_available_unit_number(u)
+      u,ios :: INT
 
       ! Get the size of the record
-      open(u,FILE=TRIM(.file_name), FORM="UNFORMATTED", ACCESS="STREAM")
+      open(newunit = u,                &
+           file    = trim(.file_name), &
+           form    = "UNFORMATTED",    &
+           access  = "STREAM",         &
+           iostat  = ios)
+      DIE_IF(ios/=0,"error opening stream file")
 
       ! Write code "8" for single precision data
       write(u) density
 
       ! Close and free
       close(u)
-      UNIT_NUMBER:free_the_used_unit_number(u)
 
    end
 
    write_drishti(density,n_x,n_y,n_z)
    ! Write a "density" vector corresponding to a grid with dimensions "n_x",
    ! "n_y", "n_z" in drishti format
-      density :: VEC{REAL}
-      n_x,n_y,n_z :: INT
+      self :: IN
+      density :: VEC{REAL}, IN
+      n_x,n_y,n_z :: INT, IN
 
       u,ios,  n,x,y,z, n_xy, offx,offy,offz :: INT
       ival4 :: INT(INT_4_KIND)
@@ -3176,11 +3179,11 @@ contains
       ! Sizes
       n_xy = n_x*n_y
 
-      ! Get a free unit number
-      UNIT_NUMBER:get_available_unit_number(u)
-
       ! Get the size of the record
-      open(u,file=trim(.file_name),access="stream",iostat=ios)
+      open(newunit = u,                &
+           file    = trim(.file_name), &
+           access  = "stream",         &
+           iostat  = ios)
       DIE_IF(ios/=0,"error opening stream file")
 
       ! Write code "8" for single precision data
@@ -3215,7 +3218,6 @@ contains
 
       ! Close and free
       close(u)
-      UNIT_NUMBER:free_the_used_unit_number(u)
 
    end
 
@@ -3227,14 +3229,15 @@ contains
       title :: STR, IN
 
       lf :: STR(len=1)
-      u,i,n_x,n_y,n_z :: INT
+      u,ios, i,n_x,n_y,n_z :: INT
       d_x,d_y,d_z,o_x,o_y,o_z :: REAL
 
-      ! Get a free unit number
-      UNIT_NUMBER:free_the_used_unit_number(u)
-
       ! Open the file in stream mode
-      open(u,FILE=trim(.file_name), ACCESS="STREAM")
+      open(newunit = u,                &
+           file    = trim(.file_name), &
+           access  = "STREAM"          &
+           iostat  = ios)
+      DIE_IF(ios/=0,"error opening stream file")
 
       ! Header info
       lf = char(10)
@@ -3256,7 +3259,6 @@ contains
 
       ! Close and free
       close(u)
-      UNIT_NUMBER:get_available_unit_number(u)
 
    end
 

@@ -528,7 +528,7 @@ contains
       if (FALSE) self = self
       var = var
 
-      proc = 0
+      proc = .master_rank
       if (present(processor)) proc = processor
 
       .mpi_status = 0

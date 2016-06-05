@@ -158,9 +158,6 @@ contains
       ! Set the name if present
       .set_name(name)
 
-      ! Get a unique unit number
-      UNIT_NUMBER:get_available_unit_number(.unit)
-
       ! Get ready to write
       .clear_and_put_margin
 
@@ -372,7 +369,6 @@ contains
          .buffer.destroy_ptr_part
          .replacement_list.destroy
          .close
-         UNIT_NUMBER:free_the_used_unit_number(.unit)
       end
       deallocate(self)
 
@@ -434,35 +430,32 @@ contains
 
    ENSURE(.internal.destroyed,"no need to open an internal file")
 
-      unit,fail :: INT
-      name :: STR
-
       .action = "read"
       .io_status = 0
-
-      unit = .unit
-      name = .name
-      fail = 0
 
       if (.exists) then
          .set_no_of_lines
       else
-         DIE("the file "//trim(name)//" does not exist!")
+         DIE("the file "//trim(.name)//" does not exist!")
       end
 
       if (IO_IS_ALLOWED) then
 
-         open(unit=unit,           &
-              file=trim(name),     &
-              status="old",        &
-              access="sequential", &
-              form="formatted",    &
-              iostat=fail)
+         open(newunit = .unit,        &
+              file    = trim(.name),  &
+              status  = "old",        &
+              access  = "sequential", &
+              form    = "formatted",  &
+              iostat  = .io_status)
       end
-      PARALLEL_BROADCAST(fail,0)
 
-      DIE_IF(fail/=0,"error opening old file for reading: "//trim(name))
-      .io_status = fail
+      ! Fail?
+      DIE_IF(.io_status/=0,"error opening old file for reading: "//trim(.name))
+
+      ! Broadcast
+      PARALLEL_BROADCAST(.unit,0)
+      PARALLEL_BROADCAST(.io_status,0)
+
 
    end
 
@@ -485,29 +478,27 @@ contains
    ENSURE(.internal.destroyed,"no need to open an internal file")
    ENSURE(.exists, "not an existing file!")
 
-      unit,fail :: INT
-      name :: STR
-
       .action = "write"
       .io_status = 0
 
-      unit = .unit
-      name = .name
       fail = 0
 
       if (IO_IS_ALLOWED) then
 
-         open(unit=unit,           &
-              file=trim(name),     &
-              status="old",        &
-              access="sequential", &
-              form="formatted",    &
-              iostat=fail)
+         open(newunit = .unit,        &
+              file    = trim(.name),  &
+              status  = "old",        &
+              access  = "sequential", &
+              form    = "formatted",  &
+              iostat  = .io_status)
       end
-      PARALLEL_BROADCAST(fail,0)
 
-      DIE_IF(fail/=0,"error opening old file: "//trim(name))
-      .io_status = fail
+      ! Fail?
+      DIE_IF(.io_status/=0,"error opening old file: "//trim(.name))
+
+      ! Broadcast
+      PARALLEL_BROADCAST(.unit,0)
+      PARALLEL_BROADCAST(.io_status,0)
 
       .clear_and_put_margin
 
@@ -520,29 +511,28 @@ contains
    ENSURE(.internal.destroyed,"no need to open an internal file")
    ENSURE(NOT .exists, "output file exists!")
 
-      unit,fail :: INT
-      name :: STR
-
       .action = "write"
       .io_status = 0
 
-      unit = .unit
-      name = .name
       fail = 0
 
       if (IO_IS_ALLOWED) then
 
-         open(unit=unit,           &
-              file=trim(name) ,    &
-              status="new",        &
-              access="sequential", &
-              form="formatted",    &
-              iostat=fail)
+         open(newunit = .unit,        &
+              file    = trim(.name) , &
+              status  = "new",        &
+              access  = "sequential", &
+              form    = "formatted",  &
+              iostat  = .io_status)
       end
-      PARALLEL_BROADCAST(fail,0)
 
-      DIE_IF(fail/=0,"error opening new file "//trim(name))
-      .io_status = fail
+      ! Fail?
+      DIE_IF(.io_status/=0,"error opening new file "//trim(.name))
+
+      ! Broadcast
+      PARALLEL_BROADCAST(.unit)
+      PARALLEL_BROADCAST(.io_status)
+
 
    end
 
@@ -609,28 +599,28 @@ contains
    ENSURE(.exists, "not an existing file!")
    ENSURE(.action=="read","not a readable file")
 
-      unit,fail,l :: INT
-      name :: STR
+      l :: INT
       line :: STR(len=8)
 
-      unit = .unit
-      name = .name
       fail = 0
 
       ! Open the file
       if (IO_IS_ALLOWED) then
 
-         open(unit=unit,           &
-              file=trim(name),     &
-              status="old",        &
-              access="sequential", &
-              form="formatted",    &
-              iostat=fail)
+         open(newunit = .unit,        &
+              file    = trim(.name),  &
+              status  = "old",        &
+              access  = "sequential", &
+              form    = "formatted",  &
+              iostat  = .io_status)
       end
-      PARALLEL_BROADCAST(fail,0)
 
-      DIE_IF(fail/=0,"error opening old file for reading: "//trim(name))
-      .io_status = fail
+      ! Failed?
+      DIE_IF(.io_status/=0,"error opening old file for reading: "//trim(.name))
+
+      ! Broadcast
+      PARALLEL_BROADCAST(.unit,0)
+      PARALLEL_BROADCAST(.io_status,0)
 
       ! Read the lines until done
       if (IO_IS_ALLOWED) then
@@ -3545,7 +3535,7 @@ contains
       .io_status = fail
 
       ! Flush - seems to cause problems with MPI
-      UNIT_NUMBER:flush_buffer_for_unit_number(.unit)
+      TONTO_FLUSH_BUFFER(.unit)
 
       .clear_and_put_margin
 

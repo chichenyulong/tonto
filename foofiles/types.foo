@@ -529,13 +529,6 @@ module TYPES
 !  Files
 !  =====
 
-   type UNIT_NUMBER
-
-     unit :: INT  DEFAULT(-1)
-     ! The unit number
-
-   end
-
    type FILE
 
      name :: STR  DEFAULT("unknown")
