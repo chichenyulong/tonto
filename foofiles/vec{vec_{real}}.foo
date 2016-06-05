@@ -144,7 +144,7 @@ contains
 
    ENSURE(NOT S.is_zero,"S is zero matrix")
 
-     old,new :: VEC{REAL}@
+     old,new :: VEC{REAL}* ! ptr ok
      keep :: VEC{REAL}@
      skip :: VEC{BIN}@
      fac :: REAL
@@ -163,13 +163,16 @@ contains
 
      ! Eliminate function with small norms
      do n = 1,.dim
-       new => self(n).element
-       norm = S.dot(new,new)
-       if(norm < sqrt(tol)) then
-         n_dependent=n_dependent+1
-         skip(n)=TRUE
-         scales(n)=norm
-       end
+
+        new => self(n).element
+        norm = S.dot(new,new)
+       
+        if(norm < sqrt(tol)) then
+          n_dependent=n_dependent+1
+          skip(n)=TRUE
+          scales(n)=norm
+        end
+
      end
 
      do n = 1,.dim
@@ -203,8 +206,6 @@ contains
      end
 
      ! Clean
-     nullify(new)
-     nullify(old)
      keep.destroy
      skip.destroy
 
