@@ -96,8 +96,8 @@ contains
 
    ENSURE(NOT .analyzed,"already analyzed")
    ENSURE(.descriptor/=" ","descriptor is blank")
-   ENSURE(.parameters.disassociated,"parameters created")
-   ENSURE(.d1_codes.associated,"no d1_codes!")
+   ENSURE(.parameters.destroyed,"parameters created")
+   ENSURE(.d1_codes.created,"no d1_codes!")
 
       term,item :: STR
       buffer :: BUFFER
@@ -227,7 +227,7 @@ contains
       do m = 1,.n_monomials
          if (.monomial(m).variable_code/=code) cycle
          if (.monomial(m).dof/=dof)   cycle
-         ENSURE(.monomial(m).parameters.associated)
+         ENSURE(.monomial(m).parameters.created)
          res = int(.monomial(m).parameters(1))
          exit
       end
@@ -252,7 +252,7 @@ contains
       do m = 1,.n_monomials
          if (.monomial(m).variable_code/=code) cycle
          if (.monomial(m).dof/=dof)   cycle
-         ENSURE(.monomial(m).parameters.associated)
+         ENSURE(.monomial(m).parameters.created)
          res = int(.monomial(m).parameters(1))
          exit
       end
@@ -312,7 +312,7 @@ contains
 
    process_keys ::: get_from(OBJECT), leaky
    ! Process each of the words in the "keys" list.
-   ENSURE(keys.associated,"no keys")
+   ENSURE(keys.created,"no keys")
    end
 
 end

@@ -270,12 +270,12 @@ contains
    close ::: leaky
    ! Close *and* destroy the archive file part.
 
-      if (.Afile.associated) then
+      if (.Afile.created) then
           .Afile.close
           .Afile.destroy
       end
 
-      if (.Bfile.associated) then
+      if (.Bfile.created) then
           .Bfile.close
           .Bfile.destroy
       end
@@ -857,7 +857,7 @@ contains
 !      item :: ITEM?, IN
 !      declaration :: STR, optional, IN
 !
-!   ENSURE(.Afile.associated OR .Bfile.creaated,"no file part created!")
+!   ENSURE(.Afile.created OR .Bfile.created,"no file part created!")
 !
 !      ! Put item with description
 !      if (.is_ascii) then
@@ -911,7 +911,7 @@ contains
 !      item :: ITEM?, IN
 !      declaration :: STR, optional, IN
 !
-!   ENSURE(.Afile.associated OR .Bfile.creaated,"no file part created!")
+!   ENSURE(.Afile.created OR .Bfile.created,"no file part created!")
 !
 !      ! Put item with description
 !      if (.is_ascii) then

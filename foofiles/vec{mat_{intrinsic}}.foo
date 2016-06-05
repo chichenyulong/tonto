@@ -101,7 +101,7 @@ contains
 
       status :: INT
 
-      if (.disassociated) return
+      if (.destroyed) return
 
       .destroy_ptr_part
 
@@ -156,7 +156,7 @@ contains
       i :: INT
       .nullify_ptr_part
       do i = 1,m.dim
-         if (m(i).element.disassociated) cycle
+         if (m(i).element.destroyed) cycle
          self(i).element.create_copy(m(i).element)
       end
    end

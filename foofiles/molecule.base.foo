@@ -90,7 +90,7 @@ contains
       g :: INT
       mol :: MOLECULE@
 
-      if (.atom_group.disassociated) return
+      if (.atom_group.destroyed) return
 
       do g = 1,.atom_group.dim
 
@@ -172,7 +172,7 @@ contains
    ! parts refer to .saved information.
       self :: allocatable, INOUT
 
-   ENSURE(.saved.associated,"no previous settings")
+   ENSURE(.saved.created,"no previous settings")
 
       saved :: MOLECULE@
 
@@ -195,7 +195,7 @@ contains
    destroy_ANOs ::: leaky
    ! Destroy the ANO's for all atoms in the molecule.
 
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
 
       if (NOT .:has_all_ANOs_made) return
 
@@ -206,7 +206,7 @@ contains
    destroy_ANO_interpolators ::: leaky
    ! Destroy the (non-unique) ANO interpolators
 
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
 
       if (NOT .:has_all_ANO_interpolators) return
 
@@ -217,7 +217,7 @@ contains
    destroy_interpolators ::: leaky
    ! Destroy the (unique) interpolators (*not* ANO interpolators)
 
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
 
       if (NOT .:has_all_interpolators) return
 
@@ -229,7 +229,7 @@ contains
    ! Destroy the restricted atomic natural orbitals (ANO) data for
    ! all atoms in the molecule.
 
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
 
       if (NOT .:has_all_spherical_atom_data) return
 
@@ -240,7 +240,7 @@ contains
    destroy_atom_shell_info ::: leaky
    ! Destroy the atom precomputed shellpair info.
 
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
 
       if (NOT .:has_all_atom_shell_info) return
 
@@ -343,7 +343,7 @@ contains
       .invariom_database_directory  = " "
       .invariom_refinement          = FALSE
 
-      if (.atom.associated) then
+      if (.atom.created) then
          .name              = .:chemical_formula
          .spin_multiplicity = .:default_spin_multiplicity
          .:set_atom_info
@@ -356,7 +356,7 @@ contains
       scfdata :: SCFDATA@
 
       ! Set the SCF defaults (leaky)
-      if (scfdata.disassociated) then
+      if (scfdata.destroyed) then
          .:set_scf_defaults
          .scfdata.set_output(FALSE)
       else if (scfdata.use_default_guess_options) then
@@ -367,7 +367,7 @@ contains
       end
 
       ! Reset some defaults from scfdata, if it is there
-      if (scfdata.associated) then
+      if (scfdata.created) then
          .scfdata.set_output(scfdata.guess_output)
          .scfdata.set_convergence(scfdata.convergence)
          .scfdata.diis.set_convergence_tolerance(scfdata.diis.convergence_tolerance)
@@ -386,7 +386,7 @@ contains
    ! Set up scf defaults for molecule
       scfdata :: SCFDATA*, optional
 
-      if (.scfdata.disassociated) then; .scfdata.create
+      if (.scfdata.destroyed) then; .scfdata.create
       else;                         .scfdata.set_defaults
       end
 
@@ -414,9 +414,9 @@ contains
 
    initialize_DFT_grids ::: leaky
    ! Initialise DFT grids, if not already done so.
-   ENSURE(.scfdata.associated,"no scfdata")
+   ENSURE(.scfdata.created,"no scfdata")
 
-      if (.becke_grid.disassociated) then
+      if (.becke_grid.destroyed) then
          .becke_grid.create
          .becke_grid.set_grid_data(.atom)
       end
@@ -458,7 +458,7 @@ contains
 
       .spin_multiplicity = val
 
-      if (.atom.associated) then
+      if (.atom.created) then
          .n_a = .BASE:no_of_alpha_electrons
          .n_b = .BASE:no_of_beta_electrons
       end
@@ -472,7 +472,7 @@ contains
    ! . Atom tags and kind indices
    ! . The spin multiplicity
    ! . The number of alpha and beta electrons.
-   ENSURE(.atom.associated,"no atom info")
+   ENSURE(.atom.created,"no atom info")
 
       if (.atom_info_made) return
 
@@ -519,7 +519,7 @@ contains
       lib_basis_labels :: VEC{STR}@
       lib_file_name :: STR
 
-      if (.atom.disassociated) return
+      if (.atom.destroyed) return
 
       if (.n_atom<1) return
 
@@ -583,7 +583,7 @@ contains
       n_unique :: INT
       library :: STR
 
-      if (.atom.disassociated) return
+      if (.atom.destroyed) return
 
       if (.n_atom<1) return
 
@@ -593,7 +593,7 @@ contains
       if (.slaterbasis_name/=" ") then
 
          ! Renormalise basis sets. (The library is in normalised form)
-         if (.slaterbasis.associated) .slaterbasis.renormalise
+         if (.slaterbasis.created) .slaterbasis.renormalise
 
          ! Read the basis from the library
          library = .slaterbasis.library_file(.slaterbasis_name)
@@ -602,7 +602,7 @@ contains
          library_basis_labels.destroy
 
          ! Resolve atom bases afresh i.e. point atom.basis to .basis
-         if (.slaterbasis.associated) then
+         if (.slaterbasis.created) then
             .atom.resolve_bases(.slaterbasis,.slaterbasis_name)
             .atom.set_basis_kind("slater")
 
@@ -611,14 +611,14 @@ contains
          end
 
       ! Resolve from existing .basis .....
-      else if (.slaterbasis.associated) then
+      else if (.slaterbasis.created) then
 
             .atom.resolve_bases(.slaterbasis)
             .atom.set_basis_kind("slater")
 
       end
 
-      if (.slaterbasis.associated) then
+      if (.slaterbasis.created) then
       if (NOT .atom.slater_bases_are_resolved) then
          stdout.flush
          WARN("not all Slater bases were resolved")
@@ -634,7 +634,7 @@ contains
       n_unique :: INT
       library :: STR
 
-      if (.atom.disassociated) return
+      if (.atom.destroyed) return
 
       if (.n_atom<1) return
 
@@ -644,7 +644,7 @@ contains
       if (.coppensbasis_name/=" ") then
 
          ! Renormalise basis sets. (The library is in normalised form)
-         if (.coppensbasis.associated) .coppensbasis.renormalise
+         if (.coppensbasis.created) .coppensbasis.renormalise
 
          ! Read the basis from the library
          library = .coppensbasis.library_file(.coppensbasis_name)
@@ -653,7 +653,7 @@ contains
          library_basis_labels.destroy
 
          ! Resolve atom bases afresh i.e. point atom.basis to .basis
-         if (.coppensbasis.associated) then
+         if (.coppensbasis.created) then
             .atom.resolve_bases(.coppensbasis,.coppensbasis_name)
             .atom.set_basis_kind("coppens")
 
@@ -662,14 +662,14 @@ contains
          end
 
       ! Resolve from existing .basis .....
-      else if (.coppensbasis.associated) then
+      else if (.coppensbasis.created) then
 
             .atom.resolve_bases(.coppensbasis)
             .atom.set_basis_kind("coppens")
 
       end
 
-      if (.coppensbasis.associated) then
+      if (.coppensbasis.created) then
       if (NOT .atom.coppens_bases_are_resolved) then
          stdout.flush
          WARN("not all Coppens bases were resolved")
@@ -691,9 +691,9 @@ contains
 
    set_basis_info ::: leaky
    ! Set the molecule basis set information; the atom list must exist.
-   ENSURE(.atom.associated,"no atom info")
+   ENSURE(.atom.created,"no atom info")
 
-      if (.basis.disassociated) return
+      if (.basis.destroyed) return
 
       if (NOT .atom.bases_are_resolved) then
 
@@ -725,7 +725,7 @@ contains
       .basis_name = name
 
       ! Destroy links to previous bases
-      if (.atom.associated) .atom.nullify_basis_part
+      if (.atom.created) .atom.nullify_basis_part
       .basis.destroy
 
       ! Make fresh basis set links (might be leaky)
@@ -748,7 +748,7 @@ contains
       .slaterbasis_name = name
 
       ! Destroy links to previous bases
-      if (.atom.associated) .atom.nullify_slaterbasis_part
+      if (.atom.created) .atom.nullify_slaterbasis_part
       .slaterbasis.destroy
 
       ! Make fresh basis set links (might be leaky)
@@ -766,7 +766,7 @@ contains
       .coppensbasis_name = name
 
       ! Destroy links to previous bases
-      if (.atom.associated) .atom.nullify_coppensbasis_part
+      if (.atom.created) .atom.nullify_coppensbasis_part
       .coppensbasis.destroy
 
       ! Make fresh basis set links (might be leaky)
@@ -780,8 +780,8 @@ contains
    ! Change the axis system to cartesian, if required.
    ! NOTE: Errors (if any) are transformed straightforwardly
 
-      if (.crystal.disassociated) return
-      if (.atom.disassociated)    return
+      if (.crystal.destroyed) return
+      if (.atom.destroyed)    return
 
       .atom.change_axis_system_to("cartesian",.crystal.unit_cell)
 
@@ -793,8 +793,8 @@ contains
 
       axis_system :: STR
 
-      if (.crystal.disassociated) return
-      if (.atom.disassociated)    return
+      if (.crystal.destroyed) return
+      if (.atom.destroyed)    return
 
       stdin.read(axis_system)
 
@@ -836,7 +836,7 @@ contains
    ! Since it is a symmetric matrix the order does not matter.
       fc :: VEC{REAL}, IN
 
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.atom.created,"no atom list")
    ENSURE(fc.dim==9*.atom.dim*.atom.dim,"wrong size, fc")
 
       n3n :: INT
@@ -861,7 +861,7 @@ contains
 
    ENSURE(cif.start_of_data>0,"no start of data in CIF")
    ENSURE(cif.end_of_data>cif.start_of_data,"no end of data in CIF")
-   ENSURE(.crystal.associated,"must have crystal information")
+   ENSURE(.crystal.created,"must have crystal information")
 
       if (NOT cif.file.is_open) cif.open
 
@@ -930,23 +930,23 @@ contains
       select case (name)
 
          case ("molecular_orbitals")
-            if (.molecular_orbitals.disassociated) .molecular_orbitals.create(.n_bf)
+            if (.molecular_orbitals.destroyed) .molecular_orbitals.create(.n_bf)
             arch.read(.molecular_orbitals)
 
          case ("density_matrix    ")
-            if (.density_matrix.disassociated) .density_matrix.create(.n_bf)
+            if (.density_matrix.destroyed) .density_matrix.create(.n_bf)
             arch.read(.density_matrix)
 
          case ("MP2_density_matrix")
-            if (.density_matrix.disassociated) .density_matrix.create(.n_bf)
+            if (.density_matrix.destroyed) .density_matrix.create(.n_bf)
             arch.read(.density_matrix)
 
          case ("MP3_density_matrix")
-            if (.density_matrix.disassociated) .density_matrix.create(.n_bf)
+            if (.density_matrix.destroyed) .density_matrix.create(.n_bf)
             arch.read(.density_matrix)
 
          case ("fock_matrix       ")
-            if (.fock_matrix.disassociated) .fock_matrix.create(.n_bf)
+            if (.fock_matrix.destroyed) .fock_matrix.create(.n_bf)
             arch.read(.fock_matrix)
 
          case ("orbital_energies  ")
@@ -954,7 +954,7 @@ contains
             arch.read(.orbital_energies)
 
          case ("natural_orbitals  ")
-            if (.natural_orbitals.disassociated) .natural_orbitals.create(.n_bf)
+            if (.natural_orbitals.destroyed) .natural_orbitals.create(.n_bf)
             arch.read(.natural_orbitals)
 
          case ("occupation_numbers")
@@ -962,19 +962,19 @@ contains
             arch.read(.occupation_numbers)
 
          case ("covalent_orbitals ")
-            if (.natural_orbitals.disassociated) .natural_orbitals.create(.n_bf)
+            if (.natural_orbitals.destroyed) .natural_orbitals.create(.n_bf)
             arch.read(.natural_orbitals)
 
          case ("ionic_orbitals    ")
-            if (.natural_orbitals.disassociated) .natural_orbitals.create(.n_bf)
+            if (.natural_orbitals.destroyed) .natural_orbitals.create(.n_bf)
             arch.read(.natural_orbitals)
 
          case ("U_electric_dipole ")
-            if (.U_electric_dipole.disassociated) .U_electric_dipole.create(.n_bf,.n_bf,3)
+            if (.U_electric_dipole.destroyed) .U_electric_dipole.create(.n_bf,.n_bf,3)
             arch.read(.U_electric_dipole)
 
          case ("U2_electric_dipole ")
-            if (.U2_electric_dipole.disassociated) .U2_electric_dipole.create(.n_bf,.n_bf,6)
+            if (.U2_electric_dipole.destroyed) .U2_electric_dipole.create(.n_bf,.n_bf,6)
             arch.read(.U2_electric_dipole)
 
          case default
@@ -1006,19 +1006,19 @@ contains
       select case (name)
 
          case ("molecular_orbitals")
-            if (.molecular_orbitals.disassociated) .molecular_orbitals.create(.n_bf)
+            if (.molecular_orbitals.destroyed) .molecular_orbitals.create(.n_bf)
             arch.read(.molecular_orbitals,by_column=TRUE)
 
          case ("density_matrix    ")
-            if (.density_matrix.disassociated)     .density_matrix.create(.n_bf)
+            if (.density_matrix.destroyed)     .density_matrix.create(.n_bf)
             arch.read(.density_matrix,by_column=TRUE)
 
          case ("MP2_density_matrix")
-            if (.density_matrix.disassociated)     .density_matrix.create(.n_bf)
+            if (.density_matrix.destroyed)     .density_matrix.create(.n_bf)
             arch.read(.density_matrix,by_column=TRUE)
 
          case ("MP3_density_matrix")
-            if (.density_matrix.disassociated)     .density_matrix.create(.n_bf)
+            if (.density_matrix.destroyed)     .density_matrix.create(.n_bf)
             arch.read(.density_matrix,by_column=TRUE)
 
          case ("orbital_energies  ")
@@ -1026,7 +1026,7 @@ contains
             arch.read(.orbital_energies)
 
          case ("natural_orbitals  ")
-            if (.natural_orbitals.disassociated)   .natural_orbitals.create(.n_bf)
+            if (.natural_orbitals.destroyed)   .natural_orbitals.create(.n_bf)
             arch.read(.natural_orbitals,by_column=TRUE)
 
          case ("occupation_numbers")
@@ -1034,15 +1034,15 @@ contains
             arch.read(.occupation_numbers)
 
          case ("covalent_orbitals ")
-            if (.natural_orbitals.disassociated)   .natural_orbitals.create(.n_bf)
+            if (.natural_orbitals.destroyed)   .natural_orbitals.create(.n_bf)
             arch.read(.natural_orbitals,by_column=TRUE)
 
          case ("ionic_orbitals    ")
-            if (.natural_orbitals.disassociated)   .natural_orbitals.create(.n_bf)
+            if (.natural_orbitals.destroyed)   .natural_orbitals.create(.n_bf)
             arch.read(.natural_orbitals,by_column=TRUE)
 
          case ("fock_matrix       ")
-            if (.fock_matrix.disassociated)        .fock_matrix.create(.n_bf)
+            if (.fock_matrix.destroyed)        .fock_matrix.create(.n_bf)
             arch.read(.fock_matrix,by_column=TRUE)
 
          case default
@@ -1072,15 +1072,15 @@ contains
       select case (name)
 
          case ("molecular_orbitals")
-            DIE_IF(.molecular_orbitals.disassociated,"no molecular_orbitals")
+            DIE_IF(.molecular_orbitals.destroyed,"no molecular_orbitals")
             arch.write(.molecular_orbitals)
 
          case ("density_matrix    ")
-            DIE_IF(.density_matrix.disassociated,"no density_matrix")
+            DIE_IF(.density_matrix.destroyed,"no density_matrix")
             arch.write(.density_matrix)
 
          case ("natural_orbitals  ")
-            DIE_IF(.natural_orbitals.disassociated,"no natural_orbitals")
+            DIE_IF(.natural_orbitals.destroyed,"no natural_orbitals")
             arch.write(.natural_orbitals)
 
          case ("occupation_numbers")
@@ -1088,7 +1088,7 @@ contains
             arch.write(.occupation_numbers)
 
          case ("fock_matrix       ")
-            DIE_IF(.fock_matrix.disassociated,"no fock_matrix")
+            DIE_IF(.fock_matrix.destroyed,"no fock_matrix")
             arch.write(.fock_matrix)
 
          case ("orbital_energies  ")
@@ -1096,11 +1096,11 @@ contains
             arch.write(.orbital_energies)
 
          case ("U_electric_dipole ")
-            DIE_IF(.U_electric_dipole.disassociated,"no U_electric_dipole")
+            DIE_IF(.U_electric_dipole.destroyed,"no U_electric_dipole")
             arch.write(.U_electric_dipole)
 
          case ("U2_electric_dipole ")
-            DIE_IF(.U2_electric_dipole.disassociated,"no U2_electric_dipole")
+            DIE_IF(.U2_electric_dipole.destroyed,"no U2_electric_dipole")
             arch.write(.U2_electric_dipole)
 
          case default
@@ -1201,11 +1201,11 @@ contains
       end
 
       ! Create atom list (leaky)
-      if (.atom.associated)  .atom.destroy
+      if (.atom.created)  .atom.destroy
       .atom.create(.n_atom)
 
       ! Create basis -- Different one for every atom (leaky)
-      if (.basis.associated) .basis.destroy
+      if (.basis.created) .basis.destroy
       .basis.create(.n_atom)
 
       ! Move back to atoms line
@@ -1515,11 +1515,11 @@ contains
       end
 
       ! Create atom list (leaky)
-      if (.atom.associated)  .atom.destroy
+      if (.atom.created)  .atom.destroy
       .atom.create(.n_atom)
 
       ! Create basis -- Different one for every atom (leaky)
-      if (.basis.associated) .basis.destroy
+      if (.basis.created) .basis.destroy
       .basis.create(.n_atom)
 
       ! Move back to atoms line
@@ -1877,7 +1877,7 @@ contains
    ! Write the MO's in a way which can replace g09 fchk file section
 
    ENSURE(NOT .use_spherical_basis,   "spherical basis not implemented")
-   ENSURE(.molecular_orbitals.associated,"no MO's")
+   ENSURE(.molecular_orbitals.created,"no MO's")
 
       arch :: ARCHIVE 
 
@@ -1890,7 +1890,7 @@ contains
    ! Write the MO's in a way which can replace g09 fchk file section
 
    ENSURE(NOT .use_spherical_basis,   "spherical basis not implemented")
-   ENSURE(.density_matrix.associated,"no MO's")
+   ENSURE(.density_matrix.created,"no MO's")
 
       arch :: ARCHIVE 
 
@@ -1920,8 +1920,8 @@ contains
       Nc :: REAL
 
       ! Destroy existing basis, and atom list
-      if (.basis.associated) .basis.destroy
-      if (.atom.associated)  .atom.destroy
+      if (.basis.created) .basis.destroy
+      if (.atom.created)  .atom.destroy
 
       ! Create scfdata
       .scfdata.destroy
@@ -2207,8 +2207,8 @@ contains
       ! Debug
       if (.:debugging("read_gaussian_FChk_file")) then
 
-         if (.molecular_orbitals.associated) then
-         if (.molecular_orbitals.restricted.associated) then
+         if (.molecular_orbitals.created) then
+         if (.molecular_orbitals.restricted.created) then
             MO => .molecular_orbitals.restricted(:,1:.n_a)
             DD.create(.n_bf,.n_bf)
             DD.to_scaled_product_of(MO,MO,fac=TWO,transpose_b=TRUE)
@@ -2269,8 +2269,8 @@ contains
       Nc :: REAL
 
       ! Destroy existing basis, and atom list
-      if (.basis.associated) .basis.destroy
-      if (.atom.associated)  .atom.destroy
+      if (.basis.created) .basis.destroy
+      if (.atom.created)  .atom.destroy
 
       ! Create scfdata
       .scfdata.destroy
@@ -2550,8 +2550,8 @@ contains
       ! Debug
       if (.:debugging("read_gaussian_FChk_file")) then
 
-         if (.molecular_orbitals.associated) then
-         if (.molecular_orbitals.restricted.associated) then
+         if (.molecular_orbitals.created) then
+         if (.molecular_orbitals.restricted.created) then
             MO => .molecular_orbitals.restricted(:,1:.n_a)
             DD.create(.n_bf,.n_bf)
             DD.to_scaled_product_of(MO,MO,fac=TWO,transpose_b=TRUE)
@@ -2625,8 +2625,8 @@ contains
       archive :: ARCHIVE
 
       ! Destroy existing basis, and atom list
-      if (.basis.associated) .basis.destroy
-      if (.atom.associated)  .atom.destroy
+      if (.basis.created) .basis.destroy
+      if (.atom.created)  .atom.destroy
 
       ! Create scfdata
       .scfdata.destroy
@@ -2902,8 +2902,8 @@ contains
       ! Debug
       if (.:debugging("read_gaussian_FChk_file")) then
 
-         if (.molecular_orbitals.associated) then
-         if (.molecular_orbitals.restricted.associated) then
+         if (.molecular_orbitals.created) then
+         if (.molecular_orbitals.restricted.created) then
             MO => .molecular_orbitals.restricted(:,1:.n_a)
             DD.create(.n_bf,.n_bf)
             DD.to_scaled_product_of(MO,MO,fac=TWO,transpose_b=TRUE)
@@ -2953,7 +2953,7 @@ contains
       ex_4_prim,cc_4_prim :: VEC{REAL}, IN
 
    ENSURE(NOT .use_spherical_basis,"not implemented")
-   ENSURE(.atom.associated,"no atonm list")
+   ENSURE(.atom.created,"no atonm list")
    ENSURE(.atom.dim==.n_atom,"wrong size, atom list")
 
       n_basis,n_shell,n_cc :: INT
@@ -3405,7 +3405,7 @@ contains
       end
 
       write(unit = wfnfile.unit, fmt = "(1A8)") "END DATA"
-      if (.scfdata.associated) then
+      if (.scfdata.created) then
       write(unit = wfnfile.unit, fmt = e_v_format) .scfdata.energy, TWO
       else
       write(unit = wfnfile.unit, fmt = e_v_format) ZERO, TWO
@@ -3515,7 +3515,7 @@ contains
       end
 
       write(unit = wfnfile.unit, fmt = "(1A8)") "END DATA"
-      if (.scfdata.associated) then
+      if (.scfdata.created) then
       write(unit = wfnfile.unit, fmt = e_v_format) .scfdata.energy, 2.0D00
       else
       write(unit = wfnfile.unit, fmt = e_v_format) ZERO, 2.0D00
@@ -3540,7 +3540,7 @@ contains
       n :: INT, IN
       mol :: MOLECULE
 
-   ENSURE(.atom.associated,"no atom info")
+   ENSURE(.atom.created,"no atom info")
    ENSURE(n<=.n_atom,"atom number n too big")
 
       i :: INT
@@ -3576,8 +3576,8 @@ contains
       n :: INT
       mol :: MOLECULE
 
-   DIE_IF(.atom.disassociated,"no atom info")
-   DIE_IF(.atom_group.disassociated,"no atom_group info")
+   DIE_IF(.atom.destroyed,"no atom info")
+   DIE_IF(.atom_group.destroyed,"no atom_group info")
    DIE_IF(n>.atom_group.dim,"group number n too big")
    DIE_IF(n<1,"group number n less than 1!")
 
@@ -3608,7 +3608,7 @@ contains
 
       ! Assign the crystal
       ! WARNING: dont destroy ...
-      if (.crystal.associated) mol.crystal => .crystal
+      if (.crystal.created) mol.crystal => .crystal
 
       ! Set guess-type SCF defaults
       mol.:set_scf_guess_defaults_from(.scfdata)
@@ -3663,7 +3663,7 @@ contains
 
 !     ! Assign the crystal
 !     ! WARNING: dont destroy ...
-!     if (parent.crystal.associated) .crystal => parent.crystal
+!     if (parent.crystal.created) .crystal => parent.crystal
 
 !     ! Set guess-type SCF defaults
 !     .:set_scf_guess_defaults_from(parent.scfdata)
@@ -3676,9 +3676,9 @@ contains
 !      n :: INT
 !      mol :: MOLECULE
 !
-!   ENSURE(.scfdata.associated,"no scfdata")
-!   ENSURE(.scfdata.cluster.associated,"no scfdata cluster")
-!   ENSURE(.atom_group.associated,"no atom_group info")
+!   ENSURE(.scfdata.created,"no scfdata")
+!   ENSURE(.scfdata.cluster.created,"no scfdata cluster")
+!   ENSURE(.atom_group.created,"no atom_group info")
 !   ENSURE(n<=.scfdata.cluster.n_molecules," n too big")
 !
 !      ! Clear the pointer part
@@ -3699,17 +3699,17 @@ contains
 !      mol.name = trim(.name) // "_" // trim(n.to_str)
 !
 !      ! If a CIF exists, copy that
-!      if (.saved.cif.associated) .cif.create_copy(.saved.cif)
+!      if (.saved.cif.created) .cif.create_copy(.saved.cif)
 !
 !      ! We want the saved crystal
 !      ! It should be consistent with the cluster.
 !      mol.crystal.create_copy(.crystal)
 !
 !      ! Set up basis sets
-!      if (.atom.associated) .atom.nullify_bases
-!      if (mol.basis.associated)               mol.basis.create_copy(.basis)
-!      if (.saved.slaterbasis.associated)   mol.slaterbasis.create_copy(.slaterbasis)
-!      if (.saved.coppensbasis.associated)  mol.coppensbasis.create_copy(.coppensbasis)
+!      if (.atom.created) .atom.nullify_bases
+!      if (mol.basis.created)               mol.basis.create_copy(.basis)
+!      if (.saved.slaterbasis.created)   mol.slaterbasis.create_copy(.slaterbasis)
+!      if (.saved.coppensbasis.created)  mol.coppensbasis.create_copy(.coppensbasis)
 !      mol.basis_name        = .saved.basis_name
 !      mol.slaterbasis_name  = .saved.slaterbasis_name
 !      mol.coppensbasis_name = .saved.coppensbasis_name
@@ -3741,9 +3741,9 @@ contains
       mol :: MOLECULE, IN
       list :: VEC{INT}, IN
 
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
    ENSURE(.n_atom_kind>0,"atoms not updated")
-   ENSURE(mol.atom.associated,"mol has no atoms")
+   ENSURE(mol.atom.created,"mol has no atoms")
    ENSURE(mol.n_atom_kind>0,"mol atoms not updated")
    ENSURE(list.dim==.atom.dim,"inconsistent list length")
 
@@ -3804,14 +3804,14 @@ contains
 
       g :: INT
 
-      if (.atom_group.associated) then
+      if (.atom_group.created) then
 
          if      (.atom_group.has_fchk_files)   then; .:make_groups_from_fchk
          else if (.atom_group.has_atom_indices) then; .:make_groups_from_self
          else;          DIE("Can't update atom groups")
          end
 
-      else if (.atom.associated AND .atom.has_groups) then
+      else if (.atom.created AND .atom.has_groups) then
 
          .atom_group.create(.atom.no_of_groups)
          do g = 1,.atom_group.dim
@@ -3826,8 +3826,8 @@ contains
    make_groups_from_fchk ::: private, leaky
    ! Make the atom groups by read in Gaussian Fchk files in they are defined for the groups
 
-   DIE_IF(.atom.associated,"atoms already exists!")
-   DIE_IF(.atom_group.disassociated,"no atom groups")
+   DIE_IF(.atom.created,"atoms already exists!")
+   DIE_IF(.atom_group.destroyed,"no atom groups")
    DIE_IF(NOT .atom_group.has_fchk_files,"no fchk files")
 
       mol :: MOLECULE@
@@ -3860,7 +3860,7 @@ contains
    make_groups_from_self ::: private, leaky
    ! Make the atom groups from "self"
 
-   DIE_IF(NOT .atom_group.associated,"no atom groups!")
+   DIE_IF(NOT .atom_group.created,"no atom groups!")
 
       mol :: MOLECULE@
       g :: INT
@@ -3905,12 +3905,12 @@ contains
    update_group_info ::: leaky
    ! Update .atom_group information (ANOs, crystal, SCF guess ...)
 
-   ENSURE(.atom.associated,"atom groups must be defined after atoms=")
+   ENSURE(.atom.created,"atom groups must be defined after atoms=")
 
       mol :: MOLECULE@
       g :: INT
 
-      if (.scfdata.disassociated) then
+      if (.scfdata.destroyed) then
          .:set_scf_defaults
          .scfdata.set_output(FALSE)
       end
@@ -3918,14 +3918,14 @@ contains
       do g = 1,.atom_group.dim
 
          mol => .atom_group(g).mol
-         ENSURE(mol.associated,"atom_group molecule "//trim(g.to_str)//" does not exist")
+         ENSURE(mol.created,"atom_group molecule "//trim(g.to_str)//" does not exist")
 
          ! Don't remake ANO data if there
          mol.:set_ANOs_from_sublist_of(self,.atom_group(g).atom_index)
 
          ! Assign the crystal
          ! WARNING: dont destroy ...
-         if (.crystal.associated) mol.crystal => .crystal
+         if (.crystal.created) mol.crystal => .crystal
 
          ! Set guess-type SCF defaults
          mol.:set_scf_guess_defaults_from(.scfdata)
@@ -3941,8 +3941,8 @@ contains
       mol :: MOLECULE@
       g,charge :: INT
 
-      if (.atom.associated)  .atom.destroy
-      if (.basis.associated) .basis.destroy
+      if (.atom.created)  .atom.destroy
+      if (.basis.created) .basis.destroy
 
       charge = 0
 
@@ -3951,9 +3951,9 @@ contains
 
          mol => .atom_group(g).mol
 
-         DIE_IF(mol.disassociated,"no mol "//trim(g.to_str))
-         DIE_IF(mol.basis.disassociated,"no basis on mol "//trim(g.to_str))
-         DIE_IF(mol.atom.disassociated,"no atom list in mol "//trim(g.to_str))
+         DIE_IF(mol.destroyed,"no mol "//trim(g.to_str))
+         DIE_IF(mol.basis.destroyed,"no basis on mol "//trim(g.to_str))
+         DIE_IF(mol.atom.destroyed,"no atom list in mol "//trim(g.to_str))
 
          charge = charge + mol.charge
 
@@ -3998,7 +3998,7 @@ contains
       self :: IN
       res :: INT
 
-   ENSURE(.atom.associated,"no atom info")
+   ENSURE(.atom.created,"no atom info")
 
       n_e :: INT
 
@@ -4025,13 +4025,13 @@ contains
    ! Return the nuclear repulsion energy
       res :: REAL
 
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       i :: INT
       scf_kind :: STR
 
       scf_kind = "unknown"
-      if (.scfdata.associated) scf_kind = .scfdata.scf_kind
+      if (.scfdata.created) scf_kind = .scfdata.scf_kind
 
       i = 0
       res = ZERO
@@ -4056,7 +4056,7 @@ contains
       with_spaces :: BIN, optional
       res :: STR
 
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       res = .atom.chemical_formula(with_spaces)
 
@@ -4067,7 +4067,7 @@ contains
       self :: IN
       center :: VEC{REAL}(3)
 
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       center = .atom.center_of_mass
 
@@ -4078,7 +4078,7 @@ contains
    ! coordinate system
       self :: IN
 
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       .atom.change_to_principal_axes
 
@@ -4090,7 +4090,7 @@ contains
    ! determinant of the axes transformation is 1.
       self :: INOUT
 
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       .atom.change_to_principal_top_axes
 
@@ -4101,7 +4101,7 @@ contains
       self :: IN
       res :: REAL
 
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       res = .atom.molecular_weight
 
@@ -4112,7 +4112,7 @@ contains
       self :: IN
       res :: REAL
 
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       res = .atom.reduced_mass
 
@@ -4120,34 +4120,34 @@ contains
 
    move_origin_to_center_of_mass
    ! Move the origin to the center of mass
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       .atom.move_origin_to_center_of_mass
 
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom) ! leaky
+      if (.becke_grid.created) .becke_grid.set_grid_data(.atom) ! leaky
 
    end
 
    move_origin_to_center_of_atoms
    ! Move the origin to the center of atoms
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
 
       .atom.move_origin_to_center_of_atoms
 
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom) ! leaky
+      if (.becke_grid.created) .becke_grid.set_grid_data(.atom) ! leaky
 
    end
 
    move_origin
    ! Move the origin by a user specified vector
-   ENSURE(.atom.associated,"atom list required")
+   ENSURE(.atom.created,"atom list required")
    ENSURE(stdin.buffer.n_items==4 OR stdin.buffer.n_items==5,"origin shift needed on same line")
       shift :: VEC{REAL}(3)
 
       stdin.read_quantity(shift)
       .atom.translate_by(shift)
 
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom) ! leaky
+      if (.becke_grid.created) .becke_grid.set_grid_data(.atom) ! leaky
 
    end
 
@@ -4155,35 +4155,35 @@ contains
    has_all_ANOs_made result (res)
    ! Return TRUE if the ANO data is made for every atom.
       res :: BIN
-      res = .atom.associated
+      res = .atom.created
       if (res) res = .atom.has_all_ANO_matrices
    end
 
    has_all_ANO_interpolators result (res)
    ! Return TRUE if the ANO interpolators are made for every atom.
       res :: BIN
-      res = .atom.associated
+      res = .atom.created
       if (res) res = .atom.has_all_ANO_interpolators
    end
 
    has_all_interpolators result (res)
    ! Return TRUE if the per-atom interpolators are made for every atom.
       res :: BIN
-      res = .atom.associated
+      res = .atom.created
       if (res) res = .atom.has_all_interpolators
    end
 
    has_all_spherical_atom_data result (res)
    ! Return TRUE if the per-atom interpolators are made for every atom.
       res :: BIN
-      res = .atom.associated
+      res = .atom.created
       if (res) res = .atom.has_all_spherical_atom_data
    end
 
    has_all_atom_shell_info result (res)
    ! Return TRUE if the per-atom interpolators are made for every atom.
       res :: BIN
-      res = .atom.associated
+      res = .atom.created
       if (res) res = .atom.has_all_shell_info
    end
 
@@ -4195,7 +4195,7 @@ contains
    ! Work out and return the number of electrons in the molecule.
       res :: INT
 
-   ENSURE(.atom.associated,  "no atom list")
+   ENSURE(.atom.created,  "no atom list")
 
       res = .atom.no_of_electrons - .charge
 
@@ -4217,7 +4217,7 @@ contains
    ! to ensure a good initial guess for promolecule SCF guess.
       res :: INT
 
-   ENSURE(.atom.associated,  "no atom list")
+   ENSURE(.atom.created,  "no atom list")
 
       tmp :: INT
 
@@ -4243,7 +4243,7 @@ contains
    ! electron. See above.
       res :: BIN
 
-   ENSURE(.atom.associated,  "no atom list")
+   ENSURE(.atom.created,  "no atom list")
 
       tmp :: INT
 
@@ -4274,7 +4274,7 @@ contains
    no_of_atom_pairs result (res)
    ! Return the number of atom pairs in the molecule
       res :: INT
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.atom.created,"no atom list")
       res = .n_atom*(.n_atom+1)/2
    end
 
@@ -4282,7 +4282,7 @@ contains
    ! Return the number of shell pairs in the basis set for the molecule
       res :: INT
 
-   ENSURE(.atom.associated,  "no atom list")
+   ENSURE(.atom.created,  "no atom list")
    ENSURE(.atom.bases_are_resolved,"gaussian bases not all resolved")
 
       n_shell :: INT
@@ -4328,8 +4328,8 @@ contains
    DFT_grid_info_made result (res)
    ! Return TRUE if the DFT grid information is made
       res :: BIN
-      res = .becke_grid.associated  &
-          AND .overlapping_atoms.associated &
+      res = .becke_grid.created  &
+          AND .overlapping_atoms.created &
           AND .overlapping_atoms_for_atom.created
    end
 
@@ -4348,8 +4348,8 @@ contains
       self :: INOUT
       res :: STR
 
-      if      (.scfdata.associated) then;            res = .scfdata.scf_kind
-      else if (.molecular_orbitals.associated) then; res = .molecular_orbitals.guess_scf_kind
+      if      (.scfdata.created) then;            res = .scfdata.scf_kind
+      else if (.molecular_orbitals.created) then; res = .molecular_orbitals.guess_scf_kind
       else;                                       DIE("no way to  guess!")
       end
 
@@ -4364,7 +4364,7 @@ contains
       a,b :: INT, IN
       res :: BIN
 
-   ENSURE(.overlapping_atoms.associated,"no .overlapping_atoms")
+   ENSURE(.overlapping_atoms.created,"no .overlapping_atoms")
 
       aa,bb,ab :: INT
 
@@ -4385,7 +4385,7 @@ contains
       list :: VEC{INT}, IN
       res :: BIN
 
-   ENSURE(.overlapping_atoms.associated,"no .overlapping_atoms")
+   ENSURE(.overlapping_atoms.created,"no .overlapping_atoms")
 
       i,b,aa,bb,ab :: INT
 
@@ -4441,7 +4441,7 @@ contains
    ! functions in pairs of shells.
       max_S :: VEC{REAL}
 
-   ENSURE(.overlap_matrix.associated,"no overlap_matrix")
+   ENSURE(.overlap_matrix.created,"no overlap_matrix")
    ENSURE(max_S.dim==.:no_of_shell_pairs,"wrong size, S_max")
 
       ab,a,b,fa,fb,la,lb :: INT
@@ -4467,7 +4467,7 @@ contains
    make_overlapping_atoms ::: leaky
    ! Make the list of overlapping atoms
    ENSURE(.basis_info_made,"no basis set")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.created,"no becke_grid")
 
       r_max :: VEC{REAL}@
       d :: VEC{REAL}(3)
@@ -4540,7 +4540,7 @@ contains
 !   make_overlapping_atoms2 ::: leaky
 !   ! Make the list of overlapping atoms
 !   ENSURE(.basis_info_made,"no basis set")
-!   ENSURE(.scfdata.associated,"no scfdata")
+!   ENSURE(.scfdata.created,"no scfdata")
 !      S_max :: VEC{REAL}@
 !      n_atom_pairs :: INT
 !      n_atom_pairs = .no_of_atom_pairs
@@ -5155,10 +5155,10 @@ contains
    ! Define a vector of atom numbers corresponding to the molecule's
    ! basis set shell numbers; also define a vector of atom shell numbers
    ! corresponding to the molecule basis set shell number
-   ENSURE(.atom.associated,"no atom information")
+   ENSURE(.atom.created,"no atom information")
    ENSURE(.atom.bases_are_resolved,"gaussian bases not all resolved")
    ENSURE(.n_atom>0,"no atoms")
-   ENSURE(.basis.associated,"no basis set")
+   ENSURE(.basis.created,"no basis set")
 
       ! Set basis l_max before anything else
       .basis_l_max = .basis.shell.maximum_l_value
@@ -5202,7 +5202,7 @@ contains
    ! NOTE for later: n_unique_shells should be a basisvec routine.
    ! NOTE for later: precomputed_basis_shellpair should be a MAT{REAL} type
 
-   ENSURE(.basis.associated,"no basis set")
+   ENSURE(.basis.created,"no basis set")
       i,j,a,b,p,q :: INT
 
       .n_unique_shells = .basis.shell.dim
@@ -5271,7 +5271,7 @@ contains
    ! a flattened list of shells) for a given shell index in the
    ! molecular basis set (i.e. the flattened list of shells in the
    ! .atom list).  NOTE for later: this should be a basisvec routine.
-   ENSURE(.basis.associated,"no basis set")
+   ENSURE(.basis.created,"no basis set")
 
       sh,at,atom_shell,ind :: INT
 
@@ -5304,10 +5304,10 @@ contains
    ! Get the atom shell info for all atoms in the molecule. We make it
    ! only for the unique atoms and pointer copy to the non-unique
    ! atoms, just like for ANO atom information.
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
    ENSURE(.atom_info_made,"no atom info")
    ENSURE(.basis_info_made,"no basis_set info")
-   ENSURE(.basis.associated,"no basis set")
+   ENSURE(.basis.created,"no basis set")
    ENSURE(.n_atom_kind>0,"no atom kinds set")
 
       kind,a,b :: INT
@@ -5360,7 +5360,7 @@ contains
       self :: IN
 
    ENSURE(.occupation_numbers.created, "no occupation numbers")
-   ENSURE(.natural_orbitals.associated, "no natural orbitals")
+   ENSURE(.natural_orbitals.created, "no natural orbitals")
 
       arch :: ARCHIVE
       genre :: STR
@@ -5395,7 +5395,7 @@ contains
       method :: STR, optional
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.molecular_orbitals.associated, "no molecular orbitals")
+   ENSURE(.molecular_orbitals.created, "no molecular orbitals")
    ENSURE(.molecular_orbitals.any_created, "no molecular orbitals")
 
       T :: REAL
@@ -5407,35 +5407,35 @@ contains
 
       ! Determine (or guess) the kind of SCF method to be used.
       if      (present(method))  then; scf_method = method
-      else if (.scfdata.associated) then; scf_method = .scfdata.scf_kind
+      else if (.scfdata.created) then; scf_method = .scfdata.scf_kind
       else;                            scf_method = .molecular_orbitals.guess_scf_kind
       end
 
       ! Determine (or guess) the genre of density matrix to be made
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = .molecular_orbitals.spinorbital_kind
       end
 
       ! Make the delta density matrix?
-      do_delta_density = .delta_density_matrix.associated
-      if (.scfdata.associated) do_delta_density = do_delta_density AND .scfdata.do_delta_build
+      do_delta_density = .delta_density_matrix.created
+      if (.scfdata.created) do_delta_density = do_delta_density AND .scfdata.do_delta_build
 
       ! Determine if density matrix damping is to be used
-      damping = .old_density_matrix.associated
+      damping = .old_density_matrix.created
       if      (present(damp)) then;    damping = damping AND damp
-      else if (.scfdata.associated) then; damping = damping AND .scfdata.apply_damping
+      else if (.scfdata.created) then; damping = damping AND .scfdata.apply_damping
       end
 
       ! Determine if pFON should be used
       use_pFON = FALSE
-      if (.scfdata.associated AND .fock_matrix.created(genre)) use_pFON = .scfdata.apply_pFON
+      if (.scfdata.created AND .fock_matrix.created(genre)) use_pFON = .scfdata.apply_pFON
 
       ! Determine if finite temperature FON should be used
       use_FON = FALSE
-      if (.scfdata.associated) use_pFON = .scfdata.using_FON
+      if (.scfdata.created) use_pFON = .scfdata.using_FON
 
       ! Create the density matrix (leaky)
-      if (.density_matrix.disassociated) .density_matrix.create(.n_bf)
+      if (.density_matrix.destroyed) .density_matrix.create(.n_bf)
       .density_matrix.destroy(genre)
       .density_matrix.create(genre)
 
@@ -5794,7 +5794,7 @@ contains
    ! matrix.
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
 
       ! Leaky
@@ -5810,12 +5810,12 @@ contains
       D :: OPMATRIX@
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(D.associated, "no density matrix")
+   ENSURE(D.created, "no density matrix")
    ENSURE(D.any_created, "no density matrix")
 
       genre :: STR
 
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = D.spinorbital_kind
       end
 
@@ -5874,14 +5874,14 @@ contains
       P :: MAT{REAL}
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
    ENSURE(P.dim1==.n_bf, "P: wrong dim1")
    ENSURE(P.dim2==.n_bf, "P: wrong dim2")
 
       genre :: STR
 
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = .density_matrix.spinorbital_kind
       end
 
@@ -5921,14 +5921,14 @@ contains
       P :: MAT{REAL}
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
    ENSURE(P.dim1==.n_bf, "P: wrong dim1")
    ENSURE(P.dim2==.n_bf, "P: wrong dim2")
 
       genre :: STR
 
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = .density_matrix.spinorbital_kind
       end
 
@@ -5964,7 +5964,7 @@ contains
    ! the density matrix. NOTE: factor 1/2 not included.
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
 
       .:make_ao_sz_density_matrix(.density_matrix)   ! leaky
@@ -5978,12 +5978,12 @@ contains
       D :: OPMATRIX@
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(D.associated, "no density matrix")
+   ENSURE(D.created, "no density matrix")
    ENSURE(D.any_created, "no density matrix")
 
       genre :: STR
 
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = D.spinorbital_kind
       end
 
@@ -6025,14 +6025,14 @@ contains
       P :: MAT{REAL}
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
    ENSURE(P.dim1==.n_bf, "P: wrong dim1")
    ENSURE(P.dim2==.n_bf, "P: wrong dim2")
 
       genre :: STR
 
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = .density_matrix.spinorbital_kind
       end
 
@@ -6070,7 +6070,7 @@ contains
       S :: MAT3{CPX}
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
    ENSURE(S.dim1==.n_bf, "S: wrong dim1")
    ENSURE(S.dim2==.n_bf, "S: wrong dim2")
@@ -6079,7 +6079,7 @@ contains
       genre :: STR
       I :: CPX
 
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = .density_matrix.spinorbital_kind
       end
 
@@ -6129,7 +6129,7 @@ contains
       S :: MAT3{REAL}
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
    ENSURE(S.dim1==.n_bf, "S: wrong dim1")
    ENSURE(S.dim2==.n_bf, "S: wrong dim2")
@@ -6138,7 +6138,7 @@ contains
       genre :: STR
       I :: CPX
 
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = .density_matrix.spinorbital_kind
       end
 
@@ -6188,7 +6188,7 @@ contains
       S :: MAT3{REAL}
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
    ENSURE(S.dim1==.n_bf, "S: wrong dim1")
    ENSURE(S.dim2==.n_bf, "S: wrong dim2")
@@ -6197,7 +6197,7 @@ contains
       genre :: STR
       I :: CPX
 
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = .density_matrix.spinorbital_kind
       end
 
@@ -6241,7 +6241,7 @@ contains
       nb :: INT, IN, optional
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.molecular_orbitals.associated, "no molecular orbitals")
+   ENSURE(.molecular_orbitals.created, "no molecular orbitals")
 
       MO,D,MOa,MOb,Da,Db :: MAT{REAL}@
       CMO,CD,CMOa,CMOb,CDa,CDb :: MAT{CPX}@
@@ -6385,11 +6385,11 @@ contains
    ! Get the spherical atom natural orbitals (ANO) data for all
    ! atoms in the molecule.
 
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
    ENSURE(.atom_info_made,"no atom info")
-   ENSURE(.basis.associated,"no basis set")
+   ENSURE(.basis.created,"no basis set")
    ENSURE(.basis_info_made,"no basis_set info")
-   ENSURE(.density_matrix.associated,"no density_matrix")
+   ENSURE(.density_matrix.created,"no density_matrix")
    ENSURE(.density_matrix.any_created,"no density_matrix")
 
       D :: OPMATRIX@
@@ -6401,7 +6401,7 @@ contains
       if (.:has_all_ANOs_made) .:destroy_ANOs
 
       ! Determine (or guess) the genre of density matrix to be made
-      if (.scfdata.associated) then; genre = .scfdata.spinorbital_kind
+      if (.scfdata.created) then; genre = .scfdata.spinorbital_kind
       else;                       genre = .molecular_orbitals.spinorbital_kind
       end
 
@@ -6430,9 +6430,9 @@ contains
       a :: INT
       D :: MAT{REAL}
 
-   ENSURE(.atom(a).natural_orbitals.disassociated,  "NOs, atom "//trim(a.to_str))
+   ENSURE(.atom(a).natural_orbitals.destroyed,  "NOs, atom "//trim(a.to_str))
    ENSURE(.atom(a).occupation_numbers.destroyed,"occ, atom "//trim(a.to_str))
-   ENSURE(.atom(a).density_matrix.disassociated,    "DM, atom "//trim(a.to_str))
+   ENSURE(.atom(a).density_matrix.destroyed,    "DM, atom "//trim(a.to_str))
 
       f,l :: INT
       mol :: MOLECULE@
@@ -6497,7 +6497,7 @@ contains
       g :: INT, IN
       mol :: MOLECULE, IN
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.created,"no atom group information")
    ENSURE(g>0,"group number must be positive")
    ENSURE(g<=.atom_group.dim,"group number exceeds number of groups")
 
@@ -6528,7 +6528,7 @@ contains
       g :: INT, IN
       mol :: MOLECULE, IN
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.created,"no atom group information")
    ENSURE(g>0,"group number must be positive")
    ENSURE(g<=.atom_group.dim,"group number exceeds number of groups")
 
@@ -6628,7 +6628,7 @@ contains
 
       genre :: STR
 
-      if (.molecular_orbitals.disassociated) return
+      if (.molecular_orbitals.destroyed) return
       if (.molecular_orbitals.all_destroyed) return
 
       genre = .molecular_orbitals.spinorbital_kind
@@ -6688,7 +6688,7 @@ contains
 
       genre :: STR
 
-      if (.molecular_orbitals.disassociated) return
+      if (.molecular_orbitals.destroyed) return
       if (.molecular_orbitals.all_destroyed) return
 
       genre = .molecular_orbitals.spinorbital_kind
@@ -6755,7 +6755,7 @@ contains
       axis :: VEC{REAL}(3)
       angle :: REAL
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.created,"no atom group information")
 
       mol :: MOLECULE@
       archive :: ARCHIVE
@@ -6778,9 +6778,9 @@ contains
       end
 
       .molecular_orbitals.destroy         ! leaky here
-      if (.density_matrix.disassociated) return
+      if (.density_matrix.destroyed) return
 
-      ENSURE(.density_matrix.restricted.associated,"group rotation for restricted DM only")
+      ENSURE(.density_matrix.restricted.created,"group rotation for restricted DM only")
 
       ! Create molecule
       mol.:create
@@ -6813,7 +6813,7 @@ contains
    ! Level shift the linear dependence in "F"
       F :: OPMATRIX, INOUT
 
-   ENSURE(.scfdata.associated,"no scfdata")
+   ENSURE(.scfdata.created,"no scfdata")
 
       s_kind :: STR
 
@@ -6838,9 +6838,9 @@ contains
    ! smallest to largest.
       F :: MAT{REAL}
 
-   ENSURE(.scfdata.associated,"no scfdata")
-   ENSURE(.overlap_eigenvectors.associated,"no overlap_eigenvectors")
-   ENSURE(.overlap_eigenvalues.associated,"no overlap_eigenvalues")
+   ENSURE(.scfdata.created,"no scfdata")
+   ENSURE(.overlap_eigenvectors.created,"no overlap_eigenvectors")
+   ENSURE(.overlap_eigenvalues.created,"no overlap_eigenvalues")
    ENSURE(F.dim1==.n_bf,"wrong size, F")
 
       n :: INT
@@ -6887,7 +6887,7 @@ contains
       self :: INOUT
       F :: OPMATRIX, INOUT
 
-   ENSURE(.scfdata.associated,"no scfdata")
+   ENSURE(.scfdata.created,"no scfdata")
 
       s_kind :: STR
 
@@ -6910,8 +6910,8 @@ contains
       self :: INOUT
       F :: MAT{REAL}, INOUT
 
-   ENSURE(.scfdata.associated,"no scfdata")
-   ENSURE(.overlap_eigenvectors.associated,"no overlap_eigenvectors")
+   ENSURE(.scfdata.created,"no scfdata")
+   ENSURE(.overlap_eigenvectors.created,"no overlap_eigenvectors")
    ENSURE(F.dim1==.n_bf,"wrong size, F")
 
       tol :: REAL
@@ -6945,7 +6945,7 @@ contains
       genre :: STR, optional
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.density_matrix.associated, "no density matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
 
       orb_kind :: STR
@@ -6967,9 +6967,9 @@ contains
 
    make_restricted_NOs ::: leaky
    ! Make the restricted natural orbitals from the density matrix
-   ENSURE(.density_matrix.associated, "no density matrix")
-   ENSURE(.density_matrix.restricted.associated, "no density matrix")
-   ENSURE(.overlap_matrix.associated, "no overlap matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
+   ENSURE(.density_matrix.restricted.created, "no density matrix")
+   ENSURE(.overlap_matrix.created, "no overlap matrix")
 
       ! Recreate (leaky)
       .natural_orbitals.destroy
@@ -6986,10 +6986,10 @@ contains
 
    make_unrestricted_NOs ::: leaky
    ! Make the unrestricted natural orbitals from the density matrix
-   ENSURE(.density_matrix.associated, "no density matrix")
-   ENSURE(.density_matrix.alpha.associated, "no density matrix")
-   ENSURE(.density_matrix.beta.associated, "no density matrix")
-   ENSURE(.overlap_matrix.associated, "no overlap matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
+   ENSURE(.density_matrix.alpha.created, "no density matrix")
+   ENSURE(.density_matrix.beta.created, "no density matrix")
+   ENSURE(.overlap_matrix.created, "no overlap matrix")
 
       ! Recreate (leaky)
       .natural_orbitals.destroy
@@ -7009,7 +7009,7 @@ contains
       NO,P :: MAT{REAL}
       occupation :: VEC{REAL}
 
-   ENSURE(.overlap_matrix.associated,"no overlap matrix")
+   ENSURE(.overlap_matrix.created,"no overlap matrix")
 
       V,X :: MAT{REAL}@
 
@@ -7035,9 +7035,9 @@ contains
 
    make_restricted_complex_NOs ::: leaky
    ! Make the restricted complex natural orbitals from the density matrix
-   ENSURE(.density_matrix.associated, "no density matrix")
-   ENSURE(.density_matrix.restricted_complex.associated, "no density matrix")
-   ENSURE(.overlap_matrix.associated, "no overlap matrix")
+   ENSURE(.density_matrix.created, "no density matrix")
+   ENSURE(.density_matrix.restricted_complex.created, "no density matrix")
+   ENSURE(.overlap_matrix.created, "no overlap matrix")
 
       V,X :: MAT{CPX}@
       O :: MAT{REAL}@
@@ -7073,9 +7073,9 @@ contains
    make_general_complex_NOs ::: leaky
    ! Make the general natural orbitals and occupations from the complex density
    ! matrix.
-   ENSURE(.density_matrix.associated,"no density matrix")
-   ENSURE(.density_matrix.general_complex.associated,"no density matrix")
-   ENSURE(.overlap_matrix.associated, "no overlap matrix")
+   ENSURE(.density_matrix.created,"no density matrix")
+   ENSURE(.density_matrix.general_complex.created,"no density matrix")
+   ENSURE(.overlap_matrix.created, "no overlap matrix")
 
       R :: MAT{REAL}@
       V,X :: MAT{CPX}@
@@ -7128,14 +7128,14 @@ contains
    ! Get "S_sqrt", the sqrt overlap matrix
       S_sqrt :: MAT{REAL}, OUT
 
-   ENSURE(.overlap_eigenvectors.associated,"no overlap_eigenvectors")
-   ENSURE(.overlap_eigenvalues.associated,"no overlap_values")
+   ENSURE(.overlap_eigenvectors.created,"no overlap_eigenvectors")
+   ENSURE(.overlap_eigenvalues.created,"no overlap_values")
    ENSURE(S_sqrt.is_square,"non-square S_qrt")
    ENSURE(S_sqrt.dim1==.overlap_eigenvectors.dim1,"wrong shape for S_sqrt")
 
       tol :: REAL
 
-      if (.scfdata.associated) then
+      if (.scfdata.created) then
          tol   = .scfdata.linear_dependence_tol
          S_sqrt.to_sqrt_of(.overlap_eigenvalues,.overlap_eigenvectors,tol)
       else
@@ -7148,14 +7148,14 @@ contains
    ! Get "S_inv", the inverse sqrt overlap matrix
       S_inv :: MAT{REAL}, OUT
 
-   ENSURE(.overlap_eigenvectors.associated,"no overlap_eigenvectors")
-   ENSURE(.overlap_eigenvalues.associated,"no overlap_values")
+   ENSURE(.overlap_eigenvectors.created,"no overlap_eigenvectors")
+   ENSURE(.overlap_eigenvalues.created,"no overlap_values")
    ENSURE(S_inv.is_square,"non-square S_inv")
    ENSURE(S_inv.dim1==.overlap_eigenvectors.dim1,"wrong shape for S_sqrt")
 
       tol :: REAL
 
-      if (.scfdata.associated) then
+      if (.scfdata.created) then
          tol   = .scfdata.linear_dependence_tol
          S_inv.to_inverse_sqrt_of(.overlap_eigenvalues,.overlap_eigenvectors,tol)
       else
@@ -7170,7 +7170,7 @@ contains
 
    assign_NOs_to_MOs ::: leaky
    ! Assign the natural orbitals to be the molecular_orbitals
-   ENSURE(.molecular_orbitals.associated, "no molecular orbitals")
+   ENSURE(.molecular_orbitals.created, "no molecular orbitals")
    ENSURE(.molecular_orbitals.any_created, "no molecular orbitals")
 
       NO_kind :: STR
@@ -7246,8 +7246,8 @@ contains
       mat :: MAT{TYPE}
 
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.atom.associated,"no atom list")
-   ENSURE(.pointgroup.associated, "no pointgroup")
+   ENSURE(.atom.created,"no atom list")
+   ENSURE(.pointgroup.created, "no pointgroup")
    ENSURE(mat.is_square,"non-square matrix")
    ENSURE(mat.dim1==.n_bf,"incorrectly dimensioned matrix")
 
@@ -7318,7 +7318,7 @@ contains
       self :: IN
       res :: MAT{INT}, OUT
 
-   ENSURE(.pointgroup.associated, "no pointgroup")
+   ENSURE(.pointgroup.created, "no pointgroup")
    ENSURE(res.dim1==.n_shell,          "wrong dim2, res")
    ENSURE(res.dim2==.pointgroup.order, "wrong dime2, res")
 
@@ -7355,8 +7355,8 @@ contains
 
    ENSURE(NOT .use_spherical_basis,"not implemented")
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.atom.associated,"no atom list")
-   ENSURE(.crystal.associated, "no pointgroup")
+   ENSURE(.atom.created,"no atom list")
+   ENSURE(.crystal.created, "no pointgroup")
    ENSURE(mat.is_square,"non-square matrix")
    ENSURE(mat.dim1==.n_bf,"incorrectly dimensioned matrix")
 
@@ -7429,7 +7429,7 @@ contains
       self :: IN
       res :: MAT{INT}, OUT
 
-   ENSURE(.crystal.associated, "no crystal")
+   ENSURE(.crystal.created, "no crystal")
    ENSURE(res.dim1==.n_shell,                    "wromg dim1, res")
    ENSURE(res.dim2==.crystal.n_stabilizer_symops,"wromg dim2, res")
 
@@ -7479,7 +7479,7 @@ contains
       archive.write(opmatrix,genre)
 
       if (avec_lambda) then
-        if (.scfdata.associated) then
+        if (.scfdata.created) then
         if (.scfdata.scf_kind.includes("xray_") OR .scfdata.scf_kind.includes("pnd_")) then
         archive.set(.name,trim(archive_name)//",lambda="//trim(.scfdata.lambda.to_str("f5.3")))
         archive.write(opmatrix,genre)
@@ -7507,7 +7507,7 @@ contains
       archive.set(.name,archive_name)
       archive.write(opvector,genre)
       if (avec_lambda) then
-        if (.scfdata.associated) then
+        if (.scfdata.created) then
         if (.scfdata.scf_kind.includes("xray_") OR .scfdata.scf_kind.includes("pnd_")) then
         archive.set(.name,trim(archive_name)//",lambda="//trim(.scfdata.lambda.to_str("f5.3")))
         archive.write(opvector,genre)
@@ -7530,7 +7530,7 @@ contains
       archive.set(.name,archive_name)
       archive.write(item,genre)
       if (avec_lambda) then
-        if (.scfdata.associated) then
+        if (.scfdata.created) then
         if (.scfdata.scf_kind.includes("xray_") OR .scfdata.scf_kind.includes("pnd_")) then
         archive.set(.name,trim(archive_name)//",lambda="//trim(.scfdata.lambda.to_str("f5.3")))
         archive.write(item,genre)
@@ -7583,7 +7583,7 @@ contains
       name :: STR
       name = "NAME"
       if (present(archive_name)) name = archive_name
-      if (.NAME.disassociated) then
+      if (.NAME.destroyed) then
         ENSURE(present(genre),"missing genre")
         .NAME.create(.n_bf,genre)
       end
@@ -7691,7 +7691,7 @@ contains
       if (present(keep_MOs)) delete_MOs = NOT keep_MOs
 
       if (NOT delete_MOs)                  return
-      if (.scfdata.disassociated)              return
+      if (.scfdata.destroyed)              return
       if (NOT .scfdata.is_constrained_scf) return
 
       archive.set_defaults
@@ -7735,10 +7735,10 @@ contains
    ! Delete any group type SCF archives.
       g :: INT
 
-      if (.atom_group.disassociated) return
+      if (.atom_group.destroyed) return
 
       do g = 1,.atom_group.dim
-         if (.atom_group(g).mol.disassociated) cycle
+         if (.atom_group(g).mol.destroyed) cycle
          .atom_group(g).mol.:delete_scf_archives
       end
 
@@ -7759,24 +7759,24 @@ contains
    put
    ! Put all the available molecule information on file
 
-   DIE_IF(tonto.disassociated,"no tonto variable")
+   DIE_IF(tonto.destroyed,"no tonto variable")
 
       .:put_basics
 
       if (tonto.low_verbosity) then
-      if (.atom.associated) then
+      if (.atom.created) then
          if (.atom.dim>100) return
       end
       end
 
-      if (.atom.associated)        .:put_atoms
-      if (.atom_group.associated)  .:atom_group.put
-      if (.pointgroup.associated)  .:put_pointgroup
-      if (.crystal.associated)     .:put_crystal
-      if (.cluster.associated)     .:put_cluster
-      if (.becke_grid.associated)  .:put_becke_grid
+      if (.atom.created)        .:put_atoms
+      if (.atom_group.created)  .:atom_group.put
+      if (.pointgroup.created)  .:put_pointgroup
+      if (.crystal.created)     .:put_crystal
+      if (.cluster.created)     .:put_cluster
+      if (.becke_grid.created)  .:put_becke_grid
 
-      if (.overlapping_atoms.associated AND .atom.associated) then
+      if (.overlapping_atoms.created AND .atom.created) then
          .:put_overlapping_atoms
          .:put_overlapping_atoms_4_atom
       end
@@ -7831,13 +7831,13 @@ contains
    put_atoms
    ! Output the atom coordinate and basis set information
 
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.atom.created,"no atom list")
 
       .atom.put_coordinate_info
 
-      if (.basis.associated)        .:put_bases
-    ! if (.coppensbasis.associated) .put_coppensbases
-    ! if (.slaterbasis.associated)  .put_slaterbases
+      if (.basis.created)        .:put_bases
+    ! if (.coppensbasis.created) .put_coppensbases
+    ! if (.slaterbasis.created)  .put_slaterbases
 
     ! .atom.put_ADPs
 
@@ -7845,7 +7845,7 @@ contains
 
    put_ADPs
    ! Output the ADPs in cartesian axes
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.atom.created,"no atom list")
 
       .atom.put_ADPs
 
@@ -7855,10 +7855,10 @@ contains
    put_bond_length_with_error ::: leaky
    ! Read two atoms, and output the bond length with associated error
 
-   ENSURE(.atom.associated,"no atom list")
-   ENSURE(.crystal.associated,"no crystal")
-   ENSURE(.crystal.data.associated,"no diffraction data")
-   ENSURE(.crystal.data.covariance_matrix.associated,"no cov matrix created")
+   ENSURE(.atom.created,"no atom list")
+   ENSURE(.crystal.created,"no crystal")
+   ENSURE(.crystal.data.created,"no diffraction data")
+   ENSURE(.crystal.data.covariance_matrix.created,"no cov matrix created")
 
       cm :: MAT{REAL}@
       a1,a2,n_f :: INT
@@ -7889,10 +7889,10 @@ contains
    ! Output the atom coordinate and basis set information
    ! Read three atoms, and output the bond angle with associated error
 
-   ENSURE(.atom.associated,"no atom list")
-   ENSURE(.crystal.associated,"no crystal")
-   ENSURE(.crystal.data.associated,"no diffraction data")
-   ENSURE(.crystal.data.covariance_matrix.associated,"no cov matrix created")
+   ENSURE(.atom.created,"no atom list")
+   ENSURE(.crystal.created,"no crystal")
+   ENSURE(.crystal.data.created,"no diffraction data")
+   ENSURE(.crystal.data.covariance_matrix.created,"no cov matrix created")
 
       cm :: MAT{REAL}@
       a1,a2,a3,n_f :: INT
@@ -7921,11 +7921,11 @@ contains
 
    put_torsion_angle_with_error ::: leaky
    ! Output the atom coordinate and basis set information
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.atom.created,"no atom list")
 
-   ENSURE(.crystal.associated,"no crystal")
-   ENSURE(.crystal.data.associated,"no diffraction data")
-   ENSURE(.crystal.data.covariance_matrix.associated,"no cov matrix created")
+   ENSURE(.crystal.created,"no crystal")
+   ENSURE(.crystal.data.created,"no diffraction data")
+   ENSURE(.crystal.data.covariance_matrix.created,"no cov matrix created")
 
       cm :: MAT{REAL}@
       a1,a2,a3,a4,n_f :: INT
@@ -7957,15 +7957,15 @@ contains
 
    put_principal_axes
    ! Output the atom principal axes
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.atom.created,"no atom list")
       .atom.put_principal_axes
    end
 
    put_bases
    ! Output the molecule basis set information, if the bases are all resolved.
 
-   ENSURE(.atom.associated,"no atom list")
-   ENSURE(.basis.associated,"no basis set list")
+   ENSURE(.atom.created,"no atom list")
+   ENSURE(.basis.created,"no basis set list")
 
       if (NOT .atom.bases_are_resolved) return
 
@@ -7995,8 +7995,8 @@ contains
    ! resolved.
       self :: IN
 
-   ENSURE(.atom.associated,"no atom list")
-   ENSURE(.slaterbasis.associated,"no basis set list")
+   ENSURE(.atom.created,"no atom list")
+   ENSURE(.slaterbasis.created,"no basis set list")
 
       if (NOT .atom.slater_bases_are_resolved) return
 
@@ -8014,8 +8014,8 @@ contains
    ! resolved.
       self :: IN
 
-   ENSURE(.atom.associated,"no atom list")
-   ENSURE(.coppensbasis.associated,"no basis set list")
+   ENSURE(.atom.created,"no atom list")
+   ENSURE(.coppensbasis.created,"no basis set list")
 
       if (NOT .atom.coppens_bases_are_resolved) return
 
@@ -8034,7 +8034,7 @@ contains
 !   put_atom_ADP_tensors
 !   ! Output the ADP (thermal) tensors if they exist.
 !
-!   ENSURE(.atom.associated,"no atom info")
+!   ENSURE(.atom.created,"no atom info")
 !
 !      xmodel,nmodel :: STR
 !
@@ -8042,9 +8042,9 @@ contains
 !
 !      xmodel = "none"
 !      nmodel = "none"
-!      if (.crystal.associated) then
-!         if (.crystal.xray_data.associated) xmodel = .crystal.xray_data.thermal_smearing_model
-!         if (.crystal.pnd_data.associated)  nmodel = .crystal.pnd_data.thermal_smearing_model
+!      if (.crystal.created) then
+!         if (.crystal.xray_data.created) xmodel = .crystal.xray_data.thermal_smearing_model
+!         if (.crystal.pnd_data.created)  nmodel = .crystal.pnd_data.thermal_smearing_model
 !      end
 !
 !      stdout.flush
@@ -8062,14 +8062,14 @@ contains
 
    put_atom_groups
    ! Out out the .atom_group info array
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.created,"no atom group information")
       .atom_group.put
    end
 
    put_overlapping_atoms
    ! Out out the .overlapping_atom info array
-   ENSURE(.overlapping_atoms.associated,"no overlapping_atoms")
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.overlapping_atoms.created,"no overlapping_atoms")
+   ENSURE(.atom.created,"no atoms")
 
       i,j,k :: INT
 
@@ -8100,8 +8100,8 @@ contains
 
    put_overlapping_atoms_4_atom
    ! Out out the .overlapping_atoms_for_atom info array
-   ENSURE(.overlapping_atoms.associated,"no overlapping_atoms")
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.overlapping_atoms.created,"no overlapping_atoms")
+   ENSURE(.atom.created,"no atoms")
 
       i,j,k :: INT
 
@@ -8136,13 +8136,13 @@ contains
 
    put_plot_grid
    ! Output the current grid.
-   ENSURE(.plot_grid.associated,"no plot grid to output")
+   ENSURE(.plot_grid.created,"no plot grid to output")
       .plot_grid.put
    end
 
    put_becke_grid
    ! Output the current DFT grid.
-   ENSURE(.becke_grid.associated,"no Becke integration grid to output")
+   ENSURE(.becke_grid.created,"no Becke integration grid to output")
       .becke_grid.put
    end
 
@@ -8153,7 +8153,7 @@ contains
 
    put_cluster
    ! Put out the cluster information
-   ENSURE(.cluster.associated,"no cluster data")
+   ENSURE(.cluster.created,"no cluster data")
       .cluster.put
    end
 
@@ -8214,7 +8214,7 @@ contains
 
    put_density_matrix
    ! Output the current associated density matrix
-   ENSURE(.density_matrix.associated,"no density matrix")
+   ENSURE(.density_matrix.created,"no density matrix")
       stdout.flush
       stdout.text("Density matrix:")
       stdout.put(.density_matrix)
@@ -8222,7 +8222,7 @@ contains
 
    put_fock_matrix
    ! Output the current associated fock matrix
-   ENSURE(.fock_matrix.associated,"no fock matrix")
+   ENSURE(.fock_matrix.created,"no fock matrix")
       stdout.flush
       stdout.text("Fock matrix:")
       stdout.put(.fock_matrix)
@@ -8232,7 +8232,7 @@ contains
    ! Output a VRML file for the coordinate geometry
       self :: IN
 
-   ENSURE(.atom.associated,"no atom list!")
+   ENSURE(.atom.created,"no atom list!")
 
       out :: TEXTFILE@
 
@@ -8253,7 +8253,7 @@ contains
       out.text("  intensity 0.4")
       out.text("}")
       .atom.put_vrml(out)
-      if (.isosurface.associated) .isosurface.put_vrml(out)
+      if (.isosurface.created) .isosurface.put_vrml(out)
       stdout.text("done VRML molecule")
 
    end
@@ -8264,7 +8264,7 @@ contains
 
    put_ANOs ::: leaky
    ! Put the ANO data out for all atoms in the molecule.
-   ENSURE(.atom.associated,"no atoms")
+   ENSURE(.atom.created,"no atoms")
 
       k,a,b :: INT
       list :: STR
@@ -8316,14 +8316,14 @@ contains
       self :: IN
       with_ESDs :: BIN, optional, IN
 
-   ENSURE(.crystal.associated, "No crystal")
-   ENSURE(.atom.associated, "No atom")
+   ENSURE(.crystal.created, "No crystal")
+   ENSURE(.atom.created, "No atom")
 
       clean,change_ESDs :: BIN
 
       ! Make sure CIF is there ...
       clean = FALSE
-      if (.cif.disassociated) then
+      if (.cif.destroyed) then
          clean = TRUE
          .cif.create(trim(.name)//".cif")
       end
@@ -8340,9 +8340,9 @@ contains
       change_ESDs = TRUE
       if (present(with_ESDs)) change_ESDs = NOT with_ESDs
 
-      if (.crystal.data.associated) then
-      DIE_IF(.crystal.data.covariance_matrix.associated AND change_ESDs,"covariances exist")
-      DIE_IF(.crystal.data.fragment_covariance_matrix.associated AND change_ESDs,"fragment covariances exist")
+      if (.crystal.data.created) then
+      DIE_IF(.crystal.data.covariance_matrix.created AND change_ESDs,"covariances exist")
+      DIE_IF(.crystal.data.fragment_covariance_matrix.created AND change_ESDs,"fragment covariances exist")
       end
 
       ! Crystal/Fragment
@@ -8463,7 +8463,7 @@ contains
 
       psi :: VEC{STR}(19)
 
-      if (.scfdata.disassociated) return
+      if (.scfdata.destroyed) return
 
       ! Get wavefunction details
       psi = .:wavefunction_descriptor
@@ -8512,7 +8512,7 @@ contains
       self :: IN
       psi :: VEC{STR}(19)
 
-   ENSURE(.scfdata.associated,"no SCF data!")
+   ENSURE(.scfdata.created,"no SCF data!")
 
       field :: STR
       radius :: REAL
@@ -8520,7 +8520,7 @@ contains
 
       psi = "?"
 
-      if (.scfdata.disassociated) return
+      if (.scfdata.destroyed) return
 
       ! QM method
       psi(1) = "Hartree-Fock"
@@ -8569,7 +8569,7 @@ contains
 
       ! Becke grid
       if (.scfdata.is_DFT_calculation) then
-      if (.becke_grid.associated) then
+      if (.becke_grid.created) then
       psi( 6) = trim(.becke_grid.kind)
       psi( 7) = trim(.becke_grid.accuracy)
       psi( 8) = trim(.becke_grid.pruning_scheme)

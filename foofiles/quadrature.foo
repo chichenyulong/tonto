@@ -760,8 +760,8 @@ contains
       res :: REAL
 
    ENSURE(.n_points>0,"no points")
-   ENSURE(.point.associated,"no points")
-   ENSURE(.weight.associated,"no weights")
+   ENSURE(.point.created,"no points")
+   ENSURE(.weight.created,"no weights")
 
       i :: INT
       f :: VEC{REAL}@

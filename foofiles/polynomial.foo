@@ -178,8 +178,8 @@ contains
       stdout.show("No. of 1D input codes =",.d1_codes.n_keys)
       stdout.flush
 
-      if (.d1_codes.associated)         .put_d1_codes
-    ! if (.series_expansion.associated) .put_series_expansion
+      if (.d1_codes.created)         .put_d1_codes
+    ! if (.series_expansion.created) .put_series_expansion
 
    end
 

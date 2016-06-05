@@ -543,7 +543,7 @@ contains
 
    read_CIFs ::: leaky
    ! Set up the starting info
-   ENSURE(.cif_file_name.associated,"no cif_files")
+   ENSURE(.cif_file_name.created,"no cif_files")
 
       cif :: CIF@
       atom :: VEC{ATOM}@
@@ -556,7 +556,7 @@ contains
       .destroy_data_ptr_part
 
       ! Set the number of temperatures
-      ENSURE(.cif_file_name.associated,"no cif file names provided")
+      ENSURE(.cif_file_name.created,"no cif file names provided")
       ENSURE(.cif_file_name.dim>1,"no cif file names provided")
       .n_T = .cif_file_name.dim
 
@@ -702,7 +702,7 @@ contains
       ! Assign modes
       .n_modes = n
 
-      ENSURE(.L.associated,"no modes were created")
+      ENSURE(.L.created,"no modes were created")
 
    end
 
@@ -853,8 +853,8 @@ contains
    make_V_expansion_coeffs ::: leaky
    ! Expansion coefficients for change in volume for data at
    ! temperature "t"
-   ENSURE(.unit_cell.associated,"no unit_cells")
-   ENSURE(.temperature.associated,"no temperatures")
+   ENSURE(.unit_cell.created,"no unit_cells")
+   ENSURE(.temperature.created,"no temperatures")
 
       Y :: VEC{REAL}@
       X,M :: MAT{REAL}@
@@ -921,8 +921,8 @@ contains
       t :: INT, IN
       res :: REAL
 
-   ENSURE(.V_coeff.associated,"no V coefficients")
-   ENSURE(.temperature.associated,"no V coefficients")
+   ENSURE(.V_coeff.created,"no V coefficients")
+   ENSURE(.temperature.created,"no V coefficients")
    ENSURE(t>=1,"wrong t value")
    ENSURE(t<=.n_T,"wrong t value")
 
@@ -970,8 +970,8 @@ contains
 
    put_unit_cell_volumes
    ! Put the unit cell volumes and fitting results
-   ENSURE(.V_coeff.associated,"no .V_coeffs")
-   ENSURE(.Delta_V_on_V.associated,"no .Delta_V_on_V")
+   ENSURE(.V_coeff.created,"no .V_coeffs")
+   ENSURE(.Delta_V_on_V.created,"no .Delta_V_on_V")
 
       coeff :: VEC{REAL}@
       t :: INT
@@ -1044,7 +1044,7 @@ contains
    ! Do the least squares fitting procedure
    ENSURE(.cif_files_read,"no cif files read")
    ENSURE(.initialized,"no initial guess")
-   ENSURE(.V_coeff.associated,"no V_coeff's")
+   ENSURE(.V_coeff.created,"no V_coeff's")
 
       .use_fixed_H_modes,LL,fac :: REAL
       XX,X0,dX, GG :: VEC{REAL}@
@@ -1428,10 +1428,10 @@ contains
       i,t :: INT, IN
       res :: REAL
 
-   ENSURE(.Delta_V_on_V.associated,"no Delta_V_on_V")
-   ENSURE(.omega.associated,"no omega")
+   ENSURE(.Delta_V_on_V.created,"no Delta_V_on_V")
+   ENSURE(.omega.created,"no omega")
    ENSURE(.omega.dim==.n_modes,"wrong size, omega")
-   ENSURE(.gamma_G.associated,"no gamma_G")
+   ENSURE(.gamma_G.created,"no gamma_G")
    ENSURE(.gamma_G.dim==.n_modes,"wrong size, gamma_G")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
@@ -1447,7 +1447,7 @@ contains
       i,t :: INT, IN
       res :: REAL
 
-   ENSURE(.omega.associated,"no omega")
+   ENSURE(.omega.created,"no omega")
    ENSURE(.omega.dim==.n_modes,"wrong size, omega")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
@@ -1473,7 +1473,7 @@ contains
    ENSURE(a>=b,"b must not be larger than a")
    ENSURE(t>=1,"wrong t value")
    ENSURE(t<=.n_T,"wrong t value")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -1545,9 +1545,9 @@ contains
       Delta,Welta :: MAT{REAL}(.n6N,.n_T), IN
       res :: REAL
 
-   ENSURE(.lambda.associated,"no lambda")
+   ENSURE(.lambda.created,"no lambda")
    ENSURE(.lambda.dim==.n_modes.triangle_number,"wrong size, lambda")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -1816,7 +1816,7 @@ contains
    ENSURE(g<=.n3N,"wrong g value")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -1851,7 +1851,7 @@ contains
    ENSURE(c<=.n_atom,"wrong c value")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -1903,8 +1903,8 @@ contains
       res :: REAL
 
 
-   ENSURE(.Delta_V_on_V.associated,"no Delta_V_on_V")
-   ENSURE(.gamma_G.associated,"no gamma_G")
+   ENSURE(.Delta_V_on_V.created,"no Delta_V_on_V")
+   ENSURE(.gamma_G.created,"no gamma_G")
    ENSURE(.gamma_G.dim==.n_modes,"wrong size, gamma_G")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
@@ -1932,7 +1932,7 @@ contains
    ENSURE(c<=.n_atom,"wrong c value")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -1963,8 +1963,8 @@ contains
       res :: REAL
 
 
-   ENSURE(.Delta_V_on_V.associated,"no Delta_V_on_V")
-   ENSURE(.omega.associated,"no omega")
+   ENSURE(.Delta_V_on_V.created,"no Delta_V_on_V")
+   ENSURE(.omega.created,"no omega")
    ENSURE(.omega.dim==.n_modes,"wrong size, omega")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
@@ -1987,9 +1987,9 @@ contains
    ENSURE(g<=.n3N,"wrong g value")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
-   ENSURE(.lambda.associated,"no lambda")
+   ENSURE(.lambda.created,"no lambda")
    ENSURE(.lambda.dim==.n_modes.triangle_number,"wrong size, lambda")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -2019,7 +2019,7 @@ contains
    ENSURE(p<=.n_modes,"wrong p value")
    ENSURE(q>=1,"wrong q value")
    ENSURE(p>=q,"q must not be larger than p")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -2352,7 +2352,7 @@ contains
    ENSURE(c<=.n_atom,"wrong c value")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -2462,7 +2462,7 @@ contains
    ENSURE(g<=.n3N,"wrong g value")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -2497,7 +2497,7 @@ contains
    ENSURE(g<=.n3N,"wrong g value")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -2532,7 +2532,7 @@ contains
    ENSURE(c<=.n_atom,"wrong c value")
    ENSURE(i>=1,"wrong i value")
    ENSURE(i<=.n_modes,"wrong i value")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 
@@ -2565,7 +2565,7 @@ contains
       t :: INT, IN
       res :: REAL
 
-   ENSURE(.Delta_V_on_V.associated,"no Delta_V_on_V")
+   ENSURE(.Delta_V_on_V.created,"no Delta_V_on_V")
    ENSURE(t>=1,"wrong t value")
    ENSURE(t<=.n_T,"wrong t value")
 
@@ -2626,7 +2626,7 @@ contains
    ENSURE(p<=.n_modes,"wrong p value")
    ENSURE(q>=1,"wrong q value")
    ENSURE(p>=q,"q must not be larger than p")
-   ENSURE(.L.associated,"no L")
+   ENSURE(.L.created,"no L")
    ENSURE(.L.dim1==.n3N,"wrong shape, L")
    ENSURE(.L.dim2==.n_modes,"wrong shape, L")
 

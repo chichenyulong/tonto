@@ -325,7 +325,7 @@ contains
       self :: allocatable, INOUT
       dim :: INT, IN
 
-   ENSURE(.associated,"no self array")
+   ENSURE(.created,"no self array")
    ENSURE(dim<=.dim,"dim too large")
 
       old :: VEC{INTRINSIC}(len=len(self(1)))*
@@ -357,7 +357,7 @@ contains
       old :: VEC{INTRINSIC}(len=len(self(1)))*
       n :: INT
 
-      if (.disassociated) then
+      if (.destroyed) then
 
          .create(dim)
          if (present(init)) self = init
@@ -393,7 +393,7 @@ contains
       dim  :: INT, IN
       init :: INTRINSIC, optional, IN
 
-      if    (.disassociated) then; .expand(dim,init)
+      if    (.destroyed) then; .expand(dim,init)
       else if (dim>.dim) then; .expand(dim,init)
       else if (dim<.dim) then; .shrink(dim)
       end
@@ -408,7 +408,7 @@ contains
       dim :: INT, IN
       chop_start :: BIN, optional, IN
 
-   ENSURE(.associated,"no self array")
+   ENSURE(.created,"no self array")
    ENSURE(dim<=.dim,"dim too large")
    ENSURE(dim>=0, "dim is negative")
 
@@ -462,7 +462,7 @@ contains
       lb,ub :: INT
       grow_end :: BIN
 
-      if (.disassociated) then
+      if (.destroyed) then
 
          .create(dim)
 
@@ -514,7 +514,7 @@ contains
 
       dim :: INT
 
-      if (.disassociated) then; dim = 0
+      if (.destroyed) then; dim = 0
       else;                 dim = .dim
       end
 
@@ -531,7 +531,7 @@ contains
 
       dim,dim1,dim2 :: INT
 
-      if (.disassociated) then; dim = 0
+      if (.destroyed) then; dim = 0
       else;                 dim = .dim
       end
 
@@ -554,7 +554,7 @@ contains
 
       dim :: INT
 
-      if (.disassociated) then; dim = 0
+      if (.destroyed) then; dim = 0
       else;                 dim = .dim
       end
 
@@ -1143,7 +1143,7 @@ contains
    ! NOTE: this version for bin, str, int
       self :: allocatable, INOUT
 
-   ENSURE(.associated,"no vector")
+   ENSURE(.created,"no vector")
 
       unique :: VEC{INTRINSIC}(len=len(self(1)))*
       i,j,n :: INT
@@ -1183,7 +1183,7 @@ contains
    ! NOTE: this version for reals & complex
       self :: allocatable, INOUT
 
-   ENSURE(.associated,"no vector")
+   ENSURE(.created,"no vector")
 
       unique :: VEC{INTRINSIC}@
       i,j,n :: INT
@@ -1382,7 +1382,7 @@ contains
       self :: allocatable, INOUT
       unique :: VEC{INT}@
 
-   ENSURE(.associated,"no vector")
+   ENSURE(.created,"no vector")
    ENSURE(.dim>0,"no zero-size vector")
 
       i,j,n :: INT

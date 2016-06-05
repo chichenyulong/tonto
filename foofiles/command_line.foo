@@ -179,7 +179,7 @@ contains
       opt :: STR, IN
       res :: BIN
 
-      if (.option.disassociated) then; res = FALSE
+      if (.option.destroyed) then; res = FALSE
       else;                            res = any(.option==opt)
       end
 
@@ -191,7 +191,7 @@ contains
       opt :: STR, IN
       res :: STR
 
-   ENSURE(.option.associated,"no options given")
+   ENSURE(.option.created,"no options given")
 
       i :: INT
 

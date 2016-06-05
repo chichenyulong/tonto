@@ -209,7 +209,7 @@ contains
       self :: allocatable, INOUT
       dim :: INT, IN
 
-   ENSURE(.associated,"no self array")
+   ENSURE(.created,"no self array")
    ENSURE(dim<=.dim,"dim too large")
 
       old :: VEC{ATOM}@
@@ -699,7 +699,7 @@ contains
 
       ! Find the 4th-order tags, resize pADP_vector, and set to 0
       ! If the atoms are already fourth order do nothing.
-      if (anharm4_tags.associated) then
+      if (anharm4_tags.created) then
 
          do t = 1,anharm4_tags.dim
             tag = anharm4_tags(t)
@@ -712,7 +712,7 @@ contains
 
       ! Find the 3rd-order tags, resize pADP_vector, and set to 0
       ! If they were already 3rd or 4th order, do nothing
-      if (anharm3_tags.associated) then
+      if (anharm3_tags.created) then
 
          do t = 1,anharm3_tags.dim
             tag = anharm3_tags(t)
@@ -1625,11 +1625,11 @@ contains
       .destroy
 
       ! Create the new atom list
-      if (symbols.associated) then
+      if (symbols.created) then
          .create(symbols.dim)
          .set_atom_data_from_labels(symbols)     ! For Z's
-         if (labels.associated) .set_labels(labels) ! For U's
-      else if (labels.associated) then
+         if (labels.created) .set_labels(labels) ! For U's
+      else if (labels.created) then
          .create(labels.dim)
          .set_atom_data_from_labels(labels)      ! This may not work
       end
@@ -2110,7 +2110,7 @@ contains
 
       stdin.read(use_interp)
 
-      if (.disassociated) return
+      if (.destroyed) return
 
       .set_use_interpolators(use_interp)
 
@@ -3677,7 +3677,7 @@ contains
 
       has = TRUE
       do a = 1,.dim
-         has = self(a).basis.associated
+         has = self(a).basis.created
          if (NOT has) exit
       end
 
@@ -3692,7 +3692,7 @@ contains
 
       has = TRUE
       do a = 1,.dim
-         has = self(a).slaterbasis.associated
+         has = self(a).slaterbasis.created
          if (NOT has) exit
       end
 
@@ -3707,7 +3707,7 @@ contains
 
       has = TRUE
       do a = 1,.dim
-         has = self(a).coppensbasis.associated
+         has = self(a).coppensbasis.created
          if (NOT has) exit
       end
 
@@ -3913,10 +3913,10 @@ contains
 
       do a = 1,.dim
 
-         has = self(a).slaterbasis.associated
+         has = self(a).slaterbasis.created
          if (NOT has) exit
 
-         has = self(a).slaterbasis.interpolator.associated
+         has = self(a).slaterbasis.interpolator.created
          if (NOT has) exit
 
       end
@@ -3934,10 +3934,10 @@ contains
 
       do a = 1,.dim
 
-         has = self(a).coppensbasis.associated
+         has = self(a).coppensbasis.created
          if (NOT has) exit
 
-         has = self(a).coppensbasis.interpolator.associated
+         has = self(a).coppensbasis.interpolator.created
          if (NOT has) exit
 
       end
@@ -3968,7 +3968,7 @@ contains
       has = TRUE
 
       do a = 1,.dim
-         has = self(a).interpolator.associated
+         has = self(a).interpolator.created
          if (NOT has) exit
       end
 
@@ -4886,7 +4886,7 @@ contains
       neighbour :: VEC{INT}@
       Z :: VEC{INT}(4)
       neighbour => .neighbours_of(a)
-      if (neighbour.disassociated) then
+      if (neighbour.destroyed) then
          res = FALSE
       else if (neighbour.dim==4) then
          Z = self(neighbour).atomic_number
@@ -4908,7 +4908,7 @@ contains
       neighbour :: VEC{INT}@
 
       neighbour => .neighbours_of(a)
-      DIE_IF(neighbour.disassociated,"there are no neighbours")
+      DIE_IF(neighbour.destroyed,"there are no neighbours")
       n = neighbour.dim
       DIE_IF(neighbour.dim/=4,"must have four neighbours, n = "//trim(n.to_str))
     ! stdout.show("neighbours =",neighbour)
@@ -4963,7 +4963,7 @@ contains
 
       ! Get indices of the nearest neighbours; return if no neighbours
       neighbour => .neighbours_of(a)
-      if (neighbour.disassociated) return
+      if (neighbour.destroyed) return
       neighbour.prune(a)
       if (neighbour.dim==0) return
 
@@ -5023,7 +5023,7 @@ contains
 
             ! Get indices of the 2nd nearest neighbours; return if no neighbours
             neighbour2 => .neighbours_of(neighbour(i))
-            DIE_IF(neighbour2.disassociated,"mesomeric atom has no neighbours")
+            DIE_IF(neighbour2.destroyed,"mesomeric atom has no neighbours")
 
             ! We don't want the original first neighbour
             neighbour2.prune(a)
@@ -5196,7 +5196,7 @@ contains
 
       ! Get indices of the nearest neighbours; return if no neighbours
       neighbour => .neighbours_of(a)
-      if (neighbour.disassociated) return
+      if (neighbour.destroyed) return
       neighbour.prune(a)
       if (neighbour.dim==0) return
 
@@ -5256,7 +5256,7 @@ contains
 
             ! Get indices of the 2nd nearest neighbours; return if no neighbours
             neighbour2 => .neighbours_of(neighbour(i))
-            DIE_IF(neighbour2.disassociated,"mesomeric atom has no neighbours")
+            DIE_IF(neighbour2.destroyed,"mesomeric atom has no neighbours")
 
             ! We don't want the original first neighbour
             neighbour2.prune(a)
@@ -6019,7 +6019,7 @@ contains
         list.append(Y)
       end
 
-      res = list.associated
+      res = list.created
 
    end
 

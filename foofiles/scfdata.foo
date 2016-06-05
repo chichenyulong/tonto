@@ -89,27 +89,27 @@ contains
 
    set_penalty
    ! Set the penalties for the diffraction data present
-   ENSURE(.crystal.associated,"No Crystal Data Present")
+   ENSURE(.crystal.created,"No Crystal Data Present")
 
       .old_penalty = .penalty
 
       select case (.scf_kind)
 
          case ("xray_rhf","xray_uhf","xray_gchf")
-            ENSURE(.crystal.xray_data.associated,"No diffraction data")
+            ENSURE(.crystal.xray_data.created,"No diffraction data")
             .penalty = .crystal.xray_data.chi2
 
          case ("xray_rks","xray_uks")
-            ENSURE(.crystal.xray_data.associated,"No diffraction data")
+            ENSURE(.crystal.xray_data.created,"No diffraction data")
             .penalty = .crystal.xray_data.chi2
 
          case ("pnd_uhf","pnd_uks")
-            ENSURE(.crystal.pnd_data.associated,"No diffraction data")
+            ENSURE(.crystal.pnd_data.created,"No diffraction data")
             .penalty = .crystal.pnd_data.chi2
 
          case ("xray_pnd_uhf","xray_pnd_uks")
-            ENSURE(.crystal.pnd_data.associated,"No PND diffraction data")
-            ENSURE(.crystal.xray_data.associated,"No X-ray diffraction data")
+            ENSURE(.crystal.pnd_data.created,"No PND diffraction data")
+            ENSURE(.crystal.xray_data.created,"No X-ray diffraction data")
             .penalty = log(.crystal.xray_data.F_chi2*.crystal.pnd_data.F_chi2)
 
          case default
@@ -2239,7 +2239,7 @@ contains
 
       if (.fitting) .put_crystal_fit_info
 
-      if (.cluster_charges.associated) .put_cluster_charges
+      if (.cluster_charges.created) .put_cluster_charges
 
    end
 
@@ -2297,7 +2297,7 @@ contains
 
       stdout.show("Penalty in F                   =", .penalty)
 
-      if (.crystal.xray_data.associated AND .scf_kind.includes("xray")) then
+      if (.crystal.xray_data.created AND .scf_kind.includes("xray")) then
 
          stdout.flush
          stdout.text("==========")
@@ -2305,12 +2305,12 @@ contains
          stdout.text("==========")
          .crystal.put_F_statistics
 
-         if (.crystal.r_free_percentage>0 AND .crystal.xray_r_free_data.associated) &
+         if (.crystal.r_free_percentage>0 AND .crystal.xray_r_free_data.created) &
             .crystal.xray_r_free_data.put_F_free_stats
 
       end
 
-      if (.crystal.pnd_data.associated AND .scf_kind.includes("pnd")) then
+      if (.crystal.pnd_data.created AND .scf_kind.includes("pnd")) then
 
          stdout.flush
          stdout.text("========")
@@ -2318,7 +2318,7 @@ contains
          stdout.text("========")
          .crystal.put_F_statistics
 
-         if (.crystal.r_free_percentage>0 AND .crystal.pnd_r_free_data.associated) &
+         if (.crystal.r_free_percentage>0 AND .crystal.pnd_r_free_data.created) &
             .crystal.pnd_r_free_data.put_F_free_stats
 
       end
@@ -2335,20 +2335,20 @@ contains
 
       stdout.show("Penalty in F                   =", .penalty)
 
-      if (.crystal.xray_data.associated AND .scf_kind.includes("xray")) then
+      if (.crystal.xray_data.created AND .scf_kind.includes("xray")) then
 
          .crystal.put_F_statistics
 
-         if (.crystal.r_free_percentage>0 AND .crystal.xray_r_free_data.associated) &
+         if (.crystal.r_free_percentage>0 AND .crystal.xray_r_free_data.created) &
             .crystal.xray_r_free_data.put_F_free_stats
 
       end
 
-      if (.crystal.pnd_data.associated AND .scf_kind.includes("pnd")) then
+      if (.crystal.pnd_data.created AND .scf_kind.includes("pnd")) then
 
          .crystal.put_F_statistics
 
-         if (.crystal.r_free_percentage>0 AND .crystal.pnd_r_free_data.associated) &
+         if (.crystal.r_free_percentage>0 AND .crystal.pnd_r_free_data.created) &
             .crystal.pnd_r_free_data.put_F_free_stats
 
       end
@@ -2472,7 +2472,7 @@ contains
 
    put_cluster
    ! Put the cluster out
-   ENSURE(.cluster.associated,"no cluster!")
+   ENSURE(.cluster.created,"no cluster!")
       .cluster.put
    end
 
@@ -2481,8 +2481,8 @@ contains
    ! into the gaussian program
       self :: IN
 
-   ENSURE(.cluster_charges.associated,"no cluster_charge array")
-   ENSURE(.cluster_charge_positions.associated,"no cluster_charge_positions array")
+   ENSURE(.cluster_charges.created,"no cluster_charge array")
+   ENSURE(.cluster_charge_positions.created,"no cluster_charge_positions array")
 
       n,i,k :: INT
       fac :: REAL

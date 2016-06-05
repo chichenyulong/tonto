@@ -1073,7 +1073,7 @@ contains
       k_pt :: MAT{REAL}, OUT
       unit_cell :: UNIT_CELL, IN
 
- ! ENSURE(.data.associated,"no data")
+ ! ENSURE(.data.created,"no data")
 
       n :: INT
       hkl :: VEC{INT}(3)
@@ -1756,7 +1756,7 @@ contains
       stdout.show("Rw(F2)                         =", .F2_weighted_r_factor)
 
       if (present(core_reflection)) then
-      if (core_reflection.associated) then
+      if (core_reflection.created) then
       stdout.show("Rval(F)                        =", .F_val_r_factor(core_reflection))
       end
       end
@@ -1793,7 +1793,7 @@ contains
       stdout.show("Free Rw(F)                   =", .F_weighted_r_factor)
 
       if (present(core_reflection)) then
-      if (core_reflection.associated) then
+      if (core_reflection.created) then
       stdout.show("Free Rval(F)                 =", .F_val_r_factor(core_reflection))
       end
       end

@@ -109,41 +109,32 @@ set(FOO_SRC
     ${FOO_DIR}/geminal_mf_spectrum.foo
     ${FOO_DIR}/int.foo
     ${FOO_DIR}/interpolator.foo
-    ${FOO_DIR}/intrinsic.foo
     ${FOO_DIR}/irrep.foo
     ${FOO_DIR}/isosurface.foo
     ${FOO_DIR}/json.foo
     ${FOO_DIR}/lebedev.foo
     ${FOO_DIR}/map{int,int}.foo
-    ${FOO_DIR}/map{key,val}.foo
     ${FOO_DIR}/map{str,int}.foo
     ${FOO_DIR}/map{vec{int},vec{int}}.foo
-    ${FOO_DIR}/map{vec{key},vec{val}}.foo
     ${FOO_DIR}/marchingcube.foo
     ${FOO_DIR}/mat3{bin}.foo
     ${FOO_DIR}/mat3{cpx}.foo
-    ${FOO_DIR}/mat3{intrinsic}.foo
     ${FOO_DIR}/mat3{int}.foo
     ${FOO_DIR}/mat3{real}.foo
     ${FOO_DIR}/mat3{vec_{bin}}.foo
-    ${FOO_DIR}/mat3{vec_{intrinsic}}.foo
     ${FOO_DIR}/mat3{vec_{int}}.foo
     ${FOO_DIR}/mat3{vec_{real}}.foo
     ${FOO_DIR}/mat4{cpx}.foo
-    ${FOO_DIR}/mat4{intrinsic}.foo
     ${FOO_DIR}/mat4{int}.foo
     ${FOO_DIR}/mat4{object}.foo
     ${FOO_DIR}/mat4{real}.foo
     ${FOO_DIR}/mat4{rms2_indices}.foo
     ${FOO_DIR}/mat5{cpx}.foo
-    ${FOO_DIR}/mat5{intrinsic}.foo
     ${FOO_DIR}/mat5{int}.foo
     ${FOO_DIR}/mat5{real}.foo
     ${FOO_DIR}/mat{bin}.foo
     ${FOO_DIR}/mat{cpx}.foo
-    ${FOO_DIR}/mat{intrinsic}.foo
     ${FOO_DIR}/mat{int}.foo
-    ${FOO_DIR}/mat{mat_{intrinsic}}.foo
     ${FOO_DIR}/mat{mat_{real}}.foo
     ${FOO_DIR}/mat{object}.foo
     ${FOO_DIR}/mat{real}.foo
@@ -209,14 +200,10 @@ set(FOO_SRC
     ${FOO_DIR}/vec{cpx}.foo
     ${FOO_DIR}/vec{diis}.foo
     ${FOO_DIR}/vec{interpolator}.foo
-    ${FOO_DIR}/vec{intrinsic}.foo
     ${FOO_DIR}/vec{int}.foo
     ${FOO_DIR}/vec{irrep}.foo
-    ${FOO_DIR}/vec{mat3_{intrinsic}}.foo
     ${FOO_DIR}/vec{mat3_{real}}.foo
-    ${FOO_DIR}/vec{mat4_{intrinsic}}.foo
     ${FOO_DIR}/vec{mat4_{real}}.foo
-    ${FOO_DIR}/vec{mat_{intrinsic}}.foo
     ${FOO_DIR}/vec{mat_{real}}.foo
     ${FOO_DIR}/vec{object}.foo
     ${FOO_DIR}/vec{quadrature}.foo
@@ -229,11 +216,9 @@ set(FOO_SRC
     ${FOO_DIR}/vec{table_column}.foo
     ${FOO_DIR}/vec{unit_cell}.foo
     ${FOO_DIR}/vec{vec_{bin}}.foo
-    ${FOO_DIR}/vec{vec_{intrinsic}}.foo
     ${FOO_DIR}/vec{vec_{int}}.foo
     ${FOO_DIR}/vec{vec_{real}}.foo
     ${FOO_DIR}/vec{vec_{str}}.foo
-    ${FOO_DIR}/vec{vec_{vec_{intrinsic}}}.foo
     ${FOO_DIR}/vec{vec_{vec_{int}}}.foo
     ${FOO_DIR}/vec{vec_{vec_{real}}}.foo
 )
@@ -270,41 +255,32 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/geminal_mf_spectrum.F90
     ${CMAKE_CURRENT_BINARY_DIR}/int.F90
     ${CMAKE_CURRENT_BINARY_DIR}/interpolator.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/intrinsic.F90
     ${CMAKE_CURRENT_BINARY_DIR}/irrep.F90
     ${CMAKE_CURRENT_BINARY_DIR}/isosurface.F90
     ${CMAKE_CURRENT_BINARY_DIR}/json.F90
     ${CMAKE_CURRENT_BINARY_DIR}/lebedev.F90
     ${CMAKE_CURRENT_BINARY_DIR}/map\{int,int\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/map\{key,val\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/map\{str,int\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/map\{vec\{int\},vec\{int\}\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/map\{vec\{key\},vec\{val\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/marchingcube.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat3\{bin\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat3\{cpx\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{intrinsic\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat3\{int\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat3\{real\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{bin\}\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{intrinsic\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{int\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{real\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{cpx\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat4\{intrinsic\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{int\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{object\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{real\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{rms2_indices\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat5\{cpx\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat5\{intrinsic\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat5\{int\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat5\{real\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{bin\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{cpx\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat\{intrinsic\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{int\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat\{mat_\{intrinsic\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{mat_\{real\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{object\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{real\}.F90
@@ -370,14 +346,10 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{cpx\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{diis\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{interpolator\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec\{intrinsic\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{int\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{irrep\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat3_\{intrinsic\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat3_\{real\}\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat4_\{intrinsic\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat4_\{real\}\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat_\{intrinsic\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat_\{real\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{object\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{quadrature\}.F90
@@ -390,11 +362,9 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{table_column\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{unit_cell\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{bin\}\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{intrinsic\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{int\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{real\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{str\}\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{vec_\{intrinsic\}\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{vec_\{int\}\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{vec_\{real\}\}\}.F90
 )

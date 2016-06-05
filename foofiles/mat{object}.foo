@@ -117,7 +117,7 @@ contains
 
       status :: INT
 
-      if (.disassociated) return
+      if (.destroyed) return
 
       .destroy_ptr_part
 
@@ -317,7 +317,7 @@ contains
 
       stdout.flush
 
-      if (.disassociated) then
+      if (.destroyed) then
 
          stdout.text(trim(object_name)//":MAT{TYPE}* = null")
 

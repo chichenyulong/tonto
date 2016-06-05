@@ -3260,8 +3260,8 @@ contains
       stdout.show("Position                    =",.position(1),.position(2),.position(3))
       stdout.flush
 
-      if (.exponent.disassociated) return
-      if (.contraction.disassociated) return
+      if (.exponent.destroyed) return
+      if (.contraction.destroyed) return
 
       ! Table headings
       table.create(2)

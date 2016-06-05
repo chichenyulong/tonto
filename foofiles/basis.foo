@@ -232,7 +232,7 @@ contains
    ! Return TRUE if self has a non-blank label
       self :: allocatable, INOUT
       res :: BIN
-      res = .associated
+      res = .created
       if (res) res = .label /=  " "
    end
 

@@ -196,7 +196,7 @@ contains
       res :: REAL
    ENSURE(.updated,"Not updated")
    ENSURE(.n_data>0,"No data")
-   ENSURE(.data_point.associated,"No data")
+   ENSURE(.data_point.created,"No data")
       res = .data_point(1)
    end
 
@@ -205,7 +205,7 @@ contains
       res :: REAL
    ENSURE(.updated,"Not updated")
    ENSURE(.n_data>0,"No data")
-   ENSURE(.data_point.associated,"No data")
+   ENSURE(.data_point.created,"No data")
       res = .data_point(.n_data)
    end
 
@@ -214,7 +214,7 @@ contains
       res :: REAL
    ENSURE(.updated,"Not updated")
    ENSURE(.n_data>0,"No data")
-   ENSURE(.data_value.associated,"No data")
+   ENSURE(.data_value.created,"No data")
       res = .data_value(.n_data)
    end
 
@@ -354,8 +354,8 @@ contains
 
    update ::: leaky
    ! Check everything is OK after reading data. 
-   ENSURE(.data_point.associated," no data_point's")
-   ENSURE(.data_value.associated," no data_value's")
+   ENSURE(.data_point.created," no data_point's")
+   ENSURE(.data_value.created," no data_value's")
    ENSURE(.data_point.dim==.data_value.dim,"inconsistent data/value lengths")
    ENSURE(.data_point.dim>2,"not enough data_point's")
 
@@ -374,8 +374,8 @@ contains
    ! points.
       self :: INOUT
 
-   ENSURE(.data_point.associated,"no data points")
-   ENSURE(.data_value.associated,"no data values")
+   ENSURE(.data_point.created,"no data points")
+   ENSURE(.data_value.created,"no data values")
    ENSURE(.n_data>=3,"must have at least 3 data points")
 
       dx,dxp,dxm,dy,dyp,dym,sig,p :: REAL
@@ -480,8 +480,8 @@ contains
 
    ENSURE(NOT (present(tol) AND present(len)),"can't supply both tol and len")
    ENSURE(.n_data==0,"there is already data")
-   ENSURE(.data_value.disassociated,"there are already data_values")
-   ENSURE(.data_point.disassociated,"there are already data_points")
+   ENSURE(.data_value.destroyed,"there are already data_values")
+   ENSURE(.data_point.destroyed,"there are already data_points")
    ENSURE(.table_spacing>ZERO,"table_spacing must be +ve")
 
       max_data :: INT
@@ -650,8 +650,8 @@ contains
       end
 
    ENSURE(.n_data==0,"there is already data")
-   ENSURE(.data_value.disassociated,"there are already data_values")
-   ENSURE(.data_point.disassociated,"there are already data_points")
+   ENSURE(.data_value.destroyed,"there are already data_values")
+   ENSURE(.data_point.destroyed,"there are already data_points")
    ENSURE(.table_spacing>ZERO,"table_spacing must be +ve")
 
       max_data :: INT
@@ -723,8 +723,8 @@ contains
       end
 
    ENSURE(.n_data==0,"there is already data")
-   ENSURE(.data_value.disassociated,"there are already data_values")
-   ENSURE(.data_point.disassociated,"there are already data_points")
+   ENSURE(.data_value.destroyed,"there are already data_values")
+   ENSURE(.data_point.destroyed,"there are already data_points")
    ENSURE(.table_spacing>ZERO,"spacing must be +ve")
 
       max_data :: INT
@@ -788,7 +788,7 @@ contains
       end
 
    ENSURE(.updated,"not updated")
-   ENSURE(.data_point.associated,"no data_points")
+   ENSURE(.data_point.created,"no data_points")
    ENSURE(.data_point.dim==.n_data,"wrong number of data_points")
 
       .data_value.create(.n_data)
@@ -811,7 +811,7 @@ contains
       pos :: VEC{REAL}(3)
 
    ENSURE(.updated,"not updated")
-   ENSURE(.data_point.associated,"no data_points")
+   ENSURE(.data_point.created,"no data_points")
    ENSURE(.data_point.dim==.n_data,"wrong number of data_points")
 
 
@@ -1603,7 +1603,7 @@ contains
       stdout.show("Data point spacing               =",.table_spacing)
       stdout.show("Table eps (smallest data value)  =",.table_eps)
 
-      if (.data_value.associated) then
+      if (.data_value.created) then
 
       stdout.flush
       stdout.show("First data value                 =",.data_point(1))

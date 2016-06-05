@@ -821,10 +821,10 @@ contains
       Z   :: VEC{INT}@
       theta :: VEC{REAL}@
 
-   ENSURE(.bond_density_atom.associated,"no bond_density_atoms")
+   ENSURE(.bond_density_atom.created,"no bond_density_atoms")
    ENSURE(.bond_density_atom.dim==3,"must have 3 bond_density_atoms")
    ENSURE(.x_atom_1/=0 AND .x_atom_2/=0,"must have x axis atoms")
-   ENSURE(.atom.associated,"must have a list of atoms")
+   ENSURE(.atom.created,"must have a list of atoms")
 
       a,b,c,n,i :: INT
       x,y,d_max :: REAL
@@ -1190,7 +1190,7 @@ contains
    ! grid center and rotated to the grid axes.
       pos :: MAT{REAL}@
 
-   ENSURE(.atom.associated,"no atoms!")
+   ENSURE(.atom.created,"no atoms!")
 
       p :: MAT{REAL}@
       axes :: MAT{REAL}(3,3)
@@ -1232,9 +1232,9 @@ contains
       math_pos :: MAT{REAL}@
       z_range :: REAL, IN
       valid :: VEC{INT}@
-   ENSURE(.atom.associated,"no atoms!")
+   ENSURE(.atom.created,"no atoms!")
    ENSURE(z_range>ZERO,"z_range must be non-negative")
-   ENSURE(valid.disassociated,"valid array already allocated")
+   ENSURE(valid.destroyed,"valid array already allocated")
 
       scale_factor,p :: VEC{REAL}(3)
       tr :: MAT{REAL}(3,3)
@@ -1294,7 +1294,7 @@ contains
       self :: IN
       res :: BIN
 
-      res = .center_atoms.associated OR .x_atom_1/=0 OR .y_atom_1 /=0
+      res = .center_atoms.created OR .x_atom_1/=0 OR .y_atom_1 /=0
 
    end
 
@@ -1664,7 +1664,7 @@ contains
 
    read_center_atoms ::: leaky
    ! Make the center of the plot to be the center of the list of atom indices.
-   ENSURE(.atom.associated,"atom list not present")
+   ENSURE(.atom.created,"atom list not present")
       i,n :: INT
 
       ! Read the center atoms list (leaky)
@@ -1719,7 +1719,7 @@ contains
    read_x_axis_atom_list
    ! Make the x-axis along the mean of two lists of atoms.
 
-   ENSURE(.atom.associated,"atom list not present")
+   ENSURE(.atom.created,"atom list not present")
 
       atom_list :: VEC{INT}@
       pos1,pos2 :: VEC{REAL}(3)
@@ -1783,7 +1783,7 @@ contains
 
    read_y_axis_atom_list
    ! Make the y-axis along the mean of two lists of atoms.
-   ENSURE(.atom.associated,"atom list not present")
+   ENSURE(.atom.created,"atom list not present")
       atom_list :: VEC{INT}@
       pos1,pos2 :: VEC{REAL}(3)
       i :: INT
@@ -1914,7 +1914,7 @@ contains
    ! Read Cassam-Chenai's 3D grid
       self :: allocatable, INOUT
       pt :: MAT{REAL}*, OUT
-      ENSURE(.associated, "no grid")
+      ENSURE(.created, "no grid")
       textfile :: TEXTFILE@
       i :: INT
 
@@ -2335,9 +2335,9 @@ contains
       z_range :: REAL, IN
       valid :: VEC{INT}@
 
-   ENSURE(.atom.associated,"no atoms!")
+   ENSURE(.atom.created,"no atoms!")
    ENSURE(z_range>ZERO,"z_range must be non-negative")
-   ENSURE(valid.disassociated,"valid array already allocated")
+   ENSURE(valid.destroyed,"valid array already allocated")
 
       scale_factor,p :: VEC{REAL}(3)
       tr :: MAT{REAL}(3,3)
@@ -2457,7 +2457,7 @@ contains
       stdout.flush
       stdout.text("Atom-based specifications:")
 
-      if (.center_atoms.associated) then
+      if (.center_atoms.created) then
       stdout.show("Center atoms list       =",.center_atoms.to_concatenated_str)
       else if (.center_atom/=0) then
       stdout.show("Center atom             =",.center_atom)

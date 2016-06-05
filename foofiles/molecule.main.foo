@@ -455,8 +455,8 @@ contains
 
    read_atoms ::: leaky
    ! Read in the atom list information
-      DIE_IF(.cluster.associated,"cluster already defined! swap cluster= and atoms= ?")
-      WARN_IF(.atom.associated,"atom list already defined!")
+      DIE_IF(.cluster.created,"cluster already defined! swap cluster= and atoms= ?")
+      WARN_IF(.atom.created,"atom list already defined!")
 
       ! Force update
       .atom_info_made = FALSE
@@ -501,16 +501,16 @@ contains
 
    read_basis_sets ::: leaky
    ! Read in a list of atomic basis sets for the molecule
-      WARN_IF(.basis.associated,"basis sets already defined!")
+      WARN_IF(.basis.created,"basis sets already defined!")
 
       ! Copy bases
-      if (.atom.associated)  .atom.nullify_basis_part
+      if (.atom.created)  .atom.nullify_basis_part
 
       ! Basis sets are read in normalized, but internally
       ! are used unnormalized.
-      if (.basis.associated) .basis.renormalise
+      if (.basis.created) .basis.renormalise
       .basis.read_list_keywords
-      if (.basis.associated) .basis.unnormalise
+      if (.basis.created) .basis.unnormalise
 
       ! Finalize
       .BASE:resolve_basis_info
@@ -541,9 +541,9 @@ contains
    read_becke_grid ::: leaky
    ! Read in the Becke integration grid data
 
-   ENSURE(.atom.associated,"input atom information before becke_grid information")
+   ENSURE(.atom.created,"input atom information before becke_grid information")
 
-      if (.becke_grid.disassociated) .becke_grid.create
+      if (.becke_grid.destroyed) .becke_grid.create
 
       ! Leaky
       .becke_grid.set_atom_info(.atom)
@@ -560,7 +560,7 @@ contains
       stdin.read(.charge)
 
       ! Set the no. of electons
-      if (.atom.associated) .n_e = .BASE:no_of_electrons
+      if (.atom.created) .n_e = .BASE:no_of_electrons
 
    end
 
@@ -610,7 +610,7 @@ contains
    ! plotgrid, different from that used in normal density plots.
 
       ! Destroy
-      if (.isosurface.disassociated) .isosurface.create(.atom)
+      if (.isosurface.destroyed) .isosurface.create(.atom)
 
       ! Read
       .isosurface.read_keywords
@@ -622,7 +622,7 @@ contains
    set_keyword_echo_on
    ! Echo keywords into the stdout file
 
-   DIE_IF(tonto.disassociated,"tonto not created")
+   DIE_IF(tonto.destroyed,"tonto not created")
 
       ! Get rid of unused self error
       tonto.keyword_echo = transfer(self,tonto.keyword_echo)
@@ -636,7 +636,7 @@ contains
    set_low_verbosity_on
    ! Set low output verbosity
 
-   DIE_IF(tonto.disassociated,"tonto not created")
+   DIE_IF(tonto.destroyed,"tonto not created")
 
       ! Get rid of self error
       tonto.low_verbosity = transfer(self,tonto.low_verbosity)
@@ -684,7 +684,7 @@ contains
    ! Read in the plot grid data
 
       ! Set up a defualt grid
-      if (.plot_grid.disassociated) .plot_grid.create(.atom)
+      if (.plot_grid.destroyed) .plot_grid.create(.atom)
 
       ! Read options
       .plot_grid.read_keywords
@@ -696,7 +696,7 @@ contains
 
    read_pointgroup ::: leaky
    ! Read in the pointgroup data
-      if (.pointgroup.disassociated) .pointgroup.create
+      if (.pointgroup.destroyed) .pointgroup.create
       .pointgroup.read_keywords
    end
 
@@ -725,7 +725,7 @@ contains
       .BASE:rotate_by(R)
 
       ! Remake the Becke grid (leaky)
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom)
+      if (.becke_grid.created) .becke_grid.set_grid_data(.atom)
 
    end
 
@@ -737,7 +737,7 @@ contains
    ! problem for group off-diagonal blocks; this routine works for progroup
    ! densities only.
    ! Checked, 7/2/06; the energy decomposition was checked by manual rotation
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.created,"no atom group information")
 
       axis :: VEC{REAL}(3)
       angle :: REAL
@@ -769,7 +769,7 @@ contains
       .BASE:rotate_by(R)
 
       ! Remake the Becke grid (leaky)
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom)
+      if (.becke_grid.created) .becke_grid.set_grid_data(.atom)
 
    end
 
@@ -792,7 +792,7 @@ contains
    read_use_interpolators
    ! Read whether to use interpolators
       stdin.read(.use_interpolators)
-      if (.atom.associated) .atom.set_use_interpolators(.use_interpolators)
+      if (.atom.created) .atom.set_use_interpolators(.use_interpolators)
    end
 
    read_use_spherical_basis ::: leaky
@@ -808,7 +808,7 @@ contains
    read_scfdata ::: leaky
    ! Read in the scf data
 
-      if (.scfdata.disassociated) .scfdata.create
+      if (.scfdata.destroyed) .scfdata.create
 
       ! Read options
       .scfdata.read_keywords
@@ -822,9 +822,9 @@ contains
    ! Read in the Roby data. NOTE: this keyword must appear after a basis set
    ! has been defined
    ENSURE(.basis_info_made, "no basis info")
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.atom.created,"no atom list")
 
-      if (.roby.associated) .roby.destroy
+      if (.roby.created) .roby.destroy
 
       ! Requirements
       .INTS:make_overlap_matrix
@@ -862,7 +862,7 @@ contains
    ! Read in the *gaussian* basis type to be used for the atoms in the
    ! *saved* molecule.
 
-   ENSURE(.saved.associated,"there is no saved molecule")
+   ENSURE(.saved.created,"there is no saved molecule")
 
       this :: STR
 
@@ -875,7 +875,7 @@ contains
    ! Read in the *slater* basis type to be used for the atoms in the
    ! *saved* molecule.
 
-   ENSURE(.saved.associated,"there is no saved molecule")
+   ENSURE(.saved.created,"there is no saved molecule")
 
       this :: STR
 
@@ -888,7 +888,7 @@ contains
    ! Read in the *coppens* basis type to be used for the atoms in the
    ! *saved* molecule.
 
-   ENSURE(.saved.associated,"there is no saved molecule")
+   ENSURE(.saved.created,"there is no saved molecule")
 
       this :: STR
 
@@ -899,13 +899,13 @@ contains
 
    read_slaterbasis_sets ::: leaky
    ! Read in a list of atomic Coppens basis sets for the molecule
-      WARN_IF(.slaterbasis.associated,"slaterbasis sets already defined!")
+      WARN_IF(.slaterbasis.created,"slaterbasis sets already defined!")
 
-      if (.atom.associated)  .atom.nullify_slaterbasis_part
+      if (.atom.created)  .atom.nullify_slaterbasis_part
 
-      if (.slaterbasis.associated) .slaterbasis.renormalise
+      if (.slaterbasis.created) .slaterbasis.renormalise
       .slaterbasis.read_list_keywords
-      if (.slaterbasis.associated) .slaterbasis.unnormalise
+      if (.slaterbasis.created) .slaterbasis.unnormalise
 
       .BASE:resolve_basis_info
 
@@ -913,13 +913,13 @@ contains
 
    read_coppensbasis_sets ::: leaky
    ! Read in a list of atomic Coppens basis sets for the molecule
-      WARN_IF(.coppensbasis.associated,"coppensbasis sets already defined!")
+      WARN_IF(.coppensbasis.created,"coppensbasis sets already defined!")
 
-      if (.atom.associated)  .atom.nullify_coppensbasis_part
+      if (.atom.created)  .atom.nullify_coppensbasis_part
 
-      if (.coppensbasis.associated) .coppensbasis.renormalise
+      if (.coppensbasis.created) .coppensbasis.renormalise
       .coppensbasis.read_list_keywords
-      if (.coppensbasis.associated) .coppensbasis.unnormalise
+      if (.coppensbasis.created) .coppensbasis.unnormalise
 
       .BASE:resolve_basis_info
 

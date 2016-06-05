@@ -121,7 +121,7 @@ contains
 
       status :: INT
 
-      if (.disassociated) return
+      if (.destroyed) return
 
       deallocate(self,stat=status)
 

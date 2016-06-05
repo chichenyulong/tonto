@@ -89,14 +89,10 @@ contains
    ! Return a pointer to it if already created
       self :: allocatable, INOUT
 
-      if (stdin.disassociated) then
+      if (stdin.destroyed) then
 
          ! Allocate and nullify
-         allocate(stdin)
-         stdin.nullify_ptr_part
-
-      self :: allocatable, INOUT
-         .set_defaults
+         stdin.create
 
          ! Reset some defaults
          stdin.name   = "stdin"
@@ -105,12 +101,6 @@ contains
 
       end
 
-      ! Reset buffer ... ?
-      stdin.buffer.set_defaults
-
-      ! Return stdin
-      self => stdin
-
    end
 
    create_stdout ::: leaky
@@ -118,14 +108,10 @@ contains
    ! Return a pointer to it if already created
       self :: allocatable, INOUT
 
-      if (stdout.disassociated) then
+      if (stdout.destroyed) then
 
          ! Allocate and nullify
-         allocate(stdout)
-         stdout.nullify_ptr_part
-
-         ! Set defaults
-         .set_defaults
+         stdout.create
 
          ! Reset some defaults
          stdout.name   = "stdout"
@@ -134,12 +120,8 @@ contains
 
       end
 
-      ! Reset buffer ... ?
-      stdout.buffer.set_defaults
+      ! Get ready
       stdout.clear_and_put_margin
-
-      ! Return stdout
-      self => stdout
 
    end
 
@@ -148,44 +130,33 @@ contains
    ! Return a pointer to it if already created
       self :: allocatable, INOUT
 
-      if (stderr.disassociated) then
+      if (stderr.destroyed) then
 
          ! Allocate and nullify
-         allocate(stderr)
-         stderr.nullify_ptr_part
-
-         ! Set defaults
-         .set_defaults
+         stderr.create
 
          ! Reset some defaults
          stderr.name = "stderr"
          stderr.action = "write"
          stderr.unit = TEXTFILE_STDERR_UNIT
+
       end
 
-      ! Reset buffer ... ?
-      stderr.buffer.set_defaults
+      ! Get ready
       stderr.clear_and_put_margin
-
-      ! Return stderr
-      self => stderr
 
    end
 
    create(name) ::: leaky
    ! Create a textfile, and optionally set the name. Does not open the file.
       self :: allocatable, INOUT
-      name :: STR, optional
+      name :: STR, IN
 
       ! Allocate and nullify
-      allocate(self)
-      .nullify_ptr_part
-
-      ! Set defaults
-      .set_defaults
+      .create
 
       ! Set the name if present
-      if (present(name)) .set_name(name)
+      .set_name(name)
 
       ! Get a unique unit number
       UNIT_NUMBER:get_available_unit_number(.unit)
@@ -200,14 +171,10 @@ contains
       self :: allocatable, INOUT
       internal :: VEC{STR}, IN
 
-   ENSURE(.internal.disassociated,"internal file already exists")
+   ENSURE(.internal.destroyed,"internal file already exists")
 
       ! Allocate and nullify
-      allocate(self)
-      .nullify_ptr_part
-
-      ! Set defaults
-      .set_defaults
+      .create
 
       ! Reset some defaults
       .action = "read"
@@ -238,7 +205,7 @@ contains
    ! Saved everything about the current textfile "self" in ".saved"
    ! Do not open a new textfile. Can be used to save style settings.
       self :: allocatable, INOUT
-   ENSURE(.associated,"no self")
+   ENSURE(.created,"no self")
 
       saved :: TEXTFILE@
 
@@ -263,7 +230,7 @@ contains
    ! Go back to previously saved textfile settings. Note that this
    ! is not the same as reverting to a previously redirected textfile
       self :: allocatable, INOUT
-   ENSURE(.saved.associated,"no previous settings")
+   ENSURE(.saved.created,"no previous settings")
 
       saved :: TEXTFILE@
 
@@ -384,7 +351,7 @@ contains
    ! style settings, including (for example) any default_units settings.
       self :: allocatable, INOUT
 
-   ENSURE(.saved.associated,"no previous settings")
+   ENSURE(.saved.created,"no previous settings")
 
       saved :: TEXTFILE@
 
@@ -399,7 +366,7 @@ contains
 
       ! Destroy pointer parts of self ...
       ! Do not destroy .saved parts recursively, just deallocate
-      if (.internal.associated) then
+      if (.internal.created) then
          .internal.destroy
       else
          .buffer.destroy_ptr_part
@@ -465,7 +432,7 @@ contains
    ! The file is positioned at the first line.
       self :: INOUT
 
-   ENSURE(.internal.disassociated,"no need to open an internal file")
+   ENSURE(.internal.destroyed,"no need to open an internal file")
 
       unit,fail :: INT
       name :: STR
@@ -503,7 +470,7 @@ contains
    ! Open the output file associated with the output object
       self :: INOUT
 
-   ENSURE(.internal.disassociated,"no need to open an internal file")
+   ENSURE(.internal.destroyed,"no need to open an internal file")
 
       if (.exists) then; .open_old_file_for_write
       else;              .open_new_file_for_write
@@ -515,7 +482,7 @@ contains
    ! Open an old output file for writing
       self :: INOUT
 
-   ENSURE(.internal.disassociated,"no need to open an internal file")
+   ENSURE(.internal.destroyed,"no need to open an internal file")
    ENSURE(.exists, "not an existing file!")
 
       unit,fail :: INT
@@ -550,7 +517,7 @@ contains
    ! Open an new output file for writing
       self :: INOUT
 
-   ENSURE(.internal.disassociated,"no need to open an internal file")
+   ENSURE(.internal.destroyed,"no need to open an internal file")
    ENSURE(NOT .exists, "output file exists!")
 
       unit,fail :: INT
@@ -617,30 +584,6 @@ contains
 !  ============
 !  Set defaults
 !  ============
-
-   set_defaults ::: pure
-   ! Set defaults
-      self :: INOUT
-
-      .name                    = "unknown"
-      .action                  = "unknown"
-      .unit                    = 0
-      .record                  = 0
-      .io_status               = 0
-      .ignore_end_of_file      = FALSE
-      .no_of_lines             = -1
-
-      .set_default_format
-
-      .default_units           = " "
-      .comment_chars           = TEXTFILE_COMMENT_CHARS
-      .quote_chars             = TEXTFILE_QUOTE_CHARS
-      .ignore_unmatched_quotes = FALSE
-      .eliminate_specials      = TRUE
-
-      .buffer.set_defaults  ! Set defaults
-
-   end
 
    set_default_format ::: pure
    ! Set the default settings for the REAL formatting object
@@ -768,7 +711,7 @@ contains
    set_replacement_list(list) ::: leaky
    ! Set the replacement_list.
       list :: MAT{STR}@
-   ENSURE(list.associated,"list destroyed")
+   ENSURE(list.created,"list destroyed")
    ENSURE(list.dim2==2,"second dimension must be 2")
       .replacement_list.destroy
       .replacement_list.create_copy(list)
@@ -1106,7 +1049,7 @@ contains
    ! Read a line into the buffer.
       self :: INOUT
 
-      if (.internal.associated) then; .read_line_internal
+      if (.internal.created) then; .read_line_internal
       else;                        .read_line_external
       end
 
@@ -1122,7 +1065,7 @@ contains
    ! saved file, and an attempt is made to read from that saved file.
       self :: INOUT
 
-   ENSURE(.internal.associated,"no internal file")
+   ENSURE(.internal.created,"no internal file")
 
       string :: STR(len=BSTR_SIZE)
 
@@ -1238,7 +1181,7 @@ contains
    ! Reading a line encountered an unexpected EOF.
       self :: IN
 
-      if(.saved.associated) then
+      if(.saved.created) then
          DIE("did you forget to set ignore_end_of_file?")
       else
          DIE("unexpected end of file")
@@ -1293,7 +1236,7 @@ contains
 
    rewind
    ! Rewind the input file, reading the first line for read-only files.
-      if (.internal.associated) then; .rewind_internal
+      if (.internal.created) then; .rewind_internal
       else;                        .rewind_external
       end
       select case (.action)
@@ -1332,7 +1275,7 @@ contains
 
    move_to_end
    ! Move to the end of the input file
-      if (.internal.associated) then; .move_to_end_internal
+      if (.internal.created) then; .move_to_end_internal
       else;                        .move_to_end_external
       end
    end
@@ -1429,7 +1372,7 @@ contains
 
    ENSURE(rec>=0,"line number must be non-negative")
 
-      if (.internal.associated) then; .move_to_record_internal(rec)
+      if (.internal.created) then; .move_to_record_internal(rec)
       else;                        .move_to_record_external(rec)
       end
 
@@ -4751,54 +4694,54 @@ contains
      by_row :: BIN, IN, optional
      by_column :: BIN, IN, optional
 
-     if (mx.restricted.associated) then
+     if (mx.restricted.created) then
        .flush
        .text("Restricted part:")
        .flush(2)
        .put(mx.restricted,by_row,by_column)
      end
 
-     if (mx.alpha.associated) then
+     if (mx.alpha.created) then
        .flush
        .text("Alpha part:")
        .flush(2)
        .put(mx.alpha,by_row,by_column)
      end
 
-     if (mx.beta.associated) then
+     if (mx.beta.created) then
        .flush
        .text("Beta part:")
        .flush(2)
        .put(mx.beta,by_row,by_column)
      end
 
-     if (mx.general.associated) then
+     if (mx.general.created) then
        .flush
        .text("General part:")
        .flush(2)
        .put(mx.general,by_row,by_column)
      end
 
-     if (mx.restricted_complex.associated) then
+     if (mx.restricted_complex.created) then
        .flush
        .text("Restricted complex part:")
        .put(mx.restricted_complex,by_row,by_column)
      end
 
-     if (mx.alpha_complex.associated) then
+     if (mx.alpha_complex.created) then
        .flush
        .text("Alpha complex part:")
        .flush(2)
        .put(mx.alpha_complex,by_row,by_column)
      end
 
-     if (mx.beta_complex.associated) then
+     if (mx.beta_complex.created) then
        .flush
        .text("Beta complex part:")
        .put(mx.beta_complex,by_row,by_column)
      end
 
-     if (mx.general_complex.associated) then
+     if (mx.general_complex.created) then
        .flush
        .text("General complex part:")
        .flush(2)
@@ -5462,7 +5405,7 @@ contains
       varname :: STR, IN
       value :: VALUE?*
 
-      if (value.disassociated) then
+      if (value.destroyed) then
          .flush
          .text(trim(varname)//":TYPE* = null")
       else

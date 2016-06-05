@@ -887,7 +887,7 @@ contains
       isosurface :: ISOSURFACE@
 
       ! Multiple iso values
-      if (.iso_values.associated) then
+      if (.iso_values.created) then
 
          ! Set self isovalue, and copy self
          .iso_value = .iso_values(1)
@@ -2002,7 +2002,7 @@ contains
             pt :: MAT{REAL}, IN
          end
       end
-   ENSURE(.point.associated,"no isosurface points!")
+   ENSURE(.point.created,"no isosurface points!")
       .surface_property_values.create(.point.dim2)
       call func(.surface_property_values,transpose(.point))
    end
@@ -2270,8 +2270,8 @@ contains
       n :: INT, IN
       res :: VEC{REAL}(3)
 
-   ENSURE(.point_gradient.associated,"no point_gradient array")
-   ENSURE(.face.associated,"no face array")
+   ENSURE(.point_gradient.created,"no point_gradient array")
+   ENSURE(.face.created,"no face array")
    ENSURE(n<=.face.dim2,"n too large")
 
       a,b,c :: VEC{REAL}(3)
@@ -2289,8 +2289,8 @@ contains
    ! Returns the average gradient for face "n"
       n :: INT
       res :: VEC{REAL}(3)
-   ENSURE(.point_gradient.associated,"no point_gradient array")
-   ENSURE(.face.associated,"no face array")
+   ENSURE(.point_gradient.created,"no point_gradient array")
+   ENSURE(.face.created,"no face array")
    ENSURE(n<=.face.dim2,"n too large")
       a,b,c :: VEC{REAL}(3)
       a = .point_gradient(:,.face(1,n))
@@ -2304,7 +2304,7 @@ contains
    ! point_gradient for than point
       n :: INT
       res :: VEC{REAL}(3)
-   ENSURE(.point_gradient.associated,"no point_gradient array")
+   ENSURE(.point_gradient.created,"no point_gradient array")
    ENSURE(n<=.n_pt,"n too large")
    ENSURE(n>0,"n must be positive")
       res = .point_gradient(:,n)
@@ -2313,7 +2313,7 @@ contains
 
    set_area
    ! Set the *total* area of the isosurface
-   ENSURE(.face.associated,"no isosurface faces created")
+   ENSURE(.face.created,"no isosurface faces created")
    ENSURE(.n_face>0,"no isosurface faces")
       i :: INT
       .area = ZERO
@@ -2326,9 +2326,9 @@ contains
    ! Set the *total* volume of the isosurface. This is set in two ways: from the
    ! face normals, and from the average of the vertex normals, calculated from
    ! the .point_gradients.
-   ENSURE(.point.associated,"no isosurface points created")
+   ENSURE(.point.created,"no isosurface points created")
    ENSURE(.n_pt>0,"no isosurface points")
-   ENSURE(.face.associated,"no isosurface faces created")
+   ENSURE(.face.created,"no isosurface faces created")
    ENSURE(.n_face>0,"no isosurface faces")
       f,i1,i2,i3 :: INT
       base,height,h1,h2,h3 :: REAL
@@ -2380,8 +2380,8 @@ contains
       self :: IN
       k1,k2 :: VEC{REAL}, OUT
 
-   ENSURE(.point_mean_curvature.associated,"no mean curvatures")
-   ENSURE(.point_gaussian_curvature.associated,"no gaussian curvatures")
+   ENSURE(.point_mean_curvature.created,"no mean curvatures")
+   ENSURE(.point_gaussian_curvature.created,"no gaussian curvatures")
    ENSURE(.n_pt>0,"no isosurface points")
    ENSURE(k1.dim==.n_pt,"wrong size, k1")
    ENSURE(k2.dim==.n_pt,"wrong size, k1")
@@ -2594,8 +2594,8 @@ contains
       list :: VEC{INT}, IN
       res  :: VEC{REAL}@
 
-   ENSURE(.point.associated,"no points")
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.point.created,"no points")
+   ENSURE(.atom.created,"no atom list")
    ENSURE(list.all_in_range([1,.atom.dim]),"in list out of bounds")
 
       dist :: VEC{REAL}(3)
@@ -2636,9 +2636,9 @@ contains
       listin, listout :: VEC{INT}, IN
       areas, res_in, res_out :: VEC{REAL}(.n_face), OUT
 
-   ENSURE(.point.associated, "no points")
-   ENSURE(.atom.associated,"no atom list")
-   ENSURE(.face.associated,"no faces list")
+   ENSURE(.point.created, "no points")
+   ENSURE(.atom.created,"no atom list")
+   ENSURE(.face.created,"no faces list")
    ENSURE(listin.all_in_range([1,.atom.dim]),"in list out of bounds")
    ENSURE(listout.all_in_range([1,.atom.dim]),"in list out of bounds")
 
@@ -2716,8 +2716,8 @@ contains
       list :: VEC{INT}, IN
       res  :: VEC{REAL}@
 
-   ENSURE(.point.associated,"no points")
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.point.created,"no points")
+   ENSURE(.atom.created,"no atom list")
    ENSURE(list.dim>=0,"no list")
    ENSURE(list.all_in_range([1,.atom.dim]),"in list out of bounds")
 
@@ -2760,7 +2760,7 @@ contains
       atom :: VEC{ATOM}, IN
       d_min,d_norm :: VEC{REAL}(.n_pt), OUT
 
-   ENSURE(.point.associated,"no points")
+   ENSURE(.point.created,"no points")
    ENSURE(list.all_in_range([1,atom.dim]),"in list out of bounds")
 
       pos :: MAT{REAL}@
@@ -2847,8 +2847,8 @@ contains
       list :: VEC{INT}, IN
       d_min_list  :: VEC{INT}(list.dim), OUT
 
-   ENSURE(.point.associated,"no points")
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.point.created,"no points")
+   ENSURE(.atom.created,"no atom list")
    ENSURE(list.dim>=0,"no list")
    ENSURE(list.all_in_range([1,.atom.dim]),"in list out of bounds")
 
@@ -2888,8 +2888,8 @@ contains
       list :: VEC{INT}, IN
       d_min_list  :: VEC{INT}(.n_face), OUT
 
-   ENSURE(.point.associated,"no points")
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.point.created,"no points")
+   ENSURE(.atom.created,"no atom list")
    ENSURE(list.dim>=0,"no list")
    ENSURE(list.all_in_range([1,.atom.dim]),"in list out of bounds")
 
@@ -2964,7 +2964,7 @@ contains
       atom :: VEC{ATOM}, IN
       res :: VEC{INT}@
 
-   ENSURE(.point.associated,"no points")
+   ENSURE(.point.created,"no points")
 
       pos,apos,d :: VEC{REAL}(3)
       group_for_pt :: VEC{REAL}@
@@ -3024,8 +3024,8 @@ contains
       self :: IN
       pts_for_group :: VEC{VEC_{INT}}@, OUT
 
-   ENSURE(.point.associated,"no points")
-   ENSURE(.atom.associated,"no atom list")
+   ENSURE(.point.created,"no points")
+   ENSURE(.atom.created,"no atom list")
    ENSURE(maxval(.atom.group)>1,"not enough groups")
 
       pos,apos,d :: VEC{REAL}(3)
@@ -3100,13 +3100,13 @@ contains
       self :: INOUT
       other :: ISOSURFACE, IN
 
-      if (other.point.associated)                    .point.append_columns(other.point)
-      if (other.point_gradient.associated)           .point_gradient.append_columns(other.point_gradient)
-      if (other.point_mean_curvature.associated)     .point_mean_curvature.append(other.point_mean_curvature)
-      if (other.point_gaussian_curvature.associated) .point_gaussian_curvature.append(other.point_gaussian_curvature)
-      if (other.face.associated)                     .face.append_columns(other.face+.n_pt)
-      if (other.surface_property_values.associated)  .surface_property_values.append(other.surface_property_values)
-      if (other.surface_iso_values.associated)       .surface_iso_values.append(other.surface_iso_values)
+      if (other.point.created)                    .point.append_columns(other.point)
+      if (other.point_gradient.created)           .point_gradient.append_columns(other.point_gradient)
+      if (other.point_mean_curvature.created)     .point_mean_curvature.append(other.point_mean_curvature)
+      if (other.point_gaussian_curvature.created) .point_gaussian_curvature.append(other.point_gaussian_curvature)
+      if (other.face.created)                     .face.append_columns(other.face+.n_pt)
+      if (other.surface_property_values.created)  .surface_property_values.append(other.surface_property_values)
+      if (other.surface_iso_values.created)       .surface_iso_values.append(other.surface_iso_values)
 
       .n_pt      = .n_pt      + other.n_pt
       .n_face    = .n_face    + other.n_face
@@ -3136,7 +3136,7 @@ contains
       stdout.show("Kind of surface          =",.property)
       stdout.show("Triangulation method     =",.triangulation_method)
       stdout.show("Iso value                =",.iso_value)
-      if (.iso_values.associated) &
+      if (.iso_values.created) &
       stdout.show("Iso values               =",.iso_values)
       stdout.show("No. of isosurface points =",.n_pt)
       stdout.show("No. of isosurface faces  =",.n_face)
@@ -3219,13 +3219,13 @@ contains
       if (.CX_output_distance_properties) .put_fingerprint_properties(in,out,atom,angstrom)
 
       ! Shape index and curvedness
-      has_curvatures = .point_mean_curvature.associated &
-                  AND  .point_gaussian_curvature.associated
+      has_curvatures = .point_mean_curvature.created &
+                  AND  .point_gaussian_curvature.created
       if (.CX_output_shape_properties AND has_curvatures) .put_vertex_SI_and_curvedness
 
       ! User-requested property?
-      if (.surface_property_values.associated) .put_surface_property_values ! up to 2
-      if (.surface_iso_values.associated)      .put_surface_iso_values ! up to 2
+      if (.surface_property_values.created) .put_surface_property_values ! up to 2
+      if (.surface_iso_values.created)      .put_surface_iso_values ! up to 2
 
       ! Binned fingerprints
       if (.CX_output_fingerprint) .put_binned_d_i_d_e(in,out)
@@ -3405,7 +3405,7 @@ contains
    put_surface_property_values
    ! Put out the surface_property_values
    ENSURE(.surface_property/=" ","no surface property set")
-   ENSURE(.surface_property_values.associated,"no surface property values")
+   ENSURE(.surface_property_values.created,"no surface property values")
 
       values :: VEC{REAL}@
 
@@ -3426,7 +3426,7 @@ contains
 
    put_surface_iso_values
    ! Put out the surface_iso_values array
-   ENSURE(.surface_iso_values.associated,"no surfacevalues")
+   ENSURE(.surface_iso_values.created,"no surfacevalues")
 
       ! Orbital is a special case because normally orbitals
       ! are plotted with two iso_values, one +ve and the other -ve
@@ -3444,7 +3444,7 @@ contains
    ! iso values ...
       label :: STR
 
-   ENSURE(.surface_iso_values.associated,"no surface iso values")
+   ENSURE(.surface_iso_values.created,"no surface iso values")
 
       stdout.save
       stdout.set_real_style("e")
@@ -3549,8 +3549,8 @@ contains
    ! Put the nearest external atom isosurface distances, as RGB
    ! colours. "out" are the indices of the atoms outside the surface.
       out :: VEC{INT}
-   ENSURE(.atom.associated,"no atom data")
-   ENSURE(.colour.associated,"no colour function")
+   ENSURE(.atom.created,"no atom data")
+   ENSURE(.colour.created,"no colour function")
 
       dist :: VEC{REAL}@
       RGB :: MAT{REAL}@
@@ -3572,8 +3572,8 @@ contains
    ! Put the nearest internal atom isosurface distances, as RGB colours. "in"
    ! are the indices of the atoms inside the surface.
       in :: VEC{INT}
-   ENSURE(.atom.associated,"no atom data")
-   ENSURE(.colour.associated,"no colour function")
+   ENSURE(.atom.created,"no atom data")
+   ENSURE(.colour.created,"no colour function")
 
       dist :: VEC{REAL}@
       RGB :: MAT{REAL}@
@@ -3598,7 +3598,7 @@ contains
    ! vale to a colour.
       in,out :: VEC{INT}
 
-   ENSURE(.atom.associated,"no atom data")
+   ENSURE(.atom.created,"no atom data")
 
       binned_areas :: MAT{REAL}@
       areas, d_i_res, d_e_res :: VEC{REAL}(.n_face)
@@ -3683,8 +3683,8 @@ contains
    ! and outside the
    ! surface.
       in,out :: VEC{INT}
-   ENSURE(.atom.associated,"no atom data")
-   ENSURE(.colour.associated,"no colour function")
+   ENSURE(.atom.created,"no atom data")
+   ENSURE(.colour.created,"no colour function")
 
       d_e,d_i :: VEC{REAL}@
       bin_count :: MAT{INT}@
@@ -3740,8 +3740,8 @@ contains
 !   ! that the actual data values are outputted with the count next to them
 !   ! (converted to a RGB colour).
 !      in,out :: VEC{INT}
-!   ENSURE(.atom.associated,"no atom data")
-!   ENSURE(.colour.associated,"no colour function")
+!   ENSURE(.atom.created,"no atom data")
+!   ENSURE(.colour.created,"no colour function")
 !
 !      d_e,d_i :: VEC{REAL}@
 !      bin_count :: VEC{INT}@
@@ -3856,7 +3856,7 @@ contains
       end
       out.text("    }")
 
-      if (.surface_property_values.associated) then
+      if (.surface_property_values.created) then
 
          ! Output the colour of each vertex, if applicable.
          RGB.create(3,.n_pt)

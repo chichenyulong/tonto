@@ -182,7 +182,7 @@ contains
       res = FALSE
 
       do g = 1,.dim
-         res = self(g).atom_index.associated
+         res = self(g).atom_index.created
          if (NOT res) exit
       end
 

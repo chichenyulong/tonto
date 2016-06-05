@@ -138,79 +138,79 @@ contains
 
       .nullify_ptr_part
 
-      if (crystal.spacegroup.associated) &
+      if (crystal.spacegroup.created) &
          .spacegroup.create_copy(crystal.spacegroup)
 
-      if (crystal.unit_cell.associated) &
+      if (crystal.unit_cell.created) &
          .unit_cell.create_copy(crystal.unit_cell)
 
-      if (crystal.fragment_atom.associated) then
+      if (crystal.fragment_atom.created) then
          if (.destroy_fragment_atom) then;               .fragment_atom.create_copy(crystal.fragment_atom)
          else;                                           .fragment_atom => crystal.fragment_atom
          end
       end
-      if (crystal.fragment_geometry.associated)             &
+      if (crystal.fragment_geometry.created)             &
          .fragment_geometry.create_copy(crystal.fragment_geometry)
 
-      if (crystal.asymmetric_unit_geometry.associated)      &
+      if (crystal.asymmetric_unit_geometry.created)      &
          .asymmetric_unit_geometry.create_copy(crystal.asymmetric_unit_geometry)
-      if (crystal.asymmetric_unit_atom.associated)          &
+      if (crystal.asymmetric_unit_atom.created)          &
          .asymmetric_unit_atom.create_copy(crystal.asymmetric_unit_atom)
 
-      if (crystal.unit_cell_geometry.associated)            &
+      if (crystal.unit_cell_geometry.created)            &
          .unit_cell_geometry.create_copy(crystal.unit_cell_geometry)
-      if (crystal.unique_unit_cell_atom.associated)         &
+      if (crystal.unique_unit_cell_atom.created)         &
          .unique_unit_cell_atom.create_copy(crystal.unique_unit_cell_atom)
-      if (crystal.is_asym_unit_cell_atom.associated)        &
+      if (crystal.is_asym_unit_cell_atom.created)        &
          .is_asym_unit_cell_atom.create_copy(crystal.is_asym_unit_cell_atom)
 
-      if (crystal.asym_atom_for_unit_cell_atom.associated)  &
+      if (crystal.asym_atom_for_unit_cell_atom.created)  &
          .asym_atom_for_unit_cell_atom.create_copy(crystal.asym_atom_for_unit_cell_atom)
-      if (crystal.asym_symop_for_unit_cell_atom.associated) &
+      if (crystal.asym_symop_for_unit_cell_atom.created) &
          .asym_symop_for_unit_cell_atom.create_copy(crystal.asym_symop_for_unit_cell_atom)
-      if (crystal.asym_shift_for_unit_cell_atom.associated) &
+      if (crystal.asym_shift_for_unit_cell_atom.created) &
          .asym_shift_for_unit_cell_atom.create_copy(crystal.asym_shift_for_unit_cell_atom)
-      if (crystal.frag_parent_for_cell_atom.associated)     &
+      if (crystal.frag_parent_for_cell_atom.created)     &
          .frag_parent_for_cell_atom.create_copy(crystal.frag_parent_for_cell_atom)
 
-      if (crystal.frag_atom_for_unit_cell_atom.associated)  &
+      if (crystal.frag_atom_for_unit_cell_atom.created)  &
          .frag_atom_for_unit_cell_atom.create_copy(crystal.frag_atom_for_unit_cell_atom)
-      if (crystal.unit_cell_atom_for_frag_atom.associated)  &
+      if (crystal.unit_cell_atom_for_frag_atom.created)  &
          .unit_cell_atom_for_frag_atom.create_copy(crystal.unit_cell_atom_for_frag_atom)
-      if (crystal.unit_cell_shft_for_frag_atom.associated)  &
+      if (crystal.unit_cell_shft_for_frag_atom.created)  &
          .unit_cell_shft_for_frag_atom.create_copy(crystal.unit_cell_shft_for_frag_atom)
-      if (crystal.frag_atom_for_asym_atom.associated)       &
+      if (crystal.frag_atom_for_asym_atom.created)       &
          .frag_atom_for_asym_atom.create_copy(crystal.frag_atom_for_asym_atom)
-      if (crystal.asym_atom_for_frag_atom.associated)       &
+      if (crystal.asym_atom_for_frag_atom.created)       &
          .asym_atom_for_frag_atom.create_copy(crystal.asym_atom_for_frag_atom)
 
-      if (crystal.unique_frag_atom.associated)              &
+      if (crystal.unique_frag_atom.created)              &
          .unique_frag_atom.create_copy(crystal.unique_frag_atom)
-      if (crystal.unique_atom_for_frag_atom.associated)     &
+      if (crystal.unique_atom_for_frag_atom.created)     &
          .unique_atom_for_frag_atom.create_copy(crystal.unique_atom_for_frag_atom)
-      if (crystal.unique_symop_for_frag_atom.associated)    &
+      if (crystal.unique_symop_for_frag_atom.created)    &
          .unique_symop_for_frag_atom.create_copy(crystal.unique_symop_for_frag_atom)
-      if (crystal.asym_symop_for_frag_atom.associated)      &
+      if (crystal.asym_symop_for_frag_atom.created)      &
          .asym_symop_for_frag_atom.create_copy(crystal.asym_symop_for_frag_atom)
-      if (crystal.asym_shift_for_frag_atom.associated)      &
+      if (crystal.asym_shift_for_frag_atom.created)      &
          .asym_shift_for_frag_atom.create_copy(crystal.asym_shift_for_frag_atom)
 
-      if (crystal.repetition_factor.associated)             &
+      if (crystal.repetition_factor.created)             &
          .repetition_factor.create_copy(crystal.repetition_factor)
-      if (crystal.asym_atom_rep_factor.associated)          &
+      if (crystal.asym_atom_rep_factor.created)          &
          .asym_atom_rep_factor.create_copy(crystal.asym_atom_rep_factor)
 
-      if (crystal.stabilizer_symop.associated)  .stabilizer_symop.create_copy(crystal.stabilizer_symop)
-      if (crystal.str.associated)               .str.create_copy(crystal.str)
-      if (crystal.ptr.associated)               .ptr.create_copy(crystal.ptr)
-      if (crystal.dtr.associated)               .dtr.create_copy(crystal.dtr)
-      if (crystal.ftr.associated)               .ftr.create_copy(crystal.ftr)
-      if (crystal.gtr.associated)               .gtr.create_copy(crystal.gtr)
+      if (crystal.stabilizer_symop.created)  .stabilizer_symop.create_copy(crystal.stabilizer_symop)
+      if (crystal.str.created)               .str.create_copy(crystal.str)
+      if (crystal.ptr.created)               .ptr.create_copy(crystal.ptr)
+      if (crystal.dtr.created)               .dtr.create_copy(crystal.dtr)
+      if (crystal.ftr.created)               .ftr.create_copy(crystal.ftr)
+      if (crystal.gtr.created)               .gtr.create_copy(crystal.gtr)
 
-      if (crystal.xray_data.associated)         .xray_data.create_copy(crystal.xray_data)
-      if (crystal.pnd_data.associated)          .pnd_data.create_copy(crystal.pnd_data)
+      if (crystal.xray_data.created)         .xray_data.create_copy(crystal.xray_data)
+      if (crystal.pnd_data.created)          .pnd_data.create_copy(crystal.pnd_data)
 
-      if (crystal.core_reflection.associated)   .core_reflection.create_copy(crystal.core_reflection)
+      if (crystal.core_reflection.created)   .core_reflection.create_copy(crystal.core_reflection)
 
    end
 
@@ -244,12 +244,12 @@ contains
       .update                      = TRUE
 
       ! Set xray_data defualts
-      if (.xray_data.associated) then; .xray_data.set_defaults
+      if (.xray_data.created) then; .xray_data.set_defaults
       else;                         nullify(.xray_data)
       end
 
       ! Set pnd_data defualts
-      if (.pnd_data.associated) then;  .pnd_data.set_defaults
+      if (.pnd_data.created) then;  .pnd_data.set_defaults
       else;                         nullify(.pnd_data)
       end
 
@@ -258,11 +258,11 @@ contains
    update ::: leaky
    ! Update the crystal information after setting values.
 
-      if (.xray_data.associated) then
+      if (.xray_data.created) then
 
         .xray_data.update(.unit_cell,.spacegroup)
 
-        if (.r_free_percentage>0 AND .xray_data.reflections.associated) then
+        if (.r_free_percentage>0 AND .xray_data.reflections.created) then
            .xray_r_free_data.destroy
            .xray_r_free_data.create_copy(.xray_data)
            .xray_r_free_data.reflections.destroy
@@ -271,11 +271,11 @@ contains
 
       end
 
-      if (.pnd_data.associated) then
+      if (.pnd_data.created) then
 
         .pnd_data.update(.unit_cell,.spacegroup)
 
-        if (.r_free_percentage>0 AND .pnd_data.reflections.associated) then
+        if (.r_free_percentage>0 AND .pnd_data.reflections.created) then
            .pnd_r_free_data.destroy
            .pnd_r_free_data.create_copy(.xray_data)
            .pnd_r_free_data.reflections.destroy
@@ -292,8 +292,8 @@ contains
       self :: INOUT
       data,free_data :: VEC{REFLECTION}@
 
-   ENSURE(data.associated,"no diffraction data")
-   ENSURE(free_data.disassociated,"r_free_data exists")
+   ENSURE(data.created,"no diffraction data")
+   ENSURE(free_data.destroyed,"r_free_data exists")
 
       keep_data :: VEC{REFLECTION}@
       harvest :: VEC{REAL}@
@@ -302,7 +302,7 @@ contains
       i,n :: INT
 
       if (.r_free_percentage<=0) return
-      if (data.disassociated) return
+      if (data.destroyed) return
 
       ! Set the percentage of reflections to reject
       percentage = .r_free_percentage/100.0d0
@@ -348,7 +348,7 @@ contains
    ! Assign data to the xray_data
       self :: INOUT
 
-   ENSURE(.xray_data.associated, "No X-ray reflection data")
+   ENSURE(.xray_data.created, "No X-ray reflection data")
 
       nullify(.data)
       .data => .xray_data
@@ -359,7 +359,7 @@ contains
    ! Assign data to the xray_r_free_data
       self :: INOUT
 
-   ENSURE(.xray_r_free_data.associated, "No X-ray R-free reflection data")
+   ENSURE(.xray_r_free_data.created, "No X-ray R-free reflection data")
 
       nullify(.data)
       .data => .xray_r_free_data
@@ -369,7 +369,7 @@ contains
    assign_pnd
    ! Assign data to the pnd_data
 
-   ENSURE(.pnd_data.associated, "No PND reflection data")
+   ENSURE(.pnd_data.created, "No PND reflection data")
 
       nullify(.data)
       .data => .pnd_data
@@ -380,7 +380,7 @@ contains
    ! Assign data to the pnd_r_free_data
       self :: INOUT
 
-   ENSURE(.pnd_r_free_data.associated, "No PND R-free PND reflection data")
+   ENSURE(.pnd_r_free_data.created, "No PND R-free PND reflection data")
 
       nullify(.data)
       .data => .pnd_r_free_data
@@ -491,8 +491,8 @@ contains
    ! Read the unit cell information
       self :: INOUT
 
-   DIE_IF(.xray_data.associated,"enter unit cell information before xray_data= !")
-   DIE_IF(.pnd_data.associated, "enter unit cell information before pnd_data= !")
+   DIE_IF(.xray_data.created,"enter unit cell information before xray_data= !")
+   DIE_IF(.pnd_data.created, "enter unit cell information before pnd_data= !")
 
       .unit_cell.destroy
       .unit_cell.create
@@ -506,10 +506,10 @@ contains
 
       DIE_IF(NOT .unit_cell.info_made,"enter unit cell information before xray_data= !")
       DIE_IF(NOT .spacegroup.analyzed,"enter spacegroup information before xray_data= !")
-      WARN_IF(.xray_data.associated,"xray diffraction data already defined!")
+      WARN_IF(.xray_data.created,"xray diffraction data already defined!")
 
       ! Create?
-      if (.xray_data.disassociated) .xray_data.create
+      if (.xray_data.destroyed) .xray_data.create
 
       ! Read, update and assign .data
       .xray_data.data_kind = "x-ray"
@@ -524,9 +524,9 @@ contains
 
       DIE_IF(NOT .unit_cell.info_made,"enter unit cell information before pnd_data= !")
       DIE_IF(NOT .spacegroup.analyzed,"enter spacegroup information before xray_data= !")
-      WARN_IF(.pnd_data.associated,"pnd diffraction data already defined!")
+      WARN_IF(.pnd_data.created,"pnd diffraction data already defined!")
 
-      if (.pnd_data.disassociated) .pnd_data.create
+      if (.pnd_data.destroyed) .pnd_data.create
 
       .pnd_data.data_kind = "pnd"
       .pnd_data.read_keywords
@@ -606,7 +606,7 @@ contains
       nullify(itemvec)
       cif.read_item("_chemical_formula_sum",.CIF_chemical_formula,itemvec,found)
       if (NOT found) .CIF_chemical_formula = "?"
-      DIE_IF(itemvec.associated,"multi line chemical formula")
+      DIE_IF(itemvec.created,"multi line chemical formula")
 
       ! Read the spacegroup
       .spacegroup.destroy
@@ -625,7 +625,7 @@ contains
 
       ! Assume this is X-ray data
       ! BAD !!!
-      if (.xray_data.disassociated) .xray_data.create
+      if (.xray_data.destroyed) .xray_data.create
       .xray_data.data_kind = "x-ray"
       .xray_data.read_CIF(cif)
       .xray_data.update(.unit_cell)
@@ -645,7 +645,7 @@ contains
    ! incrementing fastest, for the first to the last atom.
       geometry :: VEC{REAL}@
 
-   WARN_IF(.asymmetric_unit_geometry.associated,"asymmetric_unit_geometry exists!")
+   WARN_IF(.asymmetric_unit_geometry.created,"asymmetric_unit_geometry exists!")
 
       stdin.read_ptr(geometry)
       ENSURE(modulo(geometry.dim,3)==0,"number of coordinates must be divisible by 3")
@@ -670,7 +670,7 @@ contains
 !      self :: IN
 !      k_pt :: MAT{REAL}, OUT
 !
-! ! ENSURE(.data.associated,"no data")
+! ! ENSURE(.data.created,"no data")
 !
 !      n :: INT
 !      hkl :: VEC{INT}(3)
@@ -697,7 +697,7 @@ contains
 !      k_pt :: MAT{REAL}, OUT
 !      reflections :: VEC{REFLECTION}, IN
 !
-! ! ENSURE(.data.associated,"no data")
+! ! ENSURE(.data.created,"no data")
 !
 !      n :: INT
 !      hkl :: VEC{INT}(3)
@@ -723,8 +723,8 @@ contains
       res :: INT
 
    ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-   ENSURE(.data.associated,"no data")
-   ENSURE(.data.reflections.associated,"no reflection data")
+   ENSURE(.data.created,"no data")
+   ENSURE(.data.reflections.created,"no reflection data")
 
       res = .spacegroup.n_unique_SF_symops * .data.reflections.dim
 
@@ -749,9 +749,9 @@ contains
 !      k :: MAT{REAL}, OUT, target
 !
 !   ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-!   ENSURE(.spacegroup.unique_SF_symop.associated,"no unique_SF_symop array!")
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.spacegroup.unique_SF_symop.created,"no unique_SF_symop array!")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !   ENSURE(k.dim1==.n_unique_SF_k_pts,"k: wrong dim1")
 !   ENSURE(k.dim2==3,"k: wrong dim2")
 !
@@ -801,7 +801,7 @@ contains
 !      reflections :: VEC{REFLECTION}, IN
 !
 !   ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-!   ENSURE(.spacegroup.unique_SF_symop.associated,"no unique_SF_symop array!")
+!   ENSURE(.spacegroup.unique_SF_symop.created,"no unique_SF_symop array!")
 !   ENSURE(k.dim1==.n_unique_SF_k_pts,"k: wrong dim1")
 !   ENSURE(k.dim2==3,"k: wrong dim2")
 !
@@ -887,7 +887,7 @@ contains
       assign_atom :: BIN, optional, IN
       warnings    :: BIN, optional, IN
 
-   ENSURE(atom.associated,"no atom array")
+   ENSURE(atom.created,"no atom array")
 
       assign :: BIN
 
@@ -923,14 +923,14 @@ contains
       ! Make .asymmetric_unit_geometry, unit_cell_geometry, as well
       ! as .asymmetric_unit_atom list, from fragment geometry AND
       ! ESPECIALLY the *.asymmetric_unit_atoms* ...
-      if (.asymmetric_unit_geometry.disassociated) then
+      if (.asymmetric_unit_geometry.destroyed) then
          .make_asymmetric_unit(.prune_asymmetric_unit,warnings)
          if (.asymmetric_unit_source=="?") &
              .asymmetric_unit_source = "from-fragment"
       end
 
       ! Sanity check
-      DIE_IF(.asymmetric_unit_atom.disassociated,"no asymmetric_unit_atom list!")
+      DIE_IF(.asymmetric_unit_atom.destroyed,"no asymmetric_unit_atom list!")
 
       ! Relate fragment atoms to unit cell
       .make_frag_atom_for_cell_atom
@@ -965,9 +965,9 @@ contains
       fragment_geometry :: MAT{REAL}, IN
       cartesian :: BIN, optional, IN
 
-   ENSURE(.unit_cell_geometry.associated,           "no .unit_cell_geometry")
-   ENSURE(.asymmetric_unit_atom.associated,         "no .asymmetric_unit_atom")
-   ENSURE(.asym_atom_for_unit_cell_atom.associated, "no .asym_atom_for_unit_cell_atom")
+   ENSURE(.unit_cell_geometry.created,           "no .unit_cell_geometry")
+   ENSURE(.asymmetric_unit_atom.created,         "no .asymmetric_unit_atom")
+   ENSURE(.asym_atom_for_unit_cell_atom.created, "no .asym_atom_for_unit_cell_atom")
 
       atom  :: VEC{ATOM}@
       list  :: VEC{INT}@
@@ -1057,9 +1057,9 @@ contains
       prune_asymmetric_unit :: BIN, optional, IN
       warnings :: BIN, optional, IN
 
-   ENSURE(.fragment_atom.associated,"no .fragment_atom")
-   ENSURE(.fragment_geometry.associated,"no .fragment_geometry")
-   ENSURE(.asymmetric_unit_geometry.disassociated,"asymmetric unit exists")
+   ENSURE(.fragment_atom.created,"no .fragment_atom")
+   ENSURE(.fragment_geometry.created,"no .fragment_geometry")
+   ENSURE(.asymmetric_unit_geometry.destroyed,"asymmetric unit exists")
 
       pa :: VEC{REAL}(3)
       offset :: VEC{INT}(3)
@@ -1235,7 +1235,7 @@ contains
       end
 
       ! Die if no unit cell
-      DIE_IF(NOT .unit_cell_geometry.associated,"The unit_cell_geometry was not created!")
+      DIE_IF(NOT .unit_cell_geometry.created,"The unit_cell_geometry was not created!")
 
       ! >> Make the asymmetric unit atoms <<
       .asymmetric_unit_atom.destroy
@@ -1252,12 +1252,12 @@ contains
    ! Arrays which relate the fragment atoms to the unit cell atoms.
       self :: INOUT
 
-   ENSURE(.fragment_atom.associated,                "no .fragment_atom")
-   ENSURE(.fragment_geometry.associated,            "no .fragment_geometry")
-   ENSURE(.unit_cell_geometry.associated,           "no .unit_cell_geometry")
-   ENSURE(.asymmetric_unit_atom.associated,         "no .asymmetric_unit_atom")
-   ENSURE(.asym_atom_for_unit_cell_atom.associated, "no .asym_atom_for_cell_atom")
-   ENSURE(.asym_symop_for_unit_cell_atom.associated,"no .asym_symop_for_cell_atom")
+   ENSURE(.fragment_atom.created,                "no .fragment_atom")
+   ENSURE(.fragment_geometry.created,            "no .fragment_geometry")
+   ENSURE(.unit_cell_geometry.created,           "no .unit_cell_geometry")
+   ENSURE(.asymmetric_unit_atom.created,         "no .asymmetric_unit_atom")
+   ENSURE(.asym_atom_for_unit_cell_atom.created, "no .asym_atom_for_cell_atom")
+   ENSURE(.asym_symop_for_unit_cell_atom.created,"no .asym_symop_for_cell_atom")
    ENSURE(.spacegroup.analyzed,                  "no spacegroup info")
 
       sh :: VEC{INT}(3)
@@ -1388,9 +1388,9 @@ contains
    ! non-unique to the unique.
       self :: INOUT
 
-   ENSURE(.asym_atom_for_frag_atom.associated, "no .asym_atom_for_frag_atom")
-   ENSURE(.unit_cell_atom_for_frag_atom.associated, "no .unit_cell_atom_for_frag_atom")
-   ENSURE(.asym_symop_for_unit_cell_atom.associated,"no .asym_symop_for_cell_atom")
+   ENSURE(.asym_atom_for_frag_atom.created, "no .asym_atom_for_frag_atom")
+   ENSURE(.unit_cell_atom_for_frag_atom.created, "no .unit_cell_atom_for_frag_atom")
+   ENSURE(.asym_symop_for_unit_cell_atom.created,"no .asym_symop_for_cell_atom")
 
       f,a,m,u,s,t :: INT
       unique :: BIN
@@ -1447,9 +1447,9 @@ contains
    ! of covalent radii.
       self :: INOUT
 
-   ENSURE(.unit_cell_geometry.associated,"no unit_cell in the crystal")
-   ENSURE(.frag_parent_for_cell_atom.associated,"no frag_parent_for_cell_atom")
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom list")
+   ENSURE(.unit_cell_geometry.created,"no unit_cell in the crystal")
+   ENSURE(.frag_parent_for_cell_atom.created,"no frag_parent_for_cell_atom")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric_unit_atom list")
 
       new :: VEC{VEC_{INT}}@
       unit_cell_mol_for_atom,unique :: VEC{INT}@
@@ -1618,9 +1618,9 @@ contains
    ! table. Essentially aame as above with different bond criteria.
       self :: INOUT
 
-   ENSURE(.unit_cell_geometry.associated,"no unit_cell in the crystal")
-   ENSURE(.frag_parent_for_cell_atom.associated,"no frag_parent_for_cell_atom")
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom list")
+   ENSURE(.unit_cell_geometry.created,"no unit_cell in the crystal")
+   ENSURE(.frag_parent_for_cell_atom.created,"no frag_parent_for_cell_atom")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric_unit_atom list")
    ENSURE(.unit_cell_mol_for_atom.created,"no unit_cell_mol_for_atom list")
 
       vdw :: VEC{VEC_{INT}}@
@@ -1744,9 +1744,9 @@ contains
       self :: IN
       res :: REAL
 
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom")
-   ENSURE(.fragment_atom.associated,       "no fragment_atom")
-   ENSURE(.asym_atom_for_unit_cell_atom.associated,"no asym_atom_for_unit_cell_atom")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric_unit_atom")
+   ENSURE(.fragment_atom.created,       "no fragment_atom")
+   ENSURE(.asym_atom_for_unit_cell_atom.created,"no asym_atom_for_unit_cell_atom")
 
       ue,fe :: REAL
 
@@ -1772,7 +1772,7 @@ contains
    ! which are "oversampled" relative to the asymmetric cell geometry.
       self :: INOUT
 
-   ENSURE(.fragment_geometry.associated, "no fragment_geometry!")
+   ENSURE(.fragment_geometry.created, "no fragment_geometry!")
 
       pa,pb :: VEC{REAL}(3)
       a,b,n,n_same :: INT
@@ -1781,7 +1781,7 @@ contains
 
       if (.use_manual_repetition_factors) then
 
-         ENSURE(.repetition_factor.associated,"no repetiton_factors entered!")
+         ENSURE(.repetition_factor.created,"no repetiton_factors entered!")
 
       else
 
@@ -1822,7 +1822,7 @@ contains
    ! cell geometry.
       self :: INOUT
 
-   ENSURE(.fragment_geometry.associated, "no fragment_geometry!")
+   ENSURE(.fragment_geometry.created, "no fragment_geometry!")
 
       pa,pn :: VEC{REAL}(3)
       a,n,n_same :: INT
@@ -1878,7 +1878,7 @@ contains
       H_bond_length :: VEC{REAL}@
       reset :: BIN, optional, OUT
 
-   ENSURE(H_bond_length.associated,"no H_bond_length array")
+   ENSURE(H_bond_length.created,"no H_bond_length array")
 
       lb,ub,ua,fh,fa,uh,Za,n :: INT
       hh,ph,pa,sh,ch,ca,dd,d :: VEC{REAL}(3)
@@ -2006,7 +2006,7 @@ contains
       to_unit_cell :: BIN, optional, IN
       unit_cell_shift :: VEC{INT}(3), optional, OUT
 
-   ENSURE(.spacegroup.seitz.associated,"Seitz matrices not initialized")
+   ENSURE(.spacegroup.seitz.created,"Seitz matrices not initialized")
    ENSURE(op>0,"operator index out of bounds")
    ENSURE(op<=.spacegroup.n_seitz,"operator index out of bounds")
 
@@ -2093,7 +2093,7 @@ contains
       self :: IN
       res :: VEC{REAL}(3)
 
-   ENSURE(.fragment_geometry.associated,"no fragment geometry")
+   ENSURE(.fragment_geometry.created,"no fragment geometry")
 
       res = .fragment_geometry.max_abs_column_difference
 
@@ -2111,7 +2111,7 @@ contains
    ! NOTE: I think they are not transposed any more ...
       res :: MAT3{REAL}@
 
-   ENSURE(.spacegroup.seitz.associated,"no Seitz matrices")
+   ENSURE(.spacegroup.seitz.created,"no Seitz matrices")
 
       i :: INT
 
@@ -2128,7 +2128,7 @@ contains
    ! in the cartesian axis system.
       res :: MAT3{REAL}@
 
-   ENSURE(.spacegroup.seitz.associated,"no Seitz matrices")
+   ENSURE(.spacegroup.seitz.created,"no Seitz matrices")
 
       i :: INT
 
@@ -2145,7 +2145,7 @@ contains
    ! in the cartesian axis system.
       res :: MAT3{REAL}@
 
-   ENSURE(.spacegroup.seitz.associated,"no Seitz matrices")
+   ENSURE(.spacegroup.seitz.created,"no Seitz matrices")
 
       i :: INT
 
@@ -2250,8 +2250,8 @@ contains
    ! Create and return a list of the 3x3 part of the seitz matrices
    ! in the cartesian axis which stabilize the fragment geometry.
       res :: MAT3{REAL}@
-   ENSURE(.spacegroup.seitz.associated,"no Seitz matrices")
-   ENSURE(.stabilizer_symop.associated,"no stabilizer symop matrices")
+   ENSURE(.spacegroup.seitz.created,"no Seitz matrices")
+   ENSURE(.stabilizer_symop.created,"no stabilizer symop matrices")
       i,s :: INT
       res.create(3,3,.n_stabilizer_symops)
       do i = 1,.n_stabilizer_symops
@@ -2316,8 +2316,8 @@ contains
       n_unique :: INT, OUT
       show :: BIN, optional, IN
 
-   ENSURE(.data.associated,"no diffraction data")
-   ENSURE(.data.reflections.associated,"no reflection data")
+   ENSURE(.data.created,"no diffraction data")
+   ENSURE(.data.reflections.created,"no reflection data")
 
       i,j,g,n_refl :: INT
       p,q,r :: VEC{INT}(3)
@@ -2367,8 +2367,8 @@ contains
    ! calculated by the standard formula for the standard deviation.
       self :: INOUT
 
-   ENSURE(.data.associated,"no diffraction data")
-   ENSURE(.data.reflections.associated,"no reflection data")
+   ENSURE(.data.created,"no diffraction data")
+   ENSURE(.data.reflections.created,"no reflection data")
 
       list :: VEC{VEC_{INT}}@
       reflections :: VEC{REFLECTION}@
@@ -2405,8 +2405,8 @@ contains
       n_unique :: INT, OUT
       show :: BIN, IN, optional
 
-   ENSURE(.data.associated,"no diffraction data")
-   ENSURE(.data.reflections.associated,"no reflection data")
+   ENSURE(.data.created,"no diffraction data")
+   ENSURE(.data.reflections.created,"no reflection data")
 
       i,j,g,n_refl :: INT
       p,q,r :: VEC{INT}(3)
@@ -2463,8 +2463,8 @@ contains
    ! standard deviation.
       self :: INOUT
 
-   ENSURE(.data.associated,"no diffraction data")
-   ENSURE(.data.reflections.associated,"no reflection data")
+   ENSURE(.data.created,"no diffraction data")
+   ENSURE(.data.reflections.created,"no reflection data")
 
       list :: VEC{VEC_{INT}}@
       reflections :: VEC{REFLECTION}@
@@ -2500,8 +2500,8 @@ contains
    ! complete redundant list of reflections.
       self :: INOUT
 
-   ENSURE(.data.associated,"no diffraction data")
-   ENSURE(.data.reflections.associated,"no reflection data")
+   ENSURE(.data.created,"no diffraction data")
+   ENSURE(.data.reflections.created,"no reflection data")
 
       list :: VEC{VEC_{INT}}@
       reflections :: VEC{REFLECTION}@
@@ -2575,8 +2575,8 @@ contains
 !      unique_sf :: VEC{CPX}, IN
 !
 !   ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !
 !      .spacegroup.sum_unique_sf(sf,unique_sf,.data.reflections)
 !
@@ -2589,8 +2589,8 @@ contains
 !      unique_sf_ints :: MAT3{CPX}, IN
 !
 !   ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !
 !      .spacegroup.sum_unique_sf_ints(sf_ints,unique_sf_ints,.data.reflections)
 !   end
@@ -2602,8 +2602,8 @@ contains
 !      unique_sf :: MAT{CPX}, IN
 !
 !   ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !
 !      .spacegroup.sum_unique_sf_derivs(sf,unique_sf,.data.reflections)
 !   end
@@ -2615,8 +2615,8 @@ contains
 !      unique_sf :: MAT{CPX}, IN
 !
 !   ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !
 !      .spacegroup.sum_unique_sf_derivs_t(sf,unique_sf,.data.reflections)
 !   end
@@ -2633,8 +2633,8 @@ contains
 !      Fr,Fc :: VEC{REAL}, IN
 !
 !   ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !
 !      .spacegroup.sum_unique_sf_pts(X,k_pts,pts,tf,Fr,Fc,.data.reflections)
 !
@@ -2652,8 +2652,8 @@ contains
 !      Fr,Fc :: VEC{REAL}, IN
 !
 !   ENSURE(.spacegroup.analyzed,"spacegroup not analyzed")
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !
 !      .spacegroup.sum_unique_sf_pts(X,k_pts,pts,tf,Fr,Fc,.data.reflections)
 !
@@ -2732,8 +2732,8 @@ contains
 !     ft_ints :: MAT4{CPX}
 !     unique_ft_ints :: MAT3{CPX}, IN
 !
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
@@ -2806,8 +2806,8 @@ contains
 !     ft_ints :: MAT3{CPX}
 !     unique_ft_ints :: MAT4{CPX}, IN
 !
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
@@ -2864,8 +2864,8 @@ contains
 !     ft_ints :: MAT5{CPX}
 !     unique_ft_ints :: MAT3{CPX}, IN
 !
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
@@ -2933,8 +2933,8 @@ contains
 !     unique_ft_ints :: MAT4{CPX}, IN
 !     B :: VEC{REAL}(3)
 !
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
@@ -3003,8 +3003,8 @@ contains
 !      ft_ints :: MAT4{CPX}
 !      unique_ft_ints :: MAT4{CPX}, IN
 !
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
@@ -3068,8 +3068,8 @@ contains
 !     ft_ints :: MAT4{CPX}
 !     unique_ft_ints :: MAT4{CPX}, IN
 !
-!   ENSURE(.data.associated,"no data")
-!   ENSURE(.data.reflections.associated,"no reflection data")
+!   ENSURE(.data.created,"no data")
+!   ENSURE(.data.reflections.created,"no reflection data")
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
@@ -3323,9 +3323,9 @@ contains
       self :: IN
       res :: REAL
 
-   ENSURE(.xray_data.associated,"no xray data")
+   ENSURE(.xray_data.created,"no xray data")
    ENSURE(.xray_data.reflection_data_exists,"no xray reflection data")
-   ENSURE(.core_reflection.associated,"no core electron reflection data")
+   ENSURE(.core_reflection.created,"no core electron reflection data")
 
       res = .xray_data.reflections.F_val_r_factor(.core_reflection)
 
@@ -3476,7 +3476,7 @@ contains
       self :: IN
       res :: MAT{REAL}(3,.n_asymmetric_unit_atoms)
 
-   ENSURE(.asymmetric_unit_geometry.associated,"no asymmetric unit")
+   ENSURE(.asymmetric_unit_geometry.created,"no asymmetric unit")
 
       res = matmul(.unit_cell.direct_matrix,.asymmetric_unit_geometry)
 
@@ -3719,7 +3719,7 @@ contains
    ! Get the param shifts -- either F or F2
       sf_n :: MAT{CPX}, INOUT
 
-   ENSURE(.data.associated,"no data")
+   ENSURE(.data.created,"no data")
 
       if(.data.refine_F) then;  .get_parameter_shifts_F(sf_n)
       else;                     .get_parameter_shifts_I(sf_n)
@@ -3744,7 +3744,7 @@ contains
 
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,        "sf_n: wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim, "sf_n: wrong dim2")
-   ENSURE(.data.associated,                        "no data")
+   ENSURE(.data.created,                        "no data")
    ENSURE(.fragment_info_made,                  "no fragment info")
 
       dFa  :: MAT{REAL}@
@@ -3834,7 +3834,7 @@ contains
 
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,        "sf_n: wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim, "sf_n: wrong dim2")
-   ENSURE(.data.associated,                        "no data")
+   ENSURE(.data.created,                        "no data")
    ENSURE(.fragment_info_made,                  "no fragment info")
 
       dIa  :: MAT{REAL}@
@@ -3955,8 +3955,8 @@ contains
    set_fragment_esds  ::: private
    ! Set *all* the errors in the .fragment_atom positions/ADPs
    ENSURE(.fragment_info_made,"no fragment info")
-   ENSURE(.data.associated,"no data")
-   ENSURE(.data.fragment_covariance_matrix.associated,"no data.fragment_covariance_matrix")
+   ENSURE(.data.created,"no data")
+   ENSURE(.data.fragment_covariance_matrix.created,"no data.fragment_covariance_matrix")
 
       esd :: VEC{REAL}@
 
@@ -4067,9 +4067,9 @@ contains
    ! ADP's; place the shifts in the same "dX" parameter vector.
 
    ENSURE(.fragment_info_made,"no fragment info")
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom")
-   ENSURE(.data.associated,"no data")
-   ENSURE(.data.dX.associated,"no data.dX")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric_unit_atom")
+   ENSURE(.data.created,"no data")
+   ENSURE(.data.dX.created,"no data.dX")
 
       u,f,a,s, n, ub,uf,ul, ab,af,al :: INT
       dA,Apar,Xpar :: VEC{REAL}@
@@ -4156,8 +4156,8 @@ contains
    ! in positions and ADP's, removing any symmetry breaking.
 
    ENSURE(.fragment_info_made,"no fragment info")
-   ENSURE(.data.associated,"no data")
-   ENSURE(.data.dX.associated,"no data.dX")
+   ENSURE(.data.created,"no data")
+   ENSURE(.data.dX.created,"no data.dX")
 
       a, n,ab,af,al, n_stab,s,t :: INT
       stabilizer :: VEC{INT}@
@@ -4246,7 +4246,7 @@ contains
    ! Set the fit errors e.g. maximum shift on esd and the positional
    ! and ADP errors for the asym unit.
 
-   ENSURE(.data.associated,"no data")
+   ENSURE(.data.created,"no data")
 
       ! Reset the esd's and maximum shifts on esd
       .data.update_fit_esds
@@ -4260,7 +4260,7 @@ contains
    ! Update the refinement errors e.g. maximum shift on esd and the
    ! positional and ADP errors for the asym unit.
 
-   ENSURE(.data.associated,"no data")
+   ENSURE(.data.created,"no data")
 
       ! Set the refinement errors
       .data.update_refinement_ESDs
@@ -4277,9 +4277,9 @@ contains
    ! fragment atom covariance_matrix (produced from refinement)
    ! Note: .covariance_matrix is over-written.
    ENSURE(.fragment_info_made,"no fragment info")
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom")
-   ENSURE(.data.associated,"no data")
-   ENSURE(.data.covariance_matrix.associated,"no covariance matrix")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric_unit_atom")
+   ENSURE(.data.created,"no data")
+   ENSURE(.data.covariance_matrix.created,"no covariance matrix")
 
       u1,f1,a1,s1,n1, u1b,u1f,u1l, a1b,a1f,a1l :: INT
       u2,f2,a2,s2,n2, u2b,u2f,u2l, a2b,a2f,a2l :: INT
@@ -4389,9 +4389,9 @@ contains
    ! Set the total frag atom covariance matrix from the asym atom
    ! covariance matrix. Seems correct 12/9/11
    ENSURE(.fragment_info_made,"no fragment info")
-   ENSURE(.data.associated,"no data")
-   ENSURE(.data.covariance_matrix.associated,"no covariance matrix")
-   ENSURE(.data.fragment_covariance_matrix.associated,"no fragment covariance matrix")
+   ENSURE(.data.created,"no data")
+   ENSURE(.data.covariance_matrix.created,"no covariance matrix")
+   ENSURE(.data.fragment_covariance_matrix.created,"no fragment covariance matrix")
 
       f1,a1,s1,n1, f1b,f1f,f1l, a1b,a1f,a1l :: INT
       f2,a2,s2,n2, f2b,f2f,f2l, a2b,a2f,a2l :: INT
@@ -4532,12 +4532,12 @@ contains
    ENSURE(sf_d.dim1==.n_unique_SF_k_pts,         "sf_d, wrong dim1")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated,                         "no data")
+   ENSURE(.data.created,                         "no data")
 
       ! Refine positions and ADPs
       if (.data.refine_positions_and_ADPs) then
 
-         if (.data.refine_U_iso_for_atom.associated) then  ! ... and refine some atoms isotropically
+         if (.data.refine_U_iso_for_atom.created) then  ! ... and refine some atoms isotropically
                                                      .make_unique_sfd_pos_Y_Uiso_Y(sf_e,sf_d,sf_n)
          else if (.data.refine_H_ADPs) then           ! ... and refine H ADP's
 
@@ -4594,8 +4594,8 @@ contains
 !      sf_d :: MAT{CPX}, OUT
 !      sf_n :: MAT{CPX}, target, IN
 !
-!   ENSURE(.data.associated, "no reflection data")
-!   ENSURE(.xray_data.associated, "no x-ray reflection data")
+!   ENSURE(.data.created, "no reflection data")
+!   ENSURE(.xray_data.created, "no x-ray reflection data")
 !   DIE_IF(NOT .data.refine_anharmonicity, "must be refining anharmonicity")
 !   ENSURE(sf_e.dim ==.n_unique_SF_k_pts,         "sf_e, wrong dim")
 !   ENSURE(sf_d.dim1==.n_unique_SF_k_pts,         "sf_d, wrong dim1")
@@ -4788,8 +4788,8 @@ contains
 !      u :: INT
 !      sf_n :: MAT{CPX}, target
 !
-!   ENSURE(.data.associated, "no reflection data")
-!   ENSURE(.xray_data.associated, "no x-ray reflection data")
+!   ENSURE(.data.created, "no reflection data")
+!   ENSURE(.xray_data.created, "no x-ray reflection data")
 !   DIE_IF(NOT .data.refine_anharmonicity, "must be refining anharmonicity")
 !   ENSURE(sf_e.dim ==.n_unique_SF_k_pts,         "sf_e, wrong dim")
 !   ENSURE(sf_d.dim1==.n_unique_SF_k_pts,         "sf_d, wrong dim1")
@@ -4845,8 +4845,8 @@ contains
 !      sf_n :: MAT{CPX}, target
 !      u :: INT
 !
-!   ENSURE(.data.associated, "no reflection data")
-!   ENSURE(.xray_data.associated, "no x-ray reflection data")
+!   ENSURE(.data.created, "no reflection data")
+!   ENSURE(.xray_data.created, "no x-ray reflection data")
 !   DIE_IF(NOT .data.refine_anharmonicity, "must be refining anharmonicity")
 !   ENSURE(sf_e.dim ==.n_unique_SF_k_pts,         "sf_e, wrong dim")
 !
@@ -4961,8 +4961,8 @@ contains
 !      sf_n :: MAT{CPX}, target
 !      u :: INT
 !
-!   ENSURE(.data.associated, "no reflection data")
-!   ENSURE(.xray_data.associated, "no x-ray reflection data")
+!   ENSURE(.data.created, "no reflection data")
+!   ENSURE(.xray_data.created, "no x-ray reflection data")
 !   DIE_IF(NOT .data.refine_anharmonicity, "must be refining anharmonicity")
 !   ENSURE(sf_e.dim ==.n_unique_SF_k_pts,         "sf_e, wrong dim")
 !
@@ -5090,8 +5090,8 @@ contains
       sf_d :: MAT{CPX}, OUT
       sf_n :: MAT{CPX}, target, IN
 
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
    DIE_IF(NOT .data.refine_anharmonicity, "must be refining anharmonicity")
    ENSURE(sf_e.dim ==.n_unique_SF_k_pts,  "sf_e, wrong dim")
    ENSURE(sf_d.dim1==.n_unique_SF_k_pts,  "sf_d, wrong dim1")
@@ -5392,8 +5392,8 @@ contains
    ENSURE(sf_d.dim2==.n_asymmetric_unit_atoms*9, "sf_d, wrong dim2")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
 
       k_pt,kU  :: MAT{REAL}@
       sf_u :: VEC{CPX}@
@@ -5485,8 +5485,8 @@ contains
    ENSURE(sf_d.dim2==.n_asymmetric_unit_atoms*9, "sf_d, wrong dim2")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without ADP's")
 
       k_pt,kU  :: MAT{REAL}@
@@ -5572,8 +5572,8 @@ contains
    ENSURE(sf_d.dim2==.n_asymmetric_unit_atoms*9, "sf_d, wrong dim2")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without positions")
 
       k_pt,kU  :: MAT{REAL}@
@@ -5662,8 +5662,8 @@ contains
    ENSURE(sf_d.dim2==.n_asymmetric_unit_atoms*9, "sf_d, wrong dim2")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without H ADP's")
 
       k_pt,kU  :: MAT{REAL}@
@@ -5786,8 +5786,8 @@ contains
    ENSURE(sf_d.dim2==.n_asymmetric_unit_atoms*9, "sf_d, wrong dim2")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without positions")
 
       k_pt,kU  :: MAT{REAL}@
@@ -5900,8 +5900,8 @@ contains
    ENSURE(sf_d.dim2==.n_asymmetric_unit_atoms*9, "sf_d, wrong dim2")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without H ADP's")
 
       k_pt,kU  :: MAT{REAL}@
@@ -6026,8 +6026,8 @@ contains
    ENSURE(sf_d.dim2==.n_asymmetric_unit_atoms*9, "sf_d, wrong dim2")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without H ADP's")
 
       k_pt,kU  :: MAT{REAL}@
@@ -6145,9 +6145,9 @@ contains
    ENSURE(sf_d.dim2==.n_asymmetric_unit_atoms*9, "sf_d, wrong dim2")
    ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
    ENSURE(sf_n.dim2==.asymmetric_unit_atom.dim,  "sf_n, wrong dim2")
-   ENSURE(.data.associated, "no reflection data")
-   ENSURE(.xray_data.associated, "no x-ray reflection data")
-   ENSURE(.unique_atom_for_frag_atom.associated,"no crystal unq_atom_for_frag_atom")
+   ENSURE(.data.created, "no reflection data")
+   ENSURE(.xray_data.created, "no x-ray reflection data")
+   ENSURE(.unique_atom_for_frag_atom.created,"no crystal unq_atom_for_frag_atom")
    DIE_IF(.data.refine_anharmonicity, "refine anharmonicity with pos and H ADP's")
 
       k_pt,kU  :: MAT{REAL}@
@@ -6339,7 +6339,7 @@ contains
       correlation_matrix :: BIN, optional, IN
 
    ENSURE(.data_exists,"no diffraction data")
-   ENSURE(.asymmetric_unit_atom.associated,"no .asymmetric_unit_atom's")
+   ENSURE(.asymmetric_unit_atom.created,"no .asymmetric_unit_atom's")
 
       do_corr_mx :: BIN
       n_p :: INT
@@ -6370,8 +6370,8 @@ contains
       self :: INOUT
 
    ENSURE(.data_exists,"no diffraction data")
-   ENSURE(.data.correlation_matrix.associated,"no data.correlation_matrix")
-   ENSURE(.asymmetric_unit_atom.associated,"no .asymmetric_unit_atom's")
+   ENSURE(.data.correlation_matrix.created,"no data.correlation_matrix")
+   ENSURE(.asymmetric_unit_atom.created,"no .asymmetric_unit_atom's")
 
       val :: VEC{REAL}@
       row,col,ind :: VEC{INT}@
@@ -6502,8 +6502,8 @@ contains
    ! Put out the bond-length, bond-angle and torsion-angle info with
    ! errors in brackets
 
-   ENSURE(.data.associated,   "no data")
-   ENSURE(.data.fragment_covariance_matrix.associated,"no fragment_covariance_matrix")
+   ENSURE(.data.created,   "no data")
+   ENSURE(.data.fragment_covariance_matrix.created,"no fragment_covariance_matrix")
 
       f1,n1,f1b,c1b :: INT
       f2,n2,f2b,c2b :: INT
@@ -6554,8 +6554,8 @@ contains
    ! Allocate and make the positional covarinace matrix "cm".
       cm :: MAT{REAL}@
 
-   ENSURE(.data.associated,   "no data")
-   ENSURE(.data.fragment_covariance_matrix.associated,"no fragment_covariance_matrix")
+   ENSURE(.data.created,   "no data")
+   ENSURE(.data.fragment_covariance_matrix.created,"no fragment_covariance_matrix")
 
       f1,n1,f1b,c1b :: INT
       f2,n2,f2b,c2b :: INT
@@ -6594,8 +6594,8 @@ contains
    ! Put out the bond-length, bond-angle and torsion-angle info with
    ! errors with *no* brackets to a file, name read from stdin
 
-   ENSURE(.data.associated,   "no data")
-   ENSURE(.data.fragment_covariance_matrix.associated,"no fragment_covariance_matrix")
+   ENSURE(.data.created,   "no data")
+   ENSURE(.data.fragment_covariance_matrix.created,"no fragment_covariance_matrix")
 
       cm :: MAT{REAL}@
       name :: STR
@@ -6731,19 +6731,19 @@ contains
       .spacegroup.put
       if (NOT tonto.low_verbosity) .put_xyz_seitz_matrices
 
-      if (.asymmetric_unit_geometry.associated) .put_asymmetric_unit_geometry
+      if (.asymmetric_unit_geometry.created) .put_asymmetric_unit_geometry
 
       if (tonto.low_verbosity) then
-      if (.fragment_geometry.associated) then
+      if (.fragment_geometry.created) then
          if (.fragment_geometry.dim>100) return
       end
       end
 
-      if (.fragment_geometry.associated)        .put_fragment_data
-      if (.unit_cell_geometry.associated)       .put_unit_cell_geometry
+      if (.fragment_geometry.created)        .put_fragment_data
+      if (.unit_cell_geometry.created)       .put_unit_cell_geometry
 
-    ! if (.unit_cell_connection.associated)     .put_uc_connection_table
-    ! if (.uc_vdw_connection.associated)        .put_uc_vdw_connection_table
+    ! if (.unit_cell_connection.created)     .put_uc_connection_table
+    ! if (.uc_vdw_connection.created)        .put_uc_vdw_connection_table
 
     ! .put_reflection_data
 
@@ -6778,9 +6778,9 @@ contains
    ! Put out the asymmetric unit geometry.
       self :: IN
 
-   ENSURE(.asymmetric_unit_geometry.associated,"no asymmetric unit geometry")
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric unit atoms")
-   ENSURE(.asym_atom_rep_factor.associated,"no asym_atom_rep_factor")
+   ENSURE(.asymmetric_unit_geometry.created,"no asymmetric unit geometry")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric unit atoms")
+   ENSURE(.asym_atom_rep_factor.created,"no asym_atom_rep_factor")
    ENSURE(.asym_atom_stabilizer.created,"no asym_atom_stabilizer")
 
       ID :: VEC{STR}@
@@ -6828,8 +6828,8 @@ contains
 !   ! Put out the asymmetric unit atom repetition factors
 !
 !   ENSURE(.asym_atom_rep_factor.created,"no asymmetric unit atom repetition factors")
-!   ENSURE(.asym_atom_stabilizer.associated,"no asymmetric unit atom stabilizers")
-!   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric unit atom")
+!   ENSURE(.asym_atom_stabilizer.created,"no asymmetric unit atom stabilizers")
+!   ENSURE(.asymmetric_unit_atom.created,"no asymmetric unit atom")
 !
 !      a,n,rf,st :: INT
 !      symbol :: STR
@@ -6871,11 +6871,11 @@ contains
    ! Put out the unit_cell_geometry.
       self :: IN
 
-   ENSURE(.unit_cell_geometry.associated,"no unit_cell_geometry")
-   ENSURE(.asym_atom_for_unit_cell_atom.associated, "no asym-atom_for_cell_atom")
-   ENSURE(.asym_symop_for_unit_cell_atom.associated,"no asym_symop_for_cell_atom")
-   ENSURE(.frag_atom_for_unit_cell_atom.associated, "no frag_atom_for_cell_atom")
-   ENSURE(.frag_parent_for_cell_atom.associated,    "no frag_parent_for_cell_atom")
+   ENSURE(.unit_cell_geometry.created,"no unit_cell_geometry")
+   ENSURE(.asym_atom_for_unit_cell_atom.created, "no asym-atom_for_cell_atom")
+   ENSURE(.asym_symop_for_unit_cell_atom.created,"no asym_symop_for_cell_atom")
+   ENSURE(.frag_atom_for_unit_cell_atom.created, "no frag_atom_for_cell_atom")
+   ENSURE(.frag_parent_for_cell_atom.created,    "no frag_parent_for_cell_atom")
 
       ID :: VEC{STR}@
       is_asym :: VEC{BIN}@
@@ -7003,7 +7003,7 @@ contains
       self :: INOUT
       cif :: CIF, IN
 
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom list")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric_unit_atom list")
 
       has_covariances :: BIN
 
@@ -7022,7 +7022,7 @@ contains
       self :: INOUT
       cif :: CIF, IN
 
-   ENSURE(.fragment_atom.associated,"no fragment_atom list")
+   ENSURE(.fragment_atom.created,"no fragment_atom list")
 
       has_covariances :: BIN
 
@@ -7043,8 +7043,8 @@ contains
 
       res = FALSE
 
-      if (.data.associated) then
-      if (.data.covariance_matrix.associated) then
+      if (.data.created) then
+      if (.data.covariance_matrix.created) then
          res = TRUE
       end
       end
@@ -7058,8 +7058,8 @@ contains
 
       res = FALSE
 
-      if (.data.associated) then
-      if (.data.fragment_covariance_matrix.associated) then
+      if (.data.created) then
+      if (.data.fragment_covariance_matrix.created) then
          res = TRUE
       end
       end
@@ -7086,9 +7086,9 @@ contains
       atom.put_CIF_ADPn(cif)
 
       ! Put the reflection data
-      if (.data.associated) then
+      if (.data.created) then
          .data.put_CIF_covariance_matrices
-         if (.data.reflections.associated) then
+         if (.data.reflections.created) then
             thresh = .data.CIF_threshold_expression
             .data.reflections.put_CIF(thresh)
          end
@@ -7105,7 +7105,7 @@ contains
       atom :: VEC{ATOM}, IN
       covariance_matrix :: MAT{REAL}, IN
 
-   ENSURE(.data.associated,"no diffraction data!")
+   ENSURE(.data.created,"no diffraction data!")
 
       n_pADPs :: INT
       thresh :: STR
@@ -7136,7 +7136,7 @@ contains
 
       ! Put the reflection data
       .data.put_CIF_covariance_matrices
-      if (.data.reflections.associated) then
+      if (.data.reflections.created) then
          thresh = .data.CIF_threshold_expression
          .data.reflections.put_CIF(thresh)
       end
@@ -7155,7 +7155,7 @@ contains
       covariance_matrix :: MAT{REAL}, IN
       esd :: VEC{REAL}, OUT
 
-   ENSURE(.data.associated,"no data")
+   ENSURE(.data.created,"no data")
    ENSURE(atom(1).pos_axis_system==atom(1).ADP_axis_system, "inconsistent pos and ADP axis systems")
    ENSURE(atom(1).pos_axis_system==atom(1).ADPn_axis_system,"inconsistent pos and ADPn axis systems")
 
@@ -7213,8 +7213,8 @@ contains
    put_NKA_cartesian
    ! Put out the NKA information in cartesian coordinates
 
-   ENSURE(.data.associated,"no diffraction data")
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom list")
+   ENSURE(.data.created,"no diffraction data")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric_unit_atom list")
 
       ! Cell line
       stdout.flush
@@ -7238,9 +7238,9 @@ contains
    ! Put out the coordinate and ADP information in Excel format
       self :: INOUT
 
-   ENSURE(.data.associated,"no diffraction data")
-   ENSURE(.data.covariance_matrix.associated,"no covariance_matrix")
-   ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom list")
+   ENSURE(.data.created,"no diffraction data")
+   ENSURE(.data.covariance_matrix.created,"no covariance_matrix")
+   ENSURE(.asymmetric_unit_atom.created,"no asymmetric_unit_atom list")
 
       esd :: VEC{REAL}@
       n_pADPs :: INT
@@ -7480,7 +7480,7 @@ contains
    ! Put out the stabilizer symop data
       self :: IN
 
-   ENSURE(.stabilizer_symop.associated,"no stabilizer_symop")
+   ENSURE(.stabilizer_symop.created,"no stabilizer_symop")
 
       table :: VEC{TABLE_COLUMN}@
 
@@ -7606,8 +7606,8 @@ contains
    ! X-ray will be put if present.
       self :: IN
 
-      if (.xray_data.associated) then
-        if (.xray_data.reflections.associated) then
+      if (.xray_data.created) then
+        if (.xray_data.reflections.created) then
         stdout.flush
         stdout.text("======================")
         stdout.text("X-ray diffraction data")
@@ -7617,8 +7617,8 @@ contains
         end
       end
 
-      if (.pnd_data.associated) then
-        if (.pnd_data.reflections.associated) then
+      if (.pnd_data.created) then
+        if (.pnd_data.reflections.created) then
         stdout.flush
         stdout.text("==================================")
         stdout.text("Polarised neutron diffraction data")
@@ -7656,7 +7656,7 @@ contains
 
       .data.put_F_statistics
 
-      if (.core_reflection.disassociated) return
+      if (.core_reflection.destroyed) return
 
       ! Print out the valence R factor
       stdout.show("Rval (F)                    =", .F_val_r_factor)
@@ -7695,7 +7695,7 @@ contains
    ! Output all the fitting plot information to "stdout.fit_analysis"
       self :: IN
 
-   DIE_IF(.data.disassociated,"no reflection data")
+   DIE_IF(.data.destroyed,"no reflection data")
 
       lambda :: REAL
       save,file :: TEXTFILE@
@@ -7770,7 +7770,7 @@ contains
       stdout.flush
 
       ! Data analysis
-      if (.data.associated) then
+      if (.data.created) then
 
          stdout.flush
          stdout.text("====================================")
@@ -7788,7 +7788,7 @@ contains
       end
 
       ! Reserved data analysis
-      if (.xray_r_free_data.associated) then
+      if (.xray_r_free_data.created) then
 
          stdout.flush
          stdout.text("===================================")
@@ -7821,8 +7821,8 @@ contains
       map :: VEC{REAL}, OUT
       pts :: MAT{REAL}, IN
 
-   ENSURE(.data.associated, "no diffraction data")
-   ENSURE(.data.reflections.associated, "no structure factors")
+   ENSURE(.data.created, "no diffraction data")
+   ENSURE(.data.reflections.created, "no structure factors")
    ENSURE(.data.have_F_calc, "no calculated structure factors")
    ENSURE(.data.have_F_pred, "no predicted structure factors")
    ENSURE(.data.have_F_exp, "no experimental structure factors")

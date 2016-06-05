@@ -51,7 +51,7 @@ contains
 
       status :: INT
 
-      if (.disassociated) return
+      if (.destroyed) return
 
       .destroy_ptr_part
 

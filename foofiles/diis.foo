@@ -456,7 +456,7 @@ contains
       res :: INT
 
    ENSURE(.kept>0,"must have some kept vectors")
-   ENSURE(.oldest.associated,"oldest list not created")
+   ENSURE(.oldest.created,"oldest list not created")
 
       res = .oldest(1)
 
@@ -472,7 +472,7 @@ contains
       res :: INT
 
    ENSURE(.kept>0,"no stored vectors")
-   ENSURE(.lhs.associated,"no LHS")
+   ENSURE(.lhs.created,"no LHS")
 
       diag :: VEC{REAL}@
       d :: INT
@@ -502,7 +502,7 @@ contains
       res :: INT
 
    ENSURE(.kept>0,"no stored vectors")
-   ENSURE(.lhs.associated,"no LHS")
+   ENSURE(.lhs.created,"no LHS")
 
       diag :: VEC{REAL}@
       d :: INT
@@ -727,17 +727,17 @@ contains
       if (NOT present(matrices)) return
       if (NOT matrices) return
 
-      if (.lhs.associated) then
+      if (.lhs.created) then
       stdout.text("LHS:")
       stdout.put(.lhs,auto_width=TRUE)
       end
 
-      if (.rhs.associated) then
+      if (.rhs.created) then
       stdout.text("RHS:")
       stdout.put(.rhs,by_column=TRUE,auto_width=TRUE)
       end
 
-      if (.coeff.associated) then
+      if (.coeff.created) then
       stdout.text("coeff:")
       stdout.put(.coeff,by_column=TRUE,auto_width=TRUE)
       end

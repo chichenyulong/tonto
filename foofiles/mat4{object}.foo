@@ -110,7 +110,7 @@ contains
    ! Deallocate "self"
       self :: allocatable, INOUT
 
-      if (.disassociated) return
+      if (.destroyed) return
 
       .destroy_ptr_part
 

@@ -244,7 +244,7 @@ contains
       unit_cell :: UNIT_CELL, IN, optional
       spacegroup :: SPACEGROUP, IN, optional
 
-      if (.reflections.disassociated) then
+      if (.reflections.destroyed) then
 
          DIE_IF(.hkl_range.created AND .stl_limit>ZERO,"hkl_range/stl_limit both given!")
 
@@ -948,7 +948,7 @@ contains
 
    DIE_IF(REFLECTION:wavelength()<ZERO,"specify wavelength for radiation before reflection_data!")
 
-      if (.reflections.associated) .reflections.destroy
+      if (.reflections.created) .reflections.destroy
 
       .reflections.read_list_keywords
 
@@ -1196,7 +1196,7 @@ contains
       R :: REAL
       val :: STR
 
-      if (.reflections.disassociated) return
+      if (.reflections.destroyed) return
 
       stdout.flush
       stdout.text("# ==================")
@@ -1314,10 +1314,10 @@ contains
    put_CIF_covariance_matrices
    ! Output the covariance matrix in CIF format
 
-      if (.covariance_matrix.associated) &
+      if (.covariance_matrix.created) &
          ::put_CIF_covariance_matrix("asym_unit",.covariance_matrix)
 
-      if (.fragment_covariance_matrix.associated) &
+      if (.fragment_covariance_matrix.created) &
          ::put_CIF_covariance_matrix("fragment", .fragment_covariance_matrix)
 
    end
@@ -1417,8 +1417,8 @@ contains
    ! rejection test on the reflections
       self :: allocatable, INOUT
 
-   ENSURE(.associated,"No data")
-   ENSURE(.reflections.associated,"No reflection data")
+   ENSURE(.created,"No data")
+   ENSURE(.reflections.created,"No reflection data")
 
       old_reflections :: VEC{REFLECTION}@
       good,bad,h1,h2,h3 :: VEC{INT}@
@@ -1592,7 +1592,7 @@ contains
    ! This routine zero negative F_exp value
       self :: allocatable, INOUT
 
-   DIE_IF(NOT .reflections.associated,"no reflection data")
+   DIE_IF(NOT .reflections.created,"no reflection data")
    DIE_IF(NOT .reflections.have_F_exp,"no experimental data")
 
       i :: INT
@@ -1651,7 +1651,7 @@ contains
    ! Return the array of the Lorentz Polarization factors for all the
    ! reflections
       res :: VEC{REAL}(size(.reflections))
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
       n :: INT
       c,s,two_theta :: REAL
       do n=1, .reflections.n_refl
@@ -1672,7 +1672,7 @@ contains
 !   ! (but including dispersion if requested).
 !      res :: VEC{REAL}(size(.reflections))
 !
-!   ENSURE(.reflections.associated,"no reflection data")
+!   ENSURE(.reflections.created,"no reflection data")
 !   ENSURE(.reflections.have_F_exp, "no calculated structure factors")
 !
 !      n :: INT
@@ -1690,7 +1690,7 @@ contains
 !   ! and with dispersion effects if requested.
 !      res :: VEC{REAL}(size(.reflections))
 !
-!   ENSURE(.reflections.associated,"no reflection data")
+!   ENSURE(.reflections.created,"no reflection data")
 !   ENSURE(.reflections.have_F_exp, "no calculated structure factors")
 !
 !      n :: INT
@@ -1711,7 +1711,7 @@ contains
 !   ! are not included. These are the experimental intensities with these effects
 !   ! removed.
 !      res :: VEC{REAL}(size(.reflections))
-!   ENSURE(.reflections.associated,"no reflection data")
+!   ENSURE(.reflections.created,"no reflection data")
 !   ENSURE(.reflections.have_F_exp, "no calculated structure factors")
 !      n :: INT
 !      c,s,two_theta,F2 :: REAL
@@ -1732,7 +1732,7 @@ contains
 !   I_sigma result (res)
 !   ! Return the array of experimental sigma's in the Intensities.
 !      res :: VEC{REAL}(size(.reflections))
-!   ENSURE(.reflections.associated,"no reflection data")
+!   ENSURE(.reflections.created,"no reflection data")
 !   ENSURE(.reflections.have_I_pred OR .reflections.have_F_exp, "no structure factors")
 !      n :: INT
 !      c,s,two_theta,F2 :: REAL
@@ -1768,7 +1768,7 @@ contains
    ! possibly an overall scale factor and extinction correction.
       self :: INOUT
 
-   DIE_IF(NOT .reflections.associated,"no reflection data")
+   DIE_IF(NOT .reflections.created,"no reflection data")
 
       F_pred :: VEC{REAL}@
       n_r,n_p :: INT
@@ -1828,7 +1828,7 @@ contains
    ! possibly an overall scale factor and extinction correction.
       self :: INOUT
 
-   DIE_IF(NOT .reflections.associated,"no reflection data")
+   DIE_IF(NOT .reflections.created,"no reflection data")
    DIE_IF(.data_kind=="pnd", "sorry, no PND yet")
 
       I_pred :: VEC{REAL}@
@@ -2007,7 +2007,7 @@ contains
       scale_factor,extinction_factor :: REAL, IN
       res :: VEC{REAL}(size(.reflections))
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
 
       F_calc :: CPX
@@ -2046,7 +2046,7 @@ contains
       scale_factor,extinction_factor :: REAL, IN
       res :: VEC{REAL}(size(.reflections))
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
 
       n_refl :: INT
@@ -2074,7 +2074,7 @@ contains
       extinction_factor :: REAL, IN
       res :: VEC{REAL}(size(.reflections))
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
    ENSURE(scale_factors.dim==maxval(.reflections.group),"wrong # of groups")
 
@@ -2120,7 +2120,7 @@ contains
       extinction_factor :: REAL, IN
       res :: VEC{REAL}(size(.reflections))
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
    ENSURE(scale_factors.dim==maxval(.reflections.group),"wrong # of groups")
 
@@ -2169,7 +2169,7 @@ contains
    ! not do any scaling; see .extinction_correction routine for that)
       self :: INOUT
 
-   DIE_IF(NOT .reflections.associated,"no reflection data")
+   DIE_IF(NOT .reflections.created,"no reflection data")
    DIE_IF(NOT .reflections.have_F_calc, "no calculated structure factors")
    DIE_IF(NOT .reflections.have_F_exp, "no experimental structure factors")
    DIE_IF(NOT .reflections.have_F_sigma, "no structure factor errors")
@@ -2206,7 +2206,7 @@ contains
    ! Determine the structure factor scale factor to scale the calculated
    ! structure factors .F_calc by in order to minimise the chi2. (But it does
    ! not do any scaling; see .extinction_correction routine for that)
-   DIE_IF(NOT .reflections.associated,"no reflection data")
+   DIE_IF(NOT .reflections.created,"no reflection data")
    DIE_IF(NOT .reflections.have_I_calc, "no calculated I's")
    DIE_IF(NOT .reflections.have_I_exp, "no experimental I's")
    DIE_IF(NOT .reflections.have_I_sigma, "no I sigma's")
@@ -2245,7 +2245,7 @@ contains
    ! structure factors .F_calc by in order to minimise the chi2. (But it does
    ! not do any scaling; see .extinction_correction routine for that)
 
-   DIE_IF(NOT .reflections.associated,"no reflection data")
+   DIE_IF(NOT .reflections.created,"no reflection data")
    DIE_IF(NOT .reflections.have_F_calc, "no calculated structure factors")
    DIE_IF(NOT .reflections.have_F_exp, "no experimental structure factors")
    DIE_IF(NOT .reflections.have_F_sigma, "no structure factor errors")
@@ -2284,7 +2284,7 @@ contains
    ! Determine I scale factors to scale the calculated
    ! .I_calc by in order to minimise the chi2I. (But it does
    ! not do any scaling; see .extinction_correction routine for that)
-   DIE_IF(NOT .reflections.associated,"no reflection data")
+   DIE_IF(NOT .reflections.created,"no reflection data")
    DIE_IF(NOT .reflections.have_I_calc, "no calculated structure factors")
    DIE_IF(NOT .reflections.have_I_exp, "no experimental structure factors")
    DIE_IF(NOT .reflections.have_I_sigma, "no structure factor errors")
@@ -2377,7 +2377,7 @@ contains
       p :: VEC{REAL}, IN
       res :: REAL
 
-   ENSURE(saved_self.reflections.associated,"no reflection data")
+   ENSURE(saved_self.reflections.created,"no reflection data")
    ENSURE(saved_self.reflections.have_F_calc, "no calculated structure factors")
    ENSURE(saved_self.reflections.have_F_exp, "no experimental structure factors")
    ENSURE(saved_self.reflections.have_F_sigma, "no structure factor errors")
@@ -2414,7 +2414,7 @@ contains
       p :: VEC{REAL}, IN
       res :: REAL
 
-   ENSURE(saved_self.reflections.associated,"no reflection data")
+   ENSURE(saved_self.reflections.created,"no reflection data")
    ENSURE(saved_self.reflections.have_I_calc, "no calculated structure factors")
    ENSURE(saved_self.reflections.have_I_exp, "no experimental structure factors")
    ENSURE(saved_self.reflections.have_I_sigma, "no structure factor errors")
@@ -2483,7 +2483,7 @@ contains
       p :: VEC{REAL}, IN
       res :: REAL
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
    ENSURE(.reflections.have_F_exp, "no experimental structure factors")
    ENSURE(.reflections.have_F_sigma, "no structure factor errors")
@@ -2516,7 +2516,7 @@ contains
       p :: VEC{REAL}, IN
       res :: REAL
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_I_calc, "no calculated structure factors")
    ENSURE(.reflections.have_I_exp, "no experimental structure factors")
    ENSURE(.reflections.have_I_sigma, "no structure factor errors")
@@ -2549,7 +2549,7 @@ contains
       p :: VEC{REAL}, IN
       res :: REAL
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
    ENSURE(.reflections.have_F_exp, "no experimental structure factors")
    ENSURE(.reflections.have_F_sigma, "no structure factor errors")
@@ -2609,7 +2609,7 @@ contains
 !      res :: VEC{REAL}, OUT
 !      dFdX :: MAT{CPX}, IN
 !
-!   ENSURE(.reflections.associated,"no reflection data")
+!   ENSURE(.reflections.created,"no reflection data")
 !   ENSURE(.reflections.have_F_calc, "no calculated structure factors")
 !   ENSURE(.reflections.have_F_exp, "no experimental structure factors")
 !   ENSURE(.reflections.have_F_sigma, "no structure factor errors")
@@ -2690,7 +2690,7 @@ contains
 !      res :: VEC{REAL}, OUT
 !      dFdX :: MAT{CPX}, IN
 !
-!   ENSURE(.reflections.associated,"no reflection data")
+!   ENSURE(.reflections.created,"no reflection data")
 !   ENSURE(.reflections.have_F_calc, "no calculated structure factors")
 !   ENSURE(.reflections.have_F_exp, "no experimental structure factors")
 !   ENSURE(.reflections.have_F_sigma, "no structure factor errors")
@@ -2775,7 +2775,7 @@ contains
 !      res :: VEC{REAL}, OUT
 !      dFdX :: MAT{CPX}, IN
 !
-!   DIE_IF(NOT .reflections.associated,"no reflection data")
+!   DIE_IF(NOT .reflections.created,"no reflection data")
 !   DIE_IF(NOT .reflections.have_F_calc, "no calculated structure factors")
 !   DIE_IF(NOT .reflections.have_F_exp, "no experimental structure factors")
 !   DIE_IF(NOT .reflections.have_F_sigma, "no structure factor errors")
@@ -2846,7 +2846,7 @@ contains
       self :: IN
       dF :: VEC{CPX}, OUT
 
-   ENSURE(.reflections.associated, "no structure factors")
+   ENSURE(.reflections.created, "no structure factors")
    ENSURE(dF.dim==.reflections.dim, "incorrect size, dF")
 
       phase :: VEC{CPX}@
@@ -2879,13 +2879,13 @@ contains
    refine_3rd_order result (res)
    ! Refineme third-order anharmonicity for any atoms?
       res :: BIN
-      res =  .refine_3rd_order_for_atom.associated
+      res =  .refine_3rd_order_for_atom.created
    end
 
    refine_4th_order result (res)
    ! Refineme fourth-order anharmonicity for any atoms?
       res :: BIN
-      res =  .refine_4th_order_for_atom.associated
+      res =  .refine_4th_order_for_atom.created
    end
 
    no_of_3rd_order_atoms result (res)
@@ -2893,7 +2893,7 @@ contains
    ! parameters
       res :: INT
       res = 0
-      if (.refine_3rd_order_for_atom.associated) res = .refine_3rd_order_for_atom.dim
+      if (.refine_3rd_order_for_atom.created) res = .refine_3rd_order_for_atom.dim
    end
 
    no_of_4th_order_atoms result (res)
@@ -2901,7 +2901,7 @@ contains
    ! parameters
       res :: INT
       res = 0
-      if (.refine_4th_order_for_atom.associated) res = .refine_4th_order_for_atom.dim
+      if (.refine_4th_order_for_atom.created) res = .refine_4th_order_for_atom.dim
    end
 
 !  Fit/refinement initialization
@@ -3065,7 +3065,7 @@ contains
    ! structure factors w.r.t. those parameters.
       dFdX :: MAT{REAL}, IN
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_pred, "no predicted structure factors")
    ENSURE(.reflections.have_F_exp, "no experimental structure factors")
    ENSURE(.reflections.have_F_sigma, "no structure factor errors")
@@ -3184,7 +3184,7 @@ contains
    ! structure factors w.r.t. those parameters.
       dIdX :: MAT{REAL}, IN
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
 !   ENSURE(.reflections.have_F_pred, "no predicted structure factors")
    ENSURE(.reflections.have_I_pred, "no predicted structure factors")
    ENSURE(.reflections.have_I_exp, "no experimental structure factors")
@@ -3305,9 +3305,9 @@ contains
    ! covariance matrix has been transformed from a unique-fragment
    ! atom ordering to asymmetric-unit ordering.
 
-   ENSURE(.covariance_matrix.associated,"no covariance_matrix")
-   ENSURE(.esd.associated,"no esd")
-   ENSURE(.dX.associated,"no dX")
+   ENSURE(.covariance_matrix.created,"no covariance_matrix")
+   ENSURE(.esd.created,"no esd")
+   ENSURE(.dX.created,"no dX")
    ENSURE(.esd.dim==.covariance_matrix.dim1,"esd, covariance_mx mismatch")
    ENSURE(.esd.dim==.dX.dim,                "esd, dX mismatch")
 
@@ -3381,13 +3381,13 @@ contains
    ! Update the esd's for the current fit.
    ! NOTE: must have updated X_ref and X_ref0
 
-   ENSURE(.covariance_matrix.associated,"no covariance_matrix")
-   ENSURE(.esd.associated,"no esd")
-   ENSURE(.dX.associated, "no dX")
+   ENSURE(.covariance_matrix.created,"no covariance_matrix")
+   ENSURE(.esd.created,"no esd")
+   ENSURE(.dX.created, "no dX")
    ENSURE(.esd.dim==.covariance_matrix.dim1,"esd, covariance_mx mismatch")
    ENSURE(.esd.dim==.dX.dim,                "esd, dX mismatch")
-   ENSURE(.X_ref.associated, "no X_ref")
-   ENSURE(.X_ref0.associated,"no X_ref0")
+   ENSURE(.X_ref.created, "no X_ref")
+   ENSURE(.X_ref0.created,"no X_ref0")
 
       n_p,indmax,p,n :: INT
       val,valmax,valsum :: REAL
@@ -3454,7 +3454,7 @@ contains
       sig,del :: VEC{REAL}, OUT
       dFdX :: MAT{REAL}, IN
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
    ENSURE(.reflections.have_F_exp, "no experimental structure factors")
    ENSURE(.reflections.have_F_sigma, "no structure factor errors")
@@ -3572,7 +3572,7 @@ contains
       sig,del :: VEC{REAL}, OUT
       dIdX :: MAT{REAL}, IN
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_I_calc, "no calculated structure factors")
    ENSURE(.reflections.have_I_exp, "no experimental structure factors")
    ENSURE(.reflections.have_I_sigma, "no structure factor errors")
@@ -3666,7 +3666,7 @@ contains
       res :: MAT{REAL}, OUT
       dFdX :: MAT{CPX}, IN
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
    ENSURE( res.dim1==.reflections.n_refl, "wrong size, res")
    ENSURE(dFdX.dim1==.reflections.n_refl, "wrong size, dFdX")
@@ -3709,7 +3709,7 @@ contains
       res :: MAT{REAL}, OUT
       dFdX :: MAT{CPX}, IN
 
-   ENSURE(.reflections.associated,"no reflection data")
+   ENSURE(.reflections.created,"no reflection data")
    ENSURE(.reflections.have_F_calc, "no calculated structure factors")
    ENSURE( res.dim1==.reflections.n_refl, "wrong size, res")
    ENSURE(dFdX.dim1==.reflections.n_refl, "wrong size, dFdX")
@@ -4043,7 +4043,7 @@ contains
          stdout.show("No. of near-zero eigenvalues  =",.n_near_0)
 
 
-      if (.near_0_eigenvectors.associated) then
+      if (.near_0_eigenvectors.created) then
       if (.near_0_eigenvectors.dim>0) then
 
          stdout.flush
@@ -4162,7 +4162,7 @@ contains
       stdout.show("n_0                           =",.n_0)
       stdout.show("n_near_0                      =",.n_near_0)
 
-      if (.reflections.associated) then
+      if (.reflections.created) then
       stdout.flush
       stdout.text("===========")
       stdout.text("Reflections")
@@ -4186,7 +4186,7 @@ contains
    ! Output sin(theta)/lambda for all reflections.
       self :: IN
 
-   ENSURE(.reflections.associated,"No list of reflections")
+   ENSURE(.reflections.created,"No list of reflections")
    ENSURE(.reflections.have_indices,"No list of reflections")
 
       n :: INT
@@ -4303,7 +4303,7 @@ contains
    ! Put out a salection of the worst-fitting reflections
       self :: IN
 
-   ENSURE(.reflections.associated,"no reflections")
+   ENSURE(.reflections.created,"no reflections")
 
       n_refl :: INT
 
@@ -4324,7 +4324,7 @@ contains
       self :: IN
       n :: INT
 
-   ENSURE(.reflections.associated,"No reflection data")
+   ENSURE(.reflections.created,"No reflection data")
    ENSURE(.reflections.have_F_exp,"No experimental data")
    ENSURE(n.is_even,"no. of reflections n is not even")
 
@@ -4371,7 +4371,7 @@ contains
       self :: IN
       core_reflection :: VEC{REFLECTION}*, optional, IN
 
-   ENSURE(.reflections.associated,"No reflection data")
+   ENSURE(.reflections.created,"No reflection data")
 
       ! Header
       stdout.flush
@@ -4389,7 +4389,7 @@ contains
    ! It is a plot of the experimental quantile vs expected quantile.
       self :: IN
 
-   ENSURE(.reflections.associated, "no reflection data")
+   ENSURE(.reflections.created, "no reflection data")
 
       .reflections.put_F_qq_plot
 
@@ -4400,7 +4400,7 @@ contains
    ! It is a plot of the experimental quantile vs expected quantile.
       self :: IN
 
-   ENSURE(.reflections.associated, "no reflection data")
+   ENSURE(.reflections.created, "no reflection data")
 
       .reflections.put_labelled_F_qq_plot
 
@@ -5009,7 +5009,7 @@ contains
       self :: IN
       res :: INT
 
-   ENSURE(.reflections.associated, "no reflection data")
+   ENSURE(.reflections.created, "no reflection data")
 
       res = .reflections.n_refl
 

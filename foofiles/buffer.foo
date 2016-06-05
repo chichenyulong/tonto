@@ -123,7 +123,7 @@ contains
       .set_string(string)
 
       if (.eliminate_specials)       .eliminate_special_chars
-      if (.replacement_list.associated) .replace_list(.replacement_list)
+      if (.replacement_list.created) .replace_list(.replacement_list)
 
       .analyze
 
@@ -180,7 +180,7 @@ contains
       self :: INOUT
       replacement_list :: MAT{STR}@
 
-   ENSURE(replacement_list.associated,"replacement_list destroyed")
+   ENSURE(replacement_list.created,"replacement_list destroyed")
 
       .replacement_list.destroy
       .replacement_list.create_copy(replacement_list)

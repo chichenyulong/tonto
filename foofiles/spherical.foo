@@ -221,7 +221,7 @@ contains
         l :: INT, IN
         res :: REAL
 
-        ENSURE(.factorials.associated, "Factorials array not created?")
+        ENSURE(.factorials.created, "Factorials array not created?")
 
         res = ONE
         if (l <= 1) return

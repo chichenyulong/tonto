@@ -100,7 +100,7 @@ contains
      self :: IN
      vec_mat :: VEC{MAT_{REAL}}@
 
-   ENSURE(vec_mat.associated,"vec_mat not created")
+   ENSURE(vec_mat.created,"vec_mat not created")
 
      n,o,p,dim1,dim :: INT
      counter :: INT
