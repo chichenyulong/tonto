@@ -1470,8 +1470,8 @@ contains
 
    ENSURE(.is_hermitian,"not hermitian")
 
-      evec :: MAT{CPX}* DEFAULT_NULL
-      eval :: VEC{REAL}* DEFAULT_NULL
+      evec :: MAT{CPX}@
+      eval :: VEC{REAL}@
       d,i,j,k :: INT
       temp :: REAL
       val :: CPX
@@ -1485,7 +1485,7 @@ contains
       do i = 1,d
          temp = eval(i)
          if (temp <= ZERO) then
-           WARN("non-positive eigenvalue, " // trim(temp.to_str("e15.8")))
+            WARN("non-positive eigenvalue, " // trim(temp.to_str("e15.8")))
          end
          eval(i) = sqrt(abs(temp))
       end
@@ -1511,9 +1511,9 @@ contains
       R :: MAT{CPX}, IN
       tol :: REAL, optional, IN
 
-      evec :: MAT{CPX}* DEFAULT_NULL
-      eval :: VEC{REAL}* DEFAULT_NULL
-      ev :: VEC{CPX}* DEFAULT_NULL
+      evec :: MAT{CPX}@
+      eval :: VEC{REAL}@
+      ev :: VEC{CPX}@
       d,i,j,k :: INT
       eps,temp :: REAL
       val :: CPX
@@ -1538,10 +1538,11 @@ contains
             WARN("the inverse made to ZERO")
          else
             if (temp<ZERO) then
-              ev(i) = (ZERO,ONE)/sqrt(-temp)
-              WARN("non-positive eigenvalue, " // trim(temp.to_str("e15.8")))
-              WARN("non-positive definite mx")
-            else;                 ev(i) = (ONE,ZERO)/sqrt(temp)
+               ev(i) = (ZERO,ONE)/sqrt(-temp)
+               WARN("non-positive eigenvalue, " // trim(temp.to_str("e15.8")))
+               WARN("non-positive definite mx")
+            else
+               ev(i) = (ONE,ZERO)/sqrt(temp)
             end
          end
 
@@ -1568,9 +1569,9 @@ contains
       R :: MAT{CPX}
       tol :: REAL, optional
 
-      evec :: MAT{CPX}* DEFAULT_NULL
-      eval :: VEC{REAL}* DEFAULT_NULL
-      ev :: VEC{CPX}* DEFAULT_NULL
+      evec :: MAT{CPX}@
+      eval :: VEC{REAL}@
+      ev :: VEC{CPX}@
       d,i,j,k :: INT
       eps,temp :: REAL
       val :: CPX
@@ -1582,8 +1583,8 @@ contains
       ev.create(d)
       eval.create(d)
       evec.create(d,d)
-      eval=ZERO
-      evec=(ZERO,ZERO)
+      eval = ZERO
+      evec = (ZERO,ZERO)
 
 !     R.diagonalize_by_jacobi(eval,evec,eps)
       R.make_real_eigenproblem(eval,evec)
