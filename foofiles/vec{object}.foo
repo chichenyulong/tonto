@@ -101,23 +101,8 @@ contains
 
    end
 
-   destroy ::: leaky, PURE
-   ! Deallocate the vector
-      self :: allocatable, OUT
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-      if (.destroyed) return
-
-#ifdef USE_PRECONDITIONS
-      deallocate(self,stat=status)
-      ENSURE(status==0,"error in deallocating memory")
-#else
-      deallocate(self)
-#endif
-
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -132,7 +117,7 @@ contains
 
    create(dim) ::: leaky, PURE
    ! Create space for object
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
 
       status :: INT
@@ -151,7 +136,7 @@ contains
 
    create(dim) ::: leaky, PURE
    ! Create space for object. This version does not set defaults.
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
 
       status :: INT
@@ -168,7 +153,7 @@ contains
 
    create(dim) ::: leaky, PURE
    ! Create space for object. This version does not nullify ptr parts.
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
 
       status :: INT
@@ -185,7 +170,7 @@ contains
 
    create(lb,ub) ::: leaky, PURE
    ! Create the vector with lower bound "lb", upper bound "ub"
-      self :: PTR
+      self :: allocatable, INOUT
       lb,ub :: INT, IN
 
       status :: INT
@@ -205,7 +190,7 @@ contains
    create(lb,ub) ::: leaky, PURE
    ! Create the vector with lower bound "lb", upper bound "ub". This
    ! version does not set defaults.
-      self :: PTR
+      self :: allocatable, INOUT
       lb,ub :: INT, IN
 
       status :: INT
@@ -222,7 +207,7 @@ contains
 
    create(bounds) ::: leaky, PURE
    ! Create the vector with "bounds"
-      self :: PTR
+      self :: allocatable, INOUT
       bounds :: VEC{INT}(2), IN
 
       .create(bounds(1),bounds(2))
@@ -230,8 +215,8 @@ contains
    end
 
    destroy ::: leaky, PURE
-   ! Destroy space for object
-      self :: PTR
+   ! Deallocate "self"
+      self :: allocatable, INOUT
 
       status :: INT
 
@@ -248,8 +233,8 @@ contains
    end
 
    destroy ::: leaky, PURE
-   ! Destroy space for object. This version does not destroy ptr parts
-      self :: PTR
+   ! Deallocate "self". This version does not destroy ptr parts.
+      self :: allocatable, INOUT
 
       status :: INT
 
@@ -299,7 +284,7 @@ contains
 
    create_copy(vec) ::: leaky
    ! Create a replica copy of "vec".
-      self :: PTR
+      self :: allocatable, INOUT
       vec :: VEC{OBJECT}, IN
 
       nullify(self)
@@ -310,7 +295,7 @@ contains
 
    create_copy(vec,list) ::: leaky
    ! Create a copy of "vec" for the elements in "list".
-      self :: PTR
+      self :: allocatable, INOUT
       vec  :: VEC{OBJECT}, IN
       list :: VEC{INT}, IN
 
@@ -386,7 +371,7 @@ contains
 
    set_saved_self 
    ! Set saved_self
-      self :: PTR
+      self :: allocatable, INOUT
       saved_self => self
    end
 
@@ -508,14 +493,14 @@ contains
 
    shrink(dim) ::: leaky
    ! Shrink self to dimension dim.  Contents are retained.
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
 
    ENSURE(.associated,"no self array")
    ENSURE(dim<=.dim,"dim too large")
    ENSURE(dim>=0,"dim must be non-negative")
 
-      old :: VEC{OBJECT}*
+      old :: VEC{OBJECT}@
       n :: INT
 
       if (dim==.dim) return
@@ -539,10 +524,10 @@ contains
 
    expand(dim) ::: leaky
    ! Expand the vector "self" to "dim". New slots are left undefined.
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
 
-      old :: VEC{OBJECT}*
+      old :: VEC{OBJECT}@
       old_dim :: INT
 
       if (.disassociated) then
@@ -574,7 +559,7 @@ contains
 
    append(v) ::: leaky
    ! Expands self and appends the contents of vector "v".
-      self :: PTR
+      self :: allocatable, INOUT
       v :: VEC{OBJECT}, IN
 
       dim :: INT
@@ -594,7 +579,7 @@ contains
 
    append(value) ::: leaky
    ! Expands self by 1, and appends the single scalar "value" onto the end.
-      self :: PTR
+      self :: allocatable, INOUT
       value :: OBJECT, IN
 
       dim :: INT
@@ -615,7 +600,7 @@ contains
    join(v) result (res) ::: leaky
    ! Yield a vector which is the concatenation of "self" and "v"
       v :: VEC{OBJECT}
-      res :: VEC{OBJECT}*
+      res :: VEC{OBJECT}@
 
       dim, dim_v :: INT
 
@@ -635,7 +620,7 @@ contains
    join(v1,v2) result (res) ::: leaky
    ! Yield a vector which is the concatenation of "self" and "v1" and "v2"
       v1,v2 :: VEC{OBJECT}
-      res :: VEC{OBJECT}*
+      res :: VEC{OBJECT}@
 
       dim, dim_v1, dim_v2 :: INT
 
@@ -657,10 +642,10 @@ contains
    prune_element(k) ::: leaky
    ! Removes the single element at position "k" from the vector.
    ! The order of the elements is unchanged.
-      self :: PTR
+      self :: allocatable, INOUT
       k :: INT, IN
 
-      copy :: VEC{OBJECT}*
+      copy :: VEC{OBJECT}@
 
       ! In range?
       if (k<1 OR k>.dim) return
@@ -832,7 +817,7 @@ contains
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
       self :: IN
       indices :: VEC{INT}, INOUT
-      list,small,equal,large,small_indices,equal_indices,large_indices :: VEC{INT}*
+      list,small,equal,large,small_indices,equal_indices,large_indices :: VEC{INT}@
       n,i,ns,ne,nl :: INT
       chosen :: OBJECT(len=len(self(1)))
 
@@ -878,7 +863,7 @@ contains
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
       self :: IN
       indices :: VEC{INT}, INOUT
-      list,small,equal,large,small_indices,equal_indices,large_indices :: VEC{INT}*
+      list,small,equal,large,small_indices,equal_indices,large_indices :: VEC{INT}@
       n,i,ns,ne,nl :: INT
       chosen :: OBJECT(len=len(self(1)))
 
@@ -977,11 +962,11 @@ contains
    remove_repetitions ::: leaky
    ! Sort through the vector and remove repeated elements which come
    ! later in the list.  NOTE: the vector may shrink
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.associated,"no vector")
 
-      unique :: VEC{OBJECT}*
+      unique :: VEC{OBJECT}@
       i,j :: INT
       found :: BIN
 
@@ -1445,7 +1430,7 @@ contains
 
    read_keywords ::: recursive, leaky
    ! Read in and process normal (non list-type) keywords from "stdin".
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
 
@@ -1500,7 +1485,7 @@ contains
    ! are those that are intended to apply to each individual element of the list
    ! through a list of "keys" stored in the associated list-element type module.
    ! NOTE: this routine will create the list, if required.
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
 
@@ -1552,7 +1537,7 @@ contains
 
    process_list_keyword(keyword) ::: leaky
    ! Process a list-type "keyword", common to all list-type objects.
-      self :: PTR
+      self :: allocatable, INOUT
       keyword :: STR, IN
 
       word :: STR
@@ -1586,7 +1571,7 @@ contains
    read_data ::: leaky
    ! Repeatedly process the "keys" to read in the data list. 
    ! Opening and closing braces are needed.
-      self :: PTR
+      self :: allocatable, INOUT
 
       word :: STR
 
@@ -1606,7 +1591,7 @@ contains
    read_data_sans_braces ::: leaky
    ! Repeatedly process the "keys" to read in the data list. 
    ! Opening and closing braces are not needed.
-      self :: PTR
+      self :: allocatable, INOUT
 
       length :: INT
 
@@ -1630,7 +1615,7 @@ contains
    ! Repeatedly process the "keys" to read in the data list. Opening
    ! braces are not needed, but a blank line (BL) is used as an
    ! end-of-list terminator.
-      self :: PTR
+      self :: allocatable, INOUT
 
       length :: INT
 
@@ -1660,12 +1645,12 @@ contains
    ! *not* a "{" symbol.  The order of data items comprising the list is given
    ! by keys defined in the associated list-element type module. The data list
    ! must be terminated by a "}" symbol.
-      self :: PTR
+      self :: allocatable, INOUT
       length :: INT
 
    ENSURE(stdin.next_item/="}","empty data list!")
 
-      tmp :: OBJECT*
+      tmp :: OBJECT@
       word :: STR
       line,item :: INT
 
@@ -1710,12 +1695,12 @@ contains
    ! Read ahead in stdin to get the "length" of the data list. The
    ! data list begins with the first data item, *not* a "{" symbol.
    ! The data list must be terminated by a blank line (BL).
-      self :: PTR
+      self :: allocatable, INOUT
       length :: INT
 
    ENSURE(stdin.next_item/="}","empty data list!")
 
-      tmp :: OBJECT*
+      tmp :: OBJECT@
       word :: STR
       line,item :: INT
 
@@ -1763,7 +1748,7 @@ contains
    ! Read in a sublist of the complete list, and alter the data for that
    ! sublist.  The order of the data items in the sublist is given by the "keys"
    ! defined in the associated list-element type module.
-      self :: PTR
+      self :: allocatable, INOUT
    
    ENSURE(.associated,"list does not exist yet")
    ENSURE(stdin.next_item=="{","expecting open bracket symbol: {")
@@ -1797,12 +1782,12 @@ contains
 
    read_append_data ::: leaky
    ! Read in a set of data to append to an existing set.
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.associated,"list does not exist yet")
    ENSURE(stdin.next_item=="{","expecting open bracket symbol: {")
 
-      tmp :: VEC{OBJECT}*
+      tmp :: VEC{OBJECT}@
 
       ! Read data
       nullify(tmp)
@@ -1818,7 +1803,7 @@ contains
 
    process_keys ::: leaky, selfless
    ! Process the "keys" on each element of the list.
-      self :: PTR
+      self :: allocatable, INOUT
 
       s :: INT
 
@@ -1839,7 +1824,7 @@ contains
    ! "keys" set global variables in the list module (e.g. the default order of
    ! lists *within* the list data) as opposed to being keys pertaining to each
    ! element of the list.
-      self :: PTR
+      self :: allocatable, INOUT
 
       tmp :: OBJECT
 
@@ -1853,9 +1838,9 @@ contains
 
    read_keys ::: leaky
    ! Read a new set of keys
-      self :: PTR
+      self :: allocatable, INOUT
 
-      tmp :: OBJECT*
+      tmp :: OBJECT@
 
       ! Bind routine
       if (.created) then
@@ -1904,7 +1889,7 @@ contains
 
    dmpp(object_name)
    ! Dump a vector pointer object
-      self :: PTR
+      self :: allocatable, INOUT
       object_name :: STR, IN
     
       val :: STR

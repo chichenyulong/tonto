@@ -53,65 +53,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========
-!  Allocation
-!  ==========
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of the diffraction data object
-
-      nullify(.reflection0)
-      nullify(.reflections)
-
-      nullify(.scale_factors)
-
-      nullify(.refine_U_iso_for_atom)
-      nullify(.refine_3rd_order_for_atom)
-      nullify(.refine_4th_order_for_atom)
-      nullify(.refine_atom_parameters)
-
-      nullify(.dX)
-      nullify(.X_fit)
-      nullify(.X_fit0)
-      nullify(.X_ref)
-      nullify(.X_ref0)
-
-      nullify(.near_0_eigenvalues)
-      nullify(.near_0_eigenvectors)
-
-      nullify(.esd)
-      nullify(.covariance_matrix)
-      nullify(.correlation_matrix)
-      nullify(.fragment_covariance_matrix)
-
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Erase all pointer information
-
-      ! Reflection related data
-      .destroy_reflection_data
-
-      .refine_U_iso_for_atom.destroy
-      ! Refinement/fit related data
-
-      .refine_3rd_order_for_atom.destroy
-      .refine_4th_order_for_atom.destroy
-      .refine_atom_parameters.destroy
-      .destroy_fit_data
-      .destroy_refinement_data
-
-   end
 
    destroy_reflection_data ::: leaky
    ! Erase all reflection data
@@ -158,59 +99,6 @@ contains
 
       .X_ref.destroy
       .X_ref0.destroy
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(data) ::: leaky
-   ! Set self to be crystal.
-      data :: DIFFRACTION_DATA, IN
-
-      self = data
-
-      .nullify_ptr_part
-
-      ! Reflection-related data
-      if (data.reflection0.associated)                .reflection0.create_copy(data.reflection0)
-      if (data.reflections.associated)                .reflections.create_copy(data.reflections)
-      if (data.scale_factors.associated)              .scale_factors.create_copy(data.scale_factors)
-
-      ! Refinement/fit related data
-      if (data.refine_U_iso_for_atom.associated)      &
-         .refine_U_iso_for_atom.create_copy(data.refine_U_iso_for_atom)
-
-      if (data.refine_3rd_order_for_atom.associated)  &
-         .refine_3rd_order_for_atom.create_copy(data.refine_3rd_order_for_atom)
-      if (data.refine_4th_order_for_atom.associated)  &
-         .refine_4th_order_for_atom.create_copy(data.refine_4th_order_for_atom)
-      if (data.refine_atom_parameters.associated)     &
-         .refine_atom_parameters.create_copy(data.refine_atom_parameters)
-
-      if (data.dX.associated)                         .dX.create_copy(data.dX)
-      if (data.X_fit.associated)                      .X_fit.create_copy(data.X_fit)
-      if (data.X_fit0.associated)                     .X_fit0.create_copy(data.X_fit0)
-      if (data.X_ref.associated)                      .X_ref.create_copy(data.X_ref)
-      if (data.X_ref0.associated)                     .X_ref0.create_copy(data.X_ref0)
-
-      if (data.near_0_eigenvalues.associated)         .near_0_eigenvalues.create_copy(data.near_0_eigenvalues)
-      if (data.near_0_eigenvectors.associated)        .near_0_eigenvectors.create_copy(data.near_0_eigenvectors)
-
-      if (data.esd.associated)                        .esd.create_copy(data.esd)
-      if (data.covariance_matrix.associated)          .covariance_matrix.create_copy(data.covariance_matrix)
-      if (data.correlation_matrix.associated)         .correlation_matrix.create_copy(data.correlation_matrix)
-      if (data.fragment_covariance_matrix.associated) &
-         .fragment_covariance_matrix.create_copy(data.fragment_covariance_matrix)
 
    end
 
@@ -352,7 +240,7 @@ contains
    ! Update the crystal information after setting values. If the
    ! "unit_cell" is provided, then that is used to define the reflection
    ! .theta values.
-      self :: PTR
+      self :: allocatable, INOUT
       unit_cell :: UNIT_CELL, IN, optional
       spacegroup :: SPACEGROUP, IN, optional
 
@@ -640,13 +528,13 @@ contains
 
    read_keywords ::: get_from(OBJECT), recursive, leaky
    ! Read data from "stdin" using keyword style input.
-      self :: PTR
+      self :: allocatable, INOUT
    end
 
    process_keyword(keyword) ::: leaky
    ! Process command "keyword". Any required data needed by the "keyword" is
    ! inputted from "stdin".
-      self :: PTR
+      self :: allocatable, INOUT
       keyword :: STR
 
       word :: STR
@@ -1181,7 +1069,7 @@ contains
 
       name :: STR
       found :: BIN
-      cif :: CIF*
+      cif :: CIF@
 
       ! Read name from stdin
       stdin.read(name)
@@ -1484,7 +1372,7 @@ contains
    ! Then prune all the reflections, as requested by cutoffs.
    ! - Only works for F's now
    ! - Negative reflections are always pruned ... is this good????
-      self :: PTR
+      self :: allocatable, INOUT
 
       if (.reflections.have_F_exp) then
          .prune_negative_F_exp
@@ -1527,14 +1415,14 @@ contains
    prune ::: template
    ! This routine eliminates all the reflections with respect to a
    ! rejection test on the reflections
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.associated,"No data")
    ENSURE(.reflections.associated,"No reflection data")
 
-      old_reflections :: VEC{REFLECTION}*
-      good,bad,h1,h2,h3 :: VEC{INT}*
-      val :: VEC{REAL}*
+      old_reflections :: VEC{REFLECTION}@
+      good,bad,h1,h2,h3 :: VEC{INT}@
+      val :: VEC{REAL}@
       table :: VEC{TABLE_COLUMN}@
       n_refl,n,i,g,b :: INT
       title :: STR
@@ -1669,7 +1557,7 @@ contains
    ! This routine eliminates all the reflections which have
    ! F_exp/F_sigma less than .F_sigma_cutoff or I_exp/I_sigma less
    ! than .I_sigma_cutoff for intensities
-      self :: PTR
+      self :: allocatable, INOUT
       if (.refine_F) then; .prune_weak_Fs
       else;                .prune_weak_Is
       end
@@ -1702,7 +1590,7 @@ contains
 
    zero_negative_F_exp ::: leaky
    ! This routine zero negative F_exp value
-      self :: PTR
+      self :: allocatable, INOUT
 
    DIE_IF(NOT .reflections.associated,"no reflection data")
    DIE_IF(NOT .reflections.have_F_exp,"no experimental data")
@@ -1882,7 +1770,7 @@ contains
 
    DIE_IF(NOT .reflections.associated,"no reflection data")
 
-      F_pred :: VEC{REAL}*
+      F_pred :: VEC{REAL}@
       n_r,n_p :: INT
 
       if (NOT .reflections.have_F_exp) then
@@ -1943,7 +1831,7 @@ contains
    DIE_IF(NOT .reflections.associated,"no reflection data")
    DIE_IF(.data_kind=="pnd", "sorry, no PND yet")
 
-      I_pred :: VEC{REAL}*
+      I_pred :: VEC{REAL}@
       n_r,n_p :: INT
 
       ! Add on parameters for scale/extinction
@@ -2124,7 +2012,7 @@ contains
 
       F_calc :: CPX
       F_abs2,val :: REAL
-      angle_part :: VEC{REAL}*
+      angle_part :: VEC{REAL}@
       n_refl,n :: INT
 
       n_refl = .reflections.n_refl
@@ -2191,7 +2079,7 @@ contains
    ENSURE(scale_factors.dim==maxval(.reflections.group),"wrong # of groups")
 
       F_calc :: CPX
-      angle_part :: VEC{REAL}*
+      angle_part :: VEC{REAL}@
       g,n,n_refl,n_group :: INT
 
       n_refl = .reflections.n_refl
@@ -2288,7 +2176,7 @@ contains
 
       top,bot,sg2,F_pred :: REAL
       n,n_refl :: INT
-      ref :: REFLECTION*
+      ref :: REFLECTION@
 
       n_refl = .reflections.n_refl
 
@@ -2326,7 +2214,7 @@ contains
 
       top,bot,sg2,I_pred :: REAL
       n,n_refl :: INT
-      ref :: REFLECTION*
+      ref :: REFLECTION@
 
       n_refl = .reflections.n_refl
 
@@ -2365,7 +2253,7 @@ contains
 
       top,bot,F_pred :: REAL
       g,n,n_refl,n_group :: INT
-      ref :: REFLECTION*
+      ref :: REFLECTION@
 
       n_group = maxval(.reflections.group)
       n_refl = .reflections.n_refl
@@ -2405,7 +2293,7 @@ contains
 
       top,bot,I_pred :: REAL
       g,n,n_refl,n_group :: INT
-      ref :: REFLECTION*
+      ref :: REFLECTION@
 
       n_group = maxval(.reflections.group)
       n_refl = .reflections.n_refl
@@ -2496,10 +2384,10 @@ contains
    ENSURE(size(p)==2, "wrong size, p")
 
       tmp,tmp1 :: REAL
-      ext :: VEC{REAL}*
-      ref :: REFLECTION*
+      ext :: VEC{REAL}@
+      ref :: REFLECTION@
       n,n_refl :: INT
-      self :: DIFFRACTION_DATA*
+      self :: DIFFRACTION_DATA@
 
       self => saved_self
 
@@ -2533,10 +2421,10 @@ contains
    ENSURE(size(p)==2, "wrong size, p")
 
       tmp,tmp1 :: REAL
-      ext :: VEC{REAL}*
-      ref :: REFLECTION*
+      ext :: VEC{REAL}@
+      ref :: REFLECTION@
       n,n_refl :: INT
-      self :: DIFFRACTION_DATA*
+      self :: DIFFRACTION_DATA@
 
       self => saved_self
       n_refl = .reflections.n_refl
@@ -2565,7 +2453,7 @@ contains
 
    ENSURE(size(p)==2, "wrong size, p")
 
-      self :: DIFFRACTION_DATA*
+      self :: DIFFRACTION_DATA@
 
       self => saved_self
       res(1) = .d_chi2_d_scale(p)
@@ -2582,7 +2470,7 @@ contains
 
    ENSURE(size(p)==2, "wrong size, p")
 
-      self :: DIFFRACTION_DATA*
+      self :: DIFFRACTION_DATA@
 
       self => saved_self
       res(1) = .d_chi2I_d_scale(p)
@@ -2602,8 +2490,8 @@ contains
    ENSURE(size(p)==2, "wrong size, p")
 
       tmp,F_pred :: REAL
-      ext :: VEC{REAL}*
-      ref :: REFLECTION*
+      ext :: VEC{REAL}@
+      ref :: REFLECTION@
       n,n_refl :: INT
 
       n_refl = .reflections.n_refl
@@ -2635,8 +2523,8 @@ contains
    ENSURE(size(p)==2, "wrong size, p")
 
       tmp,I_pred :: REAL
-      ext :: VEC{REAL}*
-      ref :: REFLECTION*
+      ext :: VEC{REAL}@
+      ref :: REFLECTION@
       n,n_refl :: INT
 
       n_refl = .reflections.n_refl
@@ -2668,8 +2556,8 @@ contains
    ENSURE(size(p)==2, "wrong size, p")
 
       tmp,extn,p1 :: REAL
-      angle_bit,ext :: VEC{REAL}*
-      ref :: REFLECTION*
+      angle_bit,ext :: VEC{REAL}@
+      ref :: REFLECTION@
       n,n_refl :: INT
 
       n_refl = .reflections.n_refl
@@ -2728,9 +2616,9 @@ contains
 !   ENSURE(dFdX.dim1==.reflections.n_refl, "wrong size, dF")
 !   ENSURE(dFdX.dim2==res.dim, "incompatible dFdX and res")
 !
-!      Fcd_conjgFcalc :: VEC{CPX}*
-!      ref :: REFLECTION*
-!      ext,angle_bit,d_scale :: VEC{REAL}*
+!      Fcd_conjgFcalc :: VEC{CPX}@
+!      ref :: REFLECTION@
+!      ext,angle_bit,d_scale :: VEC{REAL}@
 !      Fcd,Fca,fac,extn,ext5,sg2,sdk,nrinv :: REAL
 !      n_refl,n_p,p,n :: INT
 !
@@ -2809,9 +2697,9 @@ contains
 !   ENSURE(dFdX.dim1==.reflections.n_refl, "wrong size, dF")
 !   ENSURE(dFdX.dim2==res.dim-2, "incompatible dFdX and res")
 !
-!      Fcd_conjgFcalc :: VEC{CPX}*
-!      ref :: REFLECTION*
-!      ext,angle_bit :: VEC{REAL}*
+!      Fcd_conjgFcalc :: VEC{CPX}@
+!      ref :: REFLECTION@
+!      ext,angle_bit :: VEC{REAL}@
 !      Fcd,Fca,fac,extn,ext5,extf, Fe,Fs :: REAL
 !      n_refl,n_p,p,n :: INT
 !
@@ -2897,11 +2785,11 @@ contains
 !   ENSURE(all(.reflections(:).F_sigma/=ZERO),"A structure factor has zero error F_sigma!")
 !
 !      top,bot,fac,sg2,F_abs,F_exp,F_sig,extn,val1,val2 :: REAL
-!      dt,db :: VEC{CPX}*
-!      ext   :: VEC{REAL}*
+!      dt,db :: VEC{CPX}@
+!      ext   :: VEC{REAL}@
 !      F_cal,dF :: CPX
 !      n,n_refl,p :: INT
-!      ref :: REFLECTION*
+!      ref :: REFLECTION@
 !
 !      n_refl = .reflections.n_refl
 !
@@ -2961,8 +2849,8 @@ contains
    ENSURE(.reflections.associated, "no structure factors")
    ENSURE(dF.dim==.reflections.dim, "incorrect size, dF")
 
-      phase :: VEC{CPX}*
-      ext   :: VEC{REAL}*
+      phase :: VEC{CPX}@
+      ext   :: VEC{REAL}@
 
       phase.create(.reflections.dim)
       ext.create(.reflections.dim)
@@ -3184,8 +3072,8 @@ contains
    ENSURE(dFdX.dim1==.reflections.n_refl, "wrong size, dFdX")
    ENSURE(dFdX.dim2==.dX.dim, "incompatible .dX and dFdX")
 
-      A,dF :: MAT{REAL}*
-      rhs,sig,del :: VEC{REAL}*
+      A,dF :: MAT{REAL}@
+      rhs,sig,del :: VEC{REAL}@
       n_refl,n_p,i,j :: INT
       fac :: REAL
 
@@ -3304,8 +3192,8 @@ contains
    ENSURE(dIdX.dim1==.reflections.n_refl, "wrong size, dFdX")
    ENSURE(dIdX.dim2==.dX.dim, "incompatible .dX and dIdX")
 
-      A,dI :: MAT{REAL}*
-      rhs,sig,del :: VEC{REAL}*
+      A,dI :: MAT{REAL}@
+      rhs,sig,del :: VEC{REAL}@
       n_refl,n_p,i,j :: INT
       fac :: REAL
 
@@ -3425,7 +3313,7 @@ contains
 
       indmax,p :: INT
       val,valmax :: REAL
-      W :: VEC{REAL}*
+      W :: VEC{REAL}@
 
       ! Set variances
       .covariance_matrix.put_diagonal_to(.esd)
@@ -3503,7 +3391,7 @@ contains
 
       n_p,indmax,p,n :: INT
       val,valmax,valsum :: REAL
-      dX :: VEC{REAL}*
+      dX :: VEC{REAL}@
 
       ! Constants
       n_p = .esd.dim
@@ -3575,8 +3463,8 @@ contains
    ENSURE(dFdX.dim1==.reflections.n_refl, "wrong size, dF")
    ENSURE(dFdX.dim2==res.dim2, "incompatible res, dFdX")
 
-      ref :: REFLECTION*
-      Ft,Fx,dt,db,ext,angle_bit,d_scale :: VEC{REAL}*
+      ref :: REFLECTION@
+      Ft,Fx,dt,db,ext,angle_bit,d_scale :: VEC{REAL}@
       top,bot,extn,F_exp,F_sig,F_abs,F_til,sig2,F_es2,F_ts2,fac,dsp,ext4,dX,val1,val2,dF :: REAL
       n_refl,n_p,p,n :: INT
 
@@ -3693,8 +3581,8 @@ contains
    ENSURE(dIdX.dim1==.reflections.n_refl, "wrong size, dF")
    ENSURE(dIdX.dim2==res.dim2, "incompatible res, dFdX")
 
-      ref :: REFLECTION*
-      It,dt,db,d_scale :: VEC{REAL}*
+      ref :: REFLECTION@
+      It,dt,db,d_scale :: VEC{REAL}@
       I_clc,top,bot,I_exp,I_sig,sig2,I_es2,I_ts2,fac,dsp,val1,val2,dI :: REAL
       n_refl,n_p,p,n :: INT
 
@@ -3784,8 +3672,8 @@ contains
    ENSURE(dFdX.dim1==.reflections.n_refl, "wrong size, dFdX")
    ENSURE(dFdX.dim2==res.dim2, "incompatible res, dFdX")
 
-      F_con :: VEC{CPX}*
-      F_abi :: VEC{REAL}*
+      F_con :: VEC{CPX}@
+      F_abi :: VEC{REAL}@
       F_cal :: CPX
       n_refl,n_p,p,n :: INT
 
@@ -4440,8 +4328,8 @@ contains
    ENSURE(.reflections.have_F_exp,"No experimental data")
    ENSURE(n.is_even,"no. of reflections n is not even")
 
-      F_z :: VEC{REAL}*
-      ind :: VEC{INT}*
+      F_z :: VEC{REAL}@
+      ind :: VEC{INT}@
       n_refl,n2 :: INT
 
       ! No. of old reflections
@@ -4524,8 +4412,8 @@ contains
       self :: IN
 
       n_sections,i :: INT
-      stl,bin,GOF,ratio,RF,RwF,RF2,RwF2, dF,Fexp,Fz,Feos :: VEC{REAL}*
-      C :: VEC{INT}*
+      stl,bin,GOF,ratio,RF,RwF,RF2,RwF2, dF,Fexp,Fz,Feos :: VEC{REAL}@
+      C :: VEC{INT}@
       X_min,X_max,X_bin :: REAL
       table :: VEC{TABLE_COLUMN}@
 
@@ -4639,8 +4527,8 @@ contains
       self :: IN
 
       n_sections,i :: INT
-      stl,bin,GOF,ratio,RF,RwF,RF2,RwF2, dF,Fexp,Fz,Feos :: VEC{REAL}*
-      C :: VEC{INT}*
+      stl,bin,GOF,ratio,RF,RwF,RF2,RwF2, dF,Fexp,Fz,Feos :: VEC{REAL}@
+      C :: VEC{INT}@
       X_min,X_max,X_bin :: REAL
       table :: VEC{TABLE_COLUMN}@
 
@@ -4766,8 +4654,8 @@ contains
       self :: IN
 
       n_sections,i :: INT
-      H :: VEC{REAL}*
-      C :: VEC{INT}*
+      H :: VEC{REAL}@
+      C :: VEC{INT}@
       X_min,X_max,X_bin,mid :: REAL
 
       n_sections = 20
@@ -4804,8 +4692,8 @@ contains
       self :: IN
 
       n_sections,i :: INT
-      H :: VEC{REAL}*
-      C :: VEC{INT}*
+      H :: VEC{REAL}@
+      C :: VEC{INT}@
       X_min,X_max,X_bin,mid :: REAL
 
       n_sections = 20
@@ -4843,8 +4731,8 @@ contains
       self :: IN
 
       n_sections,i :: INT
-      H :: VEC{REAL}*
-      C :: VEC{INT}*
+      H :: VEC{REAL}@
+      C :: VEC{INT}@
       X_min,X_max,X_bin,mid :: REAL
 
       n_sections = 20
@@ -4881,8 +4769,8 @@ contains
       self :: IN
 
       n_sections,i :: INT
-      H :: VEC{REAL}*
-      C :: VEC{INT}*
+      H :: VEC{REAL}@
+      C :: VEC{INT}@
       X_min,X_max,X_bin,mid :: REAL
 
       n_sections = 20
@@ -4920,8 +4808,8 @@ contains
    ! Output some different plots about the calculated structure factors.
       self :: IN
 
-      ext :: VEC{REAL}*
-      ext_refs :: VEC{REFLECTION}*
+      ext :: VEC{REAL}@
+      ext_refs :: VEC{REFLECTION}@
       n,n_refl :: INT
       y,w :: REAL
 
@@ -5015,7 +4903,7 @@ contains
    put_PND_sf(name)
    ! Output the magnetic structure factors
        name :: STR
-       FM_s,FM_l :: VEC{CPX}*
+       FM_s,FM_l :: VEC{CPX}@
        arch :: ARCHIVE
         n :: INT
        FM_s.create(.reflections.n_refl)
@@ -5335,7 +5223,7 @@ contains
    ENSURE(.have_F_exp,"no experimental structure factors")
    ENSURE(.have_F_sigma,"no experimental structure factor errors")
 
-      F_exp :: VEC{REAL}*
+      F_exp :: VEC{REAL}@
       n :: INT
       chi2,z :: REAL
 

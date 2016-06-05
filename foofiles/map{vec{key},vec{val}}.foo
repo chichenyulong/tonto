@@ -53,7 +53,7 @@ contains
    end
 
    destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
+   ! Deallocate "self"
    end
 
    nullify_ptr_part

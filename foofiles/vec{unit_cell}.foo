@@ -36,8 +36,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -54,8 +54,8 @@ contains
    ! Create space for object. This version does not nullify ptr parts.
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
-   ! Destroy space for object. This version does not destroy ptr parts
+   destroy ::: get_from(OBJECT), leaky
+   ! Deallocate "self". This version does not destroy ptr parts.
    end
 
    create_copy(vec) ::: get_from(VEC{OBJECT}), leaky

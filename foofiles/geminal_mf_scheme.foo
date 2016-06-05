@@ -51,23 +51,10 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!===============================================================================
-!                             Create and Destroy Routines
-!===============================================================================
-
-   create ::: leaky
-   ! Create a contraction-truncation scheme 
-      self :: PTR
-      nullify(self)
-      allocate(self)
-      .nullify_ptr_part
-   end
 
    create(name,nuc,n_geminals,n_bf,use_br,orth_type,guess_type,print_ham,convergence,n_step) ::: leaky
    ! Create the contraction-truncation scheme 
-      self :: PTR
+      self :: allocatable, INOUT
       name :: STR
       orth_type :: STR
       guess_type :: STR
@@ -81,71 +68,6 @@ contains
       .nullify_ptr_part
       .set_defaults(n_geminals,n_bf,name,nuc,use_br,orth_type,guess_type,print_ham,convergence,n_step)
 
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of self  
-     nullify(.spectrum)
-     nullify(.ld_tol_scheme)
-     nullify(.ig_tol_scheme)
-     nullify(.tolerance_scheme)
-     nullify(.do_triplet_energies)
-     nullify(.do_electric_dipole)
-     nullify(.truncation_scheme)
-   end
-
-   destroy_ptr_part  ::: leaky
-   ! Destroy the pointer parts of self
-     .spectrum.destroy
-     .ld_tol_scheme.destroy
-     .ig_tol_scheme.destroy
-     .tolerance_scheme.destroy
-     .do_triplet_energies.destroy
-     .do_electric_dipole.destroy
-     .truncation_scheme.destroy
-   end
-
-   create_copy(b) ::: leaky
-   ! Create a copy of "b".
-   ! Warning make_integrals, readin_mos, add_core, readin_scheme
-   ! are not copied, they will be set to their default that is FALSE
-     self :: PTR
-     b :: GEMINAL_MF_SCHEME, IN
-
-     n_step :: INT
-
-     n_step=b.max_iterations
-     .create(b.spectrum.name,b.spectrum.nuclear_repulsion_energy,b.spectrum.n_geminals, &
-     b.spectrum.n_bf,b.use_brillouin,b.orthogonality_type,b.guess_type, & 
-     b.print_hamiltonian, b.convergence_threshold,n_step)
-     .copy(b)
-
-   end
-
-   copy(b) ::: leaky
-   ! Copy a GEMINAL_MF_SCHEME "b" to "self". Make sure pointer parts are first
-   ! destroyed or nullified, as you want.
-      b :: GEMINAL_MF_SCHEME, IN
-      self = b
-      if (b.spectrum.associated) .spectrum.create_copy(b.spectrum)
-      if (b.ld_tol_scheme.associated) .ld_tol_scheme.create_copy(b.ld_tol_scheme)
-      if (b.ig_tol_scheme.associated) .ig_tol_scheme.create_copy(b.ig_tol_scheme)
-      if (b.tolerance_scheme.associated) .tolerance_scheme.create_copy(b.tolerance_scheme)
-      if (b.truncation_scheme.associated) .truncation_scheme.create_copy(b.truncation_scheme)
-      if (b.do_triplet_energies.associated) .do_triplet_energies.create_copy(b.do_triplet_energies)
-      if (b.do_electric_dipole.associated) .do_electric_dipole.create_copy(b.do_electric_dipole)
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
    end
 
 !  ===========
@@ -371,7 +293,7 @@ contains
    read_scheme
    ! Read  readin_scheme 
 
-     in :: TEXTFILE*
+     in :: TEXTFILE@
      i_step, n_step :: INT
 
      in.create("readin_scheme")
@@ -404,7 +326,7 @@ contains
    read_n_orbitals
    ! Read a reduced number of molecular orbitals with respect to the
    ! size of the atomic orbitals 
-     b :: GEMINAL_MF_SPECTRUM*
+     b :: GEMINAL_MF_SPECTRUM@
      stdin.read(.n_orbitals)
      DIE_IF(.n_orbitals>.spectrum.n_bf OR .n_orbitals<0,'invalid orbital number')
      b.create_copy(.spectrum)
@@ -689,10 +611,10 @@ contains
    ! implement the contraction-truncation scheme
    ! designed for a singlet ground state
    ! take advantage of the possible truncation of the geminal basis
-     ham :: MAT{REAL}*
-     gs_energies :: VEC{REAL}*
-     old_tolerance :: VEC{INT}*
-     group_order :: VEC{INT}*
+     ham :: MAT{REAL}@
+     gs_energies :: VEC{REAL}@
+     old_tolerance :: VEC{INT}@
+     group_order :: VEC{INT}@
      lowest_energy :: REAL
    !  highest_energy :: REAL
      old_energy :: REAL
@@ -700,7 +622,7 @@ contains
      n_nonzero :: INT
      n_step,n_geminals :: INT
      i_loop,loop_count :: INT
-     eigenvec :: MAT{REAL}*
+     eigenvec :: MAT{REAL}@
      timer :: TIME
      set :: BIN
      save_step :: BIN
@@ -973,17 +895,17 @@ contains
    ! restart the contraction-truncation scheme
    ! designed for a singlet ground state
    ! does take advantage of the possible truncation of the geminal basis
-     ham :: MAT{REAL}*
-     gs_energies :: VEC{REAL}*
-     old_tolerance :: VEC{INT}*
-     group_order :: VEC{INT}*
+     ham :: MAT{REAL}@
+     gs_energies :: VEC{REAL}@
+     old_tolerance :: VEC{INT}@
+     group_order :: VEC{INT}@
      lowest_energy :: REAL
      old_energy :: REAL
      i,j,i_step,i_geminals :: INT
      n_nonzero :: INT
      n_step,n_geminals :: INT
      i_loop,loop_count :: INT
-     eigenvec :: MAT{REAL}*
+     eigenvec :: MAT{REAL}@
      timer :: TIME
      set :: BIN
      save_step :: BIN
@@ -1210,10 +1132,10 @@ contains
 
    do_triplet_spectrum ::: leaky !because of the set_defaults
    ! do the triplet spectrum after a geminal mean field singlet step
-     ham :: MAT{REAL}*
+     ham :: MAT{REAL}@
      i_geminals :: INT
      max_bas :: INT
-     eigenvec :: MAT{REAL}*
+     eigenvec :: MAT{REAL}@
      timer :: TIME
      timer.start_timing
      i_geminals=.spectrum.i_geminals
@@ -1255,8 +1177,8 @@ contains
 
    electric_dipole_matrices 
    ! do the electric dipole matrices
-     Dx,Dy,Dz :: MAT{REAL}*
-   !  ov :: MAT{REAL}*
+     Dx,Dy,Dz :: MAT{REAL}@
+   !  ov :: MAT{REAL}@
    !  n_bas :: INT
      max_bas :: INT
      timer :: TIME

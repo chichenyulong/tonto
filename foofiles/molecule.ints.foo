@@ -38,8 +38,8 @@ contains
 
       smallest, tol, X_min,X_max,X_bin :: REAL
       n_s,n_n,i,n_sections :: INT
-      lg,bin,W :: VEC{REAL}*
-      C :: VEC{INT}*
+      lg,bin,W :: VEC{REAL}@
+      C :: VEC{INT}@
       table :: VEC{TABLE_COLUMN}@
 
       if (.overlap_matrix.associated) return
@@ -341,8 +341,8 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      atom :: ATOM*
-      Z_c,X,MX,M :: MAT{REAL}*
+      atom :: ATOM@
+      Z_c,X,MX,M :: MAT{REAL}@
       q,c,fa,la,na,fb,lb,nb :: INT
       sh :: SHELL2
 
@@ -403,8 +403,8 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      atom_c :: ATOM*
-      Z_c,M,MX,X :: MAT{REAL}*
+      atom_c :: ATOM@
+      Z_c,M,MX,X :: MAT{REAL}@
       q,c,fa,la,na,fb,lb,nb :: INT
       sh :: SHELL2
 
@@ -461,7 +461,7 @@ contains
    ENSURE(charges.dim==points.dim1,"inconsistent charges and points arrays")
    ENSURE(points.dim2==3,"wrong 2nd dimension, points array")
 
-      Z_c,MX,M,X :: MAT{REAL}*
+      Z_c,MX,M,X :: MAT{REAL}@
       q,c,fa,la,na,fb,lb,nb :: INT
       sh :: SHELL2
 
@@ -521,7 +521,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      DDx,DDy,DDz :: MAT{REAL}*
+      DDx,DDy,DDz :: MAT{REAL}@
       q,fa,la,na,fb,lb,nb :: INT
       sh :: SHELL2
 
@@ -558,7 +558,7 @@ contains
    electronic_dipole_moment result (res)
    ! Return the electronic dipole moment
       res :: VEC{REAL}(3)
-      Dx,Dy,Dz :: MAT{REAL}*
+      Dx,Dy,Dz :: MAT{REAL}@
 
       Dx.create(.n_bf,.n_bf)
       Dy.create(.n_bf,.n_bf)
@@ -588,7 +588,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      QQxx,QQyy,QQzz,QQxy,QQxz,QQyz :: MAT{REAL}*
+      QQxx,QQyy,QQzz,QQxy,QQxz,QQyz :: MAT{REAL}@
       q,fa,la,na,fb,lb,nb :: INT
       sh :: SHELL2
 
@@ -639,7 +639,7 @@ contains
    ! order: xx, yy, zz, xy, xz, yz
       res :: VEC{REAL}(6)
 
-      Qxx,Qyy,Qzz,Qxy,Qxz,Qyz :: MAT{REAL}*
+      Qxx,Qyy,Qzz,Qxy,Qxz,Qyz :: MAT{REAL}@
 
       Qxx.create(.n_bf,.n_bf)
       Qyy.create(.n_bf,.n_bf)
@@ -684,7 +684,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      OOxxx,OOyyy,OOzzz,OOxxy,OOxxz,OOyyx,OOyyz,OOzzx,OOzzy,OOxyz :: MAT{REAL}*
+      OOxxx,OOyyy,OOzzz,OOxxy,OOxxz,OOyyx,OOyyz,OOzzx,OOzzy,OOxyz :: MAT{REAL}@
       q,fa,la,na,fb,lb,nb :: INT
       sh :: SHELL2
 
@@ -757,7 +757,7 @@ contains
    ! order: xxx, yyy, zzz, xxy, xxz, yyx, yyz, zzx, zzy, xyz
       res :: VEC{REAL}(10)
 
-      Oxxx,Oyyy,Ozzz,Oxxy,Oxxz,Oyyx,Oyyz,Ozzx,Ozzy,Oxyz :: MAT{REAL}*
+      Oxxx,Oyyy,Ozzz,Oxxy,Oxxz,Oyyx,Oyyz,Ozzx,Ozzy,Oxyz :: MAT{REAL}@
 
       Oxxx.create(.n_bf,.n_bf)
       Oyyy.create(.n_bf,.n_bf)
@@ -816,7 +816,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      EEx,EEy,EEz :: MAT{REAL}*
+      EEx,EEy,EEz :: MAT{REAL}@
       q,fa,la,na,fb,lb,nb :: INT
       sh :: SHELL2
 
@@ -853,7 +853,7 @@ contains
       pos :: MAT{REAL}, IN
       res :: MAT{REAL}(3,pos.dim2)
 
-      Ex,Ey,Ez :: MAT{REAL}*
+      Ex,Ey,Ez :: MAT{REAL}@
       a :: INT
 
       Ex.create(.n_bf,.n_bf)
@@ -882,7 +882,7 @@ contains
    ! at the atoms "atom"
       atom :: VEC{ATOM}, IN
       res :: MAT{REAL}(3,atom.dim)
-      pos :: MAT{REAL}*
+      pos :: MAT{REAL}@
 
       pos => atom.coordinates_ptr
 
@@ -896,7 +896,7 @@ contains
    ! Return the electronic contribution to the electric fields
    ! at the nuclei as a (3 x .n_atom) array
       res :: MAT{REAL}(3,.n_atom)
-      pos :: MAT{REAL}*
+      pos :: MAT{REAL}@
 
       pos => .atom.coordinates_ptr
 
@@ -911,7 +911,7 @@ contains
    ! at the atoms "atom"
       atom :: VEC{ATOM}, IN
       res :: MAT{REAL}(3,atom.dim)
-      pos :: MAT{REAL}*
+      pos :: MAT{REAL}@
 
       pos => atom.coordinates_ptr
 
@@ -941,7 +941,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      EExx,EEyy,EEzz,EExy,EExz,EEyz :: MAT{REAL}*
+      EExx,EEyy,EEzz,EExy,EExz,EEyz :: MAT{REAL}@
       q,fa,la,na,fb,lb,nb :: INT
       sh :: SHELL2
 
@@ -997,7 +997,7 @@ contains
    ! electric field gradient elements is: xx, yy, zz, xy, xz, yz
       res :: MAT{REAL}(6,.n_atom)
 
-      Exx,Eyy,Ezz,Exy,Exz,Eyz :: MAT{REAL}*
+      Exx,Eyy,Ezz,Exy,Exz,Eyz :: MAT{REAL}@
       a :: INT
 
       Exx.create(.n_bf,.n_bf)
@@ -1073,7 +1073,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      SOx_c,SOy_c,SOz_c :: MAT{REAL}*
+      SOx_c,SOy_c,SOz_c :: MAT{REAL}@
       q,c,fa,la,na,fb,lb,nb :: INT
       Z :: REAL
       sh :: SHELL2
@@ -1120,7 +1120,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz :: MAT{REAL}*
+      Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz :: MAT{REAL}@
       n_bf :: INT
 
       n_bf = .n_bf
@@ -1165,7 +1165,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      xx,xy,xz,yx,yy,yz,zx,zy,zz :: MAT{REAL}*
+      xx,xy,xz,yx,yy,yz,zx,zy,zz :: MAT{REAL}@
       q,c,fa,la,na,fb,lb,nb :: INT
       Z :: REAL
       sh :: SHELL2
@@ -1260,13 +1260,13 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.associated,"no becke_grid")
    ENSURE(.overlapping_atoms.associated,"no overlapping_atoms")
-      ZORA  :: MAT4{REAL}*
-      a1,b1 :: MAT3{REAL}*
-      pt    :: MAT{REAL}*
-      wt,V0 :: VEC{REAL}*
+      ZORA  :: MAT4{REAL}@
+      a1,b1 :: MAT3{REAL}@
+      pt    :: MAT{REAL}@
+      wt,V0 :: VEC{REAL}@
       atom1 :: VEC{INT}(1), target
       atom2 :: VEC{INT}(2), target
-      atoms :: VEC{INT}*
+      atoms :: VEC{INT}@
       q,atom_a,atom_b,n_pt,fa,la,na,fb,lb,nb,k,l,a,b,aa,bb,ma,mb :: INT
       same_atoms :: BIN
 
@@ -1346,11 +1346,11 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.associated,"no becke_grid")
 
-      pt,a0,b0 :: MAT{REAL}*
-      wt,V0 :: VEC{REAL}*
+      pt,a0,b0 :: MAT{REAL}@
+      wt,V0 :: VEC{REAL}@
       atom1 :: VEC{INT}(1), target
       atom2 :: VEC{INT}(2), target
-      atoms :: VEC{INT}*
+      atoms :: VEC{INT}@
       q,atom_a,atom_b,n_pt,fa,la,na,fb,lb,nb,a,b,aa,bb,ma,mb :: INT
       same_atoms :: BIN
 

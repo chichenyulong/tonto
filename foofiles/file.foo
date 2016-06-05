@@ -71,66 +71,17 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==================
-!  Allocation methods
-!  ==================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
 
    create(name) ::: leaky
    ! Create a file-label object. Does not open the file.  Sets the filename if
    ! present.
-      self :: PTR
+      self :: allocatable, INOUT
       name :: STR
 
       .create
       .name = name
       UNIT_NUMBER:get_available_unit_number(.unit)
 
-   end
-
-   destroy ::: leaky
-   ! Destroy a file-label object
-      self :: PTR
-
-      if (.disassociated) return
-
-      ! Close and free unit
-      if (.is_open AND .unit_used) .close
-      UNIT_NUMBER:free_the_used_unit_number(.unit)
-
-      ! Clean
-
-      .destroy_ptr_part
-
-      deallocate(self)
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-      nullify( .real_buffer )
-      nullify( .int_buffer )
-      nullify( .cpx_buffer )
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy pointer parts
-      .real_buffer.destroy
-      .int_buffer.destroy
-      .cpx_buffer.destroy
    end
 
 
@@ -140,7 +91,7 @@ contains
 
    create_copy(f) ::: leaky
    ! Create a copy a file "f"
-      self :: PTR
+      self :: allocatable, INOUT
        f :: FILE
       .create
       .copy(f)
@@ -1004,7 +955,7 @@ contains
    ! Reads the multidimensional "values" from the buffer.
       values :: ARR{VALUE}, OUT
 
-      tmp :: VEC{VALUE}*
+      tmp :: VEC{VALUE}@
 
       tmp.create(values.dim)
 

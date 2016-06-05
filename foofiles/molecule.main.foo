@@ -37,7 +37,7 @@ contains
 
    run ::: leaky
    ! Main molecule run-loop; assumes stdin and stdout have been defined.
-      self :: PTR
+      self :: allocatable, INOUT
 
       ! Start timer
       std_time.start_timing
@@ -102,7 +102,7 @@ contains
    cleanup ::: leaky
    ! Clean up all undeleted memory in all modules.
 
-      self :: PTR
+      self :: allocatable, INOUT
       atom :: ATOM
       basis :: BASIS
       coppensbasis :: COPPENS_BASIS
@@ -123,7 +123,7 @@ contains
 
    reset_molecule ::: leaky
    ! Resets the mol data type and reruns the read routine
-      self :: PTR
+      self :: allocatable, INOUT
       word :: STR
 
       .BASE:destroy
@@ -144,7 +144,7 @@ contains
 
    read_keywords ::: get_from(OBJECT), recursive, leaky
    ! Read data from "stdin" using keyword style input.
-      self :: PTR
+      self :: allocatable, INOUT
    end
 
    process_keyword(keyword) ::: recursive, leaky
@@ -152,7 +152,7 @@ contains
    ! "word" is a sequence of blank separated strings. In this case,
    ! the sequence is processed as if it were a separate file.
    ! NOTE : this routine reuires a MOLECULE pointer self variable
-      self :: PTR
+      self :: allocatable, INOUT
       keyword :: STR, IN
 
       select case (keyword(1:30))

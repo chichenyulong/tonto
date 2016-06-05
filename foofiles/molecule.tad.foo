@@ -143,7 +143,7 @@ contains
    ENSURE(.crystal.xray_data.associated,"no crystal xray data")
    ENSURE(.crystal.fragment_info_made, "no crystal fragment info")
 
-      sf_n :: MAT{CPX}*
+      sf_n :: MAT{CPX}@
 
       ! Set up becke integration grid (leaky)
       .SCF:make_Hirshfeld_inputs
@@ -180,7 +180,7 @@ contains
    ! NOTE: "sf_n" is the FT rho_a(r), eqn (3) in Jayatilaka 2008,
    ! Acta Cryst A 64 p. 383-393. It is also f_a(q) in eqn (11) except
    ! without the thermal smearing factor.
-      sf_n :: MAT{CPX}*
+      sf_n :: MAT{CPX}@
 
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
@@ -192,16 +192,16 @@ contains
    ENSURE(.crystal.xray_data.associated, "no x-ray reflection data")
    ENSURE(.crystal.fragment_info_made, "no crystal fragment info")
 
-      sf_u :: VEC{CPX}*
-      Wc,wt, xa,ya,za,a2 :: VEC{REAL}*
-      rho, k1,k2,k3, r1,r2,r3, ga,gb :: VEC{REAL}*
+      sf_u :: VEC{CPX}@
+      Wc,wt, xa,ya,za,a2 :: VEC{REAL}@
+      rho, k1,k2,k3, r1,r2,r3, ga,gb :: VEC{REAL}@
       ra :: VEC{REAL}(3)
-      pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
-      D,DD,k_pts,pt,grida,gridb,bf_save :: MAT{REAL}*
+      pi,pj,pn :: VEC{INT}@
+      skipa0,skipab, skipa,skipb :: VEC{BIN}@
+      D,DD,k_pts,pt,grida,gridb,bf_save :: MAT{REAL}@
       sha :: SHELL1
       bf_skip :: VEC{VEC_{BIN}}@, target
-      bf_grid :: VEC{MAT_{REAL}}*
+      bf_grid :: VEC{MAT_{REAL}}@
       sf,dc   :: CPX
       cutoff,rf, k1k,k2k,k3k,kr, Dab, fac, val :: REAL
       n_atom,n_k,n_pt,n_keep, u,c,ca,cb, oa,fsa,lsa,fba, ob,fsb,lsb :: INT
@@ -502,7 +502,7 @@ contains
    get_unique_Voronoi_atom_SFs(sf_n) ::: leaky, private
    ! Get "sf_n", the structure factors for the symmetry related
    ! K points with *no* thermal smearing, for every unique atom.
-      sf_n :: MAT{CPX}*
+      sf_n :: MAT{CPX}@
 
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
@@ -514,12 +514,12 @@ contains
    ENSURE(.crystal.asym_atom_for_frag_atom.associated,"no asym-frag_atom")
    ENSURE(.density_matrix.associated, "no density matrix")
 
-      sf_u :: VEC{CPX}*
-      wt :: VEC{REAL}*
-      rho, k1,k2,k3, r1,r2,r3 :: VEC{REAL}*
-      D,k_pts,pt :: MAT{REAL}*
+      sf_u :: VEC{CPX}@
+      wt :: VEC{REAL}@
+      rho, k1,k2,k3, r1,r2,r3 :: VEC{REAL}@
+      D,k_pts,pt :: MAT{REAL}@
       bf_skip :: VEC{VEC_{BIN}}@
-      bf_grid :: VEC{MAT_{REAL}}*
+      bf_grid :: VEC{MAT_{REAL}}@
       sf  :: CPX
       rf, k1k,k2k,k3k,kr :: REAL
       n_atom,n_k,n_pt, u,c,a, i,k :: INT
@@ -608,7 +608,7 @@ contains
    ! Get "sf_n", the structure factors for the symmetry related
    ! K points with *no* thermal smearing, for every unique invariom.
       self :: INOUT
-      sf_n :: MAT{CPX}*
+      sf_n :: MAT{CPX}@
 
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
@@ -625,13 +625,13 @@ contains
    ENSURE(sf_n.dim1==.crystal.n_unique_SF_k_pts, "wrong dim1, sf_n")
    ENSURE(sf_n.dim2==.crystal.asymmetric_unit_atom.dim, "wrong dim2, sf_n")
 
-      k_pt,pt :: MAT{REAL}*
-      wt,rho,Wa, k1,k2,k3,r1,r2,r3 :: VEC{REAL}*
+      k_pt,pt :: MAT{REAL}@
+      wt,rho,Wa, k1,k2,k3,r1,r2,r3 :: VEC{REAL}@
       k1k,k2k,k3k,kr,rf :: REAL
       n_k,n_pt,f,a,u,k,i,n_ui,ui :: INT
-      sf_u :: VEC{CPX}*
+      sf_u :: VEC{CPX}@
       sf :: CPX
-      labels :: VEC{STR}*
+      labels :: VEC{STR}@
       invariom_kind :: VEC{VEC_{INT}}@
 
       ! Set up grids, atomic densities, and NO's
@@ -710,7 +710,7 @@ contains
 !   get_unique_Mulliken_SFs(sf_static) ::: private
 !   ! Get "sf_static", the structure factors for the symmetry related
 !   ! K points with *no* thermal smearing, for every unique invariom.
-!      sf_static :: MAT{CPX}*
+!      sf_static :: MAT{CPX}@
 !
 !   ENSURE(.basis_info_made,"no basis info")
 !   ENSURE(.atom.associated,"no atom list")
@@ -725,7 +725,7 @@ contains
 !
 !      dc :: CPX
 !      ra :: VEC{REAL}(3)
-!      k1,k2,k3 :: VEC{REAL}*
+!      k1,k2,k3 :: VEC{REAL}@
 !      n_atom,n_k, u,c,ca,cb, oa,fsa,lsa,fba, ob,fsb,lsb :: INT
 !
 !      ! Asymmetric unit atoms
@@ -834,7 +834,7 @@ contains
 
    ENSURE(.atom.associated,"no atoms")
 
-      labels :: VEC{STR}*
+      labels :: VEC{STR}@
       invariom_kind :: VEC{VEC_{INT}}@
       n_kind,n_elem,n_dash,k,l :: INT
 
@@ -898,7 +898,7 @@ contains
 
    ENSURE(.atom.associated,"no atoms")
 
-      labels :: VEC{STR}*
+      labels :: VEC{STR}@
       invariom_kind :: VEC{VEC_{INT}}@
 
       n_kind,n_elem,n_dash,k,l :: INT
@@ -1037,7 +1037,7 @@ contains
    ENSURE(.atom_info_made,"no atom info")
    ENSURE(.n_atom_kind>0,"no atom kinds")
 
-      interpolator :: VEC{INTERPOLATOR}*
+      interpolator :: VEC{INTERPOLATOR}@
       rho_av :: VEC{VEC_{REAL}}@
       max_eps,eps,eps_a :: REAL
       max_l, a,iteration :: INT
@@ -1175,12 +1175,12 @@ contains
    ENSURE(a.is_in_range([1,.n_atom]),"a out of range")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms")
 
-      pt :: MAT{REAL}*
-      rho,Wa :: VEC{REAL}*
+      pt :: MAT{REAL}@
+      rho,Wa :: VEC{REAL}@
       pos :: VEC{REAL}(3)
       old,r :: REAL
       n_pts,n,i :: INT
-      lebedev :: LEBEDEV*
+      lebedev :: LEBEDEV@
 
       ! Set the spherical grid
       lebedev.create
@@ -1273,7 +1273,7 @@ contains
 
    ENSURE(.use_interpolators,"must be using interpolators")
 
-      interpolator :: VEC{INTERPOLATOR}*
+      interpolator :: VEC{INTERPOLATOR}@
       rho_av :: VEC{VEC_{REAL}}@
       eps,eps_a :: REAL
       a,l_max,iteration :: INT
@@ -1393,12 +1393,12 @@ contains
    ENSURE(rho_av.dim==interpolator.n_data,"wrong size, rho_av")
    ENSURE(a.is_in_range([1,.n_atom]),"a out of range")
 
-      pt :: MAT{REAL}*
-      rho,Wa, del,pc :: VEC{REAL}*
+      pt :: MAT{REAL}@
+      rho,Wa, del,pc :: VEC{REAL}@
       pos :: VEC{REAL}(3)
       old,r :: REAL
       n_pts,n,i :: INT
-      lebedev :: LEBEDEV*
+      lebedev :: LEBEDEV@
 
       ! Set the spherical grid
       lebedev.create
@@ -1559,9 +1559,9 @@ contains
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
 
-      pt :: MAT{REAL}*
-      wt,rho_aba,def_density_grid :: VEC{REAL}*
-      bond_density_atom :: VEC{INT}*
+      pt :: MAT{REAL}@
+      wt,rho_aba,def_density_grid :: VEC{REAL}@
+      bond_density_atom :: VEC{INT}@
       n_pt,a,b :: INT
       val :: REAL
 
@@ -1648,9 +1648,9 @@ contains
    ENSURE(H.is_square,"H is not square")
    ENSURE(G.dim==H.dim1,"G and H are inconsistent")
 
-      Wa_cd :: MAT3{REAL}*
-      pt,Wa_c :: MAT{REAL}*
-      wt,Wa,G_grid,K_grid,Ga :: VEC{REAL}*
+      Wa_cd :: MAT3{REAL}@
+      pt,Wa_c :: MAT{REAL}@
+      wt,Wa,G_grid,K_grid,Ga :: VEC{REAL}@
       delta2 :: REAL
       a,c,d,n_pt :: INT
 
@@ -1735,7 +1735,7 @@ contains
    ENSURE(.atom.has_interpolators_any_kind,"missing atomic interpolators")
    ENSURE(grid.dim==pt.dim1,"wrong size, grid")
    ENSURE(kappa.dim==.n_atom,"wrong size, kappa")
-      rho_a :: VEC{REAL}*
+      rho_a :: VEC{REAL}@
       n_pt,i :: INT
 
       ! Allocate temporary densities
@@ -1778,7 +1778,7 @@ contains
    ENSURE(grid.dim2==.n_atom,"wrong dim2, grid")
    ENSURE(kappa.dim==.n_atom,"wrong size, kappa")
 
-      rho_a,rho_c,rho :: VEC{REAL}*
+      rho_a,rho_c,rho :: VEC{REAL}@
       n_pt,i,c :: INT
 
       ! Allocate temporary densities
@@ -1837,7 +1837,7 @@ contains
    ENSURE(grid.dim3==.n_atom,"wrong dim3, grid")
    ENSURE(kappa.dim==.n_atom,"wrong size, kappa")
 
-      rho_a,rho_c,rho_d,rho :: VEC{REAL}*
+      rho_a,rho_c,rho_d,rho :: VEC{REAL}@
       n_pt,i,c,d :: INT
 
       ! Allocate temporary densities

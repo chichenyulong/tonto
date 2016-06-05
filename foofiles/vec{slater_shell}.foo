@@ -37,8 +37,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -206,7 +206,7 @@ contains
       R :: REAL, IN
       res :: REAL
       n :: INT
-      self :: VEC{SLATER_SHELL}*
+      self :: VEC{SLATER_SHELL}@
       self => saved_self
       res = ZERO ! Work out radial density here
       do n = 1,.dim
@@ -221,7 +221,7 @@ contains
       res :: REAL
       R :: REAL
       n :: INT
-      self :: VEC{SLATER_SHELL}*
+      self :: VEC{SLATER_SHELL}@
       self => saved_self
       R = sqrt(R2)
       res = ZERO ! Work out radial density here
@@ -236,7 +236,7 @@ contains
       R :: REAL, IN
       res :: REAL
       n :: INT
-      self :: VEC{SLATER_SHELL}*
+      self :: VEC{SLATER_SHELL}@
       self => saved_self
       res = ZERO 
       do n = 1,.dim
@@ -249,7 +249,7 @@ contains
       R :: REAL, IN
       res :: REAL
       n :: INT
-      self :: VEC{SLATER_SHELL}*
+      self :: VEC{SLATER_SHELL}@
       self => saved_self
       res = ZERO 
       do n = 1,.dim

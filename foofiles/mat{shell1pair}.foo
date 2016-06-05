@@ -40,7 +40,7 @@ contains
    end
 
    destroy ::: get_from(MAT{OBJECT}), leaky
-   ! Destroy the object
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure

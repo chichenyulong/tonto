@@ -54,152 +54,14 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ===================
-!  Allocation routines
-!  ===================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
 
    create(mol) ::: leaky
    ! Create space for the object
-      self :: PTR
+      self :: allocatable, INOUT
       mol :: MOLECULE
 
       .create
       .set_defaults(mol)
-
-   end
-
-   destroy ::: leaky
-   ! Destroy space for an SCF type
-      self :: PTR
-
-      if (.disassociated) return
-
-      .nullify_ptr_data
-
-      .destroy_ptr_part
-
-      deallocate(self)
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of self
-
-      nullify(.n1)
-      nullify(.n2)
-      nullify(.bond_index)
-      nullify(.cov_index)
-      nullify(.ion_index)
-      nullify(.percent_covalency)
-      nullify(.gould_charge)
-      nullify(.cruickshank_charge)
-      nullify(.summed_n2)
-      nullify(.summed_n3)
-      nullify(.subgroup_pop)
-      nullify(.atom_list)
-
-      nullify(.theta_C)
-      nullify(.eval_C)
-      nullify(.theta_I)
-      nullify(.eval_I)
-      nullify(.pop_C)
-      nullify(.pop_I)
-      nullify(.pop_A)
-      nullify(.pop_B)
-      nullify(.covalent_index)
-      nullify(.ionic_index)
-      nullify(.proportion_a)
-      nullify(.pair)
-
-      nullify(.rho)
-      nullify(.rho_E)
-      nullify(.overlap_matrix)
-      nullify(.natural_orbitals)
-      nullify(.atom)
-
-   end
-
-   nullify_ptr_data
-   ! Nullify the pointer data that is supposed to come from outside
-   ! this module, so that this data is *not* accidentally destroyed
-
-      nullify(.rho)
-      nullify(.rho_E)
-      nullify(.atom)
-      nullify(.overlap_matrix)
-
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of self
-
-      .n1.destroy
-      .n2.destroy
-      .bond_index.destroy
-      .cov_index.destroy
-      .ion_index.destroy
-      .percent_covalency.destroy
-      .gould_charge.destroy
-      .cruickshank_charge.destroy
-      .summed_n2.destroy
-      .summed_n3.destroy
-      .subgroup_pop.destroy
-      .atom_list.destroy
-
-      .theta_C.destroy
-      .eval_C.destroy
-      .theta_I.destroy
-      .eval_I.destroy
-      .pop_C.destroy
-      .pop_I.destroy
-      .pop_A.destroy
-      .pop_B.destroy
-      .covalent_index.destroy
-      .ionic_index.destroy
-      .proportion_a.destroy
-      .pair.destroy
-
-      .occupation_numbers.destroy
-      .orbital_energies.destroy
-
-      ! Never destroy these.
-      nullify(.rho)
-      .rho_E.destroy
-      nullify(.overlap_matrix)
-      nullify(.natural_orbitals)
-      nullify(.atom)
-
-   end
-
-   set_defaults
-   ! Set default SCF data values
-      self :: INOUT
-
-      .roby_kind = "bond_and_charge_analysis"
-
-      .covalent_cutoff        = ROBY_COVALENT_CUTOFF*RADIAN_PER_DEGREE
-      .ionic_cutoff           = ROBY_IONIC_CUTOFF   *RADIAN_PER_DEGREE
-      .zero_cutoff            = ROBY_ZERO_CUTOFF    *RADIAN_PER_DEGREE
-      .pi_on_2_cutoff         = ROBY_PI_ON_2_CUTOFF *RADIAN_PER_DEGREE
-
-      .occupied_ANO_cutoff    = ROBY_OCCUPIED_ANO_CUTOFF
-      .output_theta_info      = ROBY_OUTPUT_THETA_INFO
-      .analyze_bonded_pairs   = ROBY_ANALYZE_BONDED_PAIRS
-      .bond_range_factor      = ROBY_BOND_RANGE_FACTOR
 
    end
 
@@ -482,9 +344,9 @@ contains
    unique_tags result (res) ::: leaky
    ! Return a list of unique tags for the atom groups
       self :: IN
-      res :: VEC{STR}*
+      res :: VEC{STR}@
 
-      symbols :: VEC{STR}*
+      symbols :: VEC{STR}@
       g :: INT
 
       if (.is_multicenter) then
@@ -660,7 +522,7 @@ contains
    ENSURE(.rho.associated,"no rho matrix")
    ENSURE(.overlap_matrix.associated,"no overlap matrix")
 
-      X :: MAT{REAL}*
+      X :: MAT{REAL}@
       n_gr :: INT
 
       n_gr = .n_bf(group)
@@ -693,7 +555,7 @@ contains
 !   ENSURE(.rho.associated,"no rho matrix")
 !   ENSURE(.overlap_matrix.associated,"no overlap matrix")
 !
-!      P,X,P_sub :: MAT{REAL}*
+!      P,X,P_sub :: MAT{REAL}@
 !      n_gr,n_sub :: INT
 !
 !      n_gr  = .n_bf(group)
@@ -749,8 +611,8 @@ contains
 !
 !      pop_k :: REAL
 !      m, k, n_k, n :: INT
-!      comb_mat :: MAT{INT}*
-!      pop_group :: VEC{REAL}*
+!      comb_mat :: MAT{INT}@
+!      pop_group :: VEC{REAL}@
 !
 !      n = size(group_list)
 !
@@ -971,7 +833,7 @@ contains
    ENSURE(.atom_b.created,"no atom B group")
    ENSURE(.atom_ab.created,"no atom AB group")
 
-      C :: MAT{REAL}*
+      C :: MAT{REAL}@
       n_a,n_b,n_ab :: INT
 
       n_a  = .n_bf_a
@@ -1115,8 +977,8 @@ contains
    ENSURE(.pair.associated,"No pair array")
    ENSURE(.pair.dim==.n_bf_ab,"wrong shape, pair")
 
-      P_A,PA,P_B,PB :: MAT{REAL}*
-      A,B :: VEC{REAL}*
+      P_A,PA,P_B,PB :: MAT{REAL}@
+      A,B :: VEC{REAL}@
       n_a,n_b,n_ab,i :: INT
       fac,costheta :: REAL
 
@@ -1171,7 +1033,7 @@ contains
       fac,eps :: REAL
       n_ab,i,j :: INT
       eval :: MAT{REAL}(1,1)
-      ZZ,II :: MAT{REAL}*
+      ZZ,II :: MAT{REAL}@
 
       n_ab = .pair.dim
       eps = .zero_cutoff
@@ -1457,7 +1319,7 @@ contains
    ENSURE(P.dim1==.n_bf(group),"wrong dimension, P ")
    ENSURE(P.is_square,"P is incorrectly dimensioned")
 
-      W,X,Y :: MAT{REAL}*
+      W,X,Y :: MAT{REAL}@
       n_occ,n_bf :: INT
 
       n_bf = .n_bf(group)
@@ -1547,7 +1409,7 @@ contains
    ENSURE(.atom_b.created,"No roby atom B")
    ENSURE(.atom_ab.created,"No roby atom AB")
 
-      P_A,P_B,P_AB :: MAT{REAL}*
+      P_A,P_B,P_AB :: MAT{REAL}@
       n_a, n_b, n_ab :: INT
 
       n_a  = .n_bf_a
@@ -1582,7 +1444,7 @@ contains
    ENSURE(.atom_b.created,"No roby atom B")
    ENSURE(.atom_ab.created,"No roby atom AB")
 
-      P_B,P_A :: MAT{REAL}*
+      P_B,P_A :: MAT{REAL}@
       n_a, n_b, n_ab :: INT
 
       n_a  = .n_bf_a
@@ -1618,7 +1480,7 @@ contains
    ENSURE(.atom_b.created,"No roby atom B")
    ENSURE(.atom_ab.created,"No roby atom AB")
 
-      XX,XV, SS,SI,SH :: MAT{REAL}*
+      XX,XV, SS,SI,SH :: MAT{REAL}@
       n_ab :: INT
 
       n_ab = .n_bf_ab
@@ -1657,7 +1519,7 @@ contains
 !   ENSURE(density.dim1==.n_bf,"wrong shape, density")
 !   ENSURE(density.is_square,"wrong shape, density")
 !   ENSURE(.atom_ab.associated,"No atom AB group")
-!      D,P,rho_P :: MAT{REAL}*
+!      D,P,rho_P :: MAT{REAL}@
 !      n_bf :: INT
 !      n_bf = .n_bf_ab
 !      D.create(n_bf,n_bf)
@@ -1691,8 +1553,8 @@ contains
    ENSURE(X.dim1==.n_bf(group),"wrong X dimension")
    ENSURE(X.is_square,"X is not square")
 
-      density :: OPMATRIX*
-      W :: MAT{REAL}*
+      density :: OPMATRIX@
+      W :: MAT{REAL}@
       n_bf :: INT
 
       density => .rho
@@ -1730,7 +1592,7 @@ contains
 !   ENSURE(Y.is_square,"Y is not square")
 !   ENSURE(P.is_square,"P is not square")
 !
-!      W :: MAT{REAL}*
+!      W :: MAT{REAL}@
 !
 !      W.create(Y.dim1,Y.dim2)
 !      .overlap_transform(X,W,row_atom,col_atom)
@@ -1749,7 +1611,7 @@ contains
       Y :: MAT{REAL}, OUT
       row_atom, col_atom :: VEC{INT}, optional, IN
 
-      SS :: MAT{REAL}*
+      SS :: MAT{REAL}@
       n_row,n_col :: INT
 
       n_row = .n_bf(row_atom)
@@ -1771,7 +1633,7 @@ contains
    ! basis functions on the atom indices in "row_atom" and "col_atom".
       X,Y :: MAT{REAL}
       row_atom, col_atom :: VEC{INT}, optional
-      SS :: MAT{REAL}*
+      SS :: MAT{REAL}@
       n_row,n_col :: INT
       n_row = .n_bf(row_atom)
       n_col = .n_bf(col_atom)
@@ -1814,7 +1676,7 @@ contains
 
       n_row_atoms,n_col_atoms :: INT
       i,b_i,f_i,l_i,n_i, j,b_j,f_j,l_j,n_j :: INT
-      first_basis_fn_for,last_basis_fn_for :: VEC{INT}*
+      first_basis_fn_for,last_basis_fn_for :: VEC{INT}@
       Achk,Bchk :: BIN
 
     Achk = present(A_row_atom) OR present(A_col_atom) 
@@ -1973,8 +1835,8 @@ contains
    ENSURE(.atom.associated,"no atom data")
 
       table :: VEC{TABLE_COLUMN}@
-      symbols :: VEC{STR}*
-      labels :: VEC{INT}*
+      symbols :: VEC{STR}@
+      labels :: VEC{INT}@
       f :: INT
 
 
@@ -2041,10 +1903,10 @@ contains
       table :: VEC{TABLE_COLUMN}@
       Z_list :: VEC{VEC_{INT}}@
       no_of_bonds, n_kind,k1,k2,n_bonds, i :: INT
-      pair :: MAT{INT}*
-      symbols,labels :: MAT{STR}*
-      dash,dsh1 :: VEC{STR}*
-      dist,n_A,n_B,nAB,sAB,cAB,iAB,tAB,pAB :: VEC{REAL}*
+      pair :: MAT{INT}@
+      symbols,labels :: MAT{STR}@
+      dash,dsh1 :: VEC{STR}@
+      dist,n_A,n_B,nAB,sAB,cAB,iAB,tAB,pAB :: VEC{REAL}@
       has_unique_labels :: BIN
 
       ! Anything to do?
@@ -2260,11 +2122,11 @@ contains
       table :: VEC{TABLE_COLUMN}@
       Z_list :: VEC{VEC_{INT}}@
       no_of_bonds, n_kind,k1,k2,n_bonds, i :: INT
-      pair :: MAT{INT}*
-      labels :: MAT{STR}*
-      dash :: VEC{STR}*
-      dist,cAB,iAB,tAB,pAB :: VEC{REAL}*
-      ind :: VEC{INT}*
+      pair :: MAT{INT}@
+      labels :: MAT{STR}@
+      dash :: VEC{STR}@
+      dist,cAB,iAB,tAB,pAB :: VEC{REAL}@
+      ind :: VEC{INT}@
       has_unique_labels :: BIN
 
       ! Anything to do?
@@ -2455,7 +2317,7 @@ contains
    ENSURE(.atom.associated,"no atom data")
 
       i :: INT
-      symbol :: VEC{STR}*
+      symbol :: VEC{STR}@
 
       stdout.flush
       stdout.text("==============================")
@@ -2507,8 +2369,8 @@ contains
    ENSURE(.atom.associated,"no atom data")
 
       table :: VEC{TABLE_COLUMN}@
-      symbols :: VEC{STR}*
-      labels :: VEC{INT}*
+      symbols :: VEC{STR}@
+      labels :: VEC{INT}@
       f :: INT
 
 
@@ -2570,9 +2432,9 @@ contains
    ENSURE(.n_group>1,"must be at leat two groups")
 
       table :: VEC{TABLE_COLUMN}@
-      symbol :: VEC{STR}*
-      g_A,g_B :: VEC{INT}*
-      n_A,n_B,nAB,sAB,cAB,iAB,tAB,pAB :: VEC{REAL}*
+      symbol :: VEC{STR}@
+      g_A,g_B :: VEC{INT}@
+      n_A,n_B,nAB,sAB,cAB,iAB,tAB,pAB :: VEC{REAL}@
       n_group, n_pair,i,a,b :: INT
 
       n_group = .n_group
@@ -2700,10 +2562,10 @@ contains
       table :: VEC{TABLE_COLUMN}@
       Z_list :: VEC{VEC_{INT}}@
       no_of_bonds, n_kind,k1,k2,n_bonds, i :: INT
-      pair :: MAT{INT}*
-      symbols,labels :: MAT{STR}*
-      dash,dsh1 :: VEC{STR}*
-      dist,n_A,n_B,nAB,sAB,cAB,iAB,tAB,pAB :: VEC{REAL}*
+      pair :: MAT{INT}@
+      symbols,labels :: MAT{STR}@
+      dash,dsh1 :: VEC{STR}@
+      dist,n_A,n_B,nAB,sAB,cAB,iAB,tAB,pAB :: VEC{REAL}@
       has_unique_labels :: BIN
 
       ! Anything to do?
@@ -2914,11 +2776,11 @@ contains
       table :: VEC{TABLE_COLUMN}@
       Z_list :: VEC{VEC_{INT}}@
       no_of_bonds, n_kind,k1,k2,n_bonds, i :: INT
-      pair :: MAT{INT}*
-      labels :: MAT{STR}*
-      dash :: VEC{STR}*
-      dist,cAB,iAB,tAB,pAB :: VEC{REAL}*
-      ind :: VEC{INT}*
+      pair :: MAT{INT}@
+      labels :: MAT{STR}@
+      dash :: VEC{STR}@
+      dist,cAB,iAB,tAB,pAB :: VEC{REAL}@
+      ind :: VEC{INT}@
       has_unique_labels :: BIN
 
       ! Anything to do?
@@ -3097,7 +2959,7 @@ contains
       a :: INT
       multicenter :: BIN
       symb :: STR
-      symbol :: VEC{STR}*
+      symbol :: VEC{STR}@
 
       multicenter= .is_multicenter
       if (NOT multicenter) symbol => .unique_tags
@@ -3215,8 +3077,8 @@ contains
    ENSURE(.atom_ab.created,"No Roby atom AB data")
 
       n,i,j,angle :: INT
-      evn,par,ang :: VEC{INT}*
-      cst,snt :: VEC{REAL}*
+      evn,par,ang :: VEC{INT}@
+      cst,snt :: VEC{REAL}@
       table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
@@ -3295,9 +3157,9 @@ contains
       self :: IN
 
       n,i,j,angle :: INT
-      par :: VEC{STR}*
-      ang :: VEC{INT}*
-      c_p,c_m,cov,i_p,i_m,ion :: VEC{REAL}*
+      par :: VEC{STR}@
+      ang :: VEC{INT}@
+      c_p,c_m,cov,i_p,i_m,ion :: VEC{REAL}@
       table :: VEC{TABLE_COLUMN}@
 
       ! Columns
@@ -3394,8 +3256,8 @@ contains
    ENSURE(.theta_angle.associated, "No theta angles")
 
       n,i,j,angle :: INT
-      evn,ang :: VEC{INT}*
-      n_A,n_B,nAB :: VEC{REAL}*
+      evn,ang :: VEC{INT}@
+      n_A,n_B,nAB :: VEC{REAL}@
       table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
@@ -3518,7 +3380,7 @@ contains
    ENSURE(.atom_group.created,"no atom group data")
 
       a :: INT
-      symbol :: VEC{STR}*
+      symbol :: VEC{STR}@
 
       stdout.flush
       stdout.text("===============================")

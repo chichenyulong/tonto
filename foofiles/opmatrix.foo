@@ -65,7 +65,7 @@ contains
 
    create(n_bf) ::: leaky, PURE
    ! Create an opmatrix object, in a basis set with "n_bf" spatial orbitals
-      self :: PTR
+      self :: allocatable, INOUT
       n_bf :: INT, IN
 
       .create
@@ -75,7 +75,7 @@ contains
 
    create(n_bf,genre) ::: leaky, PURE
    ! Create an opmatrix object, in a basis set with "n_bf" spatial orbitals
-      self :: PTR
+      self :: allocatable, INOUT
       n_bf :: INT, IN
       genre :: STR, IN
 
@@ -85,7 +85,7 @@ contains
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
-   ! Destroy an object
+   ! Deallocate "self"
    end
 
    create(genre) ::: leaky, PURE
@@ -182,7 +182,7 @@ contains
    created(genre) result (res) ::: pure
    ! Returns FALSE if "self" is not created.
    ! Returns FALSE, unless kind "genre" of self has been created.
-      self :: PTR
+      self :: allocatable, INOUT
       genre :: STR, IN
       res :: BIN
 
@@ -195,7 +195,7 @@ contains
 
    destroyed(genre) result (res) ::: pure
    ! Returns true if kind "genre" of self has *not* been created
-      self :: PTR
+      self :: allocatable, INOUT
       genre :: STR, IN
       res :: BIN
 
@@ -228,7 +228,7 @@ contains
    all_destroyed result (res) ::: pure
    ! Returns true if all components of self have been destroyed
    ! NOTE: the beta parts are NOT tested.
-      self :: PTR
+      self :: allocatable, INOUT
       res :: BIN
 
       d :: BIN, dimension(6)
@@ -257,7 +257,7 @@ contains
 
    create_copy(mx) ::: leaky, PURE
    ! Create an opmatrix object
-      self :: PTR
+      self :: allocatable, INOUT
       mx :: OPMATRIX, IN
 
       .create(mx.n_bf)
@@ -894,7 +894,7 @@ contains
 
       k :: STR
       l :: INT
-      W :: VEC{REAL}*
+      W :: VEC{REAL}@
 
       k = .spinorbital_kind
       if (present(genre)) k = genre
@@ -1031,7 +1031,7 @@ contains
    make_density_matrix_from(NO,occ,genre) ::: leaky, PURE
    ! Make the density_matrix from the natural orbitals "NO" and the
    ! occ numbers "occ".
-      self :: PTR
+      self :: allocatable, INOUT
       NO :: OPMATRIX, IN
       occ :: OPVECTOR, IN
       genre :: STR, optional, IN
@@ -1042,8 +1042,8 @@ contains
  ! ENSURE(occ.created(genre),"occ has no subpart: "//trim(genre))
 
 
-      Pr :: MAT{REAL}*
-    ! Pc :: MAT{CPX}*
+      Pr :: MAT{REAL}@
+    ! Pc :: MAT{CPX}@
       genus :: STR
 
       if (present(genre)) then; genus = genre
@@ -1087,8 +1087,8 @@ contains
    make_E_density_matrix_from(NO,occ,eig,genre) ::: leaky, PURE
    ! Make the energy density_matrix from the natural orbitals "NO",
    ! "occ" the occupation numbers, and the orbital eigenvalues, "eig".
-      self :: PTR
-      NO :: OPMATRIX*
+      self :: allocatable, INOUT
+      NO :: OPMATRIX@
       occ,eig :: OPVECTOR@, IN
       genre :: STR, optional, IN
 
@@ -1100,8 +1100,8 @@ contains
    ENSURE(eig.n_bf>0,"eig has non-positive n_bf")
 
       occ_eig :: VEC{REAL}@
-      Pr :: MAT{REAL}*
-    ! Pc :: MAT{CPX}*
+      Pr :: MAT{REAL}@
+    ! Pc :: MAT{CPX}@
       genus :: STR
 
       if (present(genre)) then; genus = genre
@@ -1377,7 +1377,7 @@ contains
 
       genre :: STR
       n :: INT
-      SS :: MAT{REAL}*
+      SS :: MAT{REAL}@
 
       genre = .spinorbital_kind
 
@@ -1427,7 +1427,7 @@ contains
 
       genre :: STR
       n :: INT
-      SS :: MAT{REAL}*
+      SS :: MAT{REAL}@
 
       genre = .spinorbital_kind
 

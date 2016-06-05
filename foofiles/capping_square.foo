@@ -136,59 +136,9 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not nullify point parts.
-   end
-
-   create_copy(s) ::: leaky
-   ! Create self as a duplicate of "s".
-      self :: PTR
-      s :: CAPPING_SQUARE, IN
-      .create
-      .copy(s)
-   end
-
-   copy(s) ::: leaky
-   ! Copy the contents of "s" to self.
-      s :: CAPPING_SQUARE, IN
-      self = s
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   set_defaults ::: leaky
-   ! Set up default information.
-      .face_number            = 0
-      .iso_value              = ONE
-      .skip_bit_string        = 0
-      .vertex_positions       = ZERO
-      .value_at_vertex        = ZERO
-      .cap_vertex_flag        = FALSE
-      .case                   = -1  ! This is not a real case
-      .n_triangle             = 0
-      .n_pt                   = 0
-      .triangle_edge_index    = 0
-      .triangle_vertex_index  = 0
-      .edge_vertex_index      = 0
-      .edge_vertex_positions  = ZERO
-      .edge_vertex_gradient   = ZERO
-      .edge_mean_curvature    = ZERO
-      .edge_gaussian_curvature= ZERO
-      .new_vertex_index       = 0
-      .no_new_vertex          = 0
-   end
+!  ===============
+!  Set/get methods
+!  ===============
 
    reset ::: leaky
    ! Reset defaults. 
@@ -213,10 +163,6 @@ contains
       .new_vertex_index       = 0
       .no_new_vertex          = 0
    end
-
-!  ===============
-!  Set/get methods
-!  ===============
 
    set_iso_value(iso_value)
    ! Set the iso_value for the capping square

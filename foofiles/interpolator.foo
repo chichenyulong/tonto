@@ -59,84 +59,18 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
 
    create(spacing,first) ::: leaky
    ! Create the object
-     self :: PTR
+     self :: allocatable, INOUT
      spacing :: REAL
+
      first :: REAL, optional
+
      .create
      .set_spacing(spacing)
      if (present(first)) .set_table_origin(first)
-   end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(c) ::: leaky
-   ! Copy the contents of "c" to self.
-     c :: INTERPOLATOR, IN
-     self = c
-     .nullify_ptr_part
-     if (c.data_point.associated) .data_point.create_copy(c.data_point)
-     if (c.data_value.associated) .data_value.create_copy(c.data_value)
-     if (c.y2.associated)         .y2.create_copy(c.y2)
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-      nullify(.data_point)
-      nullify(.data_value)
-      nullify(.y2)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts
-      .data_point.destroy
-      .data_value.destroy
-      .y2.destroy
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   set_defaults(spacing,first)
-   ! Set up a defaults
-      spacing,first :: REAL, optional
-      .set_interpolation_method(INTERPOLATOR_INTERPOLATION_METHOD)
-      .set_range_mapping(INTERPOLATOR_RANGE_MAPPING)
-
-      .table_length  = INTERPOLATOR_TABLE_LENGTH
-      .table_origin  = INTERPOLATOR_TABLE_ORIGIN
-      .table_spacing = INTERPOLATOR_TABLE_SPACING
-      .table_eps     = INTERPOLATOR_TABLE_EPS
-      .domain_scale_factor = ZERO
-
-      .set_domain_mapping(INTERPOLATOR_DOMAIN_MAPPING)
-
-      .n_data = 0
-      .data_point.destroy
-      .data_value.destroy
-      .updated = FALSE
-      .y1_initial = INTERPOLATOR_Y1_INITIAL
-      .y1_final   = INTERPOLATOR_Y1_FINAL
-      if (present(spacing)) .set_spacing(spacing)
-      if (present(first))   .set_table_origin(first)
    end
 
    set_interpolation_method(method)
@@ -446,7 +380,7 @@ contains
 
       dx,dxp,dxm,dy,dyp,dym,sig,p :: REAL
       n,i,ip1,im1 :: INT
-      x,y,u :: VEC{REAL}*
+      x,y,u :: VEC{REAL}@
 
       ! No of data
       n = .n_data
@@ -1019,7 +953,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}*
+      pt :: VEC{REAL}@
       first,last,del1,p,frac,res,s :: REAL
       i,f,f1 :: INT
       do_fac :: BIN
@@ -1138,7 +1072,7 @@ contains
    ENSURE(.updated,"not updated")
    ENSURE(.y2.created,"no y2")
 
-      pt :: VEC{REAL}*
+      pt :: VEC{REAL}@
       first,last,p,frac,del1,del6,v1,v2,a,b,s :: REAL
       i,f,f1,f2 :: INT
       do_fac :: BIN
@@ -1300,7 +1234,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}*
+      pt :: VEC{REAL}@
       first,last,del1,p,frac,res,s :: REAL
       i,f,f1 :: INT
       do_fac :: BIN
@@ -1406,7 +1340,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}*
+      pt :: VEC{REAL}@
       first,last,p,frac,del1,del6,v1,v2,a,b,s :: REAL
       i,f,f1,f2 :: INT
       do_fac :: BIN

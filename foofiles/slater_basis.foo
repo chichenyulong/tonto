@@ -381,7 +381,7 @@ contains
       power_factor :: INT, IN
       occ :: REAL, optional, IN
 
-      temp_density :: VEC{REAL}*
+      temp_density :: VEC{REAL}@
 
       temp_density.create(pt.dim1)
 
@@ -495,7 +495,7 @@ contains
 !   ! ENSURE(pt.dim2==3,"wrong dimension for points array")
 !   ! ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
 !   ! ENSURE(.interpolator.created,"no interpolator defined!")
-!     R,D1,D2 :: VEC{REAL}*
+!     R,D1,D2 :: VEC{REAL}@
 !     n_pt,n :: INT
 !     x,y,z,r1,r2,r3,xx,yy,zz,xy,xz,yz, fac1,fac2,val :: REAL
 !     n_pt = pt.dim1
@@ -578,7 +578,7 @@ contains
    ENSURE(.shell.created,"no slater orbitals defined!")
 
       length :: REAL
-      interpolator :: INTERPOLATOR*
+      interpolator :: INTERPOLATOR@
 
       interpolator.create  
 
@@ -702,8 +702,8 @@ contains
    ENSURE(.shell_kinds_created,"not all orbital kinds are there")
 
       configuration,conf_kind :: STR
-      split,conf :: VEC{STR}*
-      match :: VEC{BIN}*
+      split,conf :: VEC{STR}@
+      match :: VEC{BIN}@
       found,keep :: BIN
       i,j,s,occ,ind :: INT
 

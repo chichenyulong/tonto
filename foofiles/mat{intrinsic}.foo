@@ -105,106 +105,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create(dim1,dim2) ::: leaky, PURE
-   ! Create a matrix with the given dimensions
-      self :: PTR
-      dim1,dim2 :: INT, IN
-
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(dim1,dim2),STAT=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-   end
-
-   create(bounds) ::: leaky, PURE
-   ! Create a matrix with the specified "bounds" for each dimension
-      self :: PTR
-      bounds :: VEC{INT}(2), IN
-
-      .create(bounds(1),bounds(2))
-
-   end
-
-   create(lb1,ub1,lb2,ub2) ::: leaky, PURE
-   ! Create a matrix with the given dimensions
-      self :: PTR
-      lb1,ub1,lb2,ub2 :: INT, IN
-
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(lb1:ub1,lb2:ub2),STAT=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-   end
-
-   create(bounds1,bounds2) ::: leaky, PURE
-   ! Create a matrix with the specified bounds for each dimension
-      self :: PTR
-      bounds1,bounds2 :: VEC{INT}, IN
-
-      .create(bounds1(1),bounds1(2),bounds2(1),bounds2(2))
-
-   end
-
-   create(bounds) ::: leaky, PURE
-   ! Create a matrix with the given bounds for all dimensions
-      self :: PTR
-      bounds :: MAT{INT}(2,2), IN
-
-      .create(bounds(1,1),bounds(1,2),bounds(2,1),bounds(2,2))
-
-   end
-
-   create_copy(matrix) ::: leaky, PURE
-   ! Create a replica copy of matrix
-      self :: PTR
-      matrix :: MAT{INTRINSIC}, IN
-
-      .create(lbound(matrix,1),ubound(matrix,1), &
-              lbound(matrix,2),ubound(matrix,2)  )
-
-      self = matrix
-
-   end
-
-
-   destroy ::: leaky, PURE
-   ! Destroy the object
-      self :: PTR
-
-      status :: INT
-
-      if (.disassociated) return
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
 
 !  ============================
 !  Size-of and shape operations
@@ -260,124 +160,120 @@ contains
 
    shrink(dim1,dim2) ::: leaky, PURE
    ! Shrinks self to dimension dim1xdim2.  Contents are retained.
-      self :: PTR
+      self :: allocatable, INOUT
       dim1,dim2 :: INT, IN
 
-   ENSURE(.associated, "matrix not allocated")
-   ENSURE(dim1<=ubound(self,1), "1st dimension given is too large.")
-   ENSURE(dim2<=ubound(self,2), "2nd dimension given is too large.")
+   ENSURE(.created, "matrix not allocated")
+   ENSURE(dim1<=ubound(self,1), "dim1 is too large.")
+   ENSURE(dim2<=ubound(self,2), "dim2 is too large.")
+   ENSURE(1   ==lbound(self,1), ".dim1 lower bound must be 1")
+   ENSURE(1   ==lbound(self,2), ".dim2 lower bound must be 1")
 
-      old :: MAT{INTRINSIC}*
-      lb1,lb2,ub1,ub2 :: INT
+      new :: MAT{INTRINSIC}@
 
-      lb1 = lbound(self,1)
-      lb2 = lbound(self,2)
-      ub1 = ubound(self,1)
-      ub2 = ubound(self,2)
+      if (dim1==.dim1 AND dim2==.dim2) return
 
-      if (dim1==ub1 AND dim2==ub2) return
+      new = self(1:dim1,1:dim2)
 
-      old => self
-      nullify(self)
-      self.create(lb1,dim1,lb2,dim2)
-      self = old(lb1:dim1,lb2:dim2)
-      old.destroy
+      call move_alloc(from=new,to=self)
 
    end
 
    shrink_columns(dim2) ::: leaky, PURE
    ! Shrinks columns of self to dimension dim2. Contents are retained.
-      self :: PTR
+      self :: allocatable, INOUT
       dim2 :: INT, IN
 
-   ENSURE(.associated,"matrix not allocated")
-   ENSURE(dim2<=.dim2, "2nd dimension given is too large.")
+   ENSURE(.created,"matrix not allocated")
+   ENSURE(dim2<=.dim2, "dim2 is too large.")
+   ENSURE(1==lbound(self,1), ".dim1 lower bound must be 1")
+   ENSURE(1==lbound(self,2), ".dim2 lower bound must be 1")
 
-      old :: MAT{INTRINSIC}*
-      dim1 :: INT
+      new :: MAT{INTRINSIC}@
 
       if (dim2==.dim2) return
 
-      dim1 = .dim1
-      old => self
+      new = self(:,1:dim2)
 
-      nullify(self)
-      self.create(dim1,dim2)
-      self = old(1:dim1,1:dim2)
-
-      old.destroy
+      call move_alloc(from=new,to=self)
 
    end
 
    expand(dim1,dim2) ::: leaky, PURE
    ! Expands self to dimension dim1xdim2.  Contents are retained.
-      self :: PTR
+      self :: allocatable, INOUT
       dim1,dim2 :: INT, IN
-      old :: MAT{INTRINSIC}*
-      old_size1,old_size2 :: INT
 
-      if (.disassociated) then
-         .create(0,0)
+      new :: MAT{INTRINSIC}@
+
+      if (.destroyed) then
+
+         .create(dim1,dim2)
+
       else
-         ENSURE(dim1>=.dim1, "1st dimension given is too small")
-         ENSURE(dim2>=.dim2, "2nd dimension given is too small")
+
+         ENSURE(dim1>=ubound(self,1), "dim1 is too large.")
+         ENSURE(dim2>=ubound(self,2), "dim2 is too large.")
+         ENSURE(1   ==lbound(self,1), ".dim1 lower bound must be 1")
+         ENSURE(1   ==lbound(self,2), ".dim2 lower bound must be 1")
+
+         new.create(dim1,dim2)
+
+         new(1:.dim,1:.dim2) = self
+
+         call move_alloc(from=new,to=self)
+
       end
-
-      old      => self
-      old_size1 = old.dim1
-      old_size2 = old.dim2
-
-      nullify(self)
-      self.create(dim1,dim2)
-      self(1:old_size1,1:old_size2)=old
-
-      old.destroy
 
    end
 
    expand_columns(dim2) ::: leaky, PURE
    ! Expands the columns self to dim2.  Contents are retained.
-      self :: PTR
+      self :: allocatable, INOUT
       dim2 :: INT, IN
 
-   ENSURE( .associated, "matrix not allocated")
-   ENSURE(dim2>=.dim2, "2nd dimension given is too small")
+   ENSURE(.created,"matrix not allocated")
+   ENSURE(dim2>=.dim2, "dim2 is too small.")
+   ENSURE(1==lbound(self,1), ".dim1 lower bound must be 1")
+   ENSURE(2==lbound(self,2), ".dim2 lower bound must be 1")
 
-      dim1,old_dim2 :: INT
-      old :: MAT{INTRINSIC}*
+      new :: MAT{INTRINSIC}@
 
-      dim1     = .dim1
-      old     => self
-      old_dim2 = old.dim2
+      if (dim2==.dim2) return
 
-      nullify(self)
-      self.create(dim1,dim2)
-      self(:,1:old_dim2) = old
+      new.create(.dim1,dim2)
 
-      old.destroy
+      new(:,1:.dim2) = self
+
+      call move_alloc(from=new,to=self)
 
    end
 
    append_columns(cols) ::: leaky, PURE
    ! Append the columns "cols" onto the end of self.
-      self :: PTR
+      self :: allocatable, INOUT
       cols :: MAT{INTRINSIC}, IN
 
-      old_dim2,new_dim2 :: INT
+   ENSURE(1==lbound(cols,1), "cols.dim1 lower bound must be 1")
 
-      if (.disassociated) then
+      new :: MAT{INTRINSIC}@
 
-         .create_copy(cols)
+      if (.destroyed) then
+
+         self = cols
 
       else
 
-         ENSURE(.dim1==cols.dim1, "1st dimension wrong, cols")
+         ENSURE(.dim1==cols.dim1,  ".dim1 incompatible with cols.dim1")
+         ENSURE(1==lbound(self,1), ".dim1 lower bound must be 1")
+         ENSURE(1==lbound(self,2), ".dim2 lower bound must be 1")
 
-         old_dim2 = .dim2
-         new_dim2 = .dim2 + cols.dim2
-         .expand_columns(new_dim2)
+         new.create(.dim1,.dim2+cols.dim)
 
-         self(:,old_dim2+1:new_dim2) = cols
+         new(:,      1:.dim2) = self
+         new(:,.dim2+1:     ) = cols
+
+         call move_alloc(from=new,to=self)
 
       end
 
@@ -385,23 +281,30 @@ contains
 
    append_column(col) ::: leaky, PURE
    ! Append the column "col" onto the end of self.
-      self :: PTR
+      self :: allocatable, INOUT
       col :: VEC{INTRINSIC}, IN
 
-      new_dim2 :: INT
+   ENSURE(1==lbound(col,1), "cols.dim lower bound must be 1")
 
-      if (.disassociated) then
+      new :: MAT{INTRINSIC}@
 
-         .create(col.dim,1)
+      if (.destroyed) then
+
+         .create(.dim1,1)
          self(:,1) = col
 
       else
 
-         ENSURE(.dim1==col.dim, "2nd dimension given is too small")
+         ENSURE(.dim1==col.dim,    ".dim1 is incompatible with col.dim")
+         ENSURE(1==lbound(self,1), ".dim1 lower bound must be 1")
+         ENSURE(1==lbound(self,2), ".dim2 lower bound must be 1")
 
-         new_dim2 = .dim2 + 1
-         .expand_columns(new_dim2)
-         self(:,new_dim2) = col
+         new.create(.dim1,.dim2+1)
+
+         new(:,      1:.dim2) = self
+         new(:,.dim2+1      ) = col 
+
+         call move_alloc(from=new,to=self)
 
       end
 
@@ -409,41 +312,44 @@ contains
 
    prune_column(col) ::: leaky, PURE
    ! Prune the column "col".
-      self :: PTR
+      self :: allocatable, INOUT
       col :: INT, IN
 
-   ENSURE(.associated,"self is not created")
-   ENSURE(1 <= col AND col<=.dim2, "col is out of range")
+   ENSURE(.created,"self is not created")
+   ENSURE(1<=col AND col<=.dim2, "col is out of range")
+   ENSURE(1==lbound(self,1), ".dim1 lower bound must be 1")
+   ENSURE(1==lbound(self,2), ".dim2 lower bound must be 1")
 
-      dim2 :: INT
+      new :: MAT{INTRINSIC}@
 
-      dim2 = .dim2 -1
-      self(:,col:dim2) =  self(:,col+1:)
-      self.shrink_columns(dim2)
+      new.create(.dim1,.dim2-1)
+
+      new(:,  1:col-1) =  self(:,    1:col-1)
+      new(:,col:     ) =  self(:,col+1:     )
+
+      call move_alloc(from=new,to=self)
 
    end
 
-
    expand_rows(dim1) ::: leaky, PURE
    ! Expands the rows of self to dim1. Contents are retained.
-      self :: PTR
+      self :: allocatable, INOUT
       dim1 :: INT, IN
 
-   ENSURE( .associated, "matrix not allocated")
-   ENSURE(dim1>=.dim1, "1st dimension given is too small")
+   ENSURE( .created, "matrix not allocated")
+   ENSURE(dim1>=.dim1, "given dim1 is too small")
+   ENSURE(1==lbound(self,1), ".dim1 lower bound must be 1")
+   ENSURE(1==lbound(self,2), ".dim2 lower bound must be 1")
 
-      dim2,old_dim1 :: INT
-      old :: MAT{INTRINSIC}*
+      new :: MAT{INTRINSIC}@
 
-      dim2     = .dim2
-      old     => self
-      old_dim1 = old.dim1
+      if (dim1==.dim1) return
 
-      nullify(self)
-      self.create(dim1,dim2)
-      self(1:old_dim1,:) = old
+      new.create(dim1,.dim2)
 
-      old.destroy
+      new(1:.dim1,:) = self
+
+      call move_alloc(from=new,to=self)
 
    end
 
@@ -930,7 +836,7 @@ contains
    ! or else 0 is returned if there was no match.
       self :: IN
       c :: VEC{INTRINSIC}, IN
-      res :: VEC{INT}*
+      res :: VEC{INT}@
 
    ENSURE(c.dim==.dim1,"incompatible column size")
 
@@ -952,7 +858,7 @@ contains
       self :: IN
       c :: VEC{INTRINSIC}, IN
       eps :: REAL, optional, IN
-      res :: VEC{INT}*
+      res :: VEC{INT}@
 
    ENSURE(c.dim==.dim1,"incompatible column size")
 
@@ -1022,13 +928,13 @@ contains
    ! unique. The elements of array "col" are set to the indices of the unique
    ! columns.
       self :: IN
-      col :: VEC{INT}*
+      col :: VEC{INT}@
 
    ENSURE(.dim2>0,"must have at least one column")
    ENSURE(col.dim==.dim2,"wrong size for col")
 
       n,i :: INT
-      is_unique :: VEC{BIN}*
+      is_unique :: VEC{BIN}@
 
       is_unique.create(.dim2)
       .unique_columns(is_unique)
@@ -1109,7 +1015,7 @@ contains
    ! Reverse the order of the columns of self.
       self :: INOUT
 
-      tmp :: VEC{INTRINSIC}*
+      tmp :: VEC{INTRINSIC}@
       n,n_col :: INT
 
       n_col = .dim2
@@ -1304,13 +1210,13 @@ contains
    ! unique. The elements of array "row" are set to the indices of the unique
    ! rows.
       self :: IN
-      row :: VEC{INT}*
+      row :: VEC{INT}@
 
    ENSURE(.dim1>0,"must have at least one row")
    ENSURE(row.dim==.dim1,"wrong size for row")
 
       n,i :: INT
-      is_unique :: VEC{BIN}*
+      is_unique :: VEC{BIN}@
 
       is_unique.create(.dim1)
       .unique_rows(is_unique)
@@ -1429,29 +1335,29 @@ contains
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1<4,"only works for up to size 3 matrices")
 
-      adj :: MAT{INTRINSIC}*
+      adj :: MAT{INTRINSIC}@
       c :: INT
 
       select case (.dim1)
 
-         case (1)
-            res = self(1,1)
+      case (1)
+         res = self(1,1)
 
-         case (2)
-            res = self(1,1)*self(2,2) - self(2,1)*self(1,2)
+      case (2)
+         res = self(1,1)*self(2,2) - self(2,1)*self(1,2)
 
-         case (3)
-            res = self(1,1)*(self(2,2)*self(3,3) - self(2,3)*self(3,2)) &
-                - self(1,2)*(self(2,1)*self(3,3) - self(2,3)*self(3,1)) &
-                + self(1,3)*(self(2,1)*self(3,2) - self(2,2)*self(3,1))
+      case (3)
+         res = self(1,1)*(self(2,2)*self(3,3) - self(2,3)*self(3,2)) &
+             - self(1,2)*(self(2,1)*self(3,3) - self(2,3)*self(3,1)) &
+             + self(1,3)*(self(2,1)*self(3,2) - self(2,2)*self(3,1))
 
-         case default
-            res = ZERO
-            do c = 1,.dim
-               adj => .adjugate(c,1)
-               res =  res +  self(c,1)*adj.determinant
-               adj.destroy
-            end
+      case default
+         res = ZERO
+         do c = 1,.dim
+            adj = .adjugate(c,1)
+            res = res +  self(c,1)*adj.determinant
+            adj.destroy
+         end
 
       end
 
@@ -1461,7 +1367,7 @@ contains
    ! Return the adjugate of a matrix
       self :: IN
       i,j :: INT, IN
-      res :: MAT{INTRINSIC}*
+      res :: MAT{INTRINSIC}@
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1>1,"dimension must be greater than 1")
@@ -1504,7 +1410,7 @@ contains
    ENSURE(.dim1==l.dim,"wrong size, r")
    ENSURE(.dim2==r.dim,"wrong size, r")
 
-      w :: VEC{RES?}*
+      w :: VEC{RES?}@
 
       w.create(l.dim)
       w.to_product_of(self,r)
@@ -1524,7 +1430,7 @@ contains
    ENSURE(.dim2==v.dim, "incompatible arrays sizes")
 
       i,j :: INT
-      w :: VEC{INTRINSIC}*
+      w :: VEC{INTRINSIC}@
       val :: INTRINSIC
 
       w.create(.dim2)
@@ -3717,7 +3623,7 @@ contains
       a,b,c :: MAT{INTRINSIC}, IN
       res :: INTRINSIC
 
-      W1,W2 :: MAT{INTRINSIC}*
+      W1,W2 :: MAT{INTRINSIC}@
 
       W2.create(a.dim1,c.dim2)
       W1.create(b.dim1,c.dim2)
@@ -3743,7 +3649,7 @@ contains
       a,b,c,d,e :: MAT{INTRINSIC}, IN
       res :: INTRINSIC
 
-      W1,W2 :: MAT{INTRINSIC}*
+      W1,W2 :: MAT{INTRINSIC}@
 
       W1.create(d.dim1,e.dim2)
       W1.to_product_of(d,e)     ! d*e
@@ -3751,22 +3657,22 @@ contains
       W2.create(c.dim1,e.dim2)
       W2.to_product_of(c,W1)    ! c*d*e
 
-      W1.destroy; W1 => W2
-      W2.create(b.dim1,e.dim2)
-      W2.to_product_of(b,W1)    ! b*c*d*e
+      W1.destroy
+      W1.create(b.dim1,e.dim2)
+      W1.to_product_of(b,W2)    ! b*c*d*e
 
-      W1.destroy; W1 => W2
+      W2.destroy
       W2.create(a.dim1,e.dim2)
       W2.to_product_of(a,W1)    ! a*b*c*d*e
 
-      W1.destroy; W1 => W2
-      W2.create( .dim1,e.dim2)
-      W2.to_product_of(self,W1) ! self*a*b*c*d*e
-
-      res = W2.trace
-
-      W2.destroy
       W1.destroy
+      W1.create( .dim1,e.dim2)
+      W1.to_product_of(self,W2) ! self*a*b*c*d*e
+
+      res = W1.trace
+
+      W1.destroy
+      W2.destroy
 
    end
 
@@ -3783,7 +3689,7 @@ contains
    ENSURE(   .is_square,"Non-square self matrix")
    ENSURE(.dim2==V.dim1,"incompatible shapes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(.dim1,V.dim2)
       W.to_product_of(self,V)
@@ -3801,7 +3707,7 @@ contains
    ENSURE(.is_square,"non-square self matrix")
    ENSURE(.dim1==V.dim,"incompatible shapes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
       W.create(V.dim,V.dim)
 
       W.to_product_with_diagonal(self,V)
@@ -3821,7 +3727,7 @@ contains
    ENSURE(.dim2==R.dim2,"incompatible sizes")
    ENSURE(.dim1==L.dim2,"incompatible sizes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(.dim1,R.dim2)
       W.to_product_of(self,R)
@@ -3838,7 +3744,7 @@ contains
 
    ENSURE(.dim1==L.dim AND .dim2==R.dim,"incompatible sizes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(L.dim,R.dim)
       W.to_product_with_diagonal(self,R)
@@ -3859,7 +3765,7 @@ contains
    ENSURE(V.dim1==   .dim2,"wrong shapes")
    ENSURE(V.dim2==new.dim2,"wrong shapes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(.dim1,V.dim2)
       W.to_product_of(self,V)
@@ -3926,7 +3832,7 @@ contains
    ENSURE(new.dim2==R.dim2,"incompatible sizes")
    ENSURE(new.dim1==L.dim2,"incompatible sizes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(.dim1,R.dim2)
       W.to_product_of(self,R)
@@ -3947,7 +3853,7 @@ contains
    ENSURE(new.dim1==L.dim,"incompatible new and L")
    ENSURE(new.dim2==R.dim,"incompatible new and R")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(L.dim,R.dim)
       W.to_product_with_diagonal(self,R)
@@ -3964,7 +3870,7 @@ contains
 
    ENSURE(.is_square,"non-square matrix")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(V.dim1,.dim2)
       W.to_product_of(V,self)
@@ -3985,7 +3891,7 @@ contains
    ENSURE(V.dim2==.dim1,"incompatible sizes")
    ENSURE(V.dim1==new.dim1,"incompatible sizes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(V.dim1,.dim2)
       W.to_product_of(V,self)
@@ -4052,7 +3958,7 @@ contains
    ENSURE(new.dim2==R.dim1,"incompatible sizes")
    ENSURE(new.dim1==L.dim1,"incompatible sizes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
 
       W.create(.dim1,R.dim1)
       W.to_product_of(self,R,TRANSPOSE_B=TRUE)
@@ -4070,7 +3976,7 @@ contains
    ENSURE(V.is_square,"Non-square matrix")
    ENSURE(.dim1==V.dim1,"wrong shapes")
 
-      V1,W :: MAT{INTRINSIC}*
+      V1,W :: MAT{INTRINSIC}@
       n :: INT
 
       n = .dim1
@@ -4666,22 +4572,27 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-     old,new :: VEC{INTRINSIC}*
+     old,new :: VEC{INTRINSIC}@
      fac :: INTRINSIC
      n,o :: INT
-     norm,norm_sq :: REAL
+     norm,norm2 :: REAL
 
      do n = 1,.dim2
+
         new => self(:,n)
+
         do o = 1,n-1
            old => self(:,o)
            fac = S.dot(old,new)
            new = new - fac*old
         end
-        norm_sq = S.dot(new,new)
-        norm = dsqrt(norm_sq)
+
+        norm2     = S.dot(new,new)
+        norm      = sqrt(norm_sq)
         scales(n) = norm
+
         if(norm_sq>MAT_LINEAR_DEPENDENCE_TOL) new = new/norm
+
      end
 
    end
@@ -4701,8 +4612,8 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-      cols :: MAT{INTRINSIC}*
-      old,new :: VEC{INTRINSIC}*
+      cols :: MAT{INTRINSIC}@
+      old,new :: VEC{INTRINSIC}@
       fac :: INTRINSIC
       n,o :: INT
       test,norm,norm0 :: REAL
@@ -4712,28 +4623,35 @@ contains
 
       res = FALSE
 
-      cols.create_copy(self)
+      cols = self
 
       do n = 1,.dim2
-        new => cols(:,n)
-        norm0 = S.dot(new,new)
-        ENSURE(norm0>=ZERO,"length of column "//trim(n.to_str)//"is negative")
-        norm0 = sqrt(S.dot(new,new))
-        do o = 1,n-1
-           old => cols(:,o)
-           fac = S.dot(old,new)
-           new = new - fac*old
-        end
-        norm = S.dot(new,new)
-        ENSURE(norm>=ZERO,"length of column "//trim(n.to_str)//"is negative")
-        norm = sqrt(norm)
-        if ((norm/norm0)<test) then
-           res = TRUE
-           if (present(col)) col = n
-           return
-        end
-        norm = ONE/norm
-        new = new*norm
+
+         new   => cols(:,n)
+         norm0 =  S.dot(new,new)
+         ENSURE(norm0>=ZERO,"length of column "//trim(n.to_str)//"is negative")
+         norm0 = sqrt(S.dot(new,new))
+
+         do o = 1,n-1
+            old => cols(:,o)
+            fac = S.dot(old,new)
+            new = new - fac*old
+         end
+
+         norm = S.dot(new,new)
+         ENSURE(norm>=ZERO,"length of column "//trim(n.to_str)//"is negative")
+         norm = sqrt(norm)
+
+         ! Linearly dependent
+         if ((norm/norm0)<test) then
+            res = TRUE
+            if (present(col)) col = n
+            return
+         end
+
+         norm = ONE/norm
+         new  = new*norm
+
       end
 
       cols.destroy
@@ -4750,7 +4668,7 @@ contains
 
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-     old,new :: VEC{INTRINSIC}*
+     old,new :: VEC{INTRINSIC}@
      fac :: INTRINSIC
      n,o :: INT
      norm :: REAL
@@ -4758,16 +4676,20 @@ contains
      if (present(scale)) scale = ONE
 
      do n = 1,.dim2
+
         new => self(:,n)
+
         do o = 1,n-1
            old => self(:,o)
            fac = dot_product(old,new)
            new = new - fac*old
         end
+
         norm = real(dot_product(new,new),kind=REAL_KIND)
         ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
         norm = ONE/sqrt(norm)
-        new = new*norm
+
+        new  = new*norm
 
         if (present(scale)) scale = scale*norm
 
@@ -4783,54 +4705,42 @@ contains
       self :: target
       S :: MAT{REAL}, IN
       scale :: REAL, optional
+
    ENSURE(S.is_square,"S must be square matrix")
    ENSURE(S.dim1==.dim1,"incompatible metric S")
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero,"self is zero matrix")
 
-      old,new :: VEC{INTRINSIC}*
+      old,new :: VEC{INTRINSIC}@
       fac :: INTRINSIC
       n,o :: INT
       norm :: REAL
-      ! T :: VEC{REAL}*
+      ! T :: VEC{REAL}@
       ! dim,j,k :: INT
       ! proj :: REAL
 
       if (present(scale)) scale = ONE
+
       do n = 1,.dim2
-        new => self(:,n)
-        do o = 1,n-1
-           old => self(:,o)
-           fac = S.dot(old,new)
-           new = new - fac*old
-        end
-        norm = real(S.dot(new,new),kind=REAL_KIND)
-        ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
-        norm = ONE/sqrt(norm)
-        new = new*norm
-        if (present(scale)) scale = scale*norm
+
+         new => self(:,n)
+
+         do o = 1,n-1
+            old => self(:,o)
+            fac = S.dot(old,new)
+            new = new - fac*old
+         end
+
+         norm = real(S.dot(new,new),kind=REAL_KIND)
+         ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
+         norm = ONE/sqrt(norm)
+
+         new  = new*norm
+
+         if (present(scale)) scale = scale*norm
+
       end
-      ! This is old code which is not so clean, kept cos it may be more efficient
-!    dim = .dim1
-!    T.create(dim)
-!    do n=1,dim
-!      do j=1,dim
-!        T(j) = dot_product(self(:j,n),S(:j,j))
-!        T(1:j-1) = T(1:j-1) + self(j,n) * S(:j-1,j)
-!      end
-!      do k=1,n-1
-!        proj = - dot_product(self(:,k),T)
-!        self(:,n) = self(:,n) + proj * self(:,k)
-!      end
-!      do j=1,dim
-!        T(j) = dot_product(self(:j,n), S(:j,j))
-!        T(:j-1) = T(:j-1) + self(j,n) * S(:j-1,j)
-!      end
-!      norm = dot_product(T,self(:,n))
-!      ENSURE(norm>TOL(10),"linear dependence in vector " // n.to_str)
-!      self(:,n) = self(:,n) / sqrt(norm)
-!    end
-!    T.destroy
+
    end
 
    schmidt_orthonormalise(S,from,to)
@@ -4849,22 +4759,70 @@ contains
    ENSURE(from>to,"from must be greater than to")
    ENSURE(from<=.dim2,"from to large")
 
-      old,new :: VEC{INTRINSIC}*
+      old,new :: VEC{INTRINSIC}@
       fac :: INTRINSIC
       n,o :: INT
       norm :: REAL
 
       do n = from,.dim2
-        new => self(:,n)
-        do o = 1,to
-           old => self(:,o)
-           fac = S.dot(old,new)
-           new = new - fac*old
-        end
-        norm = real(S.dot(new,new),kind=REAL_KIND)
-        ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
-        norm = ONE/sqrt(norm)
-        new = new*norm
+
+         new => self(:,n)
+
+         do o = 1,to
+            old => self(:,o)
+            fac = S.dot(old,new)
+            new = new - fac*old
+         end
+
+         norm = real(S.dot(new,new),kind=REAL_KIND)
+         ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
+         norm = ONE/sqrt(norm)
+
+         new  = new*norm
+
+      end
+
+   end
+
+   schmidt_orthonormalise(S,scale)
+   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
+   ! metric. If "scale" is present, it is set to the product of the
+   ! normalisation factors used to normalise each column after the Schmidt
+   ! procedure.
+      self :: target
+      S :: MAT{REAL}, IN
+      scale :: REAL, optional
+
+   ENSURE(S.is_square,"S must be square matrix")
+   ENSURE(S.dim1==.dim1,"incompatible metric S")
+   ENSURE(NOT S.is_zero,"S is zero matrix")
+   ENSURE(NOT .is_zero,"self is zero matrix")
+
+      old,new :: VEC{INTRINSIC}@
+      fac :: INTRINSIC
+      n,o :: INT
+      norm :: REAL
+
+      if (present(scale)) scale = ONE
+
+      do n = 1,.dim2
+
+         new => self(:,n)
+
+         do o = 1,n-1
+            old => self(:,o)
+            fac = S.dot(old,new)
+            new = new - fac*old
+         end
+
+         norm = S.dot(new,new)
+         ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
+         norm = ONE/sqrt(norm)
+
+         new  = new*norm
+
+         if (present(scale)) scale = scale*norm
+
       end
 
    end
@@ -4880,21 +4838,26 @@ contains
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(NOT .is_zero, "self is zero matrix")
 
-      new,old :: VEC{INTRINSIC}*
+      new,old :: VEC{INTRINSIC}@
       fac :: INTRINSIC
       n,o :: INT
       norm :: REAL
 
       do n = .dim2,1,-1
-        new => self(:,n)
-        do o = .dim2,n+1,-1
-           old => self(:,o)
-           fac = S.dot(old,new)
-           new = new - fac*old
-        end
-        norm = real(S.dot(new,new),kind=REAL_KIND)
-        ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
-        new = new/sqrt(norm)
+
+         new => self(:,n)
+
+         do o = .dim2,n+1,-1
+            old => self(:,o)
+            fac = S.dot(old,new)
+            new = new - fac*old
+         end
+
+         norm = real(S.dot(new,new),kind=REAL_KIND)
+         ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
+
+         new  = new/sqrt(norm)
+
       end
 
    end
@@ -4905,21 +4868,26 @@ contains
 
    ENSURE(.dim1>=.dim2,"more vectors than dimension of vector space")
 
-      new,old :: VEC{INTRINSIC}*
+      new,old :: VEC{INTRINSIC}@
       fac :: INTRINSIC
       norm :: REAL
       n,k :: INT
 
       do n = .dim2,1,-1
+
          new => self(:,n)
+
          do k = n-1,1,-1
             old => self(:,k)
             fac = dot_product(old,new)
             new = new - fac*old
          end
+
          norm = CAST(dot_product(new,new))
          ENSURE(norm>TOL(10),"linear dependence, vector "//n.to_str)
-         new = new/sqrt(norm)
+
+         new  = new/sqrt(norm)
+
       end
 
    end
@@ -4927,6 +4895,7 @@ contains
    symmetrically_orthonormalise(S)
    ! Symmetrically orthonormalise the column vectors in "self" using
    ! "S" as the metric, which must be real and positive definite.
+      self :: INOUT
       S :: MAT{REAL}, IN
 
    ENSURE(S.is_square,"S must be square matrix")
@@ -4934,7 +4903,7 @@ contains
    ENSURE(NOT .is_zero,"self is zero matrix")
    ENSURE(NOT S.is_zero,"S is zero matrix")
 
-      SS,SI :: MAT{INTRINSIC}*
+      SS,SI :: MAT{INTRINSIC}@
 
       ! Get inverse sqrt "S" in self basis
       SI.create(.dim2,.dim2)
@@ -4959,12 +4928,13 @@ contains
    ! elements in each column occur along the diagonal. If "permutation" is
    ! present, it is the array which achieves this ordering, i.e. at the end of
    ! the routine, what is done is: self = self(:,permutation).
+      self :: INOUT
       permutation :: VEC{INT}, optional
 
    ENSURE(.is_square,"not square")
 
-      perm :: VEC{INT}*
-      mask :: MAT{BIN}*
+      perm :: VEC{INT}@
+      mask :: MAT{BIN}@
       i,n  :: INT
       loc :: VEC{INT}(2)
 
@@ -4994,68 +4964,6 @@ contains
 
    end
 
-   schmidt_orthonormalise(S,scale)
-   ! Schmidt orthonormalise the column vectors in "self" using "S" as the
-   ! metric. If "scale" is present, it is set to the product of the
-   ! normalisation factors used to normalise each column after the Schmidt
-   ! procedure.
-      self :: target
-      S :: MAT{REAL}, IN
-      scale :: REAL, optional
-
-   ENSURE(S.is_square,"S must be square matrix")
-   ENSURE(S.dim1==.dim1,"incompatible metric S")
-   ENSURE(NOT S.is_zero,"S is zero matrix")
-   ENSURE(NOT .is_zero,"self is zero matrix")
-
-      old,new :: VEC{INTRINSIC}*
-      fac :: INTRINSIC
-      n,o :: INT
-      norm :: REAL
-      ! T :: VEC{REAL}*
-      ! dim,j,k :: INT
-      ! proj :: REAL
-
-      if (present(scale)) scale = ONE
-
-      do n = 1,.dim2
-        new => self(:,n)
-        do o = 1,n-1
-           old => self(:,o)
-           fac = S.dot(old,new)
-           new = new - fac*old
-        end
-        norm = S.dot(new,new)
-        ENSURE(norm>MAT_LINEAR_DEPENDENCE_TOL,"linear dependence, vector "//n.to_str)
-        norm = ONE/sqrt(norm)
-        new = new*norm
-        if (present(scale)) scale = scale*norm
-      end
-
-      ! This is old code which is not so clean, kept cos it may be more efficient
-!    dim = .dim1
-!    T.create(dim)
-!    do n=1,dim
-!      do j=1,dim
-!        T(j) = dot_product(self(:j,n),S(:j,j))
-!        T(1:j-1) = T(1:j-1) + self(j,n) * S(:j-1,j)
-!      end
-!      do k=1,n-1
-!        proj = - dot_product(self(:,k),T)
-!        self(:,n) = self(:,n) + proj * self(:,k)
-!      end
-!      do j=1,dim
-!        T(j) = dot_product(self(:j,n), S(:j,j))
-!        T(:j-1) = T(:j-1) + self(j,n) * S(:j-1,j)
-!      end
-!      norm = dot_product(T,self(:,n))
-!      ENSURE(norm>TOL(10),"linear dependence in vector " // n.to_str)
-!      self(:,n) = self(:,n) / sqrt(norm)
-!    end
-!    T.destroy
-
-   end
-
 
 !  ============================================
 !  Matrix functions: inverses, and exponentials
@@ -5074,9 +4982,9 @@ contains
    ENSURE(S.is_square,"S not square")
    ENSURE(.is_same_shape_as(S),"wrong shape")
 
-      d :: VEC{INTRINSIC}*
-      U,W,X :: MAT{INTRINSIC}*
-      perm :: VEC{INT}*
+      d :: VEC{INTRINSIC}@
+      U,W,X :: MAT{INTRINSIC}@
+      perm :: VEC{INT}@
       max_iter,n,k :: INT
       eps :: REAL
 
@@ -5151,7 +5059,7 @@ contains
    ENSURE(S.is_square,"S not square")
    ENSURE(.is_same_shape_as(S),"wrong shape")
 
-      W,X :: MAT{INTRINSIC}*
+      W,X :: MAT{INTRINSIC}@
       max_iter,n,k :: INT
       eps,fac,prefac :: REAL
 
@@ -5224,7 +5132,7 @@ contains
    ENSURE(U.is_square,"U not square")
    ENSURE(.is_same_shape_as(U),"wrong shape")
 
-      W,V :: MAT{INTRINSIC}*
+      W,V :: MAT{INTRINSIC}@
       n,k :: INT
       eps,fac,error :: REAL
 
@@ -5265,16 +5173,16 @@ contains
    ! WARNING: Untested in TONTO and looks wrong.
       self :: IN
       U :: MAT{INTRINSIC}, OUT
-      evec :: MAT{INTRINSIC}*, optional, OUT
-      eval :: VEC{REAL}*, optional, OUT
+      evec :: MAT{INTRINSIC}@, target, optional, OUT
+      eval :: VEC{REAL}@, optional, OUT
 
    ENSURE(.is_square,"self is a non-square matrix")
    ENSURE(.is_same_shape_as(U),"incompatible shapes")
 
-      W :: MAT{INTRINSIC}*
+      W :: MAT{INTRINSIC}@
       dim,k :: INT
       e,e2,cs,sn :: REAL
-      v_k :: MAT{INTRINSIC}*
+      v_k :: MAT{INTRINSIC}@
 
       dim = .dim1
 
@@ -5300,7 +5208,11 @@ contains
       U.EIGEN?(eval,evec) 
 
       U = ZERO
-      do k = 1,dim            ! do the exponential ... loop over eigenvalues ...
+
+      ! Do the exponential ... 
+      ! Loop over eigenvalues ...
+      do k = 1,dim            
+
          e2 = eval(k)
          if (e2<0)  then
             e = sqrt(-e2); cs = cos(e);  sn = sin(e)/e;
@@ -5309,10 +5221,12 @@ contains
          else
             cs = ONE    ; sn = ONE
          end
+
          v_k => evec(1:dim,k:k)
          W.to_product_of(v_k,v_k,transpose_b=TRUE) ! V V^\dag part
          U.plus_scaled_product_of(W,self,sn)       ! sin part
          U.plus_scaled(W,cs)                       ! cos part
+
       end
 
       if (NOT present(eval)) eval.destroy
@@ -5435,7 +5349,7 @@ contains
    alpha_alpha result (res)
    ! return the alpha-alpha sector of the matrix
       self :: target
-      res :: MAT{INTRINSIC}*
+      res :: MAT{INTRINSIC}@
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1.is_even,"not even-dimensioned")
@@ -5450,7 +5364,7 @@ contains
    beta_alpha result (res)
    ! return the beta-alpha sector of the matrix
       self :: target
-      res :: MAT{INTRINSIC}*
+      res :: MAT{INTRINSIC}@
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1.is_even,"not even-dimensioned")
@@ -5465,7 +5379,7 @@ contains
    alpha_beta result (res)
    ! return the alpha-beta sector of the matrix
       self :: target
-      res :: MAT{INTRINSIC}*
+      res :: MAT{INTRINSIC}@
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1.is_even,"not even-dimensioned")
@@ -5480,7 +5394,7 @@ contains
    beta_beta result (res)
    ! return the beta-beta sector of the matrix
       self :: target
-      res :: MAT{INTRINSIC}*
+      res :: MAT{INTRINSIC}@
 
    ENSURE(.is_square,"non-square matrix")
    ENSURE(.dim1.is_even,"not even-dimensioned")
@@ -5857,7 +5771,7 @@ contains
    ENSURE(X.is_square,"X is non-square matrix")
 
       offset, ns,nx,nb, i,j,ix,ib,jx,jb :: INT
-      list :: VEC{INT}*
+      list :: VEC{INT}@
 
       ! Convenient dimensions
       ns = block_dim

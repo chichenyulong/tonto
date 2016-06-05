@@ -83,185 +83,12 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==================
-!  Create and destroy
-!  ==================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky, recursive
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of the molecule
-
-      nullify(.atom)
-      nullify(.atom_group)
-
-      nullify(.basis)
-      nullify(.slaterbasis)
-      nullify(.coppensbasis)
-
-      nullify(.plot_grid)
-      nullify(.interpolator)
-      nullify(.isosurface)
-
-      nullify(.becke_grid)
-
-      nullify(.crystal)
-      nullify(.cluster)
-      nullify(.cif)
-      nullify(.pointgroup)
-
-      nullify(.atom_for_shell)
-      nullify(.atom_shell_for_shell)
-      nullify(.first_shell_for_atom)
-      nullify(.last_shell_for_atom)
-      nullify(.basis_shell_for_shell)
-      nullify(.first_basis_fn_for_shell)
-      nullify(.last_basis_fn_for_shell)
-      nullify(.angular_moment_for_shell)
-      nullify(.first_basis_fn_for_atom)
-      nullify(.last_basis_fn_for_atom)
-      nullify(.precomputed_basis_shellpair)
-      nullify(.max_I)
-      nullify(.overlapping_atoms)
-
-      nullify(.scfdata)
-
-      nullify(.molecular_orbitals)
-      nullify(.density_matrix)
-      nullify(.old_density_matrix)
-      nullify(.delta_density_matrix)
-      nullify(.natural_orbitals)
-      nullify(.overlap_matrix)
-      nullify(.overlap_eigenvectors)
-      nullify(.overlap_eigenvalues)
-      nullify(.max_S)
-      nullify(.kinetic_energy_matrix)
-      nullify(.nuclear_attraction_matrix)
-      nullify(.core_matrix)
-      nullify(.fock_matrix)
-      nullify(.fock_2e_matrix)
-      nullify(.constraint_matrix)
-
-      nullify(.roby)
-      nullify(.saved)
-      nullify(.localiser)
-
-      nullify(.U_electric_dipole)
-      nullify(.dipole_polarisability)
-      nullify(.dipole_hyperpolarisability)
-      nullify(.U2_electric_dipole)
-
-      nullify(.force_constants)
-      nullify(.normal_mode_eigenvectors)
-      nullify(.normal_mode_eigenvalues)
-      nullify(.phi3_force_constants)
-      nullify(.phi4_force_constants)
-
-   end
-
-   destroy_ptr_part ::: recursive, leaky
-   ! Destroy the pointer parts of a molecule object
-
-      ! Saved molecule
-      .saved.:destroy
-
-      ! Atoms (nullify pointed-to atoms before)
-      .atom.destroy
-
-      ! Atom_groups
-      .:destroy_atom_group
-
-      ! Destroy bases and pointed
-      .basis.destroy
-      .slaterbasis.destroy
-      .coppensbasis.destroy
-
-      ! Grids, interpolators & plots
-      .plot_grid.destroy
-      .interpolator.destroy
-      .isosurface.destroy
-      .becke_grid.destroy
-
-      ! Crystals and clusters
-      .crystal.destroy
-      .cluster.destroy
-      .cif.destroy
-      .pointgroup.destroy
-
-      ! Basis set & integral info arrays
-      .atom_for_shell.destroy
-      .atom_shell_for_shell.destroy
-      .first_shell_for_atom.destroy
-      .last_shell_for_atom.destroy
-      .basis_shell_for_shell.destroy
-      .first_basis_fn_for_shell.destroy
-      .last_basis_fn_for_shell.destroy
-      .angular_moment_for_shell.destroy
-      .first_basis_fn_for_atom.destroy
-      .last_basis_fn_for_atom.destroy
-      .precomputed_basis_shellpair.destroy
-      .max_I.destroy
-      .overlapping_atoms.destroy
-      .overlapping_atoms_for_atom.destroy
-
-      ! SCF data
-      .scfdata.destroy
-
-      ! SCF info
-      .orbital_energies.destroy
-      .molecular_orbitals.destroy
-      .density_matrix.destroy
-      .old_density_matrix.destroy
-      .delta_density_matrix.destroy
-      .natural_orbitals.destroy
-      .occupation_numbers.destroy
-      .overlap_matrix.destroy
-      .overlap_eigenvectors.destroy
-      .overlap_eigenvalues.destroy
-      .max_S.destroy
-      .kinetic_energy_matrix.destroy
-      .nuclear_attraction_matrix.destroy
-
-      ! SCF intermediates
-      .core_matrix.destroy
-      .fock_matrix.destroy
-      .fock_2e_matrix.destroy
-      .constraint_matrix.destroy
-
-      ! Bond analysis
-      .roby.destroy
-
-      ! Localised MO's
-      .localiser.destroy
-
-      ! CPHF and response properties
-      .U_electric_dipole.destroy
-      .dipole_polarisability.destroy
-      .dipole_hyperpolarisability.destroy
-      .U2_electric_dipole.destroy
-
-      ! Force constants
-      .force_constants.destroy
-      .normal_mode_eigenvectors.destroy
-      .normal_mode_eigenvalues.destroy
-      .phi3_force_constants.destroy
-      .phi4_force_constants.destroy
-
-   end
 
    destroy_atom_group ::: recursive, leaky
    ! Destroy the pointer parts of a molecule object
 
       g :: INT
-      mol :: MOLECULE*
+      mol :: MOLECULE@
 
       if (.atom_group.disassociated) return
 
@@ -321,19 +148,11 @@ contains
 
    end
 
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
    save ::: leaky
    ! Save everything about "self" in ".saved".
-      self :: PTR
+      self :: allocatable, INOUT
 
-      saved :: MOLECULE*
+      saved :: MOLECULE@
 
       ! Save self
       saved => self
@@ -351,11 +170,11 @@ contains
    ! destroy everything about the current molecule in "self".
    ! WARNING: be careful when setting up self, make sure none of its pointer
    ! parts refer to .saved information.
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.saved.associated,"no previous settings")
 
-      saved :: MOLECULE*
+      saved :: MOLECULE@
 
       ! Save .saved
       saved => .saved
@@ -366,86 +185,6 @@ contains
 
       ! Restore self
       self => saved
-
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(mol) ::: leaky
-   ! Set self to be a copy of "mol"
-      mol :: MOLECULE, IN
-
-      ! Copy all non-pointer fields
-      self = mol
-
-      ! Create a copy of all pointer fields
-      .:nullify_ptr_part
-
-      if (mol.atom.associated)                       .atom.create_copy(mol.atom)
-
-      if (mol.basis.associated)                      .basis.create_copy(mol.basis)
-      if (mol.slaterbasis.associated)                .slaterbasis.create_copy(mol.slaterbasis)
-      if (mol.coppensbasis.associated)               .coppensbasis.create_copy(mol.coppensbasis)
-
-      if (mol.plot_grid.associated)                  .plot_grid.create_copy(mol.plot_grid)
-      if (mol.interpolator.associated)               .interpolator.create_copy(mol.interpolator)
-      if (mol.isosurface.associated)                 .isosurface.create_copy(mol.isosurface)
-
-      if (mol.becke_grid.associated)                 .becke_grid.create_copy(mol.becke_grid)
-
-      if (mol.crystal.associated)                    .crystal.create_copy(mol.crystal)
-      if (mol.cluster.associated)                    .cluster.create_copy(mol.cluster)
-      if (mol.cif.associated)                        .cif.create_copy(mol.cif)
-      if (mol.pointgroup.associated)                 .pointgroup.create_copy(mol.pointgroup)
-
-      if (mol.saved.:created)                     .saved.:create_copy(mol.saved)
-
-      if (mol.atom_for_shell.associated)             .atom_for_shell.create_copy(mol.atom_for_shell)
-      if (mol.atom_shell_for_shell.associated)       .atom_shell_for_shell.create_copy(mol.atom_shell_for_shell)
-      if (mol.first_shell_for_atom.associated)       .first_shell_for_atom.create_copy(mol.first_shell_for_atom)
-      if (mol.last_shell_for_atom.associated)        .last_shell_for_atom.create_copy(mol.last_shell_for_atom)
-      if (mol.first_basis_fn_for_shell.associated)   .first_basis_fn_for_shell.create_copy(mol.first_basis_fn_for_shell)
-      if (mol.last_basis_fn_for_shell.associated)    .last_basis_fn_for_shell.create_copy(mol.last_basis_fn_for_shell)
-      if (mol.angular_moment_for_shell.associated)   .angular_moment_for_shell.create_copy(mol.angular_moment_for_shell)
-      if (mol.overlapping_atoms.associated)          .overlapping_atoms.create_copy(mol.overlapping_atoms)
-      if (mol.first_basis_fn_for_atom.associated)    .first_basis_fn_for_atom.create_copy(mol.first_basis_fn_for_atom)
-      if (mol.last_basis_fn_for_atom.associated)     .last_basis_fn_for_atom.create_copy(mol.last_basis_fn_for_atom)
-
-      if (mol.scfdata.associated)                    .scfdata.create_copy(mol.scfdata)
-
-      if (mol.molecular_orbitals.associated)         .molecular_orbitals.create_copy(mol.molecular_orbitals)
-      if (mol.density_matrix.associated)             .density_matrix.create_copy(mol.density_matrix)
-      if (mol.old_density_matrix.associated)         .old_density_matrix.create_copy(mol.old_density_matrix)
-      if (mol.delta_density_matrix.associated)       .delta_density_matrix.create_copy(mol.delta_density_matrix)
-      if (mol.natural_orbitals.associated)           .natural_orbitals.create_copy(mol.natural_orbitals)
-      if (mol.overlap_matrix.associated)             .overlap_matrix.create_copy(mol.overlap_matrix)
-      if (mol.overlap_eigenvectors.associated)       .overlap_eigenvectors.create_copy(mol.overlap_eigenvectors)
-      if (mol.overlap_eigenvalues.associated)        .overlap_eigenvalues.create_copy(mol.overlap_eigenvalues)
-      if (mol.max_S.associated)                      .max_S.create_copy(mol.max_S)
-      if (mol.kinetic_energy_matrix.associated)      .kinetic_energy_matrix.create_copy(mol.kinetic_energy_matrix)
-      if (mol.nuclear_attraction_matrix.associated)  &
-         .nuclear_attraction_matrix.create_copy(mol.nuclear_attraction_matrix)
-
-      if (mol.core_matrix.associated)                .core_matrix.create_copy(mol.core_matrix)
-      if (mol.fock_matrix.associated)                .fock_matrix.create_copy(mol.fock_matrix)
-      if (mol.fock_2e_matrix.associated)             .fock_2e_matrix.create_copy(mol.fock_2e_matrix)
-      if (mol.constraint_matrix.associated)          .constraint_matrix.create_copy(mol.constraint_matrix)
-
-      if (mol.atom_group.associated)                 .atom_group.create_copy(mol.atom_group)
-
-      if (mol.U_electric_dipole.associated)          .U_electric_dipole.create_copy(mol.U_electric_dipole)
-      if (mol.dipole_polarisability.associated)      .dipole_polarisability.create_copy(mol.dipole_polarisability)
-      if (mol.dipole_hyperpolarisability.associated) &
-         .dipole_hyperpolarisability.create_copy(mol.dipole_hyperpolarisability)
-      if (mol.U2_electric_dipole.associated)         .U2_electric_dipole.create_copy(mol.U2_electric_dipole)
-
-      if (mol.force_constants.associated)            .force_constants.create_copy(mol.force_constants)
-      if (mol.normal_mode_eigenvectors.associated)   .normal_mode_eigenvectors.create_copy(mol.normal_mode_eigenvectors)
-      if (mol.normal_mode_eigenvalues.associated)    .normal_mode_eigenvalues.create_copy(mol.normal_mode_eigenvalues)
-      if (mol.phi3_force_constants.associated)       .phi3_force_constants.create_copy(mol.phi3_force_constants)
-      if (mol.phi4_force_constants.associated)       .phi4_force_constants.create_copy(mol.phi4_force_constants)
 
    end
 
@@ -614,7 +353,7 @@ contains
 
    set_scf_guess_defaults_from(scfdata) ::: leaky
    ! Set scf  data options for a guess-type SCF defaults
-      scfdata :: SCFDATA*
+      scfdata :: SCFDATA@
 
       ! Set the SCF defaults (leaky)
       if (scfdata.disassociated) then
@@ -840,7 +579,7 @@ contains
    resolve_slater_bases ::: leaky
    ! Match the basis set labels for every atom with the actual atomic
    ! basis set.
-      library_basis_labels :: VEC{STR}*
+      library_basis_labels :: VEC{STR}@
       n_unique :: INT
       library :: STR
 
@@ -891,7 +630,7 @@ contains
    resolve_coppens_bases ::: leaky
    ! Match the basis set labels for every atom with the actual atomic
    ! basis set.
-      library_basis_labels :: VEC{STR}*
+      library_basis_labels :: VEC{STR}@
       n_unique :: INT
       library :: STR
 
@@ -1413,10 +1152,10 @@ contains
 
    ENSURE(NOT .use_spherical_basis,"not implemented")
 
-      molden_file,save :: TEXTFILE*
+      molden_file,save :: TEXTFILE@
       archive :: ARCHIVE
       pos :: VEC{REAL}(3)
-      orb :: VEC{REAL}*
+      orb :: VEC{REAL}@
       fac,n_e,val,energy,occ :: REAL
       name,units,item,label,spin :: STR
       op,cl :: STR(len=1)
@@ -1727,10 +1466,10 @@ contains
 
    ENSURE(NOT .use_spherical_basis,"not implemented")
 
-      molden_file,save :: TEXTFILE*
+      molden_file,save :: TEXTFILE@
       archive :: ARCHIVE
       pos :: VEC{REAL}(3)
-      orb :: VEC{REAL}*
+      orb :: VEC{REAL}@
       fac,n_e,val,energy,occ :: REAL
       name,units,item,label,spin :: STR
       op,cl :: STR(len=1)
@@ -2026,7 +1765,7 @@ contains
       swap :: STR
 
       s,f,l,ls,fg,lg,i,j :: INT
-      fac :: VEC{REAL}*
+      fac :: VEC{REAL}@
       ff :: VEC{INT}(10) = (/ 1, 2, 3, 5, 6, 4, 9, 7, 8, 10 /)
 
       select case (swap)
@@ -2093,7 +1832,7 @@ contains
 
    DIE_IF(NOT .basis_info_made,"must be a tonto basis set!")
 
-      chkfile :: TEXTFILE*
+      chkfile :: TEXTFILE@
       fchk :: STR
 
       ! Get FChk file name
@@ -2169,11 +1908,11 @@ contains
    DIE_IF(.use_spherical_basis,"spherical basis not implemented")
 
       fchk,label :: STR
-      chkfile :: TEXTFILE*
-      shell_l,n_prim_for_shell,atom_for_shell,atom_p :: VEC{INT}*
-      G_n_prim_for_shell,G_atom_for_shell,G_shell_type :: VEC{INT}*
-      G_ex,G_cc,G_cp, ex,cc,orb_energy :: VEC{REAL}*
-      temp_mat,DD,MO :: MAT{REAL}*
+      chkfile :: TEXTFILE@
+      shell_l,n_prim_for_shell,atom_for_shell,atom_p :: VEC{INT}@
+      G_n_prim_for_shell,G_atom_for_shell,G_shell_type :: VEC{INT}@
+      G_ex,G_cc,G_cp, ex,cc,orb_energy :: VEC{REAL}@
+      temp_mat,DD,MO :: MAT{REAL}@
       Z, a,s,t, f,l,g,h :: INT
       n_prim_shells,n_shell,n_prim,n_independent :: INT
       restricted :: BIN
@@ -2518,11 +2257,11 @@ contains
    ENSURE(NOT .use_spherical_basis,"not implemented")
 
       fchk :: STR
-      chkfile :: TEXTFILE*
-      shell_l,n_prim_for_shell,atom_for_shell,atom_p :: VEC{INT}*
-      G_n_prim_for_shell,G_atom_for_shell,G_shell_type :: VEC{INT}*
-      G_ex,G_cc,G_cp, ex,cc,orb_energy, fc :: VEC{REAL}*
-      temp_mat,DD,MO :: MAT{REAL}*
+      chkfile :: TEXTFILE@
+      shell_l,n_prim_for_shell,atom_for_shell,atom_p :: VEC{INT}@
+      G_n_prim_for_shell,G_atom_for_shell,G_shell_type :: VEC{INT}@
+      G_ex,G_cc,G_cp, ex,cc,orb_energy, fc :: VEC{REAL}@
+      temp_mat,DD,MO :: MAT{REAL}@
       Z, a,s,t, f,l,g,h, n3n,ntr :: INT
       n_prim_shells,n_shell,n_prim,n_independent :: INT
       restricted :: BIN
@@ -2875,11 +2614,11 @@ contains
    ENSURE(NOT .use_spherical_basis,"not implemented")
 
       fchk :: STR
-      chkfile :: TEXTFILE*
-      shell_l,n_prim_for_shell,atom_for_shell,atom_p :: VEC{INT}*
-      G_n_prim_for_shell,G_atom_for_shell,G_shell_type :: VEC{INT}*
-      G_ex,G_cc,G_cp, ex,cc,orb_energy :: VEC{REAL}*
-      temp_mat,DD,MO :: MAT{REAL}*
+      chkfile :: TEXTFILE@
+      shell_l,n_prim_for_shell,atom_for_shell,atom_p :: VEC{INT}@
+      G_n_prim_for_shell,G_atom_for_shell,G_shell_type :: VEC{INT}@
+      G_ex,G_cc,G_cp, ex,cc,orb_energy :: VEC{REAL}@
+      temp_mat,DD,MO :: MAT{REAL}@
       Z, a,s,t, f,l,g,h :: INT
       n_prim_shells,n_shell,n_prim,n_independent :: INT
       restricted :: BIN
@@ -3219,8 +2958,8 @@ contains
 
       n_basis,n_shell,n_cc :: INT
       a,s,t, f,l, b :: INT
-      basis :: BASIS*
-      sh :: SHELL*
+      basis :: BASIS@
+      sh :: SHELL@
       same :: BIN
 
       ! Molecular basis (to be appended to)
@@ -3307,14 +3046,14 @@ contains
    ! Read a gaussian density matrix with TAG? which may be
    ! "restricted" (or not) from "chkfile". Archive it as NAME?.
    ! If "dm" is present it is created to be the density matrix.
-      chkfile :: TEXTFILE*
+      chkfile :: TEXTFILE@
       restricted :: BIN, IN
       dm :: OPMATRIX*, optional
 
    ENSURE(NOT .use_spherical_basis,"not implemented")
    ENSURE(.n_bf>0,"no basis functions")
 
-      D,spin,total :: OPMATRIX*
+      D,spin,total :: OPMATRIX@
       archive :: ARCHIVE
 
       ! Extract density matrix
@@ -3420,7 +3159,7 @@ contains
       swap :: STR
 
       s,f,l,ls,fg,lg,i,j :: INT
-      fac :: VEC{REAL}*
+      fac :: VEC{REAL}@
       ff :: VEC{INT}(10) = [ 1, 2, 3, 5, 6, 4, 9, 7, 8, 10 ]
 
       select case (swap)
@@ -3496,7 +3235,7 @@ contains
       swap :: STR
 
       s,f,l,ls,fg,lg,i,j :: INT
-      fac :: VEC{REAL}*
+      fac :: VEC{REAL}@
       ff :: VEC{INT}(10) = [ 1, 2, 3, 5, 6, 4, 9, 7, 8, 10 ]
 
       select case (swap)
@@ -3576,11 +3315,11 @@ contains
    ENSURE(.molecular_orbitals.created("restricted"), "No orbitals")
 
       name :: STR
-      wfnfile :: TEXTFILE*
-      lvec :: VEC{INT}*
-      evec :: VEC{REAL}*
-      dmatrix, cc :: MAT{REAL}*
-      sh :: SHELL*
+      wfnfile :: TEXTFILE@
+      lvec :: VEC{INT}@
+      evec :: VEC{REAL}@
+      dmatrix, cc :: MAT{REAL}@
+      sh :: SHELL@
       i, j, pcount, n_orbitals, a, l, atomn, shelln :: INT
 !      title_format :: STR, parameter = "(A80)"
       n_vars_format :: STR, parameter = "(A8, 10X, I5, 15X, I5, 15X, I5, 17X)"
@@ -3685,11 +3424,11 @@ contains
    ENSURE(.orbital_energies.created("restricted"), "No orbital energies")
    ENSURE(.molecular_orbitals.created("restricted"), "No orbitals")
       name :: STR
-      wfnfile :: TEXTFILE*
-      lvec :: VEC{INT}*
-      evec :: VEC{REAL}*
-      dmatrix, cc :: MAT{REAL}*
-      sh :: SHELL*
+      wfnfile :: TEXTFILE@
+      lvec :: VEC{INT}@
+      evec :: VEC{REAL}@
+      dmatrix, cc :: MAT{REAL}@
+      sh :: SHELL@
       i, j, pcount, n_orbitals, a, l, atomn, shelln :: INT
       occ :: REAL
 
@@ -3882,7 +3621,7 @@ contains
 !  ! indices "ind" in the parent atom list. Make the molecule ready
 !  ! for an SCF calculation using intelligent guesses from the
 !  ! "parent" molecule.
-!     self :: PTR
+!     self :: allocatable, INOUT
 !     parent :: MOLECULE, IN
 !     name :: STR, IN
 !     ind :: VEC{INT}, IN
@@ -4091,7 +3830,7 @@ contains
    DIE_IF(.atom_group.disassociated,"no atom groups")
    DIE_IF(NOT .atom_group.has_fchk_files,"no fchk files")
 
-      mol :: MOLECULE*
+      mol :: MOLECULE@
       g :: INT
 
       do g = 1,.atom_group.dim
@@ -4123,7 +3862,7 @@ contains
 
    DIE_IF(NOT .atom_group.associated,"no atom groups!")
 
-      mol :: MOLECULE*
+      mol :: MOLECULE@
       g :: INT
 
       ! Check is indices are sensible
@@ -4168,7 +3907,7 @@ contains
 
    ENSURE(.atom.associated,"atom groups must be defined after atoms=")
 
-      mol :: MOLECULE*
+      mol :: MOLECULE@
       g :: INT
 
       if (.scfdata.disassociated) then
@@ -4199,7 +3938,7 @@ contains
    ! Delete any existing .atom and .basis and set to the concatenation
    ! of the molecules in .atom_group
 
-      mol :: MOLECULE*
+      mol :: MOLECULE@
       g,charge :: INT
 
       if (.atom.associated)  .atom.destroy
@@ -4676,7 +4415,7 @@ contains
    overlapping_atoms_for(list) result (res) ::: leaky
    ! Return the list of atoms which overlaps with those in "list".
       list :: VEC{INT}, IN
-      res :: VEC{INT}*
+      res :: VEC{INT}@
 
       a,k :: INT
 
@@ -4730,7 +4469,7 @@ contains
    ENSURE(.basis_info_made,"no basis set")
    ENSURE(.becke_grid.associated,"no becke_grid")
 
-      r_max :: VEC{REAL}*
+      r_max :: VEC{REAL}@
       d :: VEC{REAL}(3)
       r :: REAL
       a,b,ab,n_atom_pairs :: INT
@@ -4802,7 +4541,7 @@ contains
 !   ! Make the list of overlapping atoms
 !   ENSURE(.basis_info_made,"no basis set")
 !   ENSURE(.scfdata.associated,"no scfdata")
-!      S_max :: VEC{REAL}*
+!      S_max :: VEC{REAL}@
 !      n_atom_pairs :: INT
 !      n_atom_pairs = .no_of_atom_pairs
 !      .overlapping_atoms.destroy
@@ -5572,7 +5311,7 @@ contains
    ENSURE(.n_atom_kind>0,"no atom kinds set")
 
       kind,a,b :: INT
-      atom_a,atom_b :: ATOM*
+      atom_a,atom_b :: ATOM@
 
       if (.:has_all_atom_shell_info) return
 
@@ -5661,8 +5400,8 @@ contains
 
       T :: REAL
       damping,do_archive,do_delta_density,use_pFON,use_FON :: BIN
-      MO,D,MOa,MOb,Da,Db,F,Fa,Fb :: MAT{REAL}*
-      CMO,CD,CMOa,CMOb,CDa,CDb :: MAT{CPX}*
+      MO,D,MOa,MOb,Da,Db,F,Fa,Fb :: MAT{REAL}@
+      CMO,CD,CMOa,CMOb,CDa,CDb :: MAT{CPX}@
       EV,Ea,Eb :: VEC{REAL}@
       scf_method,genre :: STR
 
@@ -5889,9 +5628,9 @@ contains
    ENSURE(n_e<MO.dim2,"fewer MO's than electrons")
    ENSURE(T>=ZERO,"T must be positive")
 
-      W :: MAT{REAL}*
-      occ :: VEC{REAL}*
-      ind :: VEC{INT}*
+      W :: MAT{REAL}@
+      occ :: VEC{REAL}@
+      ind :: VEC{INT}@
       beta,e_homo,e_lumo,e_fermi,homo_lumo_gap :: REAL
       n_orb,i,j,n_frac :: INT
 
@@ -6068,7 +5807,7 @@ contains
    ! density matrix. The result is placed in the "restricted" part of
    ! the density matrix.
       self :: IN
-      D :: OPMATRIX*
+      D :: OPMATRIX@
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(D.associated, "no density matrix")
@@ -6236,7 +5975,7 @@ contains
    ! Make the AO (spin independent) density matrix from the existing
    ! density matrix. The result is placed in the "restricted" part of
    ! the density matrix. NOTE: factor 1/2 not included!
-      D :: OPMATRIX*
+      D :: OPMATRIX@
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(D.associated, "no density matrix")
@@ -6504,8 +6243,8 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.molecular_orbitals.associated, "no molecular orbitals")
 
-      MO,D,MOa,MOb,Da,Db :: MAT{REAL}*
-      CMO,CD,CMOa,CMOb,CDa,CDb :: MAT{CPX}*
+      MO,D,MOa,MOb,Da,Db :: MAT{REAL}@
+      CMO,CD,CMOa,CMOb,CDa,CDb :: MAT{CPX}@
       genre :: STR
       arch :: ARCHIVE
       m :: INT
@@ -6653,7 +6392,7 @@ contains
    ENSURE(.density_matrix.associated,"no density_matrix")
    ENSURE(.density_matrix.any_created,"no density_matrix")
 
-      D :: OPMATRIX*
+      D :: OPMATRIX@
       genre :: STR
       a :: INT
 
@@ -6696,7 +6435,7 @@ contains
    ENSURE(.atom(a).density_matrix.disassociated,    "DM, atom "//trim(a.to_str))
 
       f,l :: INT
-      mol :: MOLECULE*
+      mol :: MOLECULE@
 
       ! Create the molecule
       mol.:create
@@ -6827,7 +6566,7 @@ contains
    ENSURE(X.is_square,"X operator matrix is not square")
 
       orb_kind :: STR
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
 
       res = ZERO
 
@@ -6918,8 +6657,8 @@ contains
    ENSURE(R.dim1==3,"rotation matrix R is not 3x3")
    ENSURE(NOT .use_spherical_basis,"only for cartesian bases")
 
-      new :: MAT{REAL}*
-      tr :: VEC{MAT_{REAL}}*
+      new :: MAT{REAL}@
+      tr :: VEC{MAT_{REAL}}@
       s,f,l,a :: INT
 
       new.create(.n_bf,.n_bf)
@@ -6978,8 +6717,8 @@ contains
    ENSURE(R.is_square,"rotation matrix R is not square")
    ENSURE(R.dim1==3,"rotation matrix R is not 3x3")
 
-      new :: MAT{REAL}*
-      tr :: VEC{MAT_{REAL}}*
+      new :: MAT{REAL}@
+      tr :: VEC{MAT_{REAL}}@
       s,f,l,a :: INT
 
       new.create(.n_bf,.n_bf)
@@ -7018,11 +6757,11 @@ contains
 
    ENSURE(.atom_group.associated,"no atom group information")
 
-      mol :: MOLECULE*
+      mol :: MOLECULE@
       archive :: ARCHIVE
       R :: MAT{REAL}(3,3)
       v :: VEC{REAL}(3)
-      P :: MAT{REAL}*
+      P :: MAT{REAL}@
       i,a :: INT
 
       ! Clean up different-geometry data
@@ -7272,7 +7011,7 @@ contains
 
    ENSURE(.overlap_matrix.associated,"no overlap matrix")
 
-      V,X :: MAT{REAL}*
+      V,X :: MAT{REAL}@
 
       V.create(.n_bf,.n_bf)
       .:make_r_overlap_sqrt(V)
@@ -7300,8 +7039,8 @@ contains
    ENSURE(.density_matrix.restricted_complex.associated, "no density matrix")
    ENSURE(.overlap_matrix.associated, "no overlap matrix")
 
-      V,X :: MAT{CPX}*
-      O :: MAT{REAL}*
+      V,X :: MAT{CPX}@
+      O :: MAT{REAL}@
 
       ! Recreate
       .natural_orbitals.destroy
@@ -7338,8 +7077,8 @@ contains
    ENSURE(.density_matrix.general_complex.associated,"no density matrix")
    ENSURE(.overlap_matrix.associated, "no overlap matrix")
 
-      R :: MAT{REAL}*
-      V,X :: MAT{CPX}*
+      R :: MAT{REAL}@
+      V,X :: MAT{CPX}@
 
       ! Recreate
       .natural_orbitals.destroy
@@ -7512,11 +7251,11 @@ contains
    ENSURE(mat.is_square,"non-square matrix")
    ENSURE(mat.dim1==.n_bf,"incorrectly dimensioned matrix")
 
-      sym,W :: MAT{TYPE}*
-      tra,trb :: MAT{REAL}*
+      sym,W :: MAT{TYPE}@
+      tra,trb :: MAT{REAL}@
       n,a,b,i,j,na,nb :: INT
       fa,fb,fi,fj,la,lb,li,lj :: INT
-      image :: MAT{INT}*
+      image :: MAT{INT}@
 
       image.create(.n_shell, .pointgroup.order)
       .:make_image_of_shell(image)
@@ -7621,11 +7360,11 @@ contains
    ENSURE(mat.is_square,"non-square matrix")
    ENSURE(mat.dim1==.n_bf,"incorrectly dimensioned matrix")
 
-      sym,w :: MAT{TYPE}*
-      tra,trb :: MAT{REAL}*
+      sym,w :: MAT{TYPE}@
+      tra,trb :: MAT{REAL}@
       n,a,b,i,j,na,nb :: INT
       fa,fb,fi,fj,la,lb,li,lj :: INT
-      image :: MAT{INT}*
+      image :: MAT{INT}@
 
       image.create(.n_shell,.crystal.n_stabilizer_symops)
       .:make_image_of_stabilizer(image)
@@ -7803,7 +7542,7 @@ contains
    unarchive(opmatrix,archive_name,genre) ::: leaky
    ! Recover the "opmatrix" from an archive on disk with name "archive_name".
    ! The kind is guessed from "opmatrix".
-      opmatrix :: OPMATRIX*
+      opmatrix :: OPMATRIX@
       archive_name :: STR
       genre :: STR, optional
    ENSURE(opmatrix.any_created,"no opmatrix genre created")
@@ -7973,7 +7712,7 @@ contains
    ! Delete the atom SCF archives, if they exist.
 
       a :: INT
-      mol :: MOLECULE*
+      mol :: MOLECULE@
 
       if (.n_atom_kind<=0) return
 
@@ -8121,7 +7860,7 @@ contains
    ENSURE(.crystal.data.associated,"no diffraction data")
    ENSURE(.crystal.data.covariance_matrix.associated,"no cov matrix created")
 
-      cm :: MAT{REAL}*
+      cm :: MAT{REAL}@
       a1,a2,n_f :: INT
 
       ! Read the two atoms
@@ -8155,7 +7894,7 @@ contains
    ENSURE(.crystal.data.associated,"no diffraction data")
    ENSURE(.crystal.data.covariance_matrix.associated,"no cov matrix created")
 
-      cm :: MAT{REAL}*
+      cm :: MAT{REAL}@
       a1,a2,a3,n_f :: INT
 
       ! Read the three atoms defining the angle
@@ -8188,7 +7927,7 @@ contains
    ENSURE(.crystal.data.associated,"no diffraction data")
    ENSURE(.crystal.data.covariance_matrix.associated,"no cov matrix created")
 
-      cm :: MAT{REAL}*
+      cm :: MAT{REAL}@
       a1,a2,a3,a4,n_f :: INT
 
       ! Read the three atoms defining the angle
@@ -8495,7 +8234,7 @@ contains
 
    ENSURE(.atom.associated,"no atom list!")
 
-      out :: TEXTFILE*
+      out :: TEXTFILE@
 
       out.create(trim(.name)//achar(46)//"wrl")
       out.open_for("write")

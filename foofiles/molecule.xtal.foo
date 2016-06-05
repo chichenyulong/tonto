@@ -92,7 +92,7 @@ contains
 
    read_CIF ::: leaky, public
    ! Read in CIF information, reset name of Job to cif file name
-      self :: PTR
+      self :: allocatable, INOUT
 
       if (.cif.disassociated) .cif.create
       .cif.read_keywords
@@ -272,7 +272,7 @@ contains
 
    ENSURE(.atom.associated,"no atoms")
 
-      H_bond_length :: VEC{REAL}*
+      H_bond_length :: VEC{REAL}@
       has_Hs,reset :: BIN
 
       ! Is crystal there?
@@ -339,7 +339,7 @@ contains
    destroy_cluster ::: leaky
    ! Destroy a molecule created by the "create_cluster" routine, and
    ! recover the original molecule from .saved
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.saved.associated,"no crystal data")
 
@@ -352,7 +352,7 @@ contains
    ! stored in .cluster.  The original molecule replaced by the
    ! *cluster-fragent* and stored in .saved. The new molecule is
    ! created from the cluster geometry.
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.crystal.associated,"no crystal data")
    ENSURE(.cluster.associated,"no cluster data")
@@ -419,7 +419,7 @@ contains
    ! information stored in .cluster information object.  The original
    ! molecule replaced by the m-th molecular fragment in the .cluster
    ! object.
-      self :: PTR
+      self :: allocatable, INOUT
       mol :: MOLECULE
 
       m :: INT
@@ -435,7 +435,7 @@ contains
    ! information stored in .cluster information object.  The original
    ! molecule replaced by the defragmented cluster,
    ! while the m-th molecular fragment in the .cluster is in mol
-      self :: PTR
+      self :: allocatable, INOUT
       mol :: MOLECULE
       m :: INT, IN
 
@@ -479,7 +479,7 @@ contains
    ! surface in isosurface. It is assumed there is a .saved.cluster
    ! and that the current .atom's correspond to it (i.e. this is
    ! called after a standard HS job).
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.saved.crystal.associated,"no crystal data")
    ENSURE(.saved.cluster.associated,"no cluster data")
@@ -488,8 +488,8 @@ contains
    ENSURE(.atom.associated,"no atoms")
    ENSURE(.isosurface.associated,"no isosurface")
 
-      surface_atoms :: VEC{INT}*
-      atom :: VEC{ATOM}*
+      surface_atoms :: VEC{INT}@
+      atom :: VEC{ATOM}@
       n :: INT
 
       ! Get surface atoms
@@ -559,7 +559,7 @@ contains
    ENSURE(.crystal.associated,"no crystal")
 
       dc :: CPX
-      k1,k2,k3 :: VEC{REAL}*
+      k1,k2,k3 :: VEC{REAL}@
       pos :: VEC{REAL}(3)
       x,y,z :: REAL
       a,n :: INT
@@ -597,8 +597,8 @@ contains
 
    ENSURE(.crystal.associated,"no crystal")
 
-      k_pts :: MAT{REAL}*
-      ft :: VEC{CPX}*
+      k_pts :: MAT{REAL}@
+      ft :: VEC{CPX}@
 
       ! Make predicted structure factors
       ft.create(.crystal.n_refl)
@@ -640,7 +640,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
 
       k_max,k,fa,fb,la,lb,na,nb,q,atom_a,atom_b :: INT
-      ft_ab :: MAT3{CPX}*
+      ft_ab :: MAT3{CPX}@
       cutoff :: REAL
       sh :: SHELL2
 
@@ -695,8 +695,8 @@ contains
    ENSURE(.atom.associated,  "no atom list")
 
       k_max,q,k,fa,la,fb,lb,na,nb,atom_a,atom_b :: INT
-      ft_ab :: MAT3{CPX}*
-      dens_ba :: MAT{CPX}*
+      ft_ab :: MAT3{CPX}@
+      dens_ba :: MAT{CPX}@
       cutoff :: REAL
       sh :: SHELL2
 
@@ -749,8 +749,8 @@ contains
    ENSURE(.atom.associated,  "no atom list")
 
       k_max,q,k,fa,la,fb,lb,na,nb,atom_a,atom_b :: INT
-      ft_ab :: MAT3{CPX}*
-      dens_ba_aa,dens_ba_ab,dens_ba_ba,dens_ba_bb :: MAT{CPX}*
+      ft_ab :: MAT3{CPX}@
+      dens_ba_aa,dens_ba_ab,dens_ba_ba,dens_ba_bb :: MAT{CPX}@
       cutoff :: REAL
       sh :: SHELL2
 
@@ -815,8 +815,8 @@ contains
       k_max,k,fa,fb,la,lb,na,nb,q,atom_a,atom_b,basea,baseb :: INT
       delta,g,separation,x,y,z,z2 :: REAL
       diff :: VEC{REAL}(3)
-      ft_ab :: MAT3{CPX}*
-      dens_ba :: MAT{REAL}*
+      ft_ab :: MAT3{CPX}@
+      dens_ba :: MAT{REAL}@
       cutoff :: REAL
       sh :: SHELL2
 
@@ -924,8 +924,8 @@ contains
       k_max,k,fa,fb,la,lb,na,nb,q,atom_a,atom_b,basea,baseb :: INT
       delta,g,separation,x,y,z :: REAL
       diff :: VEC{REAL}(3)
-      ft_ab :: MAT3{CPX}*
-      dens_ba :: MAT{CPX}*
+      ft_ab :: MAT3{CPX}@
+      dens_ba :: MAT{CPX}@
       cutoff :: REAL
       sh :: SHELL2
 
@@ -1021,8 +1021,8 @@ contains
    ENSURE(.crystal.associated,"no crystal data")
 
       is_zero :: BIN
-      t :: MAT3{REAL}*
-      p :: MAT{REAL}*
+      t :: MAT3{REAL}@
+      p :: MAT{REAL}@
       k_max :: INT
 
       k_max = k_pts.dim1
@@ -1067,7 +1067,7 @@ contains
    ENSURE(.crystal.associated,"no crystal data")
 
       is_zero :: BIN
-      p :: MAT{REAL}*
+      p :: MAT{REAL}@
       k_max :: INT
 
       k_max = k1.dim
@@ -1366,9 +1366,9 @@ contains
    ! Make the fourier transform of the overlap integrals on an archive file
    ENSURE(.crystal.associated, "no crystal")
       arch :: ARCHIVE
-      k_pts :: MAT{REAL}*
+      k_pts :: MAT{REAL}@
       q,fa,la,fb,lb,na,nb,atom_a,atom_b :: INT
-      ft_ab_eq,ft_ab :: MAT3{CPX}*
+      ft_ab_eq,ft_ab :: MAT3{CPX}@
       sh :: SHELL2
 
       arch.set(.name,"ft_ints")
@@ -1451,8 +1451,8 @@ contains
    ENSURE(.crystal.xray_data.associated, "no x-ray reflection data")
    ENSURE(.density_matrix.associated, "no density matrix")
 
-      sf_eq,Fc :: VEC{CPX}*
-      k_pts :: MAT{REAL}*
+      sf_eq,Fc :: VEC{CPX}@
+      k_pts :: MAT{REAL}@
       genre :: STR
 
       ! Allocate complex structure factors
@@ -1522,8 +1522,8 @@ contains
    ENSURE(.crystal.associated, "no crystal")
    ENSURE(.crystal.xray_data.associated, "no x-ray reflection data")
 
-      sf_eq,Fc :: VEC{CPX}*
-      k_pts :: MAT{REAL}*
+      sf_eq,Fc :: VEC{CPX}@
+      k_pts :: MAT{REAL}@
 
       ! Allocate complex structure factors
       Fc.create(.crystal.n_refl)
@@ -1615,8 +1615,8 @@ contains
    ENSURE(.crystal.data_exists, "no reflection data")
    ENSURE(.crystal.spacegroup.centrosymmetric, "must be a centrosymmetric crystal")
 
-      sf_eq,Fc :: VEC{CPX}*
-      k_pts :: MAT{REAL}*
+      sf_eq,Fc :: VEC{CPX}@
+      k_pts :: MAT{REAL}@
       genre :: STR
       complx :: BIN
 
@@ -1670,25 +1670,25 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
  ! ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
 
-      sf_eq,Fc :: VEC{CPX}*
-      wt, xa,ya,za,a2 :: VEC{REAL}*
-      rho, k1,k2,k3, r1,r2,r3, ga,gb :: VEC{REAL}*
+      sf_eq,Fc :: VEC{CPX}@
+      wt, xa,ya,za,a2 :: VEC{REAL}@
+      rho, k1,k2,k3, r1,r2,r3, ga,gb :: VEC{REAL}@
       ra,kv :: VEC{REAL}(3)
       adp2 :: MAT{REAL}(3,3)
       adp3 :: MAT3{REAL}(3,3,3)
       adp4 :: MAT4{REAL}(3,3,3,3)
-      pi,pj,pn :: VEC{INT}*
-      skipa0,skipab :: VEC{BIN}*
-      D,DD,k_pts,pt,grida,gridb,bf_save :: MAT{REAL}*
+      pi,pj,pn :: VEC{INT}@
+      skipa0,skipab :: VEC{BIN}@
+      D,DD,k_pts,pt,grida,gridb,bf_save :: MAT{REAL}@
       sha :: SHELL1
       bf_skip :: VEC{VEC_{BIN}}@
-      bf_grid :: VEC{MAT_{REAL}}*
+      bf_grid :: VEC{MAT_{REAL}}@
       sf,tfc  :: CPX
       cutoff,rf, kr, Dab, fac, n_e,val, tf2,tf3,tf4 :: REAL
       n_refl,n_k,n_pt,n_keep, c,ca,cb, oa,fsa,lsa,fba, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, as, a,b,i,j,k,n,p :: INT
       D_destroyed :: BIN
-      atom_c :: ATOM*
+      atom_c :: ATOM@
 
       ! Number of reflections
       n_refl = .crystal.data.reflections.dim
@@ -2070,16 +2070,16 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
  ! ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
 
-      sf_eq,Fc :: VEC{CPX}*
-      wt, xa,ya,za,a2 :: VEC{REAL}*
-      rho, k1,k2,k3, u1,u2,u3, r1,r2,r3, ga,gb :: VEC{REAL}*
+      sf_eq,Fc :: VEC{CPX}@
+      wt, xa,ya,za,a2 :: VEC{REAL}@
+      rho, k1,k2,k3, u1,u2,u3, r1,r2,r3, ga,gb :: VEC{REAL}@
       ra :: VEC{REAL}(3)
-      pi,pj,pn :: VEC{INT}*
-      skipa0,skipab :: VEC{BIN}*
-      D,DD,k_pts,kU,pt,grida,gridb,bf_save :: MAT{REAL}*
+      pi,pj,pn :: VEC{INT}@
+      skipa0,skipab :: VEC{BIN}@
+      D,DD,k_pts,kU,pt,grida,gridb,bf_save :: MAT{REAL}@
       sha :: SHELL1
       bf_skip :: VEC{VEC_{BIN}}@
-      bf_grid :: VEC{MAT_{REAL}}*
+      bf_grid :: VEC{MAT_{REAL}}@
       sf  :: CPX
       cutoff,rf, k1k,k2k,k3k,kr, Dab, fac, n_e,val :: REAL
       n_refl,n_k,n_pt,n_keep, c,ca,cb, oa,fsa,lsa,fba, ob,fsb,lsb :: INT
@@ -2388,7 +2388,7 @@ contains
 !   ! To the crystal objects structure factors for analysis
 !   ENSURE(.crystal.associated, "no crystal")
 !   ENSURE(.crystal.data_exists, "no reflection data")
-!      FM_s, FM_l, FM_r, Fc :: VEC{CPX}*
+!      FM_s, FM_l, FM_r, Fc :: VEC{CPX}@
 !      n_refl :: INT
 !      arch :: ARCHIVE
 !      .crystal.assign_pnd
@@ -2442,9 +2442,9 @@ contains
 !   ENSURE(.density_matrix.alpha.associated, "no density")
 !      arch :: ARCHIVE
 !      fac,ans :: REAL
-!      d_aa,d_bb :: MAT{REAL}*
-!      ft_ab :: MAT4{CPX}*
-!      FM :: VEC{CPX}*
+!      d_aa,d_bb :: MAT{REAL}@
+!      ft_ab :: MAT4{CPX}@
+!      FM :: VEC{CPX}@
 !      sh :: SHELL2*
 !      k_max,i,q,fa,la,fb,lb :: INT
 !      arch.set(.name,"PND_ft_spin_ints")
@@ -2485,9 +2485,9 @@ contains
 !   ENSURE(.density_matrix.general_complex.associated, "no density")
 !      arch :: ARCHIVE
 !      fac,ans :: REAL
-!      d_aa,d_bb,d_ba :: MAT{CPX}*
-!      ft_ab :: MAT4{CPX}*
-!      FM :: VEC{CPX}*
+!      d_aa,d_bb,d_ba :: MAT{CPX}@
+!      ft_ab :: MAT4{CPX}@
+!      FM :: VEC{CPX}@
 !      ci :: CPX
 !      sh :: SHELL2*
 !      k_max,i,q,fa,la,fb,lb :: INT
@@ -2536,10 +2536,10 @@ contains
 !   ! Make the fourier transform of the PND spin integrals on the archive
 !   ENSURE(.crystal.associated, "no crystal")
 !      arch :: ARCHIVE
-!      k_pts :: MAT{REAL}*
+!      k_pts :: MAT{REAL}@
 !      sh :: SHELL2*
-!      ft_ab_eq :: MAT3{CPX}*
-!      ft_ab :: MAT4{CPX}*
+!      ft_ab_eq :: MAT3{CPX}@
+!      ft_ab :: MAT4{CPX}@
 !      q,fa,la,fb,lb,atom_a,atom_b :: INT
 !      arch.set(.name,"PND_ft_spin_ints")
 !      arch.open_for("write-only",type="cpx")
@@ -2582,9 +2582,9 @@ contains
 !   ENSURE(.density_matrix.general_complex.associated, "no density")
 !      arch :: ARCHIVE
 !      fac :: REAL
-!      dens :: MAT{CPX}*
-!      ft_ab_z :: MAT3{CPX}*
-!      FM :: VEC{CPX}*
+!      dens :: MAT{CPX}@
+!      ft_ab_z :: MAT3{CPX}@
+!      FM :: VEC{CPX}@
 !      sh :: SHELL2*
 !      k_max,i,q,fa,la,fb,lb :: INT
 !      arch.set(.name,"PND_ft_nabla_ints")
@@ -2628,10 +2628,10 @@ contains
 !   ! Make the fourier transform of the nabla integrals on the archive
 !   ENSURE(.crystal.associated, "no crystal")
 !      arch :: ARCHIVE
-!      k_pts :: MAT{REAL}*
+!      k_pts :: MAT{REAL}@
 !      sh :: SHELL2*
-!      ft_ab_eq :: MAT4{CPX}*
-!      ft_ab_z :: MAT3{CPX}*
+!      ft_ab_eq :: MAT4{CPX}@
+!      ft_ab_z :: MAT3{CPX}@
 !      q,fa,la,fb,lb,atom_a,atom_b :: INT
 !      arch.set(.name,"PND_ft_nabla_ints")
 !      arch.open_for("write-only",type="cpx")
@@ -2666,8 +2666,8 @@ contains
 !      sh :: SHELL2, IN
 !      atom_a,atom_b :: INT, IN
 !   ENSURE(.crystal.associated,"no crystal data")
-!       t :: MAT3{REAL}*
-!       p :: MAT{REAL}*
+!       t :: MAT3{REAL}@
+!       p :: MAT{REAL}@
 !      k_max :: INT
 !      k_max = size(k_pts,1)
 !      t.create(k_max,sh.a.n_cc,sh.b.n_cc)
@@ -2685,9 +2685,9 @@ contains
 !   ENSURE(.crystal.associated, "no crystal")
 !      arch :: ARCHIVE
 !      fac,ans :: REAL
-!      d_aa,d_bb :: MAT{CPX}*
-!      ft_ab :: MAT4{CPX}*
-!      FM :: VEC{CPX}*
+!      d_aa,d_bb :: MAT{CPX}@
+!      ft_ab :: MAT4{CPX}@
+!      FM :: VEC{CPX}@
 !      sh :: SHELL2*
 !      k_max,i,q,fa,la,fb,lb :: INT
 !      arch.set(.name,"PND_ft_r_ints")
@@ -2732,9 +2732,9 @@ contains
 !   ENSURE(.crystal.associated, "no crystal")
 !   ENSURE(.crystal.data_exists, "no structure factor data")
 !      arch :: ARCHIVE
-!      k_pts :: MAT{REAL}*
+!      k_pts :: MAT{REAL}@
 !      sh :: SHELL2*
-!      ft_ab_eq, ft_ab :: MAT4{CPX}*
+!      ft_ab_eq, ft_ab :: MAT4{CPX}@
 !      q,fa,la,fb,lb,atom_a,atom_b,n_refl :: INT
 !      n_refl = .crystal.n_refl
 !      arch.set(.name,"PND_ft_r_ints")
@@ -2766,10 +2766,10 @@ contains
 !      ints :: MAT{CPX}, target
 !      lambda :: REAL
 !      spin_archive,nabla_archive :: ARCHIVE
-!      Fc,F_exp,F_sigma :: VEC{REAL}*
-!      ints_aa,ints_bb,ints_ba :: MAT{CPX}*
-!      nabla_z :: MAT3{CPX}*
-!      spin :: MAT4{CPX}*
+!      Fc,F_exp,F_sigma :: VEC{REAL}@
+!      ints_aa,ints_bb,ints_ba :: MAT{CPX}@
+!      nabla_z :: MAT3{CPX}@
+!      spin :: MAT4{CPX}@
 !      sh :: SHELL2*
 !      ci :: CPX
 !      fac,fac1 :: REAL
@@ -2847,8 +2847,8 @@ contains
 !   ENSURE(.crystal.xray_data.associated, "no x-ray reflection data")
 !   ENSURE(.density_matrix.associated, "no density matrix")
 
-      sf_eq,Fc :: VEC{CPX}*
-      k_pts :: MAT{REAL}*
+      sf_eq,Fc :: VEC{CPX}@
+      k_pts :: MAT{REAL}@
 
       .crystal.assign_xray
 
@@ -2895,8 +2895,8 @@ contains
 !   ENSURE(.crystal.xray_data.associated, "no x-ray reflection data")
 !   ENSURE(.density_matrix.associated, "no density matrix")
 
-      sf_eq,Fc :: VEC{CPX}*
-      k_pts :: MAT{REAL}*
+      sf_eq,Fc :: VEC{CPX}@
+      k_pts :: MAT{REAL}@
 
       Fc.create(.crystal.n_refl)
       k_pts.create(.crystal.n_unique_SF_k_pts,3)
@@ -2949,10 +2949,10 @@ contains
       n_gcm :: INT
       n,i,j,k_max :: INT
       g :: CPX
-      m_out :: MAT{INT}*
-      GG,ft_hkl,buco :: MAT{CPX}*
-      MM,YU,S,R,Z,PZP,PPZPP :: MAT{REAL}*
-      P2,Ap,Ep :: VEC{REAL}*
+      m_out :: MAT{INT}@
+      GG,ft_hkl,buco :: MAT{CPX}@
+      MM,YU,S,R,Z,PZP,PPZPP :: MAT{REAL}@
+      P2,Ap,Ep :: VEC{REAL}@
 
       k_max = size(k_pts,1)
 
@@ -3028,10 +3028,10 @@ contains
       n_gcm,met :: INT
       n,i,j,k_max :: INT
       g :: CPX
-      m_out :: MAT{INT}*
-      GG,ft_hkl :: MAT{CPX}*
-      YU,S,R,Z,PZP,PPZPP :: MAT{REAL}*
-      P2,Ap,Ep :: VEC{REAL}*
+      m_out :: MAT{INT}@
+      GG,ft_hkl :: MAT{CPX}@
+      YU,S,R,Z,PZP,PPZPP :: MAT{REAL}@
+      P2,Ap,Ep :: VEC{REAL}@
 
       k_max = k_pts.dim1
 
@@ -3124,10 +3124,10 @@ contains
 
       c :: REAL
       i,j,k :: INT
-      R,D,PDP,PPDPP,Ac,T,TX,X,buco :: MAT{CPX}*
-      WW,W2 :: MAT{REAL}*
-      A,B,Z,PZP :: MAT{REAL}*
-      M :: MAT{REAL}*
+      R,D,PDP,PPDPP,Ac,T,TX,X,buco :: MAT{CPX}@
+      WW,W2 :: MAT{REAL}@
+      A,B,Z,PZP :: MAT{REAL}@
+      M :: MAT{REAL}@
 
       !!!  the density operator X !!!
       R.create(.n_prim,.n_prim)
@@ -3456,11 +3456,11 @@ contains
        n,i,j,k,k_max :: INT
        g :: CPX
        c,alpha,alpha2 :: REAL
-       m_out :: MAT{INT}*
-       ft_hkl :: MAT{CPX}*
-       Y,U,YU,T,A,S,R,Z,PZP :: MAT{REAL}*
-       Yr,O,SOx,SOy,SOz :: MAT{REAL}*
-       P2,Ap,E,p,ep,bp :: VEC{REAL}*
+       m_out :: MAT{INT}@
+       ft_hkl :: MAT{CPX}@
+       Y,U,YU,T,A,S,R,Z,PZP :: MAT{REAL}@
+       Yr,O,SOx,SOy,SOz :: MAT{REAL}@
+       P2,Ap,E,p,ep,bp :: VEC{REAL}@
 
       k_max = size(k_pts,1)
       ! the method is for the PCE corr is sfs
@@ -3639,9 +3639,9 @@ contains
         S,O :: MAT{REAL}
 
         i,j :: INT
-        D,PDP,R :: MAT{CPX}*
-        A,B,buco :: MAT{CPX}*
-        M :: MAT{REAL}*
+        D,PDP,R :: MAT{CPX}@
+        A,B,buco :: MAT{CPX}@
+        M :: MAT{REAL}@
 
 !!!  the density operator X !!!
      R.create(.n_prim,.n_prim)
@@ -3739,7 +3739,7 @@ contains
 
       i,j,dim :: INT
       c,alpha,alpha2,alpha3,alpha4 :: REAL
-      AAA,F1R,F1L,F2 :: MAT{CPX}*
+      AAA,F1R,F1L,F2 :: MAT{CPX}@
 
       c = SPEED_OF_LIGHT_AU
       alpha = ONE/c
@@ -3790,9 +3790,9 @@ contains
    ENSURE(ft.is_square, "ft must be square")
    ENSURE(ft.dim1==.n_prim, "wrong size, ft")
 
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     ft_ab :: MAT{CPX}*
+     frst,last,at,l :: VEC{INT}@
+     ex :: VEC{REAL}@
+     ft_ab :: MAT{CPX}@
      nps,a,b,fa,la,fb,lb :: INT
      G :: GAUSSIAN2
      p,t :: REAL
@@ -3877,9 +3877,9 @@ contains
    ENSURE(ft.is_square, "ft must be square")
    ENSURE(ft.dim1==.n_prim, "wrong size, ft")
 
-     frst,last,at,l :: VEC{INT}*
-     ex :: VEC{REAL}*
-     ft_ab :: MAT{CPX}*
+     frst,last,at,l :: VEC{INT}@
+     ex :: VEC{REAL}@
+     ft_ab :: MAT{CPX}@
      nps,a,b,fa,la,fb,lb :: INT
      G :: GAUSSIAN2
      p,t :: REAL
@@ -3952,8 +3952,8 @@ contains
       q,fa,la,na,fb,lb,nb,atom_a,atom_b,ag,bg :: INT
       sh :: SHELL2
       is_zero :: BIN
-      t :: MAT{REAL}*
-      p :: MAT{REAL}*
+      t :: MAT{REAL}@
+      p :: MAT{REAL}@
 
       do q = 1,.n_shell_pairs
 

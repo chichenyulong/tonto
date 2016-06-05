@@ -102,7 +102,7 @@ contains
    end
 
    destroy ::: leaky, PURE
-   ! Destroy the object
+   ! Deallocate "self"
       self :: allocatable, INOUT
 
 #ifdef USE_PRECONDITIONS

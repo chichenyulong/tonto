@@ -62,40 +62,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create space for object
-   end
-
-   create(lb,ub) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create the vector with lower bound "lb", upper bound "ub"
-   end
-
-   create(bounds) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create the vector with "bounds"
-   end
-
-   destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Destroy space for object
-   end
-
-   create_copy(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create a copy of vector "v".
-   end
-
-   copy(v) ::: get_from(VEC{INTRINSIC}), PURE
-   ! Copy vector "v".
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
 
 !  ==================
 !  Size-of operations
@@ -145,37 +111,6 @@ contains
 
    prepend(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
    ! Prepend a single "value" to "self".
-   end
-
-! Old
-
-   shrink(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Shrink self to dimension dim.  Contents are retained.
-   end
-
-   expand(dim,init) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expand self to dimension dim. New slots are left undefined
-   ! unless "init" is supplied.
-   end
-
-   append(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(v1,v2) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self and appends the contents of vectors "v1" and "v2".
-   end
-
-   append(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
-   end
-
-   prepend(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Prepend the vector "v" to "self". "self" is expanded.
-   end
-
-   prepend(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Prepend an single "value" to "self". "self" is expanded.
    end
 
 

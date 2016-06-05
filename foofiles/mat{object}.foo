@@ -34,7 +34,7 @@ contains
 
    create(dim1,dim2) ::: leaky
    ! Create space for object
-      self :: PTR
+      self :: allocatable, INOUT
       dim1,dim2 :: INT, IN
 
       status :: INT
@@ -54,7 +54,7 @@ contains
 
    create(dim1,dim2) ::: leaky
    ! Create space for object. This version does not set defaults.
-      self :: PTR
+      self :: allocatable, INOUT
       dim1,dim2 :: INT, IN
 
       status :: INT
@@ -73,7 +73,7 @@ contains
 
    create(lb1,ub1,lb2,ub2) ::: leaky
    ! Create a matrix with the given dimensions
-      self :: PTR
+      self :: allocatable, INOUT
       lb1,ub1,lb2,ub2 :: INT, IN
 
       status :: INT
@@ -94,7 +94,7 @@ contains
    create(lb1,ub1,lb2,ub2) ::: leaky
    ! Create a matrix with the given dimensions
    ! This version does not set defaults.
-      self :: PTR
+      self :: allocatable, INOUT
       lb1,ub1,lb2,ub2 :: INT, IN
 
       status :: INT
@@ -112,8 +112,8 @@ contains
    end
 
    destroy ::: leaky
-   ! Destroy the object
-      self :: PTR
+   ! Deallocate "self"
+      self :: allocatable, INOUT
 
       status :: INT
 
@@ -166,7 +166,7 @@ contains
 
    create_copy(matrix) ::: leaky
    ! Create a copy of matrix
-      self :: PTR
+      self :: allocatable, INOUT
       matrix :: MAT{OBJECT}, IN
 
       nullify(self)
@@ -307,7 +307,7 @@ contains
 
    dmpp(object_name,lower_triangle)
    ! Dump a matrix pointer object in text format
-      self :: PTR
+      self :: allocatable, INOUT
       object_name :: STR, IN
       lower_triangle :: BIN, optional, IN
     

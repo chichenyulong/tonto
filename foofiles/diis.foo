@@ -70,80 +70,9 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-! =================
-! Memory allocation
-! =================
-
-   create ::: get_from(OBJECT), leaky, PURE
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky, PURE
-   ! Destroy an object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part ::: pure
-   ! Nullify the pointer parts of self
-      self :: INOUT
-
-      nullify(.oldest)
-      nullify(.iter_4)
-      nullify(.itor_4)
-      nullify(.lhs)
-      nullify(.rhs)
-      nullify(.coeff)
-
-   end
-
-   destroy_ptr_part ::: leaky, PURE
-   ! Destroy the pointer parts of self
-      self :: INOUT
-
-      .oldest.destroy
-      .iter_4.destroy
-      .itor_4.destroy
-      .param.destroy
-      .error.destroy
-      .lhs.destroy
-      .rhs.destroy
-      .coeff.destroy
-
-   end
-
-   create_copy(object) ::: get_from(OBJECT)
-   ! Create a copy of object
-   end
-
-   copy(object) ::: leaky
-   ! Copy the "object"
-      object :: DIIS
-
-      self = object
-
-      .nullify_ptr_part
-
-      if (object.oldest.associated)   .oldest.create_copy(object.oldest)
-      if (object.iter_4.associated)   .iter_4.create_copy(object.iter_4)
-      if (object.itor_4.associated)   .itor_4.create_copy(object.itor_4)
-      if (object.lhs.associated)      .lhs.create_copy(object.lhs)
-      if (object.rhs.associated)      .rhs.create_copy(object.rhs)
-      if (object.coeff.associated)    .coeff.create_copy(object.coeff)
-
-   end
-
-! ===========
-! Set methods
-! ===========
+!  ===========
+!  Set methods
+!  ===========
 
    set_defaults ::: leaky, PURE
    ! Set up the default settings
@@ -545,7 +474,7 @@ contains
    ENSURE(.kept>0,"no stored vectors")
    ENSURE(.lhs.associated,"no LHS")
 
-      diag :: VEC{REAL}*
+      diag :: VEC{REAL}@
       d :: INT
 
       ! Get the diagonal
@@ -575,7 +504,7 @@ contains
    ENSURE(.kept>0,"no stored vectors")
    ENSURE(.lhs.associated,"no LHS")
 
-      diag :: VEC{REAL}*
+      diag :: VEC{REAL}@
       d :: INT
 
       ! Get the diagonal

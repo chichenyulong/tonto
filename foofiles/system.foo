@@ -85,7 +85,7 @@ module SYSTEM
    implicit none
 
    ! Tonto system variable
-   tonto :: SYSTEM*, public
+   tonto :: SYSTEM*, public DEFAULT_NULL ! ptr ok
 
 contains
 
@@ -109,52 +109,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  =================
-!  Creation routines
-!  =================
-
-   create ::: leaky
-   ! Create the system object
-      self :: PTR
-
-      allocate(self)
-
-      .initialize
-
-   end
-
-   destroy ::: leaky
-   !  Destroy the memory manager object
-      self :: PTR
-
-      if (.disassociated) return
-
-      .update
-      deallocate(self)
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   set_defaults ::: pure
-   !  Set defaults
-      self :: INOUT
-
-      .error_status    = 0
-      .warnings_issued = FALSE
-      .stderr_unit     = TEXTFILE_STDERR_UNIT
-      .stdout_unit     = TEXTFILE_STDOUT_UNIT
-      .keyword_echo    = SYSTEM_KEYWORD_ECHO
-
-   end
 
    initialize
    ! Initialise the system object and set defaults
@@ -170,7 +124,7 @@ contains
    ! Initialise the random seed. Only for master and broadcast it
    ! so that all processors get the same random numbers.
 
-      seed :: VEC{INT}*
+      seed :: VEC{INT}@
       dt :: VEC{INT}(8)
       n,i,t :: INT
 

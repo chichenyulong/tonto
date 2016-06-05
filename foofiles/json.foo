@@ -32,15 +32,10 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-! ======================
-! Creation etc
-! ======================
 
     create(output_name) ::: leaky
     ! create a JSON object with default filenames
-        self :: PTR
+        self :: allocatable, INOUT
         output_name :: STR, optional
 
         allocate(self)
@@ -54,18 +49,6 @@ contains
     
     end
 
-    destroy ::: leaky, recursive
-    ! Destroy a textfile
-        self :: PTR
-
-        if (.disassociated) return
-
-        .destroy_ptr_part
-
-        deallocate(self)
-
-    end
-
     set_name(name)
     ! Set the file name
         name :: STR
@@ -75,28 +58,6 @@ contains
         .name = name 
 
     end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-    set_defaults
-        .name = "out.json"
-        .margin = 0
-    end
-
-    destroy_ptr_part ::: leaky
-        .out.destroy
-    end
-
-    nullify_ptr_part 
-        nullify(.out)
-    end
-
 
 ! =========================
 ! JSON methods
@@ -265,7 +226,7 @@ contains
         order :: BIN, optional
         i, dim1, dim2 :: INT
         sep :: STR
-        row :: VEC{T?}*
+        row :: VEC{T?}@
 
         sep = ', '
         dim1 = value.dim1

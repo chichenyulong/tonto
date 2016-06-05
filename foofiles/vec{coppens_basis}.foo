@@ -37,8 +37,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure

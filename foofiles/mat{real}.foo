@@ -67,44 +67,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create(dim1,dim2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
-   ! Create a matrix with the given dimensions
-   end
-
-   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
-   ! Create a matrix with the specified "bounds" for each dimension
-   end
-
-   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
-   ! Create a matrix with the given dimensions
-   end
-
-   create(bounds1,bounds2) ::: get_from(MAT{INTRINSIC}), leaky, PURE
-   ! Create a matrix with the specified bounds for each dimension
-   end
-
-   create(bounds) ::: get_from(MAT{INTRINSIC}), leaky, PURE
-   ! Create a matrix with the given bounds for all dimensions
-   end
-
-   create_copy(matrix) ::: get_from(MAT{INTRINSIC}), leaky, PURE
-   ! Create a replica copy of matrix
-   end
-
-   destroy ::: get_from(MAT{INTRINSIC}), leaky, PURE
-   ! Destroy the object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
 !  ============================
 !  Size-of and shape operations
 !  ============================
@@ -880,7 +842,7 @@ contains
    ENSURE(present(U1err) EQV present(U2err),"both errors must be present")
 
       U1,U12 :: MAT{REAL}(3,3)
-      a1,a2,a12 :: MAT{REAL}*
+      a1,a2,a12 :: MAT{REAL}@
       d1,d2,d12,R12,fac :: REAL
       i,j,k :: INT
 
@@ -905,16 +867,21 @@ contains
       S12err = ZERO
       do i = 1,3
       do j = 1,j
+
          k = k + 1
-          a1 =>  U1.adjugate(i,j)
-          a2 =>  U2.adjugate(i,j)
-         a12 => U12.adjugate(i,j)
+
+          a1 =   U1.adjugate(i,j)
+          a2 =   U2.adjugate(i,j)
+         a12 =  U12.adjugate(i,j)
+
          S12err = S12err +  a1.determinant*U1err(k)
          S12err = S12err +  a2.determinant*U2err(k)
          S12err = S12err - a12.determinant*(U1err(k)+U2err(k))*d12*TWO
+
          a12.destroy
           a2.destroy
           a1.destroy
+
       end
       end
 
@@ -1269,11 +1236,14 @@ contains
    ! Eigenvalues must be sorted largest to smallest.
      self :: target
      lambda :: VEC{REAL}, IN
+
    ENSURE(size(lambda)>=.dim2,"not enough eigenvalues")
    ENSURE(.dim1>=.dim2,"more vectors than dimension of vector space")
-     new,old :: VEC{REAL}*
+
+     new,old :: VEC{REAL}@
      fac,norm :: REAL
      dim1,dim2,n,k,x,y,j :: INT
+
      dim1 = .dim1
      dim2 = .dim2
 
@@ -1316,6 +1286,7 @@ contains
          end
        end
      end
+
    end
 
    schmidt_orthonormalise(S,scales,n_dependent,ld_tol)
@@ -1334,23 +1305,28 @@ contains
 
    ENSURE(NOT S.is_zero,"S is zero matrix")
 
-     decreasing_vec :: MAT{REAL}*
-     old,new :: VEC{REAL}*
-     keep :: VEC{REAL}*
+     decreasing_vec :: MAT{REAL}@
+     old,new :: VEC{REAL}@
+     keep :: VEC{REAL}@
      fac :: REAL
      tol :: REAL
      norm :: REAL
      n,o,p,dim1,dim2 :: INT
-     skip :: VEC{BIN}*
+     skip :: VEC{BIN}@
+
      n_dependent=0
+
      tol=LINEAR_DEPENDENCE_TOL
      if(present(ld_tol)) tol=ld_tol
+
      dim1= .dim1
      dim2= .dim2
+
      keep.create(dim2)
      skip.create(dim1)
      skip = FALSE
-!eliminate function with small norms
+
+     !eliminate function with small norms
      do n = 1,dim1
        new => self(n,:)
        norm = S.dot(new,new)
@@ -1366,7 +1342,7 @@ contains
         new => self(n,:)
         keep = new
         norm = S.dot(keep,keep)
-!orthogonalisation
+        !orthogonalisation
         do o = 1,n-1
            if(skip(o)) cycle
            old => self(o,:)
@@ -1377,7 +1353,7 @@ contains
         scales(n) = norm
      !   if(norm>MAT_LINEAR_DEPENDENCE_TOL) then
         if(norm>tol) then
-!normalisation of the orthogonalised vector
+          !normalisation of the orthogonalised vector
           norm = sqrt(norm)
           new = new/norm
         else
@@ -1389,7 +1365,8 @@ contains
      nullify(new)
      nullify(old)
      keep.destroy
-!reject the quasilinearly dependent vectors at the end of the array
+
+     !reject the quasilinearly dependent vectors at the end of the array
      o=0
      p=0
      decreasing_vec.create(dim1,dim2)
@@ -1402,9 +1379,12 @@ contains
          o=o+1
        end
      end
+
      self=decreasing_vec
+
      decreasing_vec.destroy
      skip.destroy
+
    end
 
    schmidt_orthonormalise(S,indices,scales,n_dependent,ld_tol) ::: leaky
@@ -1417,7 +1397,7 @@ contains
    ! rejected at the end of the list, their new order is in indices
    ! (which makes the routine leaky).
      self :: target
-     indices :: VEC{INT}*
+     indices :: VEC{INT}@
      S :: MAT{REAL}, IN
      scales :: VEC{REAL}, OUT
      n_dependent :: INT, OUT
@@ -1425,23 +1405,28 @@ contains
 
    ENSURE(NOT S.is_zero,"S is zero matrix")
 
-     decreasing_vec :: MAT{REAL}*
-     old,new :: VEC{REAL}*
-     keep :: VEC{REAL}*
+     decreasing_vec :: MAT{REAL}@
+     old,new :: VEC{REAL}@
+     keep :: VEC{REAL}@
      fac :: REAL
      tol :: REAL
      norm :: REAL
      n,o,p,dim1,dim2 :: INT
-     skip :: VEC{BIN}*
+     skip :: VEC{BIN}@
+
      n_dependent=0
+
      tol=LINEAR_DEPENDENCE_TOL
      if(present(ld_tol)) tol=ld_tol
+
      dim1= .dim1
      dim2= .dim2
+
      keep.create(dim2)
      skip.create(dim1)
      skip = FALSE
-!eliminate function with small norms
+
+     !eliminate function with small norms
      do n = 1,dim1
        new => self(n,:)
        norm = S.dot(new,new)
@@ -1457,7 +1442,8 @@ contains
         new => self(n,:)
         keep = new
         norm = S.dot(keep,keep)
-!orthogonalisation
+
+        !orthogonalisation
         do o = 1,n-1
            if(skip(o)) cycle
            old => self(o,:)
@@ -1468,7 +1454,7 @@ contains
         scales(n) = norm
      !   if(norm>MAT_LINEAR_DEPENDENCE_TOL) then
         if(norm>tol) then
-!normalisation of the orthogonalised vector
+          !normalisation of the orthogonalised vector
           norm = sqrt(norm)
           new = new/norm
         else
@@ -1480,7 +1466,8 @@ contains
      nullify(new)
      nullify(old)
      keep.destroy
-!reject the quasilinearly dependent vectors at the end of the array
+
+     !reject the quasilinearly dependent vectors at the end of the array
      o=0
      p=0
      decreasing_vec.create(dim1,dim2)
@@ -1496,9 +1483,12 @@ contains
          o=o+1
        end
      end
+
      self=decreasing_vec
+
      decreasing_vec.destroy
      skip.destroy
+
    end
 
    schmidt_orthonormalise(S,scales) ::: get_from(MAT{INTRINSIC})
@@ -1568,7 +1558,7 @@ contains
       self :: INOUT
       S :: MAT{REAL}, IN
 
-      W,PS,PSPS :: MAT{REAL}*
+      W,PS,PSPS :: MAT{REAL}@
       diff :: REAL
       n :: INT
 
@@ -1612,7 +1602,7 @@ contains
       self :: INOUT
       S :: MAT{REAL}, IN
 
-      W,PS,PS2,PS3 :: MAT{REAL}*
+      W,PS,PS2,PS3 :: MAT{REAL}@
       diff :: REAL
       n :: INT
 
@@ -1675,8 +1665,8 @@ contains
 !   ! i,k, iter, max_iter_default  :: INT
 !     a,b,c,d, u_pp, u_pq, accuracy :: REAL
 !     no_rotation :: BIN
-!     m :: MAT{REAL}*
-!     r_p, r_q :: VEC{REAL}*
+!     m :: MAT{REAL}@
+!     r_p, r_q :: VEC{REAL}@
 !     m.create_copy(self)
 !     r_p.create(.dim1)
 !     r_q.create(.dim1)
@@ -1739,8 +1729,8 @@ contains
 !     i,j,iter,max_iter  :: INT
 !     c,d,u_ii,u_ij,accuracy,del :: REAL
 !     done :: BIN
-!     W :: MAT{REAL}*
-!     r_i,r_j :: VEC{REAL}*
+!     W :: MAT{REAL}@
+!     r_i,r_j :: VEC{REAL}@
 !     accuracy = TOL(12)
 !     if (present(eps)) accuracy = eps
 !     max_iter=1000
@@ -1799,7 +1789,7 @@ contains
       i,j,iter,max_iter  :: INT
       accuracy,tol :: REAL
       done :: BIN
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
 
       accuracy = TOL(12)
       if (present(eps)) accuracy = eps
@@ -1858,7 +1848,7 @@ contains
       i,j,iter,max_iter  :: INT
       accuracy,tol :: REAL
       done :: BIN
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       accuracy = TOL(8)
       if (present(eps)) accuracy = eps
       max_iter = 500
@@ -1894,8 +1884,8 @@ contains
 !      eigenvalues :: VEC{CPX}
 !      left,right :: MAT{CPX}
 !      normalize :: BIN, optional
-!      er,ei,W :: VEC{REAL}*
-!      A,le,re :: MAT{REAL}*
+!      er,ei,W :: VEC{REAL}@
+!      A,le,re :: MAT{REAL}@
 !      i,dim,dimW, info :: INT
 !      normalise :: BIN
 !      dot :: REAL
@@ -1981,7 +1971,7 @@ contains
    ENSURE(eigenvalues.dim>=.dim1,"eigenvalue array too small")
    ENSURE(size(eigenvectors)>=size(self),"eigenvector matrix too small")
 
-      W :: VEC{REAL}*
+      W :: VEC{REAL}@
       dim,fail,lwork :: INT
 
       dim = .dim1
@@ -2001,11 +1991,11 @@ contains
    ! orthocomplement of the kernel of the matrix.
    !leaky because the number of outputed internal vectors is not known
    !beforehand
-     eigenvectors2 :: MAT{REAL}*
+     eigenvectors2 :: MAT{REAL}@
      iv_tol :: REAL, optional
      ENSURE(.dim1==.dim2,"matrix not square")
-     eigenvalues :: VEC{REAL}*
-     eigenvectors :: MAT{REAL}*
+     eigenvalues :: VEC{REAL}@
+     eigenvectors :: MAT{REAL}@
      tol :: REAL
      i,h,dim :: INT
 
@@ -2061,8 +2051,8 @@ contains
    ENSURE(rhs.dim==.dim1,"incompatible rhs")
    ENSURE(solution.dim==.dim1,"incompatible solution vector")
 
-      LU :: MAT{REAL}*
-      pivot :: VEC{INT}*
+      LU :: MAT{REAL}@
+      pivot :: VEC{INT}@
       dim,nrhs,err :: INT
 
       dim = rhs.dim
@@ -2109,8 +2099,8 @@ contains
    ENSURE(rhs.dim1==.dim2,"rhs incompatible with coefficient matrix")
    ENSURE(nrhs>0,"no rhs vectors")
 
-      LU :: MAT{REAL}*
-      pivot :: VEC{INT}*
+      LU :: MAT{REAL}@
+      pivot :: VEC{INT}@
       dim1,nrhs,err :: INT
 
       dim1 = rhs.dim1
@@ -2163,9 +2153,9 @@ contains
    ENSURE(NOT (present(keep0) AND present(keep1)),"specify only keep0 or keep1")
 
       pdim,rdim,kdim,k,n,n_combinations :: INT
-      ulist,list :: VEC{INT}*
-      combination :: MAT{INT}*
-      sol,sol0,rhs0 :: VEC{REAL}*
+      ulist,list :: VEC{INT}@
+      combination :: MAT{INT}@
+      sol,sol0,rhs0 :: VEC{REAL}@
       e,e0 :: REAL
       found_one,even :: BIN
 
@@ -2307,8 +2297,8 @@ contains
    ENSURE(present(tol_near_0)  EQV present(n_near_0),   "tol/n_near_0 not both present")
    ENSURE(present(eval_near_0) EQV present(evec_near_0),"eval/evec_near_0 not both there")
 
-      inv,evec :: MAT{REAL}*
-      eval :: VEC{REAL}*
+      inv,evec :: MAT{REAL}@
+      eval :: VEC{REAL}@
       d,i,j,k :: INT
       temp :: REAL
 
@@ -2432,8 +2422,8 @@ contains
    ENSURE(.is_square,"not square")
    ENSURE(.is_same_shape_as(R),"not same shape as R")
 
-      W :: MAT{REAL}*
-      ipiv :: VEC{INT}*
+      W :: MAT{REAL}@
+      ipiv :: VEC{INT}@
       d,d2,fail :: INT
 
       d  = size(R,1)
@@ -2462,8 +2452,8 @@ contains
    ENSURE(.is_square,"self must be a square matrix")
    ENSURE(.is_same_shape_as(R),"self and R incomptabile")
 
-      evec :: MAT{REAL}*
-      eval :: VEC{REAL}*
+      evec :: MAT{REAL}@
+      eval :: VEC{REAL}@
       d,i,j,k :: INT
       tol,temp :: REAL
 
@@ -2680,8 +2670,8 @@ contains
  ! Looks like compiler problem for gfortran on 3/3/09
  ! ENSURE(.is_symmetric,"not symmetric")
 
-      evec :: MAT{REAL}*
-      eval :: VEC{REAL}*
+      evec :: MAT{REAL}@
+      eval :: VEC{REAL}@
       d,i,j,k,n_n,n_s :: INT
       eps,sh,temp,val_n,val_s :: REAL
 
@@ -2768,7 +2758,7 @@ contains
       n_negative :: INT, optional, OUT
       shift :: REAL, optional, IN
 
-      eval :: VEC{REAL}*
+      eval :: VEC{REAL}@
       d,i,j,k,n_n,n_s :: INT
       eps,sh,temp,val_n,val_s :: REAL
 
@@ -2851,7 +2841,7 @@ contains
       n_small :: INT, optional, OUT
       n_negative :: INT, optional, OUT
 
-      eval :: VEC{REAL}*
+      eval :: VEC{REAL}@
       d,i,j,k, n_n,n_s :: INT
       eps,temp,val_n,val_s :: REAL
 
@@ -2948,7 +2938,7 @@ contains
    ENSURE(S.is_square,"S not square")
    ENSURE(.is_same_shape_as(S),"wrong shape")
       n :: INT
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       .to_power_product_inv_sqrt_of(S,tol,prefactor,max_it)
       n = S.dim1
       W.create(n,n); W = self
@@ -2973,7 +2963,7 @@ contains
    ENSURE(S.is_square,"S not square")
    ENSURE(.is_same_shape_as(S),"wrong shape")
 
-      D,X :: MAT{REAL}*
+      D,X :: MAT{REAL}@
       max_iter,n,k :: INT
       eps,prefac :: REAL
 
@@ -3032,16 +3022,18 @@ contains
    ! Returns the rotation matrix which matches coordinates "reference"
    ! to "actual" in a least squares sense.  actual = U x reference.
    ! Return the mean fitting error "L" or else "fail"  for failure.
+      self :: OUT
       reference :: MAT{REAL}, target, IN
       actual :: MAT{REAL}, IN
       L :: REAL
       fail :: BIN
+
    ENSURE(.is_square,"self must be square")
    ENSURE(.dim1==actual.dim1,"self incompatible with actual")
    ENSURE(reference.dim2==actual.dim2,"reference incompatible with actual")
 
-      U,X,Rd :: MAT{REAL}*
-      X0,Xv :: VEC{REAL}*
+      U,X,Rd :: MAT{REAL}@
+      X0,Xv :: VEC{REAL}@
       d,iteration :: INT
       big :: REAL
 
@@ -3098,7 +3090,11 @@ contains
       end
 
       ! Clean up
-      Rd.destroy; U.destroy; Xv.destroy; X0.destroy; X.destroy
+      Rd.destroy
+      U.destroy
+      Xv.destroy
+      X0.destroy
+      X.destroy
 
    end
 
@@ -3109,7 +3105,7 @@ contains
       Xv :: VEC{REAL}, IN
       L :: REAL, OUT
       dL :: VEC{REAL}, optional, OUT
-      X,U,Rd :: MAT{REAL}*
+      X,U,Rd :: MAT{REAL}@
       d,n,p,q,pq,i :: INT
       val :: REAL
 
@@ -3524,7 +3520,7 @@ contains
    ! "Y_max"). The dimension of self is calculated here.
    ! NOTE: Don't use binned data to calculate properties unless you
    ! really need to coarse grain.
-      self :: PTR
+      self :: allocatable, INOUT
       data,X,Y :: VEC{REAL}, IN
       X_min,X_max,X_bin :: REAL, IN
       Y_min,Y_max,Y_bin :: REAL, IN
@@ -3611,15 +3607,16 @@ contains
    ENSURE(.is_same_shape_as(left),"left is incompatible")
    ENSURE(size(theta)==min(.dim1,.dim1-p),"theta has wrong size")
 
-      Vp,Vq,Wp,Wq,M,MWq,Hq,Up,Uq :: MAT{REAL}*
-      lambda :: VEC{REAL}*
+      Vp,Vq,Wp,Wq,M,MWq,Hq,Up,Uq :: MAT{REAL}@
+      lambda :: VEC{REAL}@
       minpq,q,n :: INT
 
       n = .dim1
       q = n - p
       minpq = min(p,q)
 
-      ! I've only tested this for q>p.  Suspect p>q does not work.
+      ! I've only tested this for q>p.
+      ! Suspect p>q does not work.
       Vp => left(:p,:p)
       Vq => left(p+1:,p+1:)
       Wp => right(:p,:p)
@@ -3633,23 +3630,27 @@ contains
       left(p+1:,:p)=ZERO
       .zero_small_values(TOL(10))
 
-      lambda.create(q)                       ! get eigenvalues and Wq.
+      ! get eigenvalues and Wq.
+      lambda.create(q)                       
       Hq.create(q,q)
       Hq.to_product_of(M,M,transpose_a=TRUE)
       Hq.solve_symmetric_eigenproblem(lambda,Wq)
       Hq.destroy
 
-      lambda.reverse_order                   ! get rotation angles, largest first.
+      ! get rotation angles, largest first.
+      lambda.reverse_order                   
       theta = lambda(:minpq)
       lambda.destroy
       theta.zero_small_values(TOL(10))
 
    ENSURE(minval(theta)>=ZERO,"eigenvalues less than zero!")
    ENSURE(maxval(theta)<=ONE,"eigenvalues more than one!")
+
       theta = min(theta,ONE)
       theta = max(theta,ZERO)
 
-      Wq.zero_small_values(TOL(10))          ! get Vp
+      ! get Vp
+      Wq.zero_small_values(TOL(10))          
       Wq.reverse_column_order
       MWq.create(p,q)
       MWq.to_product_of(M,Wq)
@@ -3657,10 +3658,12 @@ contains
       MWq.destroy
       Vp.schmidt_orthonormalise(theta)
 
-      Vq.to_product_of(Uq,Wq)                   ! get Vq
+      ! get Vq
+      Vq.to_product_of(Uq,Wq)                   
       Vq.reverse_schmidt_orthogonalise
 
-      Wp.to_product_of(Up,Vp,transpose_a=TRUE)  ! get Wp
+      ! get Wp
+      Wp.to_product_of(Up,Vp,transpose_a=TRUE)  
       Wp.reverse_schmidt_orthogonalise
 
       theta = sqrt(theta)
@@ -3673,36 +3676,48 @@ contains
    ! where the maximum values of l is "l_max". See the book by Helgaker, Olsen,
    ! and Simons, equations (9.13.58)--(9.13.61) and (9.13.65), pp. 413-414.
    ! NOTE: self is created.
-      self :: PTR
+      self :: allocatable, INOUT
       R :: VEC{REAL}(3)
       l_max :: INT
-   ENSURE(l_max>=0,"l_max must be non-negative")
+
+   ENSURE(l_max>=0," l_max must be non-negative")
    ENSURE(.is_square,"self must be square")
    ENSURE(.dim1==(l_max+1)*(l_max+1),"self has wrong dimension")
-      Rc,Rs :: VEC{VEC_{REAL}}*
-      Rc_lj,Rs_lj :: VEC{REAL}*
+
+      Rc,Rs :: VEC{VEC_{REAL}}@, target
+      Rc_lj,Rs_lj :: VEC{REAL}@
       j,k,jk,l,m,lm,sk,lj,mmk,mpk :: INT
       fac :: REAL
+
       ! Note R, NOT -R, due to mistake (?) in Helgaker's book
       VEC{REAL}:make_R_harmonics(Rc,Rs,R,l_max)
+
       ! Set self to zero, mainly for upper triangle
       self = ZERO
+
       ! Now make the translation matrix
       jk = 0
+
       do j = 0,l_max
+
          sk = 1
          if (j.is_even) sk = -1
+         
          ! First do k<0
          do k = -j,-1
+
             jk = jk + 1
             sk = -sk    ! initially,  (-1)==j
             fac = ONE
             if (k==0) fac = HALF
             lm = j*j
+
             do l = j,l_max ! j<=l
+
                lj = l - j
                Rc_lj => Rc(lj).element
                Rs_lj => Rs(lj).element
+
                ! First do m<0
                do m = -l,-1
                   lm = lm + 1
@@ -3711,6 +3726,7 @@ contains
                   if (lj>=abs(mmk)) self(lm,jk) = self(lm,jk) +        Rc_lj(mmk) ! W^ss
                   if (lj>=abs(mpk)) self(lm,jk) = self(lm,jk) -     sk*Rc_lj(mpk) ! W^ss
                end
+
                ! Now do m>=0
                do m = 0,l
                   lm = lm + 1
@@ -3719,19 +3735,25 @@ contains
                   if (lj>=abs(mmk)) self(lm,jk) = self(lm,jk) -        Rs_lj(mmk) ! W^cs
                   if (lj>=abs(mpk)) self(lm,jk) = self(lm,jk) +     sk*Rs_lj(mpk) ! W^cs
                end
+
             end
+
          end
+
          ! Now do k>=0
          do k = 0,j
+
             jk = jk + 1
             sk = -sk    ! initially,  (-1)==j, now continuing on
             fac = ONE
             if (k==0) fac = HALF
             lm = j*j
+
             do l = j,l_max ! j<=l
                lj = l - j
                Rc_lj => Rc(lj).element
                Rs_lj => Rs(lj).element
+
                ! First do m<0
                do m = -l,-1
                   lm = lm + 1
@@ -3740,6 +3762,7 @@ contains
                   if (lj>=abs(mmk)) self(lm,jk) = self(lm,jk) +    fac*Rs_lj(mmk) ! W^sc
                   if (lj>=abs(mpk)) self(lm,jk) = self(lm,jk) + sk*fac*Rs_lj(mpk) ! W^sc
                end
+
                ! Now do m>=0
                do m = 0,l
                   lm = lm + 1
@@ -3748,13 +3771,18 @@ contains
                   if (lj>=abs(mmk)) self(lm,jk) = self(lm,jk) +    fac*Rc_lj(mmk) ! W^cc
                   if (lj>=abs(mpk)) self(lm,jk) = self(lm,jk) + sk*fac*Rc_lj(mpk) ! W^cc
                end
+
             end
+
          end
+
       end
+
       !           if (m>=0 AND k>=0) self(lm,jk) = fac*(Rc_lj(m-k) + sk*Rc_lj(m+k)) ! W^cc
       !           if (m>=0 AND k<0 ) self(lm,jk) =     -Rs_lj(m-k) + sk*Rs_lj(m+k)  ! W^cs
       !           if (m<0  AND k>=0) self(lm,jk) = fac*(Rs_lj(m-k) + sk*Rs_lj(m+k)) ! W^sc
       !           if (m<0  AND k<0 ) self(lm,jk) =      Rc_lj(m-k) - sk*Rc_lj(m+k)  ! W^ss
+
       ! Must deallocate Rc, Rs
       do L = l_max,0,-1
          deallocate(Rs(L).element)
@@ -3762,6 +3790,7 @@ contains
       end
       deallocate(Rs)
       deallocate(Rc)
+
    end
 
    add_multipole_W_translation_mx(R,l_max)
@@ -3769,23 +3798,29 @@ contains
    ! where the maximum values of l is "l_max". See the book by Helgaker, Olsen,
    ! and Simons, equations (9.13.58)--(9.13.61) and (9.13.65), pp. 413-414.
    ! NOTE: self is created.
-      self :: PTR
+      self :: allocatable, INOUT
       R :: VEC{REAL}(3)
       l_max :: INT
+
    ENSURE(l_max>=0,"l_max must be non-negative")
    ENSURE(.is_square,"self must be square")
    ENSURE(.dim1==(l_max+1)*(l_max+1),"self has wrong dimension")
-      Rc,Rs :: VEC{VEC_{REAL}}*
-      Rc_lj,Rs_lj :: VEC{REAL}*
+
+      Rc,Rs :: VEC{VEC_{REAL}}@, target
+      Rc_lj,Rs_lj :: VEC{REAL}@
       j,k,jk,l,m,lm,sk,lj,mmk,mpk :: INT
       fac :: REAL
+
       ! Note R, NOT -R, when comparing to Helgaker's book
       VEC{REAL}:make_R_harmonics(Rc,Rs,R,l_max)
+
       ! Now make the translation matrix
       jk = 0
+
       do j = 0,l_max
          sk = 1
          if (j.is_even) sk = -1
+
          ! First do k<0
          do k = -j,-1
             jk = jk + 1
@@ -3793,10 +3828,12 @@ contains
             fac = ONE
             if (k==0) fac = HALF
             lm = j*j
+
             do l = j,l_max ! j<=l
                lj = l - j
                Rc_lj => Rc(lj).element
                Rs_lj => Rs(lj).element
+
                ! First do m<0
                do m = -l,-1
                   lm = lm + 1
@@ -3805,6 +3842,7 @@ contains
                   if (lj>=abs(mmk)) self(lm,jk) = self(lm,jk) +        Rc_lj(mmk) ! W^ss
                   if (lj>=abs(mpk)) self(lm,jk) = self(lm,jk) -     sk*Rc_lj(mpk) ! W^ss
                end
+
                ! Now do m>=0
                do m = 0,l
                   lm = lm + 1
@@ -3813,8 +3851,11 @@ contains
                   if (lj>=abs(mmk)) self(lm,jk) = self(lm,jk) -        Rs_lj(mmk) ! W^cs
                   if (lj>=abs(mpk)) self(lm,jk) = self(lm,jk) +     sk*Rs_lj(mpk) ! W^cs
                end
+
             end
+
          end
+
          ! Now do k>=0
          do k = 0,j
             jk = jk + 1
@@ -3822,10 +3863,12 @@ contains
             fac = ONE
             if (k==0) fac = HALF
             lm = j*j
+
             do l = j,l_max ! j<=l
                lj = l - j
                Rc_lj => Rc(lj).element
                Rs_lj => Rs(lj).element
+
                ! First do m<0
                do m = -l,-1
                   lm = lm + 1
@@ -3834,6 +3877,7 @@ contains
                   if (lj>=abs(mmk)) self(lm,jk) = self(lm,jk) +    fac*Rs_lj(mmk) ! W^sc
                   if (lj>=abs(mpk)) self(lm,jk) = self(lm,jk) + sk*fac*Rs_lj(mpk) ! W^sc
                end
+
                ! Now do m>=0
                do m = 0,l
                   lm = lm + 1
@@ -3842,13 +3886,18 @@ contains
                   if (lj>=abs(mmk)) self(lm,jk) = self(lm,jk) +    fac*Rc_lj(mmk) ! W^cc
                   if (lj>=abs(mpk)) self(lm,jk) = self(lm,jk) + sk*fac*Rc_lj(mpk) ! W^cc
                end
+
             end
+
          end
+
       end
+
       !           if (m>=0 AND k>=0) self(lm,jk) = fac*(Rc_lj(m-k) + sk*Rc_lj(m+k)) ! W^cc
       !           if (m>=0 AND k<0 ) self(lm,jk) =     -Rs_lj(m-k) + sk*Rs_lj(m+k)  ! W^cs
       !           if (m<0  AND k>=0) self(lm,jk) = fac*(Rs_lj(m-k) + sk*Rs_lj(m+k)) ! W^sc
       !           if (m<0  AND k<0 ) self(lm,jk) =      Rc_lj(m-k) - sk*Rc_lj(m+k)  ! W^ss
+
       ! Must deallocate Rc, Rs
       do L = l_max,0,-1
          deallocate(Rs(L).element)
@@ -3856,6 +3905,7 @@ contains
       end
       deallocate(Rs)
       deallocate(Rc)
+
    end
 
    to_multipole_T_interaction_mx(R,l_max,j_max)
@@ -3863,22 +3913,28 @@ contains
    ! where the maximum value of l and j are, respectoively, "l_max" and "j_max".
    ! See the book by Helgaker, Olsen, and Simons, equation (9.13.75), p. 415.
    ! NOTE: self is created.
-      self :: PTR
+      self :: allocatable, INOUT
       R :: VEC{REAL}(3)
       l_max,j_max :: INT
+
    ENSURE(l_max>=0,"l_max must be non-negative")
    ENSURE(.dim1==(l_max+1)*(l_max+1),"self has wrong 1st (l_max) dimension")
    ENSURE(.dim2==(j_max+1)*(j_max+1),"self has wrong 1st (j_max) dimension")
-      Ic,Is :: VEC{VEC_{REAL}}*
-      Ic_lj,Is_lj :: VEC{REAL}*
+
+      Ic,Is :: VEC{VEC_{REAL}}@, target
+      Ic_lj,Is_lj :: VEC{REAL}@
       j,k,jk,sj,l,m,lm,sk,lj,mmk,mpk :: INT
       fac,fk,fm :: REAL
+
       VEC{REAL}:make_I_harmonics(Ic,Is,R,l_max+j_max)
+
       jk = 0
+
       do j = 0,j_max
          sj = -1
          if (j.is_even) sj = 1
          sk = -sj
+
          ! First do k<0
          do k = -j,-1
             jk = jk + 1
@@ -3886,10 +3942,12 @@ contains
             fk = ONE
             if (k==0) fk = HALF
             lm = 0
+
             do l = 0,l_max
                lj = l + j
                Ic_lj => Ic(lj).element
                Is_lj => Is(lj).element
+
                ! First do m<0
                do m = -l,-1
                   lm = lm + 1
@@ -3900,6 +3958,7 @@ contains
                   fac = 2*sj*fm*fk
                   self(lm,jk) = fac*(-Ic_lj(mpk) + sk*Ic_lj(mmk)) ! T^ss
                end
+
                ! Now do m>=0
                do m = 0,l
                   lm = lm + 1
@@ -3910,8 +3969,11 @@ contains
                   fac = 2*sj*fm*fk
                   self(lm,jk) = fac*( Is_lj(mpk) - sk*Is_lj(mmk)) ! T^cs
                end
+
             end
+
          end
+
          ! No do k>=0
          do k = 0,j
             jk = jk + 1
@@ -3919,10 +3981,12 @@ contains
             fk = ONE
             if (k==0) fk = HALF
             lm = 0
+
             do l = 0,l_max
                lj = l + j
                Ic_lj => Ic(lj).element
                Is_lj => Is(lj).element
+
                ! First do m<0
                do m = -l,-1
                   lm = lm + 1
@@ -3933,6 +3997,7 @@ contains
                   fac = 2*sj*fm*fk
                   self(lm,jk) = fac*( Is_lj(mpk) + sk*Is_lj(mmk)) ! T^sc
                end
+
                ! Now do m>=0
                do m = 0,l
                   lm = lm + 1
@@ -3943,13 +4008,18 @@ contains
                   fac = 2*sj*fm*fk
                   self(lm,jk) = fac*( Ic_lj(mpk) + sk*Ic_lj(mmk)) ! T^cc
                end
+
             end
+
          end
+
       end
+
       !           if (m>=0 AND k>=0) self(lm,jk) = fac*( Ic_lj(m+k) + sk*Ic_lj(m-k)) ! T^cc
       !           if (m>=0 AND k<0 ) self(lm,jk) = fac*( Is_lj(m+k) - sk*Is_lj(m-k)) ! T^cs
       !           if (m<0  AND k>=0) self(lm,jk) = fac*( Is_lj(m+k) + sk*Is_lj(m-k)) ! T^sc
       !           if (m<0  AND k<0 ) self(lm,jk) = fac*(-Ic_lj(m+k) + sk*Ic_lj(m-k)) ! T^ss
+
       ! Must deallocate Ic, Is
       do L = l_max+j_max,0,-1
          deallocate(Is(L).element)
@@ -3957,6 +4027,7 @@ contains
       end
       deallocate(Is)
       deallocate(Ic)
+
    end
 
    add_multipole_T_interaction_mx(R,l_max,j_max)
@@ -3964,22 +4035,27 @@ contains
    ! where the maximum value of l and j are, respectoively, "l_max" and "j_max".
    ! See the book by Helgaker, Olsen, and Simons, equation (9.13.75), p. 415.
    ! NOTE: self is created.
-      self :: PTR
+      self :: allocatable, INOUT
       R :: VEC{REAL}(3)
       l_max,j_max :: INT
+
    ENSURE(l_max>=0,"l_max must be non-negative")
    ENSURE(.dim1==(l_max+1)*(l_max+1),"self has wrong 1st (l_max) dimension")
    ENSURE(.dim2==(j_max+1)*(j_max+1),"self has wrong 1st (j_max) dimension")
-      Ic,Is :: VEC{VEC_{REAL}}*
-      Ic_lj,Is_lj :: VEC{REAL}*
+
+      Ic,Is :: VEC{VEC_{REAL}}@, target
+      Ic_lj,Is_lj :: VEC{REAL}@
       j,k,jk,sj,l,m,lm,sk,lj,mmk,mpk :: INT
       fac,fk,fm :: REAL
+
       VEC{REAL}:make_I_harmonics(Ic,Is,R,l_max+j_max)
+
       jk = 0
       do j = 0,j_max
          sj = -1
          if (j.is_even) sj = 1
          sk = -sj
+
          ! First do k<0
          do k = -j,-1
             jk = jk + 1
@@ -3987,10 +4063,12 @@ contains
             fk = ONE
             if (k==0) fk = HALF
             lm = 0
+
             do l = 0,l_max
                lj = l + j
                Ic_lj => Ic(lj).element
                Is_lj => Is(lj).element
+
                ! First do m<0
                do m = -l,-1
                   lm = lm + 1
@@ -4001,6 +4079,7 @@ contains
                   fac = 2*sj*fm*fk
                   self(lm,jk) = self(lm,jk) + fac*(-Ic_lj(mpk) + sk*Ic_lj(mmk)) ! T^ss
                end
+
                ! Now do m>=0
                do m = 0,l
                   lm = lm + 1
@@ -4011,8 +4090,11 @@ contains
                   fac = 2*sj*fm*fk
                   self(lm,jk) = self(lm,jk) + fac*( Is_lj(mpk) - sk*Is_lj(mmk)) ! T^cs
                end
+
             end
+
          end
+
          ! No do k>=0
          do k = 0,j
             jk = jk + 1
@@ -4020,10 +4102,12 @@ contains
             fk = ONE
             if (k==0) fk = HALF
             lm = 0
+
             do l = 0,l_max
                lj = l + j
                Ic_lj => Ic(lj).element
                Is_lj => Is(lj).element
+
                ! First do m<0
                do m = -l,-1
                   lm = lm + 1
@@ -4034,6 +4118,7 @@ contains
                   fac = 2*sj*fm*fk
                   self(lm,jk) = self(lm,jk) + fac*( Is_lj(mpk) + sk*Is_lj(mmk)) ! T^sc
                end
+
                ! Now do m>=0
                do m = 0,l
                   lm = lm + 1
@@ -4044,13 +4129,18 @@ contains
                   fac = 2*sj*fm*fk
                   self(lm,jk) = self(lm,jk) + fac*( Ic_lj(mpk) + sk*Ic_lj(mmk)) ! T^cc
                end
+
             end
+
          end
+
       end
+
       !           if (m>=0 AND k>=0) self(lm,jk) = fac*( Ic_lj(m+k) + sk*Ic_lj(m-k)) ! T^cc
       !           if (m>=0 AND k<0 ) self(lm,jk) = fac*( Is_lj(m+k) - sk*Is_lj(m-k)) ! T^cs
       !           if (m<0  AND k>=0) self(lm,jk) = fac*( Is_lj(m+k) + sk*Is_lj(m-k)) ! T^sc
       !           if (m<0  AND k<0 ) self(lm,jk) = fac*(-Ic_lj(m+k) + sk*Ic_lj(m-k)) ! T^ss
+
       ! Must deallocate Ic, Is
       do L = l_max+j_max,0,-1
          deallocate(Is(L).element)
@@ -4058,6 +4148,7 @@ contains
       end
       deallocate(Is)
       deallocate(Ic)
+
    end
 
    to_R_mu_multipole_mx(points,l_max)
@@ -4074,7 +4165,7 @@ contains
    ENSURE(l_max>=0,"l_max must be non-negative")
    ENSURE(.dim1==points.dim1,"wrong 1st dimension, self")
    ENSURE(.dim2==(l_max+1)*(l_max+1),"wrong 2nd dimension, self")
-      Rm :: VEC{VEC_{VEC_{REAL}}}*
+      Rm :: VEC{VEC_{VEC_{REAL}}}@
       L,M,lm :: INT
       VEC{REAL}:make_R_mu_harmonics(Rm,points,l_max)
       lm = 0

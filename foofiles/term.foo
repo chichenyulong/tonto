@@ -59,66 +59,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========================
-!  Create and destroy methods
-!  ==========================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-      nullify(.d1_codes)
-      nullify(.monomial)
-      nullify(.has_any_var)
-      nullify(.has_any_dof)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts
-      nullify(.d1_codes)
-      .monomial.destroy
-      .has_any_var.destroy
-      .has_any_dof.destroy
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(x) ::: leaky
-   ! Create a copy of "x"
-      self :: PTR
-      x :: TERM, IN
-      .create
-      .copy(x)
-   end
-
-   copy(x) ::: leaky
-   ! Set self to be a copy of "x"
-      x :: TERM, IN
-
-      ! Copy all (pointer copy)
-      self = x
-
-      ! Create copy
-      if (x.monomial.associated)    .monomial.create_copy(x.monomial)
-      if (x.has_any_var.associated) .has_any_var.create_copy(x.has_any_var)
-      if (x.has_any_dof.associated) .has_any_dof.create_copy(x.has_any_dof)
-
-   end
-
 !  ============
 !  Set routines
 !  ============

@@ -45,19 +45,10 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  =======================
-!  Create/Destroy routines
-!  =======================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not set defaults.
-   end
 
    create(shell_a,shell_b,shell_c,shell_d) ::: leaky
    ! Create a shell4 object from copies of shell1s.
-      self :: PTR
+      self :: allocatable, INOUT
       shell_a,shell_b,shell_c,shell_d :: SHELL1, IN
       .create
       .copy(shell_a,shell_b,shell_c,shell_d)
@@ -65,37 +56,11 @@ contains
 
    create(shell_a,shell_b,shell_c,shell_d,pos_a,pos_b,pos_c,pos_d) ::: leaky
    ! Create a shell4 object from copies of shells and their positions.
-      self :: PTR
+      self :: allocatable, INOUT
       shell_a,shell_b,shell_c,shell_d :: SHELL, IN
       pos_a,pos_b,pos_c,pos_d :: VEC{REAL}(3), IN
       .create
       .copy(shell_a,shell_b,shell_c,shell_d,pos_a,pos_b,pos_c,pos_d)
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of self
-      .a.nullify_ptr_part
-      .b.nullify_ptr_part
-      .c.nullify_ptr_part
-      .d.nullify_ptr_part
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of self
-      .destroy_ab
-      .destroy_cd
    end
 
    destroy_ab ::: leaky
@@ -108,14 +73,6 @@ contains
    ! Destroy the shellc and shelld pointer parts of self
       .c.destroy_ptr_part
       .d.destroy_ptr_part
-   end
-
-   create_copy(shell) ::: leaky
-   ! Create a copy of "shell"
-      self :: PTR
-      shell :: SHELL4, IN
-      .create
-      .copy(shell)
    end
 
 !  ====================================================
@@ -289,7 +246,7 @@ contains
       self :: IN
       I :: MAT4{REAL}, OUT
 
-      II :: MAT4{REAL}*
+      II :: MAT4{REAL}@
       G :: GAUSSIAN4
       a,b,c,d :: INT
       cc :: REAL
@@ -351,7 +308,7 @@ contains
       self :: IN
       Sx,Sy,Sz,Ox,Oy,Oz :: MAT4{REAL}, OUT
 
-      SSx,SSy,SSz,OOx,OOy,OOz :: MAT4{REAL}*
+      SSx,SSy,SSz,OOx,OOy,OOz :: MAT4{REAL}@
       G :: GAUSSIAN4
       a,b,c,d,na,nb,nc,nd :: INT
       cc :: REAL
@@ -410,7 +367,7 @@ contains
       self :: IN
       Dxx,Dyy,Dzz,Dxy,Dxz,Dyz :: MAT4{REAL}, OUT
 
-      Mxx,Myy,Mzz,Mxy,Mxz,Myz :: MAT4{REAL}*
+      Mxx,Myy,Mzz,Mxy,Mxz,Myz :: MAT4{REAL}@
       G :: GAUSSIAN4
       a,b,c,d,na,nb,nc,nd :: INT
       cc :: REAL
@@ -549,8 +506,8 @@ contains
       self :: IN
 
       abcd :: MAT4{REAL}, OUT
-      escd :: MAT3{REAL}*
-      esfs :: MAT{REAL}*
+      escd :: MAT3{REAL}@
+      esfs :: MAT{REAL}@
       eub,fub,ab_l_max,cd_l_max :: INT
 
       nullify(esfs)
@@ -579,9 +536,9 @@ contains
       self :: IN
       esfs :: MAT{REAL}, OUT
 
-      Ixa,Iya,Iza :: MAT3{REAL}*
-      rys :: RYS*
-      Ix,Iy,Iz :: MAT{REAL}*
+      Ixa,Iya,Iza :: MAT3{REAL}@
+      rys :: RYS@
+      Ix,Iy,Iz :: MAT{REAL}@
       At,Ct,P,Q,PA,QC,QP,AB,CD :: VEC{REAL}(3)
       zeta,eta,xx,zinv,rho,einv,rho_zinv,rho_einv :: REAL
       ce,cf,bb,ce1,kappa_ab,kappa_cd,normab,norm,r2ab,r2cd :: REAL
@@ -778,8 +735,8 @@ contains
       esfs :: MAT{REAL}, OUT
       eub,fub,n_sum :: INT, IN
 
-      e_x,e_y,e_z,f_x,f_y,f_z,ii_e_ivec,ii_f_ivec :: VEC{INT}*
-      Ief :: MAT3{REAL}*
+      e_x,e_y,e_z,f_x,f_y,f_z,ii_e_ivec,ii_f_ivec :: VEC{INT}@
+      Ief :: MAT3{REAL}@
       e,f,zf,yf,ze,ye,iie,iif,fe,le,ff,lf :: INT
       dime,dimf,dime1,dimf1,dime2,dimf2 :: INT
 
@@ -843,7 +800,7 @@ contains
       eub,fub :: INT, IN
 
       e,f,fe,le,ff,lf :: INT
-      e_x,e_y,e_z,f_x,f_y,f_z :: VEC{INT}*
+      e_x,e_y,e_z,f_x,f_y,f_z :: VEC{INT}@
 
       fe = GAUSSIAN_DATA:n_comp_up_to(max(.a.l,.b.l)-1) + 1
       ff = GAUSSIAN_DATA:n_comp_up_to(max(.c.l,.d.l)-1) + 1
@@ -909,10 +866,10 @@ contains
       esfs :: MAT{REAL}, IN
       escd :: MAT3{REAL}, OUT
 
-      int_new,int_old :: MAT3{REAL}*
-      components,components_c,components_d :: MAT{INT}*
-      index_c,index_d :: MAT3{INT}*
-      comp_to_use,component_to_use :: VEC{INT}*
+      int_new,int_old :: MAT3{REAL}@
+      components,components_c,components_d :: MAT{INT}@
+      index_c,index_d :: MAT3{INT}@
+      comp_to_use,component_to_use :: VEC{INT}@
       CD :: VEC{REAL}(3)
       c,d,c1,c2,c3,d1,ld,cub,dub,ab_l_max :: INT
       cx,cy,cz,dx,dy,dz,j,clb,dlb,dob,e,eub :: INT
@@ -1047,10 +1004,10 @@ contains
       esfs :: MAT{REAL}, IN
       escd :: MAT3{REAL}, OUT
 
-      int_new,int_old :: MAT3{REAL}*
-      components,components_c,components_d :: MAT{INT}*
-      index_c,index_d :: MAT3{INT}*
-      comp_to_use,component_to_use :: VEC{INT}*
+      int_new,int_old :: MAT3{REAL}@
+      components,components_c,components_d :: MAT{INT}@
+      index_c,index_d :: MAT3{INT}@
+      comp_to_use,component_to_use :: VEC{INT}@
       DC :: VEC{REAL}(3)
       c,d,c1,d1,d2,d3,lc,cub,dub,ab_l_max :: INT
       cx,cy,cz,dx,dy,dz,j,clb,dlb,cob,e,eub :: INT
@@ -1185,10 +1142,10 @@ contains
       escd :: MAT3{REAL}, IN
       abcd :: MAT4{REAL}, OUT
 
-      int_new,int_old :: MAT4{REAL}*
-      components,components_a,components_b :: MAT{INT}*
-      index_a,index_b :: MAT3{INT}*
-      comp_to_use,component_to_use :: VEC{INT}*
+      int_new,int_old :: MAT4{REAL}@
+      components,components_a,components_b :: MAT{INT}@
+      index_a,index_b :: MAT3{INT}@
+      comp_to_use,component_to_use :: VEC{INT}@
       AB :: VEC{REAL}(3)
       a,b,c,d,a1,a2,a3,b1,lb,aub,bub,cub,dub :: INT
       ax,ay,az,bx,by,bz,j,alb,blb,bob :: INT
@@ -1327,10 +1284,10 @@ contains
       escd :: MAT3{REAL}, IN
       abcd :: MAT4{REAL}, OUT
 
-      int_new,int_old :: MAT4{REAL}*
-      components,components_a,components_b :: MAT{INT}*
-      index_a,index_b :: MAT3{INT}*
-      comp_to_use,component_to_use :: VEC{INT}*
+      int_new,int_old :: MAT4{REAL}@
+      components,components_a,components_b :: MAT{INT}@
+      index_a,index_b :: MAT3{INT}@
+      comp_to_use,component_to_use :: VEC{INT}@
       BA :: VEC{REAL}(3)
       a,b,c,d,a1,b1,b2,b3,la,aub,bub,cub,dub :: INT
       ax,ay,az,bx,by,bz,j,alb,blb,aob :: INT
@@ -1469,10 +1426,10 @@ contains
       escd :: MAT{REAL}, IN
       abcd :: MAT3{REAL}, OUT
 
-      int_new,int_old :: MAT3{REAL}*
-      components,components_a,components_b :: MAT{INT}*
-      index_a,index_b :: MAT3{INT}*
-      comp_to_use,component_to_use :: VEC{INT}*
+      int_new,int_old :: MAT3{REAL}@
+      components,components_a,components_b :: MAT{INT}@
+      index_a,index_b :: MAT3{INT}@
+      comp_to_use,component_to_use :: VEC{INT}@
       AB :: VEC{REAL}(3)
       a,b,f,a1,a2,a3,b1,lb,aub,bub,fub :: INT
       ax,ay,az,bx,by,bz,j,alb,blb,bob :: INT
@@ -1608,10 +1565,10 @@ contains
       escd :: MAT{REAL}, IN
       abcd :: MAT3{REAL}, OUT
 
-      int_new,int_old :: MAT3{REAL}*
-      components,components_a,components_b :: MAT{INT}*
-      comp_to_use,component_to_use :: VEC{INT}*
-      index_a,index_b :: MAT3{INT}*
+      int_new,int_old :: MAT3{REAL}@
+      components,components_a,components_b :: MAT{INT}@
+      comp_to_use,component_to_use :: VEC{INT}@
+      index_a,index_b :: MAT3{INT}@
       BA :: VEC{REAL}(3)
       a,b,f,a1,b1,b2,b3,la,aub,bub,fub :: INT
       ax,ay,az,bx,by,bz,j,alb,blb,aob :: INT
@@ -1783,8 +1740,8 @@ contains
       factor :: REAL, IN
       fa,la,fb,lb,fc,lc,fd,ld :: INT, IN
 
-      I4 :: MAT4{REAL}*
-      Kc,Kd :: VEC{REAL}*
+      I4 :: MAT4{REAL}@
+      Kc,Kd :: VEC{REAL}@
       P_dc,Jcd,P_db,P_cb,Kbc,Kbd,I_abcd :: REAL
       a,b,c,d :: INT
 
@@ -1868,7 +1825,7 @@ contains
       factor :: REAL, IN
       fa,la,fb,lb,fc,lc,fd,ld :: INT, IN
 
-      I4 :: MAT4{REAL}*
+      I4 :: MAT4{REAL}@
       P_dc,Jcd,I_abcd :: REAL
       a,b,c,d :: INT
 

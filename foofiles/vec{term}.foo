@@ -36,8 +36,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -54,8 +54,8 @@ contains
    ! Create space for object. This version does not nullify ptr parts.
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
-   ! Destroy space for object. This version does not destroy ptr parts
+   destroy ::: get_from(OBJECT), leaky
+   ! Deallocate "self". This version does not destroy ptr parts.
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -209,7 +209,7 @@ contains
 
    analyze(d1_codes) ::: leaky
    ! Analyze each observable term with provided d1_codes
-      d1_codes :: MAP{STR,INT}*
+      d1_codes :: MAP{STR,INT}@
 
       i,n_dof :: INT
 
@@ -256,7 +256,7 @@ contains
       res :: INT
 
       n :: INT
-      dof_present :: VEC{BIN}*
+      dof_present :: VEC{BIN}@
 
       ! Highest DOF
       n = .no_of_dofs
@@ -283,7 +283,7 @@ contains
    coefficient_list result (res) ::: leaky
    ! Return the coefficients as a flat list
       self :: IN
-      res :: VEC{REAL}*
+      res :: VEC{REAL}@
 
        Get it
       res.create(.dim)
@@ -296,7 +296,7 @@ contains
    variable_code_list result (res) ::: leaky
    ! Return the variable codes as a list-of-lists
       self :: IN
-      res :: VEC{VEC_{INT}}*
+      res :: VEC{VEC_{INT}}@
 
       ! Get it
       res.create(.dim)
@@ -309,7 +309,7 @@ contains
    parameter_list result (res) ::: leaky
    ! Return the parameters as a list-of-lists
       self :: IN
-      res :: VEC{VEC_{REAL}}*
+      res :: VEC{VEC_{REAL}}@
 
       ! Get it
       res.create(.dim)
@@ -326,10 +326,10 @@ contains
    put
    ! Put the series expansion out
 
-      table :: VEC{TABLE_COLUMN}*
-      coeffs :: VEC{REAL}*
-      varcodes :: VEC{VEC_{INT}}*
-      parameters :: VEC{VEC_{REAL}}*
+      table :: VEC{TABLE_COLUMN}@
+      coeffs :: VEC{REAL}@
+      varcodes :: VEC{VEC_{INT}}@
+      parameters :: VEC{VEC_{REAL}}@
 
     ! stdout.flush
     ! stdout.text("==========================")

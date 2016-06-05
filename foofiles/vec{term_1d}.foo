@@ -36,8 +36,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -54,8 +54,8 @@ contains
    ! Create space for object. This version does not nullify ptr parts.
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
-   ! Destroy space for object. This version does not destroy ptr parts
+   destroy ::: get_from(OBJECT), leaky
+   ! Deallocate "self". This version does not destroy ptr parts.
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -84,7 +84,7 @@ contains
 
    set_d1_codes(val)
    ! Set the d1_codes
-      val :: MAP{STR,INT}*
+      val :: MAP{STR,INT}@
       n :: INT
       do n = 1,.dim
         self(n).set_d1_codes(val)
@@ -218,7 +218,7 @@ contains
 
    analyze_descriptor(d1_codes) ::: leaky
    ! Analyze each observable term woith provided d1_codes
-      d1_codes :: MAP{STR,INT}*
+      d1_codes :: MAP{STR,INT}@
       i :: INT
       do i = 1,.dim
          self(i).set_d1_codes(d1_codes)

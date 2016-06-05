@@ -30,7 +30,7 @@ contains
 
    create(dim) ::: leaky
    ! Create the object
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT
 
       status :: INT
@@ -46,8 +46,8 @@ contains
    end
 
    destroy ::: leaky
-   ! Destroy the object
-      self :: PTR
+   ! Deallocate "self"
+      self :: allocatable, INOUT
 
       status :: INT
 

@@ -35,7 +35,7 @@ contains
 !   optimize_geometry
 !   ! Optimise the Hartree-Fock SCF energy gradient.
 !      k,i :: INT
-!      p :: VEC{REAL}*
+!      p :: VEC{REAL}@
 !      energy :: REAL
 !      self :: target
 !      p.create(3*.n_atom)
@@ -58,7 +58,7 @@ contains
 !   ! Evaluates the total HF SCF energy (including nuclear)
 !      p :: VEC{REAL}
 !     res :: REAL
-!     self :: MOLECULE*
+!     self :: MOLECULE@
 !   ENSURE(.n_atom*3==p.dim,"wrong size for p")
 !     .BASE:set_from_saved_self
 !     if (NOT .atom.coordinate_vector.same_as(p,tol=TOL(9))) then
@@ -97,7 +97,7 @@ contains
 !       p :: VEC{REAL}
 !       g :: VEC{REAL}(size(p))
 !      i,k :: INT
-!      self :: MOLECULE*
+!      self :: MOLECULE@
 !   ENSURE(.n_atom*3==p.dim,"wrong size for p")
 !      .BASE:set_from_saved_self
 !      if (NOT .atom.coordinate_vector.same_as(p,tol=TOL(9))) then
@@ -114,8 +114,8 @@ contains
 !
 !   hf_scf_energy_gradient
 !   ! Calculate the Hartree-Fock SCF energy gradient.
-!      g :: VEC{REAL}*
-!      P :: MAT{REAL}*
+!      g :: VEC{REAL}@
+!      P :: MAT{REAL}@
 !      delta, val :: REAL
 !   ENSURE(.density_matrix.restricted.associated,"no density matrix")
 !      stdin.read(delta)
@@ -143,8 +143,8 @@ contains
 !   energy_gradient(gradient)
 !   ! Calculate the Hartree-Fock SCF energy gradient.
 !       gradient :: VEC{REAL}
-!       g :: VEC{REAL}*
-!       P :: MAT{REAL}*
+!       g :: VEC{REAL}@
+!       P :: MAT{REAL}@
 !   ENSURE(.density_matrix.restricted.associated,"no density matrix")
 !      g.create(3*.n_atom)
 !      g = ZERO
@@ -163,8 +163,8 @@ contains
 !   ! Make the eigenvalue weighted density matrix used in the overlap
 !   ! derivative energy gradient term
 !     D :: MAT{REAL}
-!     X,MO :: MAT{REAL}*
-!     eigenvalues :: VEC{REAL}*
+!     X,MO :: MAT{REAL}@
+!     eigenvalues :: VEC{REAL}@
 !     eig_archive,MO_archive :: ARCHIVE
 !     eig_archive.set(.name,"orbital_energies",genre="restricted")
 !     MO_archive.set(.name,"molecular_orbitals",genre="restricted")
@@ -188,8 +188,8 @@ contains
 !   ! Make the overlap derivative contribution to the SCF gradient by contracting
 !   ! The overlap derivatives with the densitu matrix.
 !     gradient :: VEC{REAL}
-!     g :: VEC{REAL}*
-!     SAx,SAy,SAz, D :: MAT{REAL}*
+!     g :: VEC{REAL}@
+!     SAx,SAy,SAz, D :: MAT{REAL}@
 !     q,fa,la,fb,lb,atom_a,atom_b, ax,ay,az,bx,by,bz :: INT
 !     val_x,val_y,val_z :: REAL
 !     sh :: SHELL2
@@ -228,8 +228,8 @@ contains
 !   ! Add the kinetic derivative contribution to the SCF "gradient" by contracting
 !   ! The kinetic integral derivatives with the densitu matrix.
 !     gradient :: VEC{REAL}
-!     g :: VEC{REAL}*
-!     TAx,TAy,TAz, P :: MAT{REAL}*
+!     g :: VEC{REAL}@
+!     TAx,TAy,TAz, P :: MAT{REAL}@
 !     q,fa,la,fb,lb,atom_a,atom_b, ax,ay,az,bx,by,bz :: INT
 !     val_x,val_y,val_z :: REAL
 !     arch :: ARCHIVE
@@ -272,8 +272,8 @@ contains
 !   ! the nuclear attraction integral derivatives with the densitu matrix. This term includes
 !   ! the Helmann-Feynman contribution.
 !     gradient :: VEC{REAL}
-!     g :: VEC{REAL}*
-!     NAx,NAy,NAz, NBx,NBy,NBz, P :: MAT{REAL}*
+!     g :: VEC{REAL}@
+!     NAx,NAy,NAz, NBx,NBy,NBz, P :: MAT{REAL}@
 !     q,fa,la,fb,lb,atom_a,atom_b,c, ax,ay,az,bx,by,bz,cx,cy,cz :: INT
 !     val_ax,val_ay,val_az, val_bx,val_by,val_bz, val_cx,val_cy,val_cz, Z, fac :: REAL
 !     arch :: ARCHIVE
@@ -329,9 +329,9 @@ contains
 !   add_2e_gradient_term(gradient) ::: private
 !   ! Add the two electron derivative contributions to the "gradient".
 !     gradient :: VEC{REAL}
-!     g :: VEC{REAL}*
-!     P :: MAT{REAL}*
-!     max_I,max_P :: VEC{REAL}*
+!     g :: VEC{REAL}@
+!     P :: MAT{REAL}@
+!     max_I,max_P :: VEC{REAL}@
 !     sh :: SHELL4
 !     AA,BB,CC :: MAT5{REAL}@
 !     ab,cd, sa,sb,sc,sd, atom_a,atom_b,atom_c,atom_d :: INT
@@ -435,7 +435,7 @@ contains
 !         end
 !      end
 !      delta :: REAL, optional
-!      g,p :: VEC{REAL}*
+!      g,p :: VEC{REAL}@
 !      del,e_p,e_m :: REAL
 !      a,i,ai :: INT
 !      del = TOL(7)
@@ -473,7 +473,7 @@ contains
 !   S_energy result (res)
 !   ! Make the energy weighted S energy
 !     res :: REAL
-!     D :: MAT{REAL}*
+!     D :: MAT{REAL}@
 !     D.create(.n_bf,.n_bf)
 !     .make_e_weighted_density_matrix(D) ! includes factor of 2
 !     .INTS:make_overlap_matrix
@@ -484,7 +484,7 @@ contains
 !   T_energy result (res)
 !   ! Make the kinetic energy
 !     res :: REAL
-!     T :: MAT{REAL}*
+!     T :: MAT{REAL}@
 !     T.create(.n_bf,.n_bf)
 !     .get_kinetic_energy_mx(T)
 !     res = .expectation(T)
@@ -494,7 +494,7 @@ contains
 !   NA_energy result (res)
 !   ! Make the electron-nuclear attraction energy
 !     res :: REAL
-!     Z :: MAT{REAL}*
+!     Z :: MAT{REAL}@
 !     Z.create(.n_bf,.n_bf)
 !     .get_attraction_nuclear_mx(Z)
 !     res = .expectation(Z)
@@ -507,10 +507,10 @@ contains
 
    optimize_orbitals
    ! Optimise the Hartree-Fock orbitals directly using Fletcher Powell
-      self :: PTR
+      self :: allocatable, INOUT
 
       energy :: REAL
-      MO :: VEC{REAL}*
+      MO :: VEC{REAL}@
 
       .SCF:get_initial_guess
 
@@ -536,7 +536,7 @@ contains
       MO :: VEC{REAL}, IN
       res :: REAL
 
-      self :: MOLECULE*
+      self :: MOLECULE@
 
       ! Recover state
       .BASE:set_from_saved_self
@@ -564,7 +564,7 @@ contains
       MO :: MAT{REAL}
       res :: REAL
 
-      P,N :: MAT{REAL}*
+      P,N :: MAT{REAL}@
 
       ! Create
       P.create(.n_bf,.n_bf)
@@ -595,7 +595,7 @@ contains
    ENSURE(P.dim1==.n_bf,"wrong size, P")
    ENSURE(P.is_square,"wrong shape, P")
 
-      T,Pba :: MAT{REAL}*
+      T,Pba :: MAT{REAL}@
       q,fa,la,na,fb,lb,nb, c :: INT
       fac,val :: REAL
       sh :: SHELL2
@@ -647,8 +647,8 @@ contains
    ENSURE(P.dim1==.n_bf,"wrong size, P")
    ENSURE(P.is_square,"wrong shape, P")
 
-      max_I,max_P :: VEC{REAL}*
-      I :: MAT4{REAL}*
+      max_I,max_P :: VEC{REAL}@
+      I :: MAT4{REAL}@
       sh :: SHELL4
       ab,cd, sa,sb,sc,sd, atom_a,atom_b,atom_c,atom_d :: INT
       a,b,c,d,fa,fb,fc,fd,la,lb,lc,ld :: INT
@@ -734,7 +734,7 @@ contains
    ! the matrix of the occupied molecular orbital coefficients.
       MO :: VEC{REAL}, IN
       g  :: VEC{REAL}(MO.dim)
-      self :: MOLECULE*
+      self :: MOLECULE@
       .BASE:set_from_saved_self
       g = .:r_hf_energy_MO_gradient(reshape(MO,[.n_bf,.n_a]),make_fock=FALSE)
       ! The fock matrix is not made because in the minimiser the gradient is
@@ -756,7 +756,7 @@ contains
 
       g :: VEC{REAL}(.n_bf*.n_a)
       do_fock :: BIN
-      W,X,N,S, F,P,g1 :: MAT{REAL}*
+      W,X,N,S, F,P,g1 :: MAT{REAL}@
       norm :: REAL
       archive :: ARCHIVE
 
@@ -834,7 +834,7 @@ contains
    ENSURE(.basis_info_made, "no basis set")
    ENSURE(.molecular_orbitals.associated, "no molecular orbitals")
 
-      MO,D,N :: MAT{REAL}*
+      MO,D,N :: MAT{REAL}@
       orb_kind :: STR
       archive :: ARCHIVE
 
@@ -917,7 +917,7 @@ contains
 !   ! If present and FALSE, "r12"  removes the two electron contribution
 !     direct,core,r12,test :: BIN, optional
 !     P,F :: MAT{REAL}
-!     J,K :: MAT{REAL}*
+!     J,K :: MAT{REAL}@
 !     do_direct,add_core,add_r12,do_test :: BIN
 !   ENSURE(.basis_info_made, "no basis set")
 !   ENSURE(F.dim1==.n_bf,"wrong shape, F")
@@ -953,7 +953,7 @@ contains
 
 !   put_energy_decomposition
 !   ! Put out the energy decomposition specified in the .atom_group array
-!      T,Z,C,K,P,E_T,E_Z,E_C,E_K :: MAT{REAL}*
+!      T,Z,C,K,P,E_T,E_Z,E_C,E_K :: MAT{REAL}@
 !      n_group,i,j,ia,ib,a,b, fa,la,fb,lb :: INT
 !      fac :: REAL
 !      unit :: STR
@@ -1058,9 +1058,9 @@ contains
 !   ! Put out the energy decomposition specified in the .atom_group array
 !   ! This routine calculates quadricentric contributions which are
 !   ! comparable to the Fischer-Kollmar decomposition.
-!      T,Z,ZZ,C,K,P,W,E_T,E_Z, EE :: MAT{REAL}*
-!      E_ZZ :: MAT3{REAL}*
-!      E_C,E_K :: MAT4{REAL}*
+!      T,Z,ZZ,C,K,P,W,E_T,E_Z, EE :: MAT{REAL}@
+!      E_ZZ :: MAT3{REAL}@
+!      E_C,E_K :: MAT4{REAL}@
 !      n_group,x,y,i,j :: INT
 !      fac :: REAL
 !      unit :: STR
@@ -1306,9 +1306,9 @@ contains
 !   ! This routine calculates quadricentric contributions which are
 !   ! comparable to the Fischer-Kollmar decomposition in an orthogonalised
 !   ! AO basis set
-!      T,Z,ZZ,C,K,P,PP,W,E_T,E_Z, S,Sph,Smh, EE :: MAT{REAL}*
-!      E_ZZ :: MAT3{REAL}*
-!      E_C,E_K :: MAT4{REAL}*
+!      T,Z,ZZ,C,K,P,PP,W,E_T,E_Z, S,Sph,Smh, EE :: MAT{REAL}@
+!      E_ZZ :: MAT3{REAL}@
+!      E_C,E_K :: MAT4{REAL}@
 !      n_group,i,j,g,h, fa,la,fb,lb :: INT
 !      fac,fac_ij,fac_xy :: REAL
 !      unit :: STR
@@ -1504,9 +1504,9 @@ contains
 !   ! on atoms in the "col_group", as specified in ".atom_group".
 !     J,K,P :: MAT{REAL}
 !     row_group,col_group :: INT
-!     PP :: MAT{REAL}*
-!      I :: MAT4{REAL}*
-!     max_I,max_P :: VEC{REAL}*
+!     PP :: MAT{REAL}@
+!      I :: MAT4{REAL}@
+!     max_I,max_P :: VEC{REAL}@
 !     sh4 :: SHELL4
 !     ab,cd,i_a,i_b,i_c,i_d :: INT
 !     a,b,c,d,fa,fb,fc,fd,la,lb,lc,ld :: INT
@@ -1596,8 +1596,8 @@ contains
 !   !
 !      n_pt,i,j,n, k :: INT
 !      aa,bb,cc :: REAL
-!      pt :: MAT{REAL}*
-!      dma :: MAT3{CPX}*
+!      pt :: MAT{REAL}@
+!      dma :: MAT3{CPX}@
 !      re,im :: REAL
 !      n_pt = 59*75
 !    ! n_pt = 25
@@ -1644,7 +1644,7 @@ contains
 !   ! Make the total b_field "b" on ".plot_grid"
 !      pt :: MAT{REAL}
 !      archive :: ARCHIVE
-!      b,w :: MAT{REAL}*
+!      b,w :: MAT{REAL}@
 !      complex :: BIN
 !      n_pt :: INT
 !   ENSURE(.basis_info_made, "no basis set")
@@ -1676,7 +1676,7 @@ contains
 !   ! Make the b_field due to the spin density on ".plot_grid"
 !      pt :: MAT{REAL}
 !      archive :: ARCHIVE
-!       b :: MAT{REAL}*
+!       b :: MAT{REAL}@
 !      complex :: BIN
 !      n_pt :: INT
 !   ENSURE(.basis_info_made, "no basis set")
@@ -1702,8 +1702,8 @@ contains
 !   ! AO density matrix "dens"
 !      bb,pt :: MAT{REAL}
 !      dens :: MAT{CPX}, target
-!      Daa,Dba,Dbb :: MAT{CPX}*
-!      Mxx,Mxy,Mxz,Myx,Myy,Myz,Mzx,Mzy,Mzz :: MAT{REAL}*
+!      Daa,Dba,Dbb :: MAT{CPX}@
+!      Mxx,Mxy,Mxz,Myx,Myy,Myz,Mzx,Mzy,Mzz :: MAT{REAL}@
 !      q,a,b,fa,fb,la,lb,k, n_pt :: INT
 !      fac :: REAL
 !      shell :: SHELL2
@@ -1759,7 +1759,7 @@ contains
 !   ! Make the b_field due to the current density on ".plot_grid"
 !      pt :: MAT{REAL}
 !      archive :: ARCHIVE
-!       b :: MAT{REAL}*
+!       b :: MAT{REAL}@
 !      complex :: BIN
 !      n_pt :: INT
 !   ENSURE(.basis_info_made, "no basis set")
@@ -1786,8 +1786,8 @@ contains
 !   ! density at a set of points "pt" using a complex AO density matrix "dens"
 !      bb,pt :: MAT{REAL}
 !      dens :: MAT{CPX}, target
-!      Dba :: MAT{CPX}*
-!      Jx,Jy,Jz :: MAT{REAL}*
+!      Dba :: MAT{CPX}@
+!      Jx,Jy,Jz :: MAT{REAL}@
 !      q,a,b,fa,fb,la,lb,k, n_pt :: INT
 !      fac :: REAL
 !      shell :: SHELL2
@@ -1822,9 +1822,9 @@ contains
 !   ! is added to whatever is already in bb.
 !      bb,pt :: MAT{REAL}
 !      Dx,Dy,Dz :: MAT{REAL}, target
-!      DD :: MAT3{REAL}*
-!      M :: MAT4{REAL}*
-!      Mxx,Mxy,Mxz,Myx,Myy,Myz,Mzx,Mzy,Mzz :: MAT{REAL}*
+!      DD :: MAT3{REAL}@
+!      M :: MAT4{REAL}@
+!      Mxx,Mxy,Mxz,Myx,Myy,Myz,Mzx,Mzy,Mzz :: MAT{REAL}@
 !      q,a,b,fa,fb,la,lb,n, n_pt, i,j,k :: INT
 !      eps :: MAT3{REAL}(3,3,3)
 !      fac :: REAL
@@ -1871,13 +1871,13 @@ contains
 !
 !   make_pcc_structure_factors
 !   !
-!       S :: MAT{REAL}*
-!      mo,Smo :: MAT{REAL}*
-!      in :: TEXTFILE*
-!      k_pts :: MAT{REAL}*
-!      ftnew,ft :: MAT3{CPX}*
-!       W :: MAT{CPX}*
-!      ftnew_nabla,ft_nabla :: MAT4{CPX}*
+!       S :: MAT{REAL}@
+!      mo,Smo :: MAT{REAL}@
+!      in :: TEXTFILE@
+!      k_pts :: MAT{REAL}@
+!      ftnew,ft :: MAT3{CPX}@
+!       W :: MAT{CPX}@
+!      ftnew_nabla,ft_nabla :: MAT4{CPX}@
 !      shell :: SHELL2*
 !      n_refl,q,i,j :: INT
 !      fa,la,fb,lb,a,b :: INT
@@ -1957,11 +1957,11 @@ contains
 !
 !   make_pcc_L_matrices
 !   !
-!       S :: MAT{REAL}*
-!      mo,Smo :: MAT{REAL}*
-!      Lx,Ly,Lz :: MAT{REAL}*
-!      Lxmo,Lymo,Lzmo :: MAT{REAL}*
-!      in :: TEXTFILE*
+!       S :: MAT{REAL}@
+!      mo,Smo :: MAT{REAL}@
+!      Lx,Ly,Lz :: MAT{REAL}@
+!      Lxmo,Lymo,Lzmo :: MAT{REAL}@
+!      in :: TEXTFILE@
 !      mo.create(160,4)
 !      in.create("mo35")
 !      in.open_for("read")
@@ -2011,7 +2011,7 @@ contains
 !
 !   test_spin_orbit_B_matrices
 !   !
-!      Lx,Ly,Lz :: MAT{REAL}*
+!      Lx,Ly,Lz :: MAT{REAL}@
 !      fac :: REAL
 !      fac = (TWO*EIGHT*SPEED_OF_LIGHT_AU*SPEED_OF_LIGHT_AU)/G_FACTOR
 !      Lx.create(.n_bf,.n_bf)
@@ -2037,7 +2037,7 @@ contains
 !   make_SOB_matrices(SOBx,SOBy,SOBz)
 !   ! Calculate the gauge modified (B field) spin orbit matrices "SOBx" "SOBy" and "SOBz"
 !      SOBx,SOBy,SOBz :: MAT{REAL}
-!      Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz,Qx,Qy,Qz,Qss :: MAT{REAL}*
+!      Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz,Qx,Qy,Qz,Qss :: MAT{REAL}@
 !      q,c,a,b,fa,la,fb,lb,atom_a,atom_b :: INT
 !      fac,Z :: REAL
 !      shell :: SHELL2
@@ -2083,12 +2083,12 @@ contains
 !
 !   make_pcc_densities
 !   ! Calculate pcc's densities for the paper
-!      mo :: MAT{REAL}*
-!      mo35,mo48,mo49,mo50 :: VEC{REAL}*
-!      p35,p48,p49,p50 :: VEC{REAL}*
-!      g35,g48,g49,g50 :: MAT{REAL}*
-!      j,s :: MAT{REAL}*
-!      in :: TEXTFILE*
+!      mo :: MAT{REAL}@
+!      mo35,mo48,mo49,mo50 :: VEC{REAL}@
+!      p35,p48,p49,p50 :: VEC{REAL}@
+!      g35,g48,g49,g50 :: MAT{REAL}@
+!      j,s :: MAT{REAL}@
+!      in :: TEXTFILE@
 !      n_pt,k :: INT
 !      mu,nu,rt3,fac :: REAL
 !      archive :: ARCHIVE
@@ -2174,8 +2174,8 @@ contains
    ! They are complex matrices in the block order:
    ! alpha-alpha, beta-alpha, alpha-beta, beta-beta.
 
-      textfile :: TEXTFILE*
-      dens :: MAT3{CPX}*
+      textfile :: TEXTFILE@
+      dens :: MAT3{CPX}@
       val :: CPX
       name :: STR
       i,j,k :: INT
@@ -2245,7 +2245,7 @@ contains
 
       s,f,l,ls,fg,lg,i,j :: INT
       do_left :: BIN
-      fac :: VEC{REAL}*
+      fac :: VEC{REAL}@
 
       do_left = TRUE
       if (present(left)) do_left = left
@@ -2325,9 +2325,9 @@ contains
 ! ! ENSURE(.crystal.reflection_data_exists, "no reflection data")
 !   ENSURE(.density_matrix.associated, "no density matrix")
 !   ENSURE(.density_matrix.any_created, "no density matrix")
-!      Fc :: MAT{CPX}*
-!      k_pts :: MAT{REAL}*
-!      k_values :: VEC{REAL}*
+!      Fc :: MAT{CPX}@
+!      k_pts :: MAT{REAL}@
+!      k_values :: VEC{REAL}@
 !      orb_kind :: STR
 !      complex :: BIN
 !      i,n_pts,n_theta :: INT
@@ -2372,8 +2372,8 @@ contains
 !   ENSURE(res.dim2==n_theta+1,"incompatible res and n_theta")
 !      k,fa,fb,la,lb,q,t :: INT
 !      sh :: SHELL2
-!      ft_ab :: MAT4{CPX}*
-!      dens_ba :: MAT{REAL}*
+!      ft_ab :: MAT4{CPX}@
+!      dens_ba :: MAT{REAL}@
 !      cutoff,fac,val :: REAL
 !      res = ZERO
 !      cutoff = TOL(10) / .n_shell_pairs
@@ -2406,8 +2406,8 @@ contains
    ENSURE(.density_matrix.associated, "no density matrix")
    ENSURE(.density_matrix.any_created, "no density matrix")
 
-      Fc :: VEC{CPX}*
-      k_values :: VEC{REAL}*
+      Fc :: VEC{CPX}@
+      k_values :: VEC{REAL}@
       orb_kind :: STR
       complex :: BIN
       i,k,n_pts :: INT
@@ -2463,8 +2463,8 @@ contains
 
       k,fa,la,na,fb,lb,nb,q :: INT
       sh :: SHELL2
-      ftab :: MAT3{CPX}*
-      Dba :: MAT{REAL}*
+      ftab :: MAT3{CPX}@
+      Dba :: MAT{REAL}@
       cutoff,fac :: REAL
 
       res = ZERO
@@ -2519,12 +2519,12 @@ contains
    ENSURE(.crystal.xray_data.associated,"no crystal xray data!")
    ENSURE(.crystal.xray_data.reflections.associated,"no xray_data reflection!")
 
-      AO :: OPMATRIX*
-      k_pt,D,AO_core :: MAT{REAL}*
-      k1,k2,k3  :: VEC{REAL}*
+      AO :: OPMATRIX@
+      k_pt,D,AO_core :: MAT{REAL}@
+      k1,k2,k3  :: VEC{REAL}@
       ra,diff :: VEC{REAL}(3)
-      F_calc,core,phase :: VEC{CPX}*
-      mol :: MOLECULE*
+      F_calc,core,phase :: VEC{CPX}@
+      mol :: MOLECULE@
       II  :: CPX
       n_k,n_core,n_bf,k,a,b,n :: INT
 
@@ -2676,7 +2676,7 @@ contains
    ENSURE(.n_atom_kind>0,"no atom kinds")
 
       head :: STR
-      ind :: VEC{INT}*
+      ind :: VEC{INT}@
       a,i :: INT
 
       ! Read the atom list
@@ -2788,10 +2788,10 @@ contains
    ! Reference: R. Zanasi and P. Lazzeretti, CPL 286, 240 (1998)
    ENSURE(.basis_info_made, "no basis info")
 
-       pt :: MAT{REAL}*
-       Pa,Pb :: VEC{CPX}*
-       Na,Nb :: MAT{CPX}*
-       PV,NN :: VEC{REAL}*
+       pt :: MAT{REAL}@
+       Pa,Pb :: VEC{CPX}@
+       Na,Nb :: MAT{CPX}@
+       PV,NN :: VEC{REAL}@
        n, x,y,z :: INT
        Gamma :: REAL
        I :: CPX
@@ -2866,8 +2866,8 @@ contains
    ! Put the g-tensor shift information to the output.
    ! Reference: Jayatilaka, JCP 108, 7587 (1998)
 
-      Lx,Ly,Lz, Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz, T :: MAT{REAL}*
-      HH,P :: MAT{CPX}*
+      Lx,Ly,Lz, Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz, T :: MAT{REAL}@
+      HH,P :: MAT{CPX}@
       Sx,Sy,Sz,SS_net, Mx,My,Mz,MM_net :: REAL
       Qx,Qy,Qz,QQ_net, Tx,Ty,Tz,TT_net :: REAL
       Sx_ppm,Sy_ppm,Sz_ppm, Mx_ppm,My_ppm,Mz_ppm :: REAL
@@ -3094,8 +3094,8 @@ contains
    make_fermi_contact_terms
    ! subroutine to calculate fermi contact terms
    a,i,sgn,na,nb :: INT
-   fermi_terms,GN :: VEC{REAL}*
-   grid :: MAT{REAL}*
+   fermi_terms,GN :: VEC{REAL}@
+   grid :: MAT{REAL}@
    value :: REAL
    int_width :: BIN
 
@@ -3207,15 +3207,15 @@ contains
 
    integrate_density_numerically
    ! Integrate the density numerically
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.becke_grid.associated,"no becke_grid")
    ENSURE(.becke_grid.updated,"becke_grid not updated")
 
-      b :: BECKE_GRID*
-      pt, Z :: MAT{REAL}*
-      wt,rho_grid :: VEC{REAL}*
-   !   nuc :: VEC{REAL}*
+      b :: BECKE_GRID@
+      pt, Z :: MAT{REAL}@
+      wt,rho_grid :: VEC{REAL}@
+   !   nuc :: VEC{REAL}@
       n_pt, i,j :: INT
       n_e, V_ee :: REAL
 
@@ -3288,14 +3288,14 @@ contains
 
    integrate_spin_numerically
    ! Integrate the spin density numerically
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.becke_grid.associated,"no becke_grid")
    ENSURE(.becke_grid.updated,"becke_grid not updated")
 
-      b :: BECKE_GRID*
-      pt :: MAT{REAL}*
-      wt,rho_grid :: VEC{REAL}*
+      b :: BECKE_GRID@
+      pt :: MAT{REAL}@
+      wt,rho_grid :: VEC{REAL}@
       n_pt, sgn :: INT
       n_e :: REAL
 
@@ -3341,14 +3341,14 @@ contains
 
    integrate_nc_spin_numerically
    ! Integrate the noncollinear spin density numerically
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.becke_grid.associated,"no becke_grid")
    ENSURE(.becke_grid.updated,"becke_grid not updated")
 
-      b :: BECKE_GRID*
-      pt :: MAT{REAL}*
-      wt,rho_grid :: VEC{REAL}*
+      b :: BECKE_GRID@
+      pt :: MAT{REAL}@
+      wt,rho_grid :: VEC{REAL}@
       n_pt :: INT
       n_e :: REAL
 
@@ -3393,14 +3393,14 @@ contains
 
    integrate_ku_spin_numerically
    ! Integrate the (unpaired electron) density numerically
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.becke_grid.associated,"no becke_grid")
    ENSURE(.becke_grid.updated,"becke_grid not updated")
 
-      b :: BECKE_GRID*
-      pt :: MAT{REAL}*
-      wt,rho_grid :: VEC{REAL}*
+      b :: BECKE_GRID@
+      pt :: MAT{REAL}@
+      wt,rho_grid :: VEC{REAL}@
       n_pt :: INT
       n_e :: REAL
 
@@ -3451,13 +3451,13 @@ contains
 !   ! be multipled by the source integrals to give the contracted term (usually
 !   ! the J-matrix)
 !      P :: MAT{REAL}
-!      PP :: VEC{VEC_{REAL}*
+!      PP :: VEC{VEC_{REAL}@
 !   ENSURE(.basis_info_made,"no basis info")
 !   ENSURE(.atom.associated,"no atom info")
 !      R :: VEC{REAL}(3)
 !      R1,R2,R3,T1,T2,T3,fx,fy,fz :: REAL
-!      ax,ay,az,bx,by,bz,Rx,Ry,Rz, ab :: VEC{REAL}*
-!      binbx,binby,binbz :: VEC{INT}*
+!      ax,ay,az,bx,by,bz,Rx,Ry,Rz, ab :: VEC{REAL}@
+!      binbx,binby,binbz :: VEC{INT}@
 !      q,fa,la,fb,lb,atom_a,atom_b,aa,bb :: INT
 !      i,a,b,x,y,z,xa,ya,za,xb,yb,zb,xx,yy,zz :: INT
 !      sh :: SHELL2
@@ -3565,7 +3565,7 @@ contains
 
 !   test_rchf_S
 !   ! Test rchf S
-!      S,D,T,U :: MAT{REAL}*
+!      S,D,T,U :: MAT{REAL}@
 !      n_bf :: INT
 !      .cluster.create_atom_list
 !      .cluster.atom.make_index_info
@@ -3579,7 +3579,7 @@ contains
 
 !   test_inv_sqrt_S
 !   ! Test inv sqrt S routine
-!      S,D,T,U :: MAT{REAL}*
+!      S,D,T,U :: MAT{REAL}@
 !      S.create(.n_bf,.n_bf)
 !      D.create(.n_bf,.n_bf)
 !      T.create(.n_bf,.n_bf)
@@ -3619,8 +3619,8 @@ contains
 
 !   test_E_field_matrices
 !   ! Test the E field matrices
-!      Exx,Eyy,Ezz,Exy,Exz,Eyz :: MAT{REAL}*
-!      Exp,Eyp,Ezp,Exm,Eym,Ezm,NN :: MAT{REAL}*
+!      Exx,Eyy,Ezz,Exy,Exz,Eyz :: MAT{REAL}@
+!      Exp,Eyp,Ezp,Exm,Eym,Ezm,NN :: MAT{REAL}@
 !      c :: VEC{REAL}(3)
 !      Exp.create(.n_bf,.n_bf); Eyp.create(.n_bf,.n_bf); Ezp.create(.n_bf,.n_bf)
 !      Exm.create(.n_bf,.n_bf); Eym.create(.n_bf,.n_bf); Ezm.create(.n_bf,.n_bf)
@@ -3652,7 +3652,7 @@ contains
 !   ENSURE(.basis_info_made, "no basis info")
 !   ENSURE(.atom.associated,  "no atom list")
 !   ENSURE(.dftgrid.associated, "need to specify dftgrid for ZORA")
-!     ZZ :: MAT{REAL}*
+!     ZZ :: MAT{REAL}@
 !     sh :: SHELL2
 !     arch :: ARCHIVE
 !     q,fa,la,fb,lb :: INT
@@ -3696,8 +3696,8 @@ contains
 
 !   test_ZORA_SO_matrices
 !   !
-!      SOx,SOy,SOz :: MAT{REAL}*
-!      ZOx,ZOy,ZOz, T :: MAT{REAL}*
+!      SOx,SOy,SOz :: MAT{REAL}@
+!      ZOx,ZOy,ZOz, T :: MAT{REAL}@
 !      T.create(.n_bf,.n_bf)
 !      SOx.create(.n_bf,.n_bf); SOy.create(.n_bf,.n_bf); SOz.create(.n_bf,.n_bf)
 !      ZOx.create(.n_bf,.n_bf); ZOy.create(.n_bf,.n_bf); ZOz.create(.n_bf,.n_bf)
@@ -3720,7 +3720,7 @@ contains
 !
 !   test_dftgrid
 !   !
-!      Z,NZ,DZ :: MAT{REAL}*
+!      Z,NZ,DZ :: MAT{REAL}@
 !      Z.create(.n_bf,.n_bf)
 !      NZ.create(.n_bf,.n_bf)
 !      DZ.create(.n_bf,.n_bf)
@@ -3740,8 +3740,8 @@ contains
 !      Z :: MAT{REAL}
 !     output :: BIN, OPTIONAL
 !     do_output :: BIN
-!     atom :: ATOM*
-!     Z_c :: MAT{REAL}*
+!     atom :: ATOM@
+!     Z_c :: MAT{REAL}@
 !     q,c,fa,la,fb,lb :: INT
 !     shell :: SHELL2
 !     archive :: ARCHIVE
@@ -3771,7 +3771,7 @@ contains
 !
 !   test_num
 !   !
-!     ZZ :: MAT{REAL}*
+!     ZZ :: MAT{REAL}@
 !     q,fa,la,fb,lb :: INT
 !     shell :: SHELL2
 !   ENSURE(.basis_info_made, "no basis set")
@@ -3850,9 +3850,9 @@ contains
 !   !
 !      n,i :: INT
 !      dot :: REAL
-!       m :: MAT{REAL}*
-!      eval :: VEC{REAL}*
-!      L,R,w :: MAT{REAL}*
+!       m :: MAT{REAL}@
+!      eval :: VEC{REAL}@
+!      L,R,w :: MAT{REAL}@
 !      stdin.read(n)
 !      m.create(n,n)
 !      stdin.read(m)
@@ -3923,9 +3923,9 @@ contains
 !   ! and a Fock matrix must already exist in memory. The new molecular orbitals
 !   ! "MO*U" are found from the old MOs solving : (MO^T F MO)U = MO^T S MO U E
 !   ! where U is a general matrix (since F is not symmetric).
-!     MO_energies :: VEC{REAL}*
-!     MO,F :: MAT{REAL}*
-!     G,U,left :: MAT{REAL}*
+!     MO_energies :: VEC{REAL}@
+!     MO,F :: MAT{REAL}@
+!     G,U,left :: MAT{REAL}@
 !      i :: INT
 !     MO_energies => .orbital_energies.restricted
 !     MO => .molecular_orbitals.restricted
@@ -3963,7 +3963,7 @@ contains
 !   ! Make the DVPT initial orbitals. Currently this is just the same
 !   ! as the usual initial guess, but the MO's are written to disk.
 !       m :: INT
-!      MO :: MAT{REAL}*
+!      MO :: MAT{REAL}@
 !      m_archive :: ARCHIVE
 !      m = .DVPT_order
 !      m_archive.set(.name,"DVPT_mo_"// trim(m.to_str))
@@ -4011,7 +4011,7 @@ contains
 !   ! Make the effective DVPT fock matrix
 !      m,i,j :: INT
 !      fac,sum,det :: REAL
-!      DD,D :: MAT{REAL}*
+!      DD,D :: MAT{REAL}@
 !      d_archive :: ARCHIVE
 !      .density_matrix.restricted.destroy
 !      DD.create(.n_bf,.n_bf); DD = ZERO
@@ -4056,7 +4056,7 @@ contains
 !   ! for a left determinant orbitals "left" and  a right determinant orbitals "right".
 !   ! The density and determinant are stored as archives on disk.
 !      left,right :: INT
-!      D,L,R :: MAT{REAL}*
+!      D,L,R :: MAT{REAL}@
 !      l_archive,r_archive,d_archive :: ARCHIVE
 !      determinant :: REAL
 !      D.create(.n_bf,.n_bf)
@@ -4093,7 +4093,7 @@ contains
 !       D :: MAT{REAL}
 !      left,right :: MAT{REAL}
 !      determinant :: REAL
-!      S,O,C :: MAT{REAL}*
+!      S,O,C :: MAT{REAL}@
 !      dim :: INT
 !   ENSURE(size(D,1)==size(D,2),"D is not square")
 !   ENSURE(size(D,1)==.n_bf,"D has wrong size")
@@ -4119,8 +4119,8 @@ contains
 !   ! determinant is that for the full overlap matrix
 !      C,S :: MAT{REAL}
 !      determinant :: REAL
-!      eval,n :: VEC{REAL}*
-!      left,right,W :: MAT{REAL}*
+!      eval,n :: VEC{REAL}@
+!      left,right,W :: MAT{REAL}@
 !      dim,i :: INT
 !      dot :: REAL
 !   ENSURE(size(C,1)==size(C,2),"C is not square")
@@ -4185,7 +4185,7 @@ contains
 !   ! Make the effective DVPT fock matrix
 !      m,j :: INT
 !      E_m,E_mj,sum,det :: REAL
-!      FF,F,W,D :: MAT{REAL}*
+!      FF,F,W,D :: MAT{REAL}@
 !      f_archive :: ARCHIVE
 !      .fock_matrix.restricted.destroy
 !      FF.create(.n_bf,.n_bf); FF = ZERO
@@ -4235,7 +4235,7 @@ contains
 !   ! for a left determinant orbitals "left" and  a right determinant orbitals "right".
 !   ! The Fock matrix is stored as an archive on disk.
 !      left,right :: INT
-!       F :: MAT{REAL}*
+!       F :: MAT{REAL}@
 !      f_archive :: ARCHIVE
 !      label :: STR
 !      F.create(.n_bf,.n_bf)
@@ -4252,7 +4252,7 @@ contains
 !   ! "right". If present, "D" is used as the density matrix.
 !       F :: MAT{REAL}
 !      left,right :: INT
-!       P :: MAT{REAL}*
+!       P :: MAT{REAL}@
 !      determinant,fac :: REAL
 !      P.create(.n_bf,.n_bf)
 !      .get_DVPT_density_matrix(P,determinant,left,right)
@@ -4270,7 +4270,7 @@ contains
 !   ! If present and FALSE, "r12"  removes the two electron contribution
 !     direct,core,r12 :: BIN, optional
 !     P,F :: MAT{REAL}
-!     J,K :: MAT{REAL}*
+!     J,K :: MAT{REAL}@
 !     do_direct,add_core,add_r12 :: BIN
 !
 !     do_direct= FALSE
@@ -4301,7 +4301,7 @@ contains
 !   ! If present and FALSE, "r12"  removes the two electron contribution
 !     direct,core,r12 :: BIN, optional
 !     P,F :: MAT{REAL}
-!     J,K :: MAT{REAL}*
+!     J,K :: MAT{REAL}@
 !     do_direct,add_core,add_r12 :: BIN
 !   ENSURE(size(F,1)==.n_bf, "Fock matrix dimensions wrong")
 !   ENSURE(size(P,1)==.n_bf, "Density matrix dimensions wrong")
@@ -4332,9 +4332,9 @@ contains
 !   ! Make the real coulomb matrices "J" and exchange matrix "K"  from an
 !   ! asymmetric density matrix "P" directly from the integrals.
 !     J,K,P :: MAT{REAL}
-!      I :: MAT4{REAL}*
+!      I :: MAT4{REAL}@
 !     shell4 :: SHELL4*
-!     I_max :: VEC{REAL}*
+!     I_max :: VEC{REAL}@
 !     ac,ab,cd,aa,cc :: INT
 !     a,b,c,d,fa,fb,fc,fd,la,lb,lc,ld :: INT
 !     cutoff,I_abcd,factor :: REAL
@@ -4403,7 +4403,7 @@ contains
 !   ! asymmetric density matrix "P" using disk integrals.
 !     J,K,P :: MAT{REAL}
 !     eri_archive,ind_archive :: ARCHIVE
-!      I :: MAT4{REAL}*
+!      I :: MAT4{REAL}@
 !     q,n_quartets,a,b,c,d,fa,fb,fc,fd,la,lb,lc,ld :: INT
 !     I_abcd :: REAL
 !     eri_archive.create(.name,"eri_integrals")
@@ -4469,7 +4469,7 @@ contains
 !   ! Evaluates the SCF electronic energy
 !     res :: REAL
 !     scf_kind :: STR
-!     F,D :: MAT{REAL}*
+!     F,D :: MAT{REAL}@
 !     m,i,j :: INT
 !     fac,det,sum :: REAL
 !     m = .DVPT_order
@@ -4522,9 +4522,9 @@ contains
 !   ENSURE(Dx.dim1==.n_bf AND Dx.is_square,"wrong shape for Dx")
 !   ENSURE(Dy.dim1==.n_bf AND Dy.is_square,"wrong shape for Dy")
 !   ENSURE(Dz.dim1==.n_bf AND Dz.is_square,"wrong shape for Dz")
-!      DD :: MAT3{REAL}*
-!      M :: MAT4{REAL}*
-!      Mxx,Mxy,Mxz,Myx,Myy,Myz,Mzx,Mzy,Mzz :: MAT{REAL}*
+!      DD :: MAT3{REAL}@
+!      M :: MAT4{REAL}@
+!      Mxx,Mxy,Mxz,Myx,Myy,Myz,Mzx,Mzy,Mzz :: MAT{REAL}@
 !      q,fa,fb,la,lb,n, n_pt, i,j,k :: INT
 !      eps :: MAT3{REAL}(3,3,3)
 !      fac :: REAL
@@ -4567,8 +4567,8 @@ contains
 !   ! Make the magnetic B field "bb" due to the spin density at a set of points
 !   ! given in "pt"
 !      self :: target
-!      B,pt,Dx,Dy,Dz :: MAT{REAL}*
-!      dmc :: MAT3{CPX}*
+!      B,pt,Dx,Dy,Dz :: MAT{REAL}@
+!      dmc :: MAT3{CPX}@
 !      aa,bb :: REAL
 !      xv :: VEC{REAL}(3)
 !      n_pt,i,j,k,n :: INT
@@ -4630,8 +4630,8 @@ contains
 !   make_divergence_j_para
 !   ! Make the divergence of the paramagnetic current at a set of points
 !   ! given in "pt"
-!      B,pt,Dx,Dy,Dz :: MAT{REAL}*
-!      dmc :: MAT3{CPX}*
+!      B,pt,Dx,Dy,Dz :: MAT{REAL}@
+!      dmc :: MAT3{CPX}@
 !      aa,bb :: REAL
 !      xv :: VEC{REAL}(3)
 !      n_pt,i,j,k,n :: INT
@@ -4726,8 +4726,8 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated, "no atom info")
 
-      SAO,SMO :: MAT4{REAL}*
-      S,SS,TM :: MAT{REAL}*
+      SAO,SMO :: MAT4{REAL}@
+      S,SS,TM :: MAT{REAL}@
       sh :: SHELL2
       ci,cj :: VEC{REAL}(3)
       maxl,n,i,j,k,l,p,q,fa,la,na,fb,lb,nb, nc,nt :: INT
@@ -4827,7 +4827,7 @@ contains
    ENSURE(.crystal.associated, "No crystal")
    ENSURE(.atom.associated, "No atom")
 
-      pdbfile :: TEXTFILE*
+      pdbfile :: TEXTFILE@
 
       pdbfile.create("stdout.pdb")
       pdbfile.open_for("write")
@@ -4850,7 +4850,7 @@ contains
    put_kinetic_energy_matrix
    ! Print out the kinetic energy matrix
 
-      T :: MAT{REAL}*
+      T :: MAT{REAL}@
 
       T.create(.n_bf,.n_bf)
 
@@ -4866,7 +4866,7 @@ contains
    put_nuclear_attraction_matrix
    ! Print out the nuclear attractions matrix
 
-      Z :: MAT{REAL}*
+      Z :: MAT{REAL}@
 
       Z.create(.n_bf,.n_bf)
 
@@ -4893,8 +4893,8 @@ contains
    ENSURE(.crystal.asymmetric_unit_atom.associated,"no crystal asym atoms")
 
       max_shift,max_allowed_shift,shift_convergence,delta,fac :: REAL
-      kappa,kappa_old,kappa_del,G :: VEC{REAL}*
-      H :: MAT{REAL}*
+      kappa,kappa_old,kappa_del,G :: VEC{REAL}@
+      H :: MAT{REAL}@
       iter,max_iter :: INT
       finished :: BIN
 
@@ -4986,8 +4986,8 @@ contains
    ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(kappa.dim==.n_atom,"wrong size, kappa")
 
-      pt :: MAT{REAL}*
-      E_G,E_K,wt,Wa,G_grid,K_grid :: VEC{REAL}*
+      pt :: MAT{REAL}@
+      E_G,E_K,wt,Wa,G_grid,K_grid :: VEC{REAL}@
       E_GT,E_KT :: REAL
       a,n_pt :: INT
 
@@ -5072,8 +5072,8 @@ contains
    ENSURE(.becke_grid.associated,"no becke_grid")
    ENSURE(.becke_grid.updated,"becke_grid not updated")
 
-      pt :: MAT{REAL}*
-      E_G,E_K,wt,Wa,G_grid,K_grid :: VEC{REAL}*
+      pt :: MAT{REAL}@
+      E_G,E_K,wt,Wa,G_grid,K_grid :: VEC{REAL}@
       E_GT,E_KT :: REAL
       a,n_pt :: INT
 
@@ -5168,8 +5168,8 @@ contains
    DIE_IF(stdin.buffer.n_items/=4,"must supply 3 arguments")
 
       arch :: ARCHIVE
-      grid1,grid2 :: VEC{REAL}*
-      pt :: MAT{REAL}*
+      grid1,grid2 :: VEC{REAL}@
+      pt :: MAT{REAL}@
       name_mo_1,name_mo_2,genre :: STR
 
       .molecular_orbitals.destroy
@@ -5224,8 +5224,8 @@ contains
    DIE_IF(stdin.buffer.n_items/=4,"must supply 3 arguments")
 
       arch :: ARCHIVE
-      grid1,grid2 :: VEC{REAL}*
-      pt :: MAT{REAL}*
+      grid1,grid2 :: VEC{REAL}@
+      pt :: MAT{REAL}@
       name_mo_1,name_mo_2,genre :: STR
 
       .molecular_orbitals.destroy
@@ -5282,9 +5282,9 @@ contains
    ENSURE(stdin.buffer.n_items==5,"must be four items after the keyword")
    ENSURE(stdin.buffer.item_index==1,"must be at 2nd item on the input line")
 
-      interpolator :: INTERPOLATOR*
-      slaterbasis  :: VEC{SLATER_BASIS}*
-      labels :: VEC{STR}*
+      interpolator :: INTERPOLATOR@
+      slaterbasis  :: VEC{SLATER_BASIS}@
+      labels :: VEC{STR}@
       word,basis_kind,plotfile :: STR
       density_cutoff :: REAL
       do_log10 :: BIN
@@ -5369,9 +5369,9 @@ contains
    ENSURE(stdin.buffer.n_items==6,"must be five items after the keyword")
    ENSURE(stdin.buffer.item_index==1,"must be at 2nd item on the input line")
 
-      interpolator :: INTERPOLATOR*
-      slater1basis,slater2basis :: VEC{SLATER_BASIS}*
-      labels :: VEC{STR}*
+      interpolator :: INTERPOLATOR@
+      slater1basis,slater2basis :: VEC{SLATER_BASIS}@
+      labels :: VEC{STR}@
       basis1,basis2,plotfile :: STR
       density_cutoff :: REAL
       do_log10 :: BIN
@@ -5436,10 +5436,10 @@ contains
    ENSURE(stdin.buffer.n_items==6,"must be six items after the keyword")
    ENSURE(stdin.buffer.item_index==1,"must be at 2nd item on the input line")
 
-      interpolator :: INTERPOLATOR*
-      coppensbasis :: VEC{COPPENS_BASIS}*
-      slaterbasis  :: VEC{SLATER_BASIS}*
-      labels :: VEC{STR}*
+      interpolator :: INTERPOLATOR@
+      coppensbasis :: VEC{COPPENS_BASIS}@
+      slaterbasis  :: VEC{SLATER_BASIS}@
+      labels :: VEC{STR}@
       basis1,basis2,plotfile :: STR
       density_cutoff :: REAL
       do_log10 :: BIN
@@ -5542,10 +5542,10 @@ contains
    make_mp2
    ! Calculate the electron repulsion integrals (ERI's) in the MO basis from the
    ! AO integrals and make restricted MP2 in core
-      v :: MAT4{REAL}*
+      v :: MAT4{REAL}@
       E2 :: REAL
       virt,ram_lim,Escf :: REAL
-      eval :: VEC{REAL}*
+      eval :: VEC{REAL}@
       a,b,r,s,fa,lr :: INT
 
      eval.create(.n_bf)
@@ -5618,8 +5618,8 @@ contains
    make_chem_mp2
    ! Calculate the electron repulsion integrals (ERI's) in the MO basis from the
    ! AO integrals and make restricted MP2 in core
-      v :: MAT4{REAL}*
-      eval :: VEC{REAL}*
+      v :: MAT4{REAL}@
+      eval :: VEC{REAL}@
       n,f,l, i,j,a,b :: INT
       e2,top,bot,Vc,Vx :: REAL
 
@@ -5678,10 +5678,10 @@ contains
    ! Calculate the electron repulsion integrals (ERI's) in the uMO basis from the
    ! AO integrals and make unrestricted MP2
 
-      vaa,vab,vbb :: MAT4{REAL}*
+      vaa,vab,vbb :: MAT4{REAL}@
       E2,E :: REAL
       virt,ram_lim :: REAL
-      evala,evalb :: VEC{REAL}*
+      evala,evalb :: VEC{REAL}@
       a,b,r,s,fa,fb,lr,ls :: INT
 
      evala.create(.n_bf)
@@ -5798,10 +5798,10 @@ contains
    ! Calculate the electron repulsion integrals (ERI's) in the gc_MO basis from the
    ! AO integrals and make general complex MP2
 
-      v :: MAT4{CPX}*
+      v :: MAT4{CPX}@
       E2 :: CPX
       virt,ram_lim,E :: REAL
-      eval :: VEC{REAL}*
+      eval :: VEC{REAL}@
       a,b,r,s,fa,lr :: INT
 
      eval.create(2*.n_bf)

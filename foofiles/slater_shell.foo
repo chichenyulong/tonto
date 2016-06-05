@@ -196,7 +196,7 @@ contains
 
       i :: INT
       Rp,orb,dorb :: REAL
-      val1,val2,val3 :: VEC{REAL}*
+      val1,val2,val3 :: VEC{REAL}@
 
    ! f(R)  = \sum_i n_i (\sum_j c_{ji} R^(n_i-1) exp(-z_i R))^2
    ! f'(R) = \sum_i 2 n_i (\sum_j c_{ji} R^(n_i-1) exp(-z_i R))
@@ -234,7 +234,7 @@ contains
 
       i,p :: INT
       Rp,orb,dorb :: REAL
-      val1,val2,val3 :: VEC{REAL}*
+      val1,val2,val3 :: VEC{REAL}@
 
    ! f(R)  = \sum_i n_i (\sum_j c_{ji} R^(n_i-1) exp(-z_i R))^2
    ! f'(R) = \sum_i 2 n_i (\sum_j c_{ji} R^(n_i-1) exp(-z_i R))
@@ -585,7 +585,7 @@ contains
    ENSURE(.n_orb>0,"n_orb not set; use n_orb= before this command")
    ENSURE(.n_prim==0,"n_prim already defined!")
 
-      tmp :: VEC{REAL}*
+      tmp :: VEC{REAL}@
       i,k :: INT
 
       stdin.read_ptr(tmp)

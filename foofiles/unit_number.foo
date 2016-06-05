@@ -41,7 +41,7 @@ contains
    ! Returns the next unused unit number, and updates the used_unit_list.
       unit :: INT, OUT
 
-      old :: VEC{INT}*
+      old :: VEC{INT}@
       length :: INT
 
       if (NOT associated(used_unit_list)) then
@@ -84,7 +84,7 @@ contains
    ! If there is no "unit" nothing is done ...
       unit :: INT, IN
 
-      old :: VEC{INT}*
+      old :: VEC{INT}@
       length,position,i :: INT
 
       if (unit<UNIT_NUMBER_STARTING_UNIT) return

@@ -48,59 +48,13 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========================
-!  Create and destroy methods
-!  ==========================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
 
    create(name) ::: leaky
    ! Create a a cif with .file_name to be "name".
-      self :: PTR
+      self :: allocatable, INOUT
       name :: STR
       .create
       .set_file_name(name)
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-      nullify(.file)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts
-      .file.destroy
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(cif) ::: leaky
-   ! Set self to be "cif".
-      cif :: CIF, IN
-
-      self = cif
-
-      .nullify_ptr_part
-      if (cif.file.associated) .file.create_copy(cif.file)
-
    end
 
 !  ============
@@ -737,7 +691,7 @@ contains
    ! found, otherwise it is set FALSE and there is no error.
       ID :: STR, IN
       item :: STR, OUT
-      itemvec :: VEC{STR}*
+      itemvec :: VEC{STR}@
       found :: BIN, OUT, optional
 
    ENSURE(.file.associated,"CIF file has not been created")
@@ -920,7 +874,7 @@ contains
    ! If present, "found" is set TRUE if "ID" is found, else it is set
    ! FALSE and the routine returns without an error.
       ID :: STR, IN
-      item :: VEC{TYPE}*
+      item :: VEC{TYPE}@
       found :: BIN, OUT, optional
 
    ENSURE(.file.associated,"CIF file has not been created")
@@ -991,7 +945,7 @@ contains
    ! If present, "found" is set TRUE if "ID" is found, else it is set
    ! FALSE and the routine returns without an error.
       ID :: STR, IN
-      item :: VEC{REAL}*
+      item :: VEC{REAL}@
       error :: VEC{REAL}*, optional
       found :: BIN, OUT, optional
 
@@ -1169,7 +1123,7 @@ contains
    ! "found" is set TRUE if all the "ID" are found; else it is set
    ! FALSE and routine returns without error.
       ID :: VEC{STR}
-      mat :: MAT{REAL}*
+      mat :: MAT{REAL}@
       error :: MAT{REAL}*, optional
       found :: BIN, OUT, optional
       transpose :: BIN, IN, optional
@@ -1292,7 +1246,7 @@ contains
    ! created. If present, "found" is set TRUE if all the "ID" are
    ! found; else it is set FALSE and routine returns without error.
       ID :: VEC{STR}, IN
-      mat :: MAT{STR}*
+      mat :: MAT{STR}@
       found :: BIN, OUT, optional
 
    ENSURE(.file.associated,"CIF file has not been created")
@@ -1387,7 +1341,7 @@ contains
       kind :: STR, IN
       covariance_matrix :: MAT{REAL}
 
-      cov :: VEC{REAL}*
+      cov :: VEC{REAL}@
       np :: INT
       there :: BIN
 

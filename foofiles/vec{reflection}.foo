@@ -36,8 +36,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -54,8 +54,8 @@ contains
    ! Create space for object. This version does not nullify ptr parts.
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Destroy space for object. This version does not destroy ptr parts
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self". This version does not destroy ptr parts.
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -945,8 +945,8 @@ contains
    ENSURE(.have_F_exp,"no experimental structure factors")
 
       top,bot,val :: REAL
-      xi :: VEC{REAL}*
-      phase :: VEC{CPX}*
+      xi :: VEC{REAL}@
+      phase :: VEC{CPX}@
       k :: INT
 
       ! Get the scale factor/extinction correction
@@ -1206,7 +1206,7 @@ contains
    ! Set a h,k,l half-sphere ... useful for structure factor
    ! calculations without having to set reflections individually.
    ! NOTE: ensure wavelength is already set !
-      self :: PTR
+      self :: allocatable, INOUT
       limit :: REAL, IN
       unit_cell :: UNIT_CELL, IN
 
@@ -1273,7 +1273,7 @@ contains
    set_hkl_range(hkl_range) ::: leaky, PURE
    ! Set a h,k,l range ... useful for structure factor calculations
    ! without having to set every reflection individually.
-      self :: PTR
+      self :: allocatable, INOUT
       hkl_range :: VEC{VEC_{INT}}, IN
 
    ENSURE(hkl_range.dim==3,"hkl range must have three ranges")
@@ -1391,7 +1391,7 @@ contains
 
    process_keyword(keyword) ::: leaky
    ! Process a normal (non list-type) "keyword".
-      self :: PTR
+      self :: allocatable, INOUT
       keyword :: STR, IN
 
       word :: STR
@@ -1424,7 +1424,7 @@ contains
 
    read_CIF(cif) ::: leaky
    ! Read reflections from a "cif" file.
-      self :: PTR
+      self :: allocatable, INOUT
       cif :: CIF, IN
 
            if (::has_CIF_F_reflections(cif))  then; .read_CIF_F_reflections(cif)
@@ -1454,11 +1454,11 @@ contains
 
    read_CIF_F_reflections(cif) ::: leaky
    ! Read F reflections from "cif".
-      self :: PTR
+      self :: allocatable, INOUT
       cif :: CIF, IN
 
-      h,k,l :: VEC{INT}*
-      Fp,Fm,Sg :: VEC{REAL}*
+      h,k,l :: VEC{INT}@
+      Fp,Fm,Sg :: VEC{REAL}@
 
       ! Read
       cif.read_looped_item("_refln_index_h",h)
@@ -1509,11 +1509,11 @@ contains
 
    read_CIF_F2_reflections(cif) ::: leaky
    ! Read F2 reflections from "cif".
-      self :: PTR
+      self :: allocatable, INOUT
       cif :: CIF, IN
 
-      h,k,l :: VEC{INT}*
-      Fp,Fm,Sg :: VEC{REAL}*
+      h,k,l :: VEC{INT}@
+      Fp,Fm,Sg :: VEC{REAL}@
 
       ! Read
       cif.read_looped_item("_refln_index_h",h)
@@ -1549,7 +1549,7 @@ contains
 
    read_shelx_hkl_file(file) ::: template
    ! Read Sheldrick's hkl F/F2 reflections from "file".
-      self :: PTR
+      self :: allocatable, INOUT
       file :: TEXTFILE, INOUT
 
       i,n_refl, h,k,l,n :: INT
@@ -1601,7 +1601,7 @@ contains
 
    read_std_hkl_file(file) ::: template
    ! Read normal free-form hkl F/F2 reflections from "file".
-      self :: PTR
+      self :: allocatable, INOUT
       file :: TEXTFILE, INOUT
 
       i,n_refl, h,k,l,n :: INT
@@ -1814,8 +1814,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l,g :: VEC{INT}*
-      F_cr,F_ci,F_pred,F_exp,F_sigma,F_z,stl,d :: VEC{REAL}*
+      h,k,l,g :: VEC{INT}@
+      F_cr,F_ci,F_pred,F_exp,F_sigma,F_z,stl,d :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -1881,8 +1881,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l :: VEC{INT}*
-      F_cr,F_ci,F_pred,F_exp,F_sigma,F_z,stl,d :: VEC{REAL}*
+      h,k,l :: VEC{INT}@
+      F_cr,F_ci,F_pred,F_exp,F_sigma,F_z,stl,d :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -1944,8 +1944,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l :: VEC{INT}*
-      F_cr,F_ci,F_pred,stl,d :: VEC{REAL}*
+      h,k,l :: VEC{INT}@
+      F_cr,F_ci,F_pred,stl,d :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -2006,8 +2006,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l :: VEC{INT}*
-      F_exp,F_sigma,stl,d :: VEC{REAL}*
+      h,k,l :: VEC{INT}@
+      F_exp,F_sigma,stl,d :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -2056,8 +2056,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l,g :: VEC{INT}*
-      F_exp,F_sigma,stl,d :: VEC{REAL}*
+      h,k,l,g :: VEC{INT}@
+      F_exp,F_sigma,stl,d :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -2187,8 +2187,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l :: VEC{INT}*
-      I_calc,I_pred,I_exp,I_sigma,I_z :: VEC{REAL}*
+      h,k,l :: VEC{INT}@
+      I_calc,I_pred,I_exp,I_sigma,I_z :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -2234,8 +2234,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l,g :: VEC{INT}*
-      I_calc,I_pred,I_exp,I_sigma,I_z :: VEC{REAL}*
+      h,k,l,g :: VEC{INT}@
+      I_calc,I_pred,I_exp,I_sigma,I_z :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -2287,8 +2287,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l :: VEC{INT}*
-      I_calc,I_pred :: VEC{REAL}*
+      h,k,l :: VEC{INT}@
+      I_calc,I_pred :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -2340,8 +2340,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l :: VEC{INT}*
-      I_exp,I_sigma :: VEC{REAL}*
+      h,k,l :: VEC{INT}@
+      I_exp,I_sigma :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -2379,8 +2379,8 @@ contains
       self :: IN
 
       table :: VEC{TABLE_COLUMN}@
-      h,k,l,g :: VEC{INT}*
-      I_exp,I_sigma :: VEC{REAL}*
+      h,k,l,g :: VEC{INT}@
+      I_exp,I_sigma :: VEC{REAL}@
       n_refl :: INT
 
       ! Constants
@@ -2496,7 +2496,7 @@ contains
    ! Output a qq plot to the text file.
    ! It is a plot of the experimental quantile vs expected quantile.
 
-      grid :: MAT{REAL}*
+      grid :: MAT{REAL}@
 
       grid.create(.n_refl,2)
 
@@ -2516,8 +2516,8 @@ contains
    ! Output a qq plot to the text file.
    ! It is a plot of the experimental quantile vs expected quantile.
 
-      grid :: MAT{REAL}*
-      hkl :: MAT{INT}*
+      grid :: MAT{REAL}@
+      hkl :: MAT{INT}@
       n :: INT
 
       hkl.create(.n_refl,3)
@@ -2559,8 +2559,8 @@ contains
    ENSURE(grid.dim1==.dim, "grid: wrong dim1")
    ENSURE(grid.dim2==2,    "grid: wrong dim2")
 
-      d,e :: VEC{REAL}*
-      ref :: REFLECTION*
+      d,e :: VEC{REAL}@
+      ref :: REFLECTION@
       p :: REAL
       n_refl,i,j :: INT
 

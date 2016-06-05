@@ -46,7 +46,7 @@ contains
    end
 
    destroy ::: get_from(MAT4{OBJECT}), leaky
-   ! Destroy the object
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -91,9 +91,9 @@ contains
 
    set_indices(l_max,rms_indices,nx,ny,nz) ::: leaky
    ! Set the rms indices. 
-     self :: PTR
+     self :: allocatable, INOUT
      l_max :: INT, IN
-     rms_indices :: MAT{RMS_INDICES}*
+     rms_indices :: MAT{RMS_INDICES}@
      nx,ny,nz :: VEC{INT}, IN
    ENSURE(.associated,"no self object")
    ENSURE(lbound(self,1)==0,"lower bound 1 wrong")

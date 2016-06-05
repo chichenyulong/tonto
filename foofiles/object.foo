@@ -111,7 +111,7 @@ contains
 
    create ::: leaky, PURE
    ! Create an object
-      self :: PTR
+      self :: allocatable, INOUT
 
 #ifdef USE_PRECONDITIONS
       status :: INT
@@ -131,7 +131,7 @@ contains
 
    create ::: leaky, PURE
    ! Create an object. This version does not set defaults.
-      self :: PTR
+      self :: allocatable, INOUT
 
 #ifdef USE_PRECONDITIONS
       status :: INT
@@ -150,7 +150,7 @@ contains
 
    create ::: leaky, PURE
    ! Create an object. This version does not nullify point parts.
-      self :: PTR
+      self :: allocatable, INOUT
 
 #ifdef USE_PRECONDITIONS
       status :: INT
@@ -170,7 +170,7 @@ contains
    create ::: leaky, PURE
    ! Create an object. This does not nullify point parts or set
    ! defaults.
-      self :: PTR
+      self :: allocatable, INOUT
 
 #ifdef USE_PRECONDITIONS
       status :: INT
@@ -187,7 +187,7 @@ contains
 
    create_copy(object) ::: leaky
    ! Create a copy of object
-      self :: PTR
+      self :: allocatable, INOUT
       object :: OBJECT, IN
 
       .:create
@@ -196,8 +196,8 @@ contains
    end
 
    destroy ::: leaky, PURE
-   ! Destroy an object
-      self :: PTR
+   ! Deallocate "self"
+      self :: allocatable, INOUT
 
 #ifdef USE_PRECONDITIONS
       status :: INT
@@ -217,8 +217,9 @@ contains
    end
 
    destroy ::: leaky, PURE
-   ! Destroy an object. This version does not destroy pointer parts.
-      self :: PTR
+   ! Deallocate "self". This version does not destroy ptr parts.
+   ! Deallocate "self". This version does not destroy ptr parts.
+      self :: allocatable, INOUT
 
 #ifdef USE_PRECONDITIONS
       status :: INT
@@ -237,7 +238,7 @@ contains
 
    created result (res) ::: pure
    ! Returns true if self has been created
-      self :: PTR
+      self :: allocatable, INOUT
       res :: BIN
 
       res = associated(self)
@@ -246,7 +247,7 @@ contains
 
    destroyed result (res) ::: pure
    ! Returns true if self has *not* been created
-      self :: PTR
+      self :: allocatable, INOUT
       res :: BIN
 
       res = NOT associated(self)
@@ -259,7 +260,7 @@ contains
 
    set_saved_self 
    ! Set saved_self
-      self :: PTR
+      self :: allocatable, INOUT
       saved_self => self
    end
 
@@ -271,7 +272,7 @@ contains
 
    set_from_saved_self
    ! Set from saved_self
-      self :: PTR
+      self :: allocatable, INOUT
       self => saved_self
    end
 
@@ -359,7 +360,7 @@ contains
 
    read_keywords ::: recursive, leaky
    ! Read data from "stdin" using keyword style input.
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
 
@@ -535,7 +536,7 @@ contains
 
    read_keys ::: leaky
    ! Read the "keys".
-      self :: PTR
+      self :: allocatable, INOUT
 
       ! Bind the routine
       if (.created) then
@@ -553,7 +554,7 @@ contains
       k,l,n_key :: INT
       keyword :: STR
       keyword_echo :: BIN
-      internal :: VEC{STR}*
+      internal :: VEC{STR}@
 
       ! The number of keys
       n_key = keys.dim
@@ -610,7 +611,7 @@ contains
 
    set_keys(the_keys) ::: leaky
    ! This is for setting the "keys" externally.
-      self :: PTR
+      self :: allocatable, INOUT
       the_keys :: VEC{STR}, IN
 
       ! Bind the routine
@@ -655,7 +656,7 @@ contains
 
    dmpp(object_name)
    ! Dump pointer object data as text
-      self :: PTR
+      self :: allocatable, INOUT
       object_name :: STR, IN
 
       if (.disassociated) then

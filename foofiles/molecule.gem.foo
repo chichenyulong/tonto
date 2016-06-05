@@ -39,7 +39,7 @@ contains
    ENSURE(.atom.associated,"no atom info")
    ENSURE(.basis_info_made,"no basis info")
 
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      eri_archive :: ARCHIVE
      make_integrals, readin_mos :: BIN
      n_bf, new_n_bf :: INT
@@ -119,7 +119,7 @@ contains
    ENSURE(.atom.associated,"no atom info")
    ENSURE(.basis_info_made,"no basis info")
 
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      eri_archive :: ARCHIVE
      make_integrals, readin_mos :: BIN
      n_bf, new_n_bf :: INT
@@ -197,7 +197,7 @@ contains
    ENSURE(.atom.associated,"no atom info")
    ENSURE(.basis_info_made,"no basis info")
 
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      eri_archive :: ARCHIVE
      make_integrals, readin_mos :: BIN
      n_bf, new_n_bf :: INT

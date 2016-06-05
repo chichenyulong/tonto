@@ -104,27 +104,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-! =================
-! Memory allocation
-! =================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not nullify point parts.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
 
    destroy_data ::: selfless, leaky
    ! Destroy all module data and reset l_max_saved.
@@ -149,11 +128,6 @@ contains
       pxyz_pow.destroy
       pxyz_rep.destroy
 
-   end
-
-   set_defaults
-   ! Set defaults
-      .l_max = 0
    end
 
 ! ===========
@@ -787,7 +761,7 @@ contains
    ! where "c" is the lexical index of the cartesian gaussian and "M" is the
    ! spherical component index, as defined in the book by Helgaker, Olsen, and
    ! Simons, p.218. NOTE: sph is created.
-      sph :: VEC{MAT_{REAL}}*
+      sph :: VEC{MAT_{REAL}}@
 
    ENSURE(l_max_saved>=0,"l_max_saved must be non-negative")
 
@@ -883,14 +857,14 @@ contains
    ! gaussian shells from the p xyz matrices.
       R   :: MAT3{REAL}, IN
       is_spherical :: BIN, IN
-      res :: MAT3{REAL}*
+      res :: MAT3{REAL}@
 
    ENSURE(R.dim1==3,"wrong 1st dimension, self")
    ENSURE(R.dim2==3,"wrong 2nd dimension, self")
    ENSURE(R.dim3>0,"no p type matrices")
 
       n,order :: INT
-      dtr :: MAT{REAL}*
+      dtr :: MAT{REAL}@
 
       res => null()
       if (l_max_saved<2) return
@@ -923,14 +897,14 @@ contains
    ! gaussian shells from the p xyz matrices
       R   :: MAT3{REAL}, IN
       is_spherical :: BIN, IN
-      res :: MAT3{REAL}*
+      res :: MAT3{REAL}@
 
    ENSURE(R.dim1==3,"wrong 1st dimension, self")
    ENSURE(R.dim2==3,"wrong 2nd dimension, self")
    ENSURE(R.dim3>0,"no p type matrices")
 
       n,order :: INT
-      ftr :: MAT{REAL}*
+      ftr :: MAT{REAL}@
 
       res => null()
       if (l_max_saved<3) return
@@ -963,14 +937,14 @@ contains
    ! gaussian shells from the p xyz matrices
       R   :: MAT3{REAL}, IN
       is_spherical :: BIN, IN
-      res :: MAT3{REAL}*
+      res :: MAT3{REAL}@
 
    ENSURE(R.dim1==3,"wrong 1st dimension, self")
    ENSURE(R.dim2==3,"wrong 2nd dimension, self")
    ENSURE(R.dim3>0,"no p type matrices")
 
       n,order :: INT
-      gtr :: MAT{REAL}*
+      gtr :: MAT{REAL}@
 
       order = R.dim3
 

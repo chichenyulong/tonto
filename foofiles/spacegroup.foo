@@ -818,51 +818,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create ::: get_from(OBJECT), leaky, PURE
-   ! Create an object
-      self :: PTR
-   end
-
-   destroy ::: get_from(OBJECT), leaky, PURE
-   ! Destroy an object
-   end
-
-   nullify_ptr_part ::: pure
-   ! Nullify the pointer parts of object
-      self :: INOUT
-
-      nullify(.seitz)
-      nullify(.product_of_symops)
-      nullify(.inverse_of_symops)
-      nullify(.inverted_symop)
-      nullify(.translated_symop)
-      nullify(.unique_SF_symop)
-
-   end
-
-   destroy_ptr_part ::: leaky, PURE
-   ! Destroy the pointer parts of object
-      self :: INOUT
-
-      .seitz.destroy
-      .product_of_symops.destroy
-      .inverse_of_symops.destroy
-      .inverted_symop.destroy
-      .translated_symop.destroy
-      .unique_SF_symop.destroy
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
 !  ====
 !  Copy
 !  ====
@@ -1105,7 +1060,7 @@ contains
 
       symbol :: STR
       found :: BIN
-      sg :: SPACEGROUP*
+      sg :: SPACEGROUP@
       g :: INT
 
       found = FALSE
@@ -1221,9 +1176,9 @@ contains
 
       found,jf_found,matched :: BIN
       item,symbol,IT_symbol :: STR
-      jf_symbols,itemvec :: VEC{STR}*
-      mat :: MAT3{REAL}*
-      list :: MAT{STR}*
+      jf_symbols,itemvec :: VEC{STR}@
+      mat :: MAT3{REAL}@
+      list :: MAT{STR}@
 
       ! Initialise
       .Hall_symbol = " "
@@ -1393,8 +1348,8 @@ contains
 
    read_jones_faithful_symbols ::: leaky
    ! Read the jones faithful symbols.
-      jf_symbols :: VEC{STR}*
-    ! list :: MAT{STR}*
+      jf_symbols :: VEC{STR}@
+    ! list :: MAT{STR}@
       stdin.read_ptr(jf_symbols)
     ! jf_symbols.remove_blanks
     ! list.create(6,2) 
@@ -2571,7 +2526,7 @@ contains
    ! Get the "full" set of distinct atom positions in the unit cell,
    ! given a (possibly) partial "geometry", and a set of partition
    ! factors "pfac".
-      full :: MAT{REAL}*
+      full :: MAT{REAL}@
       geometry :: MAT{REAL}
       pfac :: VEC{REAL}
 
@@ -2656,10 +2611,10 @@ contains
    ! coordinates are the same, to within *traslational* symmetry
       geom_i,geom_j :: MAT{REAL}
       res :: BIN
-      gi,gj :: MAT{REAL}*
+      gi,gj :: MAT{REAL}@
       i,j,n_atom :: INT
       same :: BIN
-      skip :: VEC{BIN}*
+      skip :: VEC{BIN}@
       n_atom = size(geom_i,2)
    ENSURE(.seitz.associated, "Seitz matrices not initialized")
    ENSURE(geom_i.dim1==3, "incorrect size for array geom_i")
@@ -2752,7 +2707,7 @@ contains
    ENSURE(sf.dim==refl.dim,                           "sf: wrong size")
    ENSURE(unique_sf.dim==.n_unique_SF_symops*refl.dim,"unique_sf: wrong size")
 
-      phase :: VEC{CPX}*
+      phase :: VEC{CPX}@
       u,uf,ul,n_refl :: INT
 
       n_refl = refl.dim
@@ -2793,7 +2748,7 @@ contains
    ENSURE(sf_ints.dim1==refl.dim,                           "sf_ints: wrong size")
    ENSURE(unique_sf_ints.dim1==.n_unique_SF_symops*refl.dim,"unique_sf_ints: wrong size")
 
-      phase :: VEC{CPX}*
+      phase :: VEC{CPX}@
       u,uf,n,n_refl :: INT
 
       n_refl = refl.dim
@@ -2837,7 +2792,7 @@ contains
    ENSURE(sf.dim==refl.dim,                            "sf: wrong size")
    ENSURE(unique_sf.dim2==.n_unique_SF_symops*refl.dim,"unique_sf: wrong dim2")
 
-      phase :: VEC{CPX}*
+      phase :: VEC{CPX}@
       u,uf,n,n_refl :: INT
 
       n_refl = refl.dim
@@ -2882,7 +2837,7 @@ contains
    ENSURE(sf.dim1==refl.dim,                           "sf: wrong dim1")
    ENSURE(unique_sf.dim1==.n_unique_SF_symops*refl.dim,"unique_sf: wrong dim1")
 
-      phase :: VEC{CPX}*
+      phase :: VEC{CPX}@
       u,uf,n,n_refl :: INT
 
       n_refl = refl.dim
@@ -2935,8 +2890,8 @@ contains
    ENSURE(Fr.dim==refl.dim,                        "Fr: wrong size")
    ENSURE(Fc.dim==refl.dim,                        "Fc: wrong size")
 
-      phase :: VEC{CPX}*
-      T, k1,k2,k3, r1,r2,r3 :: VEC{REAL}*
+      phase :: VEC{CPX}@
+      T, k1,k2,k3, r1,r2,r3 :: VEC{REAL}@
       I,ph,val :: CPX
       k1k,k2k,k3k, kr, facr,facc,valr,valc :: REAL
       n_refl,n_p,k,p,u,uf,ul :: INT
@@ -3061,9 +3016,9 @@ contains
    ENSURE(Fr.dim==refl.dim,                        "Fr: wrong size")
    ENSURE(Fc.dim==refl.dim,                        "Fc: wrong size")
 
-      phase :: VEC{CPX}*
-      T :: VEC{CPX}*
-      k1,k2,k3, r1,r2,r3 :: VEC{REAL}*
+      phase :: VEC{CPX}@
+      T :: VEC{CPX}@
+      k1,k2,k3, r1,r2,r3 :: VEC{REAL}@
       I,ph,val :: CPX
       k1k,k2k,k3k, kr, facr,facc,valr,valc :: REAL
       n_refl,n_p,k,p,u,uf,ul :: INT
@@ -3285,7 +3240,7 @@ contains
       self :: IN
 
       n :: INT
-      jf :: VEC{STR}*
+      jf :: VEC{STR}@
       table :: VEC{TABLE_COLUMN}@
 
       ! Title
@@ -3387,7 +3342,7 @@ contains
    ENSURE(.translated_symop.associated,"no translated_symop")
 
       n :: INT
-      unique :: VEC{STR}*
+      unique :: VEC{STR}@
       table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
@@ -3441,8 +3396,8 @@ contains
    ! Put out all the IT symbols which match "symbol".
       symbol :: STR, IN
 
-      mask :: VEC{BIN}*
-      IT,HM,Hall :: VEC{STR}*
+      mask :: VEC{BIN}@
+      IT,HM,Hall :: VEC{STR}@
       n,i :: INT
 
       mask.create(593)
@@ -3480,8 +3435,8 @@ contains
    ! Put out all the HM symbols which match "symbol".
       symbol :: STR, IN
 
-      mask :: VEC{BIN}*
-      IT,HM,Hall :: VEC{STR}*
+      mask :: VEC{BIN}@
+      IT,HM,Hall :: VEC{STR}@
       n,i :: INT
 
       mask.create(593)

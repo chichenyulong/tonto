@@ -30,7 +30,7 @@ contains
 
    create(dim) ::: leaky
    ! Create the object with dimension "dim"
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT
 
       status :: INT
@@ -47,7 +47,7 @@ contains
 
    create(lb,ub) ::: leaky
    ! Create the object with lower and upper bounds "lb" and "ub"
-      self :: PTR
+      self :: allocatable, INOUT
       lb,ub :: INT
 
    ENSURE(ub>=lb,"upper bound must be greater than or equal to lower bound")
@@ -65,8 +65,8 @@ contains
    end
 
    destroy ::: leaky
-   ! Destroy the object
-      self :: PTR
+   ! Deallocate "self"
+      self :: allocatable, INOUT
 
       status :: INT
 
@@ -108,7 +108,7 @@ contains
 
    create_copy(m) ::: leaky
    ! Create a copy of "m"
-      self :: PTR
+      self :: allocatable, INOUT
       m :: VEC{MAT3_{INTRINSIC}}
       .create(m.lb,m.ub)
       .copy(m)

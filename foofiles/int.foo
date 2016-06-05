@@ -348,7 +348,7 @@ contains
       self :: IN
       l :: INT, IN
       zeta :: REAL, IN
-      res :: VEC{REAL}*
+      res :: VEC{REAL}@
 
    ENSURE(self>=0,"non positive self")
 

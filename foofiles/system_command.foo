@@ -49,54 +49,9 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-! =================
-! Memory allocation
-! =================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not nullify point parts.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT)
-   ! Create a copy of object
-   end
-
-   copy(object) ::: leaky
-   ! Copy the "object"
-      object :: SYSTEM_COMMAND
-
-      self = object
-
-   end
-
 ! ===========
 ! Set methods
 ! ===========
-
-   set_defaults
-   ! Set up the default settings
-
-      .command     = " "
-      .wait        = TRUE
-      .exit_status = 0
-      .status      = 0
-      .message     = " "
-
-   end
 
    set_command(val)
    ! Set up the default settings

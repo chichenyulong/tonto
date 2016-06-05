@@ -30,7 +30,7 @@ contains
 
    create(dim1,dim2) ::: leaky
    ! Create the object
-      self :: PTR
+      self :: allocatable, INOUT
       dim1,dim2 :: INT
 
       status :: INT
@@ -49,8 +49,8 @@ contains
    end
 
    destroy ::: leaky
-   ! Destroy the object
-      self :: PTR
+   ! Deallocate "self"
+      self :: allocatable, INOUT
 
       status :: INT
 
@@ -96,7 +96,7 @@ contains
 
    create_copy(m) ::: leaky
    ! Create a copy of "m"
-      self :: PTR
+      self :: allocatable, INOUT
       m :: MAT{MAT_{INTRINSIC}}
       .create(m.dim1,m.dim2)
       .copy(m)

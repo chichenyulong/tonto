@@ -55,96 +55,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create(dim) ::: leaky, PURE
-   ! Create space for object
-      self :: PTR
-      dim :: INT, IN
-
-   ENSURE(dim>=0, "array dimension is -ve, dim = "//trim(INT:to_str(dim)))
-
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(dim),STAT=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-   end
-
-   create(lb,ub) ::: leaky, PURE
-   ! Create the vector with lower bound "lb", upper bound "ub"
-      self :: PTR
-      lb,ub :: INT, IN
-
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(lb:ub),STAT=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-   end
-
-   create(bounds) ::: leaky, PURE
-   ! Create the vector with "bounds"
-      self :: PTR
-      bounds :: VEC{INT}(2), IN
-
-      .create(bounds(1),bounds(2))
-   
-   end
-
-   destroy ::: leaky
-   ! Destroy space for object
-      self :: PTR
-
-      status :: INT
-
-      if (.disassociated) return
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-   end
-
-   create_copy(v) ::: leaky, PURE
-   ! Create a copy of vector "v".
-      self :: PTR
-      v :: VEC{INTRINSIC}, IN
-
-      .create(v.dim)
-      self = v
-
-   end
-
-   copy(v) ::: pure
-   ! Copy vector "v".
-      self :: OUT
-      v :: VEC{INTRINSIC}, IN
-
-      self = v
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
 !  ==================
 !  Size-of operations
 !  ==================
@@ -412,7 +322,7 @@ contains
 
    shrink(dim) ::: leaky, PURE
    ! Shrink self to dimension dim.  Contents are retained.
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
 
    ENSURE(.associated,"no self array")
@@ -440,7 +350,7 @@ contains
    expand(dim,init) ::: leaky, PURE
    ! Expand self to dimension dim. New slots are left undefined
    ! unless "init" is supplied.
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
       init :: INTRINSIC, optional, IN
 
@@ -479,7 +389,7 @@ contains
    resize(dim,init) ::: leaky, PURE
    ! Resize self to dimension dim. New slots are left undefined
    ! unless "init" is supplied.
-      self :: PTR
+      self :: allocatable, INOUT
       dim  :: INT, IN
       init :: INTRINSIC, optional, IN
 
@@ -494,7 +404,7 @@ contains
    ! Shrink "self" from the last element, to dimension "dim". Contents are
    ! retained.  If "chop_start" is present and TRUE, then "self" is shrunk or
    ! chopped from the start, and the contents from the end are retained.
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
       chop_start :: BIN, optional, IN
 
@@ -544,7 +454,7 @@ contains
    ! Expand "self" to dimension "dim" from the end. New slots are left undefined.
    ! If "grow_start" is present and TRUE, then "self" is expanded from the
    ! start. Again, the starting slots are undefined.
-      self :: PTR
+      self :: allocatable, INOUT
       dim :: INT, IN
       grow_start :: BIN, optional, IN
 
@@ -599,7 +509,7 @@ contains
 
    append(v) ::: leaky, PURE
    ! Expands self and appends the contents of vector "v".
-      self :: PTR
+      self :: allocatable, INOUT
       v :: VEC{INTRINSIC}, IN
 
       dim :: INT
@@ -616,7 +526,7 @@ contains
 
    append(v1,v2) ::: leaky, PURE
    ! Expands self and appends the contents of vectors "v1" and "v2".
-      self :: PTR
+      self :: allocatable, INOUT
       v1,v2 :: VEC{INTRINSIC}, IN
 
       dim,dim1,dim2 :: INT
@@ -639,7 +549,7 @@ contains
 
    append(value) ::: leaky, PURE
    ! Expands self by 1, and appends the single scalar "value" onto the end.
-      self :: PTR
+      self :: allocatable, INOUT
       value :: INTRINSIC, IN
 
       dim :: INT
@@ -657,7 +567,7 @@ contains
    append_only_if_unique(value) ::: leaky, PURE
    ! Expands self by 1, and appends the single scalar "value" onto the end, but
    ! only if the "value" is unique
-      self :: PTR
+      self :: allocatable, INOUT
       value :: INTRINSIC, IN
 
       if (any(self==value)) return
@@ -668,7 +578,7 @@ contains
 
    prepend(v) ::: leaky, PURE
    ! Prepend the vector "v" to "self". "self" is expanded.
-      self :: PTR
+      self :: allocatable, INOUT
       v :: VEC{INTRINSIC}, IN
 
       dim,dimv :: INT
@@ -686,7 +596,7 @@ contains
 
    prepend(value) ::: leaky, PURE
    ! Prepend an single "value" to "self". "self" is expanded.
-      self :: PTR
+      self :: allocatable, INOUT
       value :: INTRINSIC, IN
 
       dim :: INT
@@ -704,10 +614,10 @@ contains
    prune(values) ::: leaky, PURE
    ! Removes the scalar "values" from the vector, if they are there.
    ! The order of the elementsis otherwise unchanged.
-      self :: PTR
+      self :: allocatable, INOUT
       values :: VEC{INTRINSIC}, IN
 
-      copy :: VEC{INTRINSIC}*
+      copy :: VEC{INTRINSIC}@
       i,n :: INT
 
       copy.create(.dim)
@@ -732,10 +642,10 @@ contains
    prune(value) ::: leaky, PURE
    ! Removes the single scalar "value" from the vector, if it is there.
    ! The order of the elementsis otherwise unchanged.
-      self :: PTR
+      self :: allocatable, INOUT
       value :: INTRINSIC, IN
 
-      copy :: VEC{INTRINSIC}*
+      copy :: VEC{INTRINSIC}@
       i,n :: INT
 
       copy.create(.dim)
@@ -760,10 +670,10 @@ contains
    prune_element(k) ::: leaky, PURE
    ! Removes the single element at position "k" from the vector.
    ! The order of the elements is unchanged.
-      self :: PTR
+      self :: allocatable, INOUT
       k :: INT, IN
 
-      copy :: VEC{INTRINSIC}*
+      copy :: VEC{INTRINSIC}@
 
       if (k<1 OR k>.dim) return
 
@@ -1063,7 +973,7 @@ contains
    ! See also routine below.
       self :: IN
       v :: VEC{INTRINSIC}, IN
-      res :: VEC{INTRINSIC}*
+      res :: VEC{INTRINSIC}@
 
       i,n :: INT
       val :: INTRINSIC
@@ -1095,7 +1005,7 @@ contains
    ! See also routine above.
       self :: IN
       v :: VEC{INTRINSIC}, IN
-      res :: VEC{INTRINSIC}*
+      res :: VEC{INTRINSIC}@
 
       i,n :: INT
       val :: INTRINSIC
@@ -1126,7 +1036,7 @@ contains
    ! NOTE: this routine returns a pointer!
       self :: IN
       item :: INTRINSIC, IN
-      res :: VEC{INT}*
+      res :: VEC{INT}@
 
       dim,i,n :: INT
 
@@ -1151,7 +1061,7 @@ contains
       permutation :: VEC{INT}(.dim), OUT
       res :: BIN, OUT
 
-      skip :: VEC{BIN}*
+      skip :: VEC{BIN}@
       i,j :: INT
 
       res = TRUE
@@ -1231,7 +1141,7 @@ contains
    ! Remove repeated elements which come later in the list. 
    ! NOTE: the vector may shrink. 
    ! NOTE: this version for bin, str, int
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.associated,"no vector")
 
@@ -1271,11 +1181,11 @@ contains
    ! Remove repeated elements which come later in the list. 
    ! NOTE: the vector may shrink. 
    ! NOTE: this version for reals & complex
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.associated,"no vector")
 
-      unique :: VEC{INTRINSIC}*
+      unique :: VEC{INTRINSIC}@
       i,j,n :: INT
       found :: BIN
 
@@ -1395,7 +1305,7 @@ contains
 
    to_unique_elements_of(X) ::: leaky, PURE
    ! set self to the unique elements of "X".
-      self :: PTR
+      self :: allocatable, INOUT
       X :: VEC{INTRINSIC}, IN
 
    ENSURE(X.dim>0,"no zero-size vector")
@@ -1437,7 +1347,7 @@ contains
    ! of zero. The number of different kinds is returned in "n_kind".
    ! NOTE: this version for bin, str, int
       self :: IN
-      cnt :: VEC{INT}*
+      cnt :: VEC{INT}@
       n_kind :: INT, OUT
 
       n,l :: INT
@@ -1469,8 +1379,8 @@ contains
    indices_of_unique_elements result(unique) ::: leaky, PURE
    ! Sort through the vector and return the indices of the unique elements
    ! NOTE: this version for bin, str, int
-      self :: PTR
-      unique :: VEC{INT}*
+      self :: allocatable, INOUT
+      unique :: VEC{INT}@
 
    ENSURE(.associated,"no vector")
    ENSURE(.dim>0,"no zero-size vector")
@@ -1509,7 +1419,7 @@ contains
    ! Make a map of unique_element's, and the inverse map
    ! unique_element_for a given non-unique element in the list.
       self :: IN
-      unique_element,unique_element_for :: VEC{INT}*
+      unique_element,unique_element_for :: VEC{INT}@
 
       n,k,i :: INT
 
@@ -2474,7 +2384,7 @@ contains
    ENSURE(size(a,1)==size(a,2),"matrix must be square")
    ENSURE(size(a,2)==.dim,"matrix and vector dimensions inconsistent")
 
-      v :: VEC{INTRINSIC}*
+      v :: VEC{INTRINSIC}@
 
       v.create_copy(self)
       self.to_product_of(a,v)
@@ -2732,7 +2642,7 @@ contains
    ! elements of "self" which are within the specified "range".
       self :: IN
       range :: VEC{INTRINSIC}(2), IN
-      row :: VEC{INT}*
+      row :: VEC{INT}@
       
       i,r,n :: INT
 

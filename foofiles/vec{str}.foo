@@ -68,40 +68,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create space for object
-   end
-
-   create(lb,ub) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create the vector with lower bound "lb", upper bound "ub"
-   end
-
-   create(bounds) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create the vector with "bounds"
-   end
-
-   destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Destroy space for object
-   end
-
-   create_copy(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create a copy of vector "v".
-   end
-
-   copy(v) ::: get_from(VEC{INTRINSIC}), PURE
-   ! Copy vector "v".
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
 ! ==================
 ! Size-of operations
 ! ==================
@@ -169,55 +135,6 @@ contains
    prune_element(k) ::: get_from(VEC{INTRINSIC}), leaky, PURE
    ! Removes the single element at position "k" from "self".
    ! Elements after that position are moved downward.
-   end
-
-! Old
-
-   shrink(dim,chop_start) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Shrink "self" from the last element, to dimension "dim". Contents are
-   ! retained.  If "chop_start" is present and TRUE, then "self" is shrunk or
-   ! chopped from the start, and the contents from the end are retained.
-   end
-
-   expand(dim,grow_start) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expand "self" to dimension "dim" from the end. New slots are left undefined.
-   ! If "grow_start" is present and TRUE, then "self" is expanded from the
-   ! start. Again, the starting slots are undefined.
-   end
-
-   append(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(v1,v2) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self and appends the contents of vectors "v1" and "v2".
-   end
-
-   append(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
-   end
-
-   append_only_if_unique(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self by 1, and appends the single scalar "value" onto the end, but
-   ! only if the "value" is unique
-   end
-
-   prepend(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Prepend the vector "v" to "self". "self" is expanded.
-   end
-
-   prepend(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Prepend an single "value" to "self". "self" is expanded.
-   end
-
-   prune(values) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Removes the scalar "values" from the vector, if they are there.
-   ! The order of the elementsis otherwise unchanged.
-   end
-
-   prune(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Removes the single scalar "value" from the vector, if it is there.
-   ! The order of the elementsis otherwise unchanged.
    end
 
 ! ====================

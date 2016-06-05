@@ -855,101 +855,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==================
-!  Allocation methods
-!  ==================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of the atom
-   ! WARNING: all of these are usually pointer assigned in MOLECULE
-   ! when defining the (spherically averaged) atomic natural orbitals.
-   ! Therefore, the appropriate MOLECULE destructor should be called
-   ! before using this routine.
-
-      nullify(.basis)
-      nullify(.slaterbasis)
-      nullify(.coppensbasis)
-
-      nullify(.pADP_vector)
-      nullify(.pADP_errors)
-
-      nullify(.atomic_orbitals)
-      nullify(.density_matrix)
-      nullify(.natural_orbitals)
-
-      nullify(.interpolator)
-
-      nullify(.first_basis_fn_for_shell)
-      nullify(.last_basis_fn_for_shell)
-      nullify(.precomputed_basis_shellpair)
-
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of an atom
-   ! WARNING: take care using this, you may need
-   ! a unique-atom or all-atom destruction for the
-   ! different pointer parts depending on how they
-   ! were created.
-
-      ! Never destroy these ... they are always
-      ! resolved outside the atom object.
-      nullify(.basis)
-      nullify(.slaterbasis)
-      nullify(.coppensbasis)
-
-      ! WARNING: this may not be correct
-      ! The destroy should be done outside of this module
-      if (.kind==0 OR .is_unique_kind) then
-
-         .atomic_orbitals.destroy
-         .density_matrix.destroy
-         .natural_orbitals.destroy
-         .occupation_numbers.destroy
-
-         .interpolator.destroy
-
-         .first_basis_fn_for_shell.destroy
-         .last_basis_fn_for_shell.destroy
-         .precomputed_basis_shellpair.destroy
-
-      else
-
-         nullify(.atomic_orbitals)
-         nullify(.density_matrix)
-         nullify(.natural_orbitals)
-
-         nullify(.interpolator)
-
-         nullify(.first_basis_fn_for_shell)
-         nullify(.last_basis_fn_for_shell)
-         nullify(.precomputed_basis_shellpair)
-
-      end
-
-      ! Do always destroy these
-      .pADP_vector.destroy
-      .pADP_errors.destroy
-
-   end
 
    destroy_ANOs ::: leaky
    ! Destroy the (unique-atom) ANO pointer parts
@@ -1755,7 +1660,7 @@ contains
       self :: INOUT
       dim  :: INT, IN
 
-      X,dX :: VEC{REAL}*
+      X,dX :: VEC{REAL}@
       n :: INT
 
       ! Create pADPs, and set to existing pADPs
@@ -2512,8 +2417,8 @@ contains
       self :: INOUT
       R :: MAT{REAL}(3,3), IN
 
-      W :: MAT{REAL}*
-      X,U :: VEC{REAL}*
+      W :: MAT{REAL}@
+      X,U :: VEC{REAL}@
 
       ! Create
       X.create(.no_of_pADPs)
@@ -3338,8 +3243,8 @@ contains
 
    ENSURE(axis_system.is_one_of(["cartesian","crystal  "]),"unknown axis system!")
 
-      W :: MAT{REAL}*
-      pADP :: VEC{REAL}*
+      W :: MAT{REAL}@
+      pADP :: VEC{REAL}@
       change_err :: BIN
 
       change_err = TRUE
@@ -3473,7 +3378,7 @@ contains
    ! . If that fails, try to matching using only the chemical symbol
    !   e.g. if the basis was obtained from reading an external
    !   program, like gaussian.
-      basis :: VEC{BASIS?}*
+      basis :: VEC{BASIS?}@
       suffix :: STR, optional
       found :: BIN, optional
 
@@ -4973,7 +4878,7 @@ contains
    ENSURE(U.dim==actual.dim2,"U incompatible with actual")
    ENSURE(reference.dim2==actual.dim2,"reference incompatible with actual")
 
-      U0,X,Rd :: MAT{REAL}*
+      U0,X,Rd :: MAT{REAL}@
       d,n,p,q,i,iteration :: INT
       val :: REAL
 
@@ -5121,7 +5026,7 @@ contains
       U4 :: MAT4{REAL}(3,3,3,3)
       n_pt,i,j,k,l,m :: INT
       det,top,fac,H :: REAL
-      P0,g3,g4 :: VEC{REAL}*
+      P0,g3,g4 :: VEC{REAL}@
 
       ! Harmonic grid
       n_pt = g.dim
@@ -5250,7 +5155,7 @@ contains
       U4 :: MAT4{REAL}(3,3,3,3)
       n_pt,i,j,k,l,m :: INT
       H :: REAL
-      g3,g4 :: VEC{REAL}*
+      g3,g4 :: VEC{REAL}@
 
       n_pt = g.dim
 
@@ -5426,7 +5331,7 @@ contains
    ENSURE(.natural_orbitals.created("restricted"),"no restricted NO's")
    ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
 
-      NO :: VEC{REAL}*
+      NO :: VEC{REAL}@
       n_occ,n :: INT
       do_occ :: BIN
 
@@ -5467,7 +5372,7 @@ contains
    ENSURE(.natural_orbitals.created("restricted"),"no restricted NO's")
    ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
 
-      NO :: VEC{REAL}*
+      NO :: VEC{REAL}@
       n_occ,n :: INT
       do_occ :: BIN
 
@@ -5511,7 +5416,7 @@ contains
    ENSURE(.natural_orbitals.created("restricted_complex"),"no restricted NO's")
    ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
 
-      NO :: VEC{CPX}*
+      NO :: VEC{CPX}@
       n_occ,n :: INT
       do_occ :: BIN
 
@@ -5552,7 +5457,7 @@ contains
    ENSURE(.natural_orbitals.created("restricted_complex"),"no restricted NO's")
    ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
 
-      NO :: VEC{CPX}*
+      NO :: VEC{CPX}@
       n_occ,n :: INT
       do_occ :: BIN
 
@@ -5599,8 +5504,8 @@ contains
    ENSURE(D.is_square,"D, not square")
    ENSURE(D.dim1==.basis.no_of_basis_functions,"D, wrong size")
 
-      g :: MAT{REAL}*
-      W :: VEC{REAL}*
+      g :: MAT{REAL}@
+      W :: VEC{REAL}@
       i :: INT
       do_occ :: BIN
 
@@ -5643,8 +5548,8 @@ contains
    ENSURE(D.is_square,"D, not square")
    ENSURE(D.dim1==.basis.no_of_basis_functions,"D, wrong size")
 
-      g :: MAT{REAL}*
-      W :: VEC{REAL}*
+      g :: MAT{REAL}@
+      W :: VEC{REAL}@
       i :: INT
       do_occ :: BIN
 
@@ -5769,7 +5674,7 @@ contains
 
       sq :: BIN
       sh :: SHELL1
-      sh_grid :: MAT{REAL}*
+      sh_grid :: MAT{REAL}@
       n_pt,n_shell,f,l,s :: INT
 
       sq = FALSE
@@ -5824,7 +5729,7 @@ contains
 
       sq :: BIN
       sh :: SHELL1
-      sh_grid :: MAT{REAL}*
+      sh_grid :: MAT{REAL}@
       n_pt,n_shell,f,l,s :: INT
 
       sq = FALSE
@@ -5900,7 +5805,7 @@ contains
    ! This assumes that the atomic density is spherical!
       R :: REAL, IN
       res :: REAL
-      self :: ATOM*
+      self :: ATOM@
       self => saved_self
       res = .density_at_radius(R)
    end
@@ -5911,7 +5816,7 @@ contains
 !     R2 :: REAL, IN
 !     res :: REAL
 !     R :: REAL
-!     self :: ATOM*
+!     self :: ATOM@
 !     self => saved_self
 !     R = sqrt(R2)
 !     res = .density_at_radius(R)
@@ -5929,7 +5834,7 @@ contains
 !     res :: REAL
 !
 !     R :: REAL
-!     self :: ATOM*
+!     self :: ATOM@
 !
 !
 !     if (x>=ONE) then
@@ -5980,7 +5885,7 @@ contains
    ! atom density. The interpolator is a default one.
       tol,length :: REAL
 
-      interpolator :: INTERPOLATOR*
+      interpolator :: INTERPOLATOR@
 
       interpolator.create
       .set_saved_self   ! Used by function below
@@ -6002,7 +5907,7 @@ contains
    ENSURE(.interpolator.associated,"no interpolator defined!")
    ENSURE(.interpolator.domain_mapping(1:4)=="sqrt","must using sqrt-like mapping")
 
-      R2 :: VEC{REAL}*
+      R2 :: VEC{REAL}@
       n_pt,n :: INT
       x,y,z :: REAL
 
@@ -6039,7 +5944,7 @@ contains
    ENSURE(.interpolator.associated,"no interpolator defined!")
    ENSURE(.interpolator.domain_mapping(1:4)=="sqrt","must using sqrt-like mapping")
 
-      R2 :: VEC{REAL}*
+      R2 :: VEC{REAL}@
       n_pt,n :: INT
       x,y,z :: REAL
 
@@ -6109,8 +6014,8 @@ contains
    ENSURE(.occupation_numbers.created, "no occupation numbers")
    ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
 
-      orb :: VEC{REAL}*
-      nabla_orb :: MAT{REAL}*
+      orb :: VEC{REAL}@
+      nabla_orb :: MAT{REAL}@
       occ :: REAL
       n_occ,n,n_pts :: INT
 
@@ -6153,8 +6058,8 @@ contains
    ENSURE(.occupation_numbers.created, "no occupation numbers")
    ENSURE(.occupation_numbers.created("restricted"),"no occupation numbers")
 
-      orb :: VEC{REAL}*
-      nabla_orb :: MAT{REAL}*
+      orb :: VEC{REAL}@
+      nabla_orb :: MAT{REAL}@
       occ :: REAL
       n_occ,n,n_pts :: INT
 
@@ -6196,10 +6101,10 @@ contains
    ENSURE(g.dim2==3,"grid array has wrong 2nd dimension")
    ENSURE(h.dim==pt.dim1,"grid array has wrong 1st dimension")
 
-      orb_a :: VEC{REAL}*
+      orb_a :: VEC{REAL}@
       sh :: SHELL1
-      sh_grid :: MAT3{REAL}*
-      sh_grid0 :: MAT{REAL}*
+      sh_grid :: MAT3{REAL}@
+      sh_grid0 :: MAT{REAL}@
       n_shell,n_pt,f,l,a :: INT
 
       n_pt = pt.dim1
@@ -6272,8 +6177,8 @@ contains
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
-      NO :: VEC{REAL}*
-      P,D :: MAT{REAL}*
+      NO :: VEC{REAL}@
+      P,D :: MAT{REAL}@
       n_occ,n,n_pt :: INT
       occ :: REAL
 
@@ -6318,9 +6223,9 @@ contains
    ENSURE(i.dim==pt.dim1,  "grid array has wrong 1st dimension")
 
       sh :: SHELL1
-      sh_grid,sh_grid1 :: MAT3{REAL}*
-      sh_grid0 :: MAT{REAL}*
-      orb_a :: VEC{REAL}*
+      sh_grid,sh_grid1 :: MAT3{REAL}@
+      sh_grid0 :: MAT{REAL}@
+      orb_a :: VEC{REAL}@
       n_pt,f,l,a,n_shell :: INT
 
       n_pt = pt.dim1
@@ -6397,8 +6302,8 @@ contains
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
-      rho,NO :: VEC{REAL}*
-      P,D :: MAT{REAL}*
+      rho,NO :: VEC{REAL}@
+      P,D :: MAT{REAL}@
       n_occ,n,n_pt :: INT
       occ :: REAL
 
@@ -6459,7 +6364,7 @@ contains
       H_grid :: VEC{REAL}
       pt :: MAT{REAL}
 
-      G_grid :: VEC{REAL}*
+      G_grid :: VEC{REAL}@
 
       G_grid.create(H_grid.dim)
       .make_G_kinetic_energy_grid(G_grid,pt)
@@ -6475,7 +6380,7 @@ contains
       H_grid :: VEC{REAL}
       pt :: MAT{REAL}
 
-      G_grid :: VEC{REAL}*
+      G_grid :: VEC{REAL}@
 
       G_grid.create(H_grid.dim)
       .make_rG_kinetic_energy_grid(G_grid,pt)
@@ -6491,7 +6396,7 @@ contains
       H_grid :: VEC{REAL}
       pt :: MAT{REAL}
 
-      G_grid :: VEC{REAL}*
+      G_grid :: VEC{REAL}@
 
       G_grid.create(H_grid.dim)
       .make_G_Kirzhnits_grid(G_grid,pt)
@@ -6507,7 +6412,7 @@ contains
       V :: VEC{REAL}
       pt :: MAT{REAL}
 
-      G :: VEC{REAL}*
+      G :: VEC{REAL}@
 
       G.create(V.dim)
       .make_G_kinetic_energy_grid(G,pt)
@@ -6523,7 +6428,7 @@ contains
       V :: VEC{REAL}
       pt :: MAT{REAL}
 
-      G :: VEC{REAL}*
+      G :: VEC{REAL}@
 
       G.create(V.dim)
       .make_rG_kinetic_energy_grid(G,pt)
@@ -6539,7 +6444,7 @@ contains
       V :: VEC{REAL}
       pt :: MAT{REAL}
 
-      G :: VEC{REAL}*
+      G :: VEC{REAL}@
 
       G.create(V.dim)
       .make_G_Kirzhnits_grid(G,pt)
@@ -6580,8 +6485,8 @@ contains
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
-      NO :: VEC{REAL}*
-      P :: MAT{REAL}*
+      NO :: VEC{REAL}@
+      P :: MAT{REAL}@
       n_occ,n,n_pt :: INT
 
       n_pt = pt.dim1
@@ -6633,8 +6538,8 @@ contains
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
-      rho,NO :: VEC{REAL}*
-      P :: MAT{REAL}*
+      rho,NO :: VEC{REAL}@
+      P :: MAT{REAL}@
       n_occ,n,n_pt :: INT
       occ :: REAL
 
@@ -6689,8 +6594,8 @@ contains
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
-      NO,rho,nab_ro2,lap_rho :: VEC{REAL}*
-      G,L,nab_rho :: MAT{REAL}*
+      NO,rho,nab_ro2,lap_rho :: VEC{REAL}@
+      G,L,nab_rho :: MAT{REAL}@
       lambda,k2,fac,occ,occ2 :: REAL
       n_occ,n,n_pt :: INT
 
@@ -6762,8 +6667,8 @@ contains
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
-      NO :: VEC{REAL}*
-      P,D :: MAT{REAL}*
+      NO :: VEC{REAL}@
+      P,D :: MAT{REAL}@
       n_occ,n,n_pt :: INT
 
       n_pt = pt.dim1
@@ -6813,8 +6718,8 @@ contains
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.created, "no occupation #'s")
 
-      rho,NO :: VEC{REAL}*
-      P,D :: MAT{REAL}*
+      rho,NO :: VEC{REAL}@
+      P,D :: MAT{REAL}@
       n_occ,n,n_pt :: INT
       occ :: REAL
 
@@ -6855,7 +6760,7 @@ contains
       exchange,correlation :: STR
 
       dft :: DFT_FUNCTIONAL
-      rho :: VEC{REAL}*
+      rho :: VEC{REAL}@
 
       rho.create(V.dim)
       .make_density_grid(rho,pt)
@@ -6873,7 +6778,7 @@ contains
       pt :: MAT{REAL}
       exchange,correlation :: STR
 
-      rho :: VEC{REAL}*
+      rho :: VEC{REAL}@
       dft :: DFT_FUNCTIONAL
 
       .make_electric_potential_grid(V,pt)
@@ -6895,7 +6800,7 @@ contains
    ENSURE(.density_matrix.associated, "no density matrix")
    ENSURE(.density_matrix.restricted.associated, "no restricted density matrix")
 
-      Ve,rho :: VEC{REAL}*
+      Ve,rho :: VEC{REAL}@
       dft :: DFT_FUNCTIONAL
 
       .nuclear_potential(V,pt)
@@ -6918,7 +6823,7 @@ contains
       pt :: MAT{REAL}
       exchange,correlation :: STR
 
-      G_grid :: VEC{REAL}*
+      G_grid :: VEC{REAL}@
 
       G_grid.create(H_grid.dim)
       .make_G_kinetic_energy_grid(G_grid,pt)
@@ -6955,7 +6860,7 @@ contains
       pt :: MAT{REAL}
       dens :: MAT{REAL}
 
-      elec_grid :: VEC{REAL}*
+      elec_grid :: VEC{REAL}@
 
       .nuclear_potential(pot_grid,pt)
       elec_grid.create(size(pot_grid))
@@ -6974,7 +6879,7 @@ contains
 
    ENSURE(.basis.associated,"no basis set")
 
-      Vab,Dba :: MAT{REAL}*
+      Vab,Dba :: MAT{REAL}@
       sh :: SHELL2
       n_pt,n_shell_pairs,q,fa,fb,la,lb,k :: INT
 
@@ -7159,7 +7064,7 @@ contains
    ENSURE(grid0.dim1==pt.dim1,"incompatible grid0 and pt arrays")
    ENSURE(grid0.dim2==.no_of_basis_functions,"wrong size, grid0 array")
 
-      x,y,z,r2 :: VEC{REAL}*
+      x,y,z,r2 :: VEC{REAL}@
       sh :: SHELL1
       n_pt,s,f,l,n_shell :: INT
 
@@ -7207,7 +7112,7 @@ contains
    ENSURE(grid1.dim2==.no_of_basis_functions,"wrong size, grid1 array")
    ENSURE(grid1.dim3==3,"wrong size, grid1 array")
 
-      x,y,z,r2 :: VEC{REAL}*
+      x,y,z,r2 :: VEC{REAL}@
       sh :: SHELL1
       n_pt,s,n_shell :: INT
 
@@ -7254,7 +7159,7 @@ contains
 
       sh :: SHELL1
       n_pt,s,f,l,n_shell :: INT
-      x,y,z,r2 :: VEC{REAL}*
+      x,y,z,r2 :: VEC{REAL}@
 
       n_pt = pt.dim1
 
@@ -7391,8 +7296,8 @@ contains
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE.
-      x,y,z,r2 :: VEC{REAL}*
-      skip :: VEC{BIN}*
+      x,y,z,r2 :: VEC{REAL}@
+      skip :: VEC{BIN}@
       pt :: MAT{REAL}, IN
       cutoff :: REAL, IN
 
@@ -7446,8 +7351,8 @@ contains
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE.
-      x,y,z,r2,d2 :: VEC{REAL}*
-      skip :: VEC{BIN}*
+      x,y,z,r2,d2 :: VEC{REAL}@
+      skip :: VEC{BIN}@
       pt :: MAT{REAL}, IN
       cutoff :: REAL, IN
    ENSURE(.basis.associated,"no basis set")
@@ -7499,8 +7404,8 @@ contains
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE. "skip2" is an array
    ! which skips (in addition) some preselcted points.
-      x,y,z,r2 :: VEC{REAL}*
-      skip :: VEC{BIN}*
+      x,y,z,r2 :: VEC{REAL}@
+      skip :: VEC{BIN}@
       pt :: MAT{REAL}, IN
       skip2 :: VEC{BIN}, IN
       cutoff :: REAL, IN
@@ -7570,7 +7475,7 @@ contains
    ! Set the indices of first and last basis functions in a particular shell
    ! "s", first(s) and last(s), respectively.
       self :: IN
-      first,last :: VEC{INT}*
+      first,last :: VEC{INT}@
 
       n_shell,f,l,s :: INT
 

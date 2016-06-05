@@ -111,7 +111,7 @@ contains
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
-   ! Deallocate the vector
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure

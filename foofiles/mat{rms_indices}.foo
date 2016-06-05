@@ -46,7 +46,7 @@ contains
    end
 
    destroy ::: get_from(MAT{OBJECT}), leaky
-   ! Destroy the object
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -83,7 +83,7 @@ contains
 
    set_indices(l_max,nx,ny,nz,px,py,pz) ::: leaky
    ! Set the rms indices. 
-      self :: PTR
+      self :: allocatable, INOUT
       l_max :: INT, IN
       nx,ny,nz :: VEC{INT}, IN
       px,py,pz :: VEC{INT}, IN

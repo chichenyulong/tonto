@@ -125,49 +125,13 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  =================
-!  Memory allocation
-!  =================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This does not nullify point parts or set
-   ! defaults.
-   end
 
    create(Ga,Gb) ::: leaky
    ! Create a gaussian pair, and optionally set it to "Ga" and "Gb"
-      self :: PTR
+      self :: allocatable, INOUT
       Ga,Gb :: GAUSSIAN
       .create
       .set(Ga,Gb)
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(G) ::: leaky
-   ! Create a copy of "G"
-      self :: PTR
-       G :: GAUSSIAN2
-      .create
-      .copy(G)
-   end
-
-   copy(G)
-   ! Set the gaussian pair object to "G"
-      G :: GAUSSIAN2
-      self = G
    end
 
 !  ===========
@@ -374,9 +338,9 @@ contains
 !
 !      kn,kn_t :: REAL
 !      a,b,t,t_max,k_max,n :: INT
-!      e :: MAT3{REAL}*
-!      val1,val2,k2 :: VEC{REAL}*
-!      k1 :: MAT{REAL}*
+!      e :: MAT3{REAL}@
+!      val1,val2,k2 :: VEC{REAL}@
+!      k1 :: MAT{REAL}@
 !
 !      k_max = k_pts.dim
 !      t_max = .a.l+.b.l
@@ -512,9 +476,9 @@ contains
       comp  :: INT, IN
       k_pts :: VEC{REAL}, IN
 
-      e  :: MAT3{REAL}*
-      kp :: MAT{REAL}*
-      vr,vi :: VEC{REAL}*
+      e  :: MAT3{REAL}@
+      kp :: MAT{REAL}@
+      vr,vi :: VEC{REAL}@
       a,b,t,k_max,t_max :: INT
 
       k_max = k_pts.dim
@@ -580,9 +544,9 @@ contains
       res :: MAT3{CPX}(1:,0:,0:)
       kn,fac :: REAL
       a,b,t,t_max,n :: INT
-      e0,e1 :: MAT3{REAL}*
+      e0,e1 :: MAT3{REAL}@
       val :: VEC{REAL}*                      ! Local variables
-      k1 :: MAT{REAL}*
+      k1 :: MAT{REAL}@
 
       ! Define k1 array containing
       t_max = .a.l+.b.l
@@ -669,9 +633,9 @@ contains
       k_pts :: VEC{REAL}, IN
       kn,fac_a,fac_b :: REAL
       a,b,t,t_max,k_max,n :: INT
-      e0,e1 :: MAT3{REAL}*
+      e0,e1 :: MAT3{REAL}@
       val :: VEC{REAL}*                      ! Local variables
-      k1 :: MAT{REAL}*
+      k1 :: MAT{REAL}@
       t_max = .a.l+.b.l
       k_max = da.dim1
       k1.create([1,k_max],[0,t_max+1]) ! Define k1 array containing
@@ -786,7 +750,7 @@ contains
       k_pts :: MAT{REAL}, target
 
       pos :: VEC{REAL}(3)
-      k_x,k_y,k_z :: VEC{REAL}*
+      k_x,k_y,k_z :: VEC{REAL}@
       g1_exa,g1_exb,e00 :: REAL
       pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       k :: INT
@@ -834,11 +798,11 @@ contains
       self :: IN
       ft :: MAT3{CPX}
       k_pts :: MAT{REAL}, target
-      ft_x,ft_y,ft_z :: MAT3{CPX}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      prefac,ft_xb,ft_yb,ft_zb :: VEC{CPX}*
-      ft_xbx,ft_yby,ft_zbz :: MAT{CPX}*
-      k_x,k_y,k_z :: VEC{REAL}*
+      ft_x,ft_y,ft_z :: MAT3{CPX}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      prefac,ft_xb,ft_yb,ft_zb :: VEC{CPX}@
+      ft_xbx,ft_yby,ft_zbz :: MAT{CPX}@
+      k_x,k_y,k_z :: VEC{REAL}@
       g1_exa,g1_exb :: REAL
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       k_max,a,b,k,xa,ya,za,xb,yb,zb,bxlast,bylast,bzlast,fa,la,fb,lb :: INT
@@ -1036,10 +1000,10 @@ contains
       ft :: MAT3{CPX}
       k_pts :: MAT{REAL}, target
 
-      ft_x,ft_y,ft_z :: MAT3{CPX}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      prefac :: VEC{CPX}*
-      k_x,k_y,k_z :: VEC{REAL}*
+      ft_x,ft_y,ft_z :: MAT3{CPX}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      prefac :: VEC{CPX}@
+      k_x,k_y,k_z :: VEC{REAL}@
       g1_exa,g1_exb :: REAL
       pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       k_max,a,b,k,fa,la,fb,lb :: INT
@@ -1119,8 +1083,8 @@ contains
       ci,prefac :: CPX
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3 :: REAL
       k_max,a,b,k,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      ft_x,ft_y,ft_z,fd_x,fd_y,fd_z :: MAT3{CPX}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      ft_x,ft_y,ft_z,fd_x,fd_y,fd_z :: MAT3{CPX}@
 
       ! A few useful constants ...
       ci = IMAGIFY(ONE)
@@ -1187,8 +1151,8 @@ contains
       ci,prefac :: CPX
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3 :: REAL
       k_max,a,b,k,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      ft_x,ft_y,ft_z,fa_x,fa_y,fa_z,fb_x,fb_y,fb_z :: MAT3{CPX}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      ft_x,ft_y,ft_z,fa_x,fa_y,fa_z,fb_x,fb_y,fb_z :: MAT3{CPX}@
 
       ! The imaginary constant i ...
       ci = IMAGIFY(ONE)
@@ -1261,8 +1225,8 @@ contains
       ci,prefac :: CPX
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3 :: REAL
       k_max,a,b,k,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      ft_x,ft_y,ft_z :: MAT3{CPX}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      ft_x,ft_y,ft_z :: MAT3{CPX}@
 
       ! A few useful constants ...
       ci = IMAGIFY(ONE)
@@ -1318,9 +1282,9 @@ contains
    ! Put the McMurchie Davidson E coefficients to file "out"
       out :: TEXTFILE
       a,b,t :: INT
-      Ex :: MAT3{REAL}*
-      Ey :: MAT3{REAL}*
-      Ez :: MAT3{REAL}*
+      Ex :: MAT3{REAL}@
+      Ey :: MAT3{REAL}@
+      Ez :: MAT3{REAL}@
 
       out.flush
       out.text("GAUSSIAN2 output:")
@@ -1390,8 +1354,8 @@ contains
       C :: MAT{REAL}, IN
       S :: MAT{REAL}, OUT
 
-      UU  :: VEC{MAT_{REAL}}*
-      W,U :: MAT{REAL}*
+      UU  :: VEC{MAT_{REAL}}@
+      W,U :: MAT{REAL}@
 
       UU => GAUSSIAN_DATA::spherical_harmonics_for
 
@@ -1421,9 +1385,9 @@ contains
       C :: MAT{CPX}, IN
       S :: MAT{CPX}, OUT
 
-      UU  :: VEC{MAT_{REAL}}*
-      U :: MAT{REAL}*
-      W :: MAT{CPX}*
+      UU  :: VEC{MAT_{REAL}}@
+      U :: MAT{REAL}@
+      W :: MAT{CPX}@
 
 
       UU => GAUSSIAN_DATA::spherical_harmonics_for
@@ -1452,7 +1416,7 @@ contains
       S :: MAT{REAL}
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -1476,8 +1440,8 @@ contains
    make_overlap_ints(S)
    ! Make the overlap integral matrix "S". Uses Gauss-Hermite quadrature.
       S :: MAT{REAL}
-      Sx,Sy,Sz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
@@ -1560,8 +1524,8 @@ contains
    ! The derivatives with respect to position B are not evaluated. By translational
    ! invariance, they are just the negative of the derivatives w.r.t. A.
       AAx,AAy,AAz :: MAT{REAL}
-      Sx,Sy,Sz, Dx,Dy,Dz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz, Dx,Dy,Dz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
@@ -1623,8 +1587,8 @@ contains
       lc_min,lc_max,ld_min,ld_max :: INT
    ENSURE(S.dim3==(GAUSSIAN_DATA:n_comp_up_to(lc_max)-GAUSSIAN_DATA:n_comp_up_to(lc_min-1)),"S: bad dim3")
    ENSURE(S.dim4==(GAUSSIAN_DATA:n_comp_up_to(ld_max)-GAUSSIAN_DATA:n_comp_up_to(ld_min-1)),"S: bad dim4")
-      Sx,Sy,Sz :: MAT4{REAL}*
-      ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}*
+      Sx,Sy,Sz :: MAT4{REAL}@
+      ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       fa,la,fb,lb,fc,lc,fd,ld :: INT
@@ -1709,7 +1673,7 @@ contains
       T :: MAT{REAL}
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -1734,8 +1698,8 @@ contains
    ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       T :: MAT{REAL}
-      Sx,Sy,Sz, Dx,Dy,Dz, Tx,Ty,Tz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz, Dx,Dy,Dz, Tx,Ty,Tz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
@@ -1796,8 +1760,8 @@ contains
    ! invariance, they are just the negative of the derivatives w.r.t. A.
    ! This includes the factor of -1/2 in T = -1/2 \nabla^2.
       AAx,AAy,AAz :: MAT{REAL}
-      SSx,SSy,SSz, SAx,SAy,SAz, TTx,TTy,TTz, TAx,TAy,TAz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      SSx,SSy,SSz, SAx,SAy,SAz, TTx,TTy,TTz, TAx,TAy,TAz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
@@ -1881,8 +1845,8 @@ contains
 !      l_c,l_d :: INT
 !   ENSURE(T.dim3==l_c*(l_c+1)/2,"wrong size for S")
 !   ENSURE(T.dim4==l_d*(l_d+1)/2,"wrong size for S")
-!      Sx,Sy,Sz, Dx,Dy,Dz, Tx,Ty,Tz :: MAT4{REAL}*
-!      ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}*
+!      Sx,Sy,Sz, Dx,Dy,Dz, Tx,Ty,Tz :: MAT4{REAL}@
+!      ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}@
 !      rab :: VEC{REAL}(3)
 !      p,prefac :: REAL
 !      n_a,n_b,n_c,n_d,a,b :: INT
@@ -1970,8 +1934,8 @@ contains
       Dx,Dy,Dz :: MAT{REAL}
       origin :: VEC{REAL}(3)
 
-      Sx,Sy,Sz,Rx,Ry,Rz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz,Rx,Ry,Rz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac,Sx_ab,Sy_ab,Sz_ab :: REAL
       a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
@@ -2070,8 +2034,8 @@ contains
    ! Uses Gauss-Hermite quadrature.
       Qxx,Qyy,Qzz,Qxy,Qxz,Qyz :: MAT{REAL}
       origin :: VEC{REAL}(3)
-      Sx,Sy,Sz,Rx,Ry,Rz,Qx,Qy,Qz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz,Rx,Ry,Rz,Qx,Qy,Qz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       Sx_ab,Sy_ab,Sz_ab,Rx_ab,Ry_ab,Rz_ab,Qx_ab,Qy_ab,Qz_ab :: REAL
@@ -2189,8 +2153,8 @@ contains
    ! Uses Gauss-Hermite quadrature.
       Oxxx,Oyyy,Ozzz,Oxxy,Oxxz,Oyyx,Oyyz,Ozzx,Ozzy,Oxyz :: MAT{REAL}
       origin :: VEC{REAL}(3)
-      Sx,Sy,Sz,Rx,Ry,Rz,Qx,Qy,Qz,Ox,Oy,Oz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz,Rx,Ry,Rz,Qx,Qy,Qz,Ox,Oy,Oz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       Sx_ab,Sy_ab,Sz_ab,Rx_ab,Ry_ab,Rz_ab :: REAL
@@ -2322,7 +2286,7 @@ contains
       c :: VEC{REAL}(3)
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -2349,12 +2313,12 @@ contains
    ! quadrature.
       NA :: MAT{REAL}
       c :: VEC{REAL}(3)
-      NAx,NAy,NAz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      NAx,NAy,NAz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,a,b,bix,biy,biz,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -2445,12 +2409,12 @@ contains
    ! "c". Uses Rys decomposition of 1/r_c and Gauss-Hermite quadrature
       DAx,DAy,DAz,DBx,DBy,DBz :: MAT{REAL}
       c :: VEC{REAL}(3)
-      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,a,b,bix,biy,biz,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -2527,7 +2491,7 @@ contains
       c :: VEC{REAL}(3)
       spherical :: BIN, optional
 
-      W,Wx,Wy,Wz :: MAT{REAL}*
+      W,Wx,Wy,Wz :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -2566,12 +2530,12 @@ contains
       T,SOx,SOy,SOz :: MAT{REAL}
       c :: VEC{REAL}(3)
 
-      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       ! Indexing array limits
       fa = .a.first_gaussian; la = .a.last_gaussian
@@ -2661,7 +2625,7 @@ contains
       c :: VEC{REAL}(3)
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -2688,13 +2652,13 @@ contains
       ppZpp :: MAT{REAL}
       c :: VEC{REAL}(3)
 
-      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}*
-      AB2x,AB2y,AB2z,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}@
+      AB2x,AB2y,AB2z,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       ! Indexing array limits
       fa = .a.first_gaussian; la = .a.last_gaussian
@@ -2810,13 +2774,13 @@ contains
       ppZpp :: MAT{REAL}
       c :: VEC{REAL}(3)
 
-      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}*
-      AB2x,AB2y,AB2z :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}@
+      AB2x,AB2y,AB2z :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       ! Indexing array limits
       fa = .a.first_gaussian; la = .a.last_gaussian
@@ -2919,13 +2883,13 @@ contains
    ! Uses Rys decomposition of 1/r_c and Gauss-Hermite quadrature.
       Lx,Ly,Lz :: MAT{REAL}
       c :: VEC{REAL}(3)
-      NAx,NAy,NAz,AAx,AAy,AAz,BBx,BBy,BBz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      NAx,NAy,NAz,AAx,AAy,AAz,BBx,BBy,BBz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
       AAx_ab,AAy_ab,AAz_ab,BBx_ab,BBy_ab,BBz_ab :: REAL
-      rys :: RYS*
+      rys :: RYS@
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -3002,13 +2966,13 @@ contains
    ! Uses Rys decomposition of 1/r_c and Gauss-Hermite quadrature.
       Ex,Ey,Ez :: MAT{REAL}
        c :: VEC{REAL}(3)
-      Sx,Sy,Sz,Fx,Fy,Fz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz,Fx,Fy,Fz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,fa,la,fb,lb :: INT
       ! a,b,aix,aiy,aiz,bix,biy,biz :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -3118,13 +3082,13 @@ contains
    ! Uses Rys decomposition of 1/r_c and Gauss-Hermite quadrature.
       Exx,Eyy,Ezz,Exy,Exz,Eyz :: MAT{REAL}
       c :: VEC{REAL}(3)
-      Sx,Sy,Sz,Fx,Fy,Fz,Gx,Gy,Gz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz,Fx,Fy,Fz,Gx,Gy,Gz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,fa,la,fb,lb :: INT
       ! a,b,aix,aiy,aiz,bix,biy,biz :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -3242,12 +3206,12 @@ contains
    ! Uses Rys decomposition of 1/|r-c| and Gauss-Hermite quadrature.
       Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz :: MAT{REAL}
       c,origin :: VEC{REAL}(3)
-      Sx,Sy,Sz,Dx,Dy,Dz,Fx,Fy,Fz,Qx,Qy,Qz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz,Dx,Dy,Dz,Fx,Fy,Fz,Qx,Qy,Qz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -3374,8 +3338,8 @@ contains
    ! Uses Gauss-Hermite quadrature.
       Lx,Ly,Lz :: MAT{REAL}
       origin :: VEC{REAL}(3)
-      Sx,Sy,Sz,Rx,Ry,Rz,Dx,Dy,Dz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz,Rx,Ry,Rz,Dx,Dy,Dz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
@@ -3482,17 +3446,17 @@ contains
       Jx,Jy,Jz :: MAT{REAL}
       c :: VEC{REAL}(3)
 
-      Sx00,Sy00,Sz00 :: MAT{REAL}*
-      Sx10,Sy10,Sz10 :: MAT{REAL}*
-      Sx01,Sy01,Sz01 :: MAT{REAL}*
-      Sxmm,Symm,Szmm :: MAT{REAL}*
-      Fx00,Fy00,Fz00 :: MAT{REAL}*
-      ax,ay,az :: VEC{INT}*
-      bx,by,bz :: VEC{INT}*
+      Sx00,Sy00,Sz00 :: MAT{REAL}@
+      Sx10,Sy10,Sz10 :: MAT{REAL}@
+      Sx01,Sy01,Sz01 :: MAT{REAL}@
+      Sxmm,Symm,Szmm :: MAT{REAL}@
+      Fx00,Fy00,Fz00 :: MAT{REAL}@
+      ax,ay,az :: VEC{INT}@
+      bx,by,bz :: VEC{INT}@
       rpc,rab  :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       ! Gaussian function limits
       fa = .a.first_gaussian; la = .a.last_gaussian
@@ -3589,20 +3553,20 @@ contains
       M :: MAT4{REAL}
       c :: VEC{REAL}(3)
 
-      Sx00,Sy00,Sz00 :: MAT{REAL}*
-      Sx10,Sy10,Sz10 :: MAT{REAL}*
-      Sx01,Sy01,Sz01 :: MAT{REAL}*
-      Sxpp,Sypp,Szpp :: MAT{REAL}*
-      Fx00,Fy00,Fz00 :: MAT{REAL}*
-      Fx10,Fy10,Fz10 :: MAT{REAL}*
-      Fx01,Fy01,Fz01 :: MAT{REAL}*
-      Fxpp,Fypp,Fzpp :: MAT{REAL}*
+      Sx00,Sy00,Sz00 :: MAT{REAL}@
+      Sx10,Sy10,Sz10 :: MAT{REAL}@
+      Sx01,Sy01,Sz01 :: MAT{REAL}@
+      Sxpp,Sypp,Szpp :: MAT{REAL}@
+      Fx00,Fy00,Fz00 :: MAT{REAL}@
+      Fx10,Fy10,Fz10 :: MAT{REAL}@
+      Fx01,Fy01,Fz01 :: MAT{REAL}@
+      Fxpp,Fypp,Fzpp :: MAT{REAL}@
 
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       ! Gaussian function limits
       fa = .a.first_gaussian; la = .a.last_gaussian
@@ -3710,16 +3674,16 @@ contains
       M :: MAT4{REAL}
       c :: VEC{REAL}(3)
 
-      Sx00,Sy00,Sz00 :: MAT{REAL}*
-      Sx01,Sy01,Sz01 :: MAT{REAL}*
-      Fx00,Fy00,Fz00 :: MAT{REAL}*
-      Fx01,Fy01,Fz01 :: MAT{REAL}*
+      Sx00,Sy00,Sz00 :: MAT{REAL}@
+      Sx01,Sy01,Sz01 :: MAT{REAL}@
+      Fx00,Fy00,Fz00 :: MAT{REAL}@
+      Fx01,Fy01,Fz01 :: MAT{REAL}@
 
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       ! Gaussian function limits
       fa = .a.first_gaussian; la = .a.last_gaussian
@@ -3806,16 +3770,16 @@ contains
    ! Uses a double quadrature based on Rys method and Gauss-Hermite quadrature.
       Jx,Jy,Jz :: MAT{REAL}
       c :: VEC{REAL}(3)
-      Sx00,Sy00,Sz00,Sx10,Sy10,Sz10,Sx01,Sy01,Sz01,Sxpp,Sypp,Szpp,Sxmm,Symm,Szmm :: MAT{REAL}*
-      Fx00,Fy00,Fz00,Fx10,Fy10,Fz10,Fx01,Fy01,Fz01,Fxpp,Fypp,Fzpp,Fxmm,Fymm,Fzmm :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx00,Sy00,Sz00,Sx10,Sy10,Sz10,Sx01,Sy01,Sz01,Sxpp,Sypp,Szpp,Sxmm,Symm,Szmm :: MAT{REAL}@
+      Fx00,Fy00,Fz00,Fx10,Fy10,Fz10,Fx01,Fy01,Fz01,Fxpp,Fypp,Fzpp,Fxmm,Fymm,Fzmm :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
       Sx00_ab,Sy00_ab,Sz00_ab,Sxpp_ab,Sypp_ab,Szpp_ab :: REAL
       Fxpp_ab,Fypp_ab,Fzpp_ab :: REAL
       Sxmm_ab,Symm_ab,Szmm_ab,Fxmm_ab,Fymm_ab,Fzmm_ab :: REAL
-      rys :: RYS*
+      rys :: RYS@
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -3948,15 +3912,15 @@ contains
    ! Uses a double quadrature based on Rys method and Gauss-Hermite quadrature.
       Jx,Jy,Jz :: MAT{REAL}
       B_field,origin,c :: VEC{REAL}(3)
-      Sx00,Sy00,Sz00,Sx10,Sy10,Sz10,Sx01,Sy01,Sz01,Sxpp,Sypp,Szpp :: MAT{REAL}*
-      Dx00,Dy00,Dz00,Dx10,Dy10,Dz10,Dx01,Dy01,Dz01,Dxpp,Dypp,Dzpp :: MAT{REAL}*
-      Fx00,Fy00,Fz00,Fx10,Fy10,Fz10,Fx01,Fy01,Fz01,Fxpp,Fypp,Fzpp :: MAT{REAL}*
-      Qx00,Qy00,Qz00,Qx10,Qy10,Qz10,Qx01,Qy01,Qz01,Qxpp,Qypp,Qzpp :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx00,Sy00,Sz00,Sx10,Sy10,Sz10,Sx01,Sy01,Sz01,Sxpp,Sypp,Szpp :: MAT{REAL}@
+      Dx00,Dy00,Dz00,Dx10,Dy10,Dz10,Dx01,Dy01,Dz01,Dxpp,Dypp,Dzpp :: MAT{REAL}@
+      Fx00,Fy00,Fz00,Fx10,Fy10,Fz10,Fx01,Fy01,Fz01,Fxpp,Fypp,Fzpp :: MAT{REAL}@
+      Qx00,Qy00,Qz00,Qx10,Qy10,Qz10,Qx01,Qy01,Qz01,Qxpp,Qypp,Qzpp :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac,B_x,B_y,B_z :: REAL
       n_roots,k,a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
-      rys :: RYS*
+      rys :: RYS@
       Sx00_ab,Sy00_ab,Sz00_ab,Fx00_ab,Fy00_ab,Fz00_ab :: REAL
       Dx00_ab,Dy00_ab,Dz00_ab :: REAL
       Sxpp_ab,Sypp_ab,Szpp_ab,Fxpp_ab,Fypp_ab,Fzpp_ab :: REAL
@@ -4179,15 +4143,15 @@ contains
    ! Uses a double quadrature based on Rys method and Gauss-Hermite quadrature.
       Jx,Jy,Jz :: MAT{REAL}
        c :: VEC{REAL}(3)
-      Sx00,Sy00,Sz00,Sx10,Sy10,Sz10,Sx01,Sy01,Sz01,Sxmm,Symm,Szmm :: MAT{REAL}*
-      Fx00,Fy00,Fz00,Fx10,Fy10,Fz10,Fx01,Fy01,Fz01,Fxmm,Fymm,Fzmm :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx00,Sy00,Sz00,Sx10,Sy10,Sz10,Sx01,Sy01,Sz01,Sxmm,Symm,Szmm :: MAT{REAL}@
+      Fx00,Fy00,Fz00,Fx10,Fy10,Fz10,Fx01,Fy01,Fz01,Fxmm,Fymm,Fzmm :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac :: REAL
       n_roots,k,a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
       Sx00_ab,Sy00_ab,Sz00_ab,Fx00_ab,Fy00_ab,Fz00_ab :: REAL
       Sxmm_ab,Symm_ab,Szmm_ab,Fxmm_ab,Fymm_ab,Fzmm_ab :: REAL
-      rys :: RYS*
+      rys :: RYS@
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -4313,18 +4277,18 @@ contains
    ! Uses a double quadrature based on Rys method and Gauss-Hermite quadrature.
       Jx,Jy,Jz :: MAT{REAL}
       B_field,origin,c :: VEC{REAL}(3)
-      Sx00,Sy00,Sz00,Sx10,Sy10,Sz10,Sx01,Sy01,Sz01 :: MAT{REAL}*
-      Sxpp,Sypp,Szpp,Dx00,Dy00,Dz00 :: MAT{REAL}*
-      Fx00,Fy00,Fz00,Fx10,Fy10,Fz10,Fx01,Fy01,Fz01 :: MAT{REAL}*
-      Fxpp,Fypp,Fzpp,Qx00,Qy00,Qz00 :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx00,Sy00,Sz00,Sx10,Sy10,Sz10,Sx01,Sy01,Sz01 :: MAT{REAL}@
+      Sxpp,Sypp,Szpp,Dx00,Dy00,Dz00 :: MAT{REAL}@
+      Fx00,Fy00,Fz00,Fx10,Fy10,Fz10,Fx01,Fy01,Fz01 :: MAT{REAL}@
+      Fxpp,Fypp,Fzpp,Qx00,Qy00,Qz00 :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rpc,rab :: VEC{REAL}(3)
       p,xx,uu,wt,prefac,B_x,B_y,B_z :: REAL
       n_roots,k,a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
       Sx00_ab,Sy00_ab,Sz00_ab,Fx00_ab,Fy00_ab,Fz00_ab :: REAL
       Dx00_ab,Dy00_ab,Dz00_ab,Qx00_ab,Qy00_ab,Qz00_ab :: REAL
       Sxpp_ab,Sypp_ab,Szpp_ab,Fxpp_ab,Fypp_ab,Fzpp_ab :: REAL
-      rys :: RYS*
+      rys :: RYS@
 
       B_x = B_field(1)
       B_y = B_field(2)
@@ -4486,7 +4450,7 @@ contains
       nc,n :: INT
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -4513,9 +4477,9 @@ contains
       nc,n :: INT
       npos :: VEC{REAL}(3)
 
-      Ix,Iy,Iz :: MAT3{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      rys :: RYS*
+      Ix,Iy,Iz :: MAT3{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      rys :: RYS@
       AB,CD,P,Q,PA,QP :: VEC{REAL}(3)
       zeta,zinv,eta,einv,zeinv,rho,xx,AB2,fac,h,r212 :: REAL
       l_e,l_f,n_roots,fa,la,fb,lb :: INT
@@ -4701,7 +4665,7 @@ contains
       nc,n :: INT
       spherical :: BIN, optional
 
-      W,Wx,Wy,Wz :: MAT{REAL}*
+      W,Wx,Wy,Wz :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -4740,10 +4704,10 @@ contains
       npos :: VEC{REAL}(3)
       nc,n :: INT
 
-      NAx,NAy,NAz :: MAT3{REAL}*
-      AAx,ABx,BBx,AAy,ABy,BBy,AAz,ABz,BBz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      rys :: RYS*
+      NAx,NAy,NAz :: MAT3{REAL}@
+      AAx,ABx,BBx,AAy,ABy,BBy,AAz,ABz,BBz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      rys :: RYS@
       AB,CD,P,Q,PA,QP :: VEC{REAL}(3)
       zeta,zinv,eta,einv,zeinv,rho,xx,AB2,fac,h,r212 :: REAL
       i,l_e,l_f,n_roots,fa,la,fb,lb :: INT
@@ -4848,7 +4812,7 @@ contains
       nuc :: INT
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -4874,8 +4838,8 @@ contains
       S :: MAT{REAL}
       pos :: VEC{REAL}
       nuc :: INT
-      Sx,Sy,Sz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
@@ -4974,7 +4938,7 @@ contains
       nuc :: INT
       spherical :: BIN, optional
 
-      W,Wx,Wy,Wz :: MAT{REAL}*
+      W,Wx,Wy,Wz :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5012,8 +4976,8 @@ contains
       S,SOx,SOy,SOz :: MAT{REAL}
       pos :: VEC{REAL}
       nuc :: INT
-      Sx,Sy,Sz,AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz,AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
       fa,la,fb,lb :: INT
@@ -5084,7 +5048,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5109,8 +5073,8 @@ contains
    ! Make the overlap integral matrix "S". Uses Gauss-Hermite quadrature.
       S :: MAT{REAL}
       x,y,z :: REAL
-      Sx,Sy,Sz :: MAT{REAL}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
+      Sx,Sy,Sz :: MAT{REAL}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
       a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -5166,7 +5130,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5192,8 +5156,8 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       T :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -5258,7 +5222,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5284,10 +5248,10 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       ppDpp :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}*
-      A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      AB2x,AB2y,AB2z :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz,AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}@
+      A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+      AB2x,AB2y,AB2z :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -5370,10 +5334,10 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       ppDpp :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}*
-!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      AB2x,AB2y,AB2z :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz,AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}@
+!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+      AB2x,AB2y,AB2z :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -5445,7 +5409,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      Wx,Wy,Wz :: MAT{REAL}*
+      Wx,Wy,Wz :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5479,8 +5443,8 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       SOx,SOy,SOz :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz, AAx,AAy,AAz,BBx,BBy,BBz,ABx,ABy,ABz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -5549,7 +5513,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      Wx,Wy,Wz :: MAT{REAL}*
+      Wx,Wy,Wz :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5583,10 +5547,10 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       SOx,SOy,SOz :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -5673,7 +5637,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5699,8 +5663,8 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       T :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz, AAx,AAy,AAz,ABx,ABy,ABz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz, AAx,AAy,AAz,ABx,ABy,ABz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -5756,7 +5720,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5782,8 +5746,8 @@ contains
    ! very inefficient.
       T :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz, AAx,AAy,AAz,ABx,ABy,ABz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz, AAx,AAy,AAz,ABx,ABy,ABz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -5839,7 +5803,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5865,8 +5829,8 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       T :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,AXx,AXy,AXz,ABx,ABy,ABz,XXx,XXy,XXz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz,AAx,AAy,AAz,AXx,AXy,AXz,ABx,ABy,ABz,XXx,XXy,XXz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -5947,7 +5911,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -5973,8 +5937,8 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       T :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,AXx,AXy,AXz,ABx,ABy,ABz,XXx,XXy,XXz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz,AAx,AAy,AAz,AXx,AXy,AXz,ABx,ABy,ABz,XXx,XXy,XXz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -6055,7 +6019,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      Wx,Wy,Wz :: MAT{REAL}*
+      Wx,Wy,Wz :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -6089,10 +6053,10 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       SOx,SOy,SOz :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -6179,7 +6143,7 @@ contains
       x,y,z :: REAL
       spherical :: BIN, optional
 
-      Wx,Wy,Wz :: MAT{REAL}*
+      Wx,Wy,Wz :: MAT{REAL}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -6213,10 +6177,10 @@ contains
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
       SOx,SOy,SOz :: MAT{REAL}
       x,y,z :: REAL
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}*
-      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}*
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      NAx,NAy,NAz,AAx,AAy,AAz,A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+!     A2x,A2y,A2z,B2x,B2y,B2z :: MAT{REAL}@
+      ABx,ABy,ABz,BBx,BBy,BBz :: MAT{REAL}@
       fa,la,fb,lb :: INT
 
       ! Indexing array limits
@@ -6315,7 +6279,7 @@ contains
 !      h,k,l :: REAL, target
 !
 !      pos :: VEC{REAL}(3)
-!      k_x,k_y,k_z :: REAL*
+!      k_x,k_y,k_z :: REAL@
 !      g1_exa,g1_exb,e00,fac :: REAL
 !      pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
 !      I :: CPX
@@ -6367,7 +6331,7 @@ contains
 !      h,k,l :: REAL
 !      spherical :: BIN, optional
 !
-!      W :: MAT{CPX}*
+!      W :: MAT{CPX}@
 !      is_spherical :: BIN
 !
 !      is_spherical = FALSE
@@ -6404,10 +6368,10 @@ contains
 !      ft :: MAT{CPX}
 !      h1,h2,h3 :: REAL, target
 !
-!      ft_x,ft_y,ft_z :: MAT{CPX}*
-!      ax,ay,az,bx,by,bz :: VEC{INT}*
-!      ft_xb,ft_yb,ft_zb :: VEC{CPX}*
-!      k_x,k_y,k_z :: REAL*
+!      ft_x,ft_y,ft_z :: MAT{CPX}@
+!      ax,ay,az,bx,by,bz :: VEC{INT}@
+!      ft_xb,ft_yb,ft_zb :: VEC{CPX}@
+!      k_x,k_y,k_z :: REAL@
 !      g1_exa,g1_exb :: REAL
 !      pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
 !      k_max,a,b,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
@@ -6490,7 +6454,7 @@ contains
 !      h,k,l :: REAL
 !      spherical :: BIN, optional
 !
-!      W :: MAT{CPX}*
+!      W :: MAT{CPX}@
 !      is_spherical :: BIN
 !
 !      is_spherical = FALSE
@@ -6526,10 +6490,10 @@ contains
 !      ft :: MAT{CPX}
 !      h1,h2,h3 :: REAL, target
 !
-!      ft_x,ft_y,ft_z :: MAT{CPX}*
-!      pftp_x,pftp_y,pftp_z :: MAT{CPX}*
-!      ax,ay,az,bx,by,bz :: VEC{INT}*
-!      k_x,k_y,k_z :: REAL*
+!      ft_x,ft_y,ft_z :: MAT{CPX}@
+!      pftp_x,pftp_y,pftp_z :: MAT{CPX}@
+!      ax,ay,az,bx,by,bz :: VEC{INT}@
+!      k_x,k_y,k_z :: REAL@
 !      g1_exa,g1_exb :: REAL
 !      pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
 !      k_max,a,b,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
@@ -6623,8 +6587,8 @@ contains
 !      comp  :: INT, IN
 !      k_pts :: REAL, IN
 !
-!      e  :: MAT3{REAL}*
-!      kp :: VEC{REAL}*
+!      e  :: MAT3{REAL}@
+!      kp :: VEC{REAL}@
 !      vr,vi :: REAL
 !      a,b,t,k_max,t_max :: INT
 !
@@ -6686,8 +6650,8 @@ contains
 !      comp  :: INT, IN
 !      k_pts :: REAL, IN
 !
-!      e  :: MAT3{REAL}*
-!      kp :: VEC{REAL}*
+!      e  :: MAT3{REAL}@
+!      kp :: VEC{REAL}@
 !      vr,vi :: REAL
 !      a,b,t,k_max,t_max :: INT
 !
@@ -6873,8 +6837,8 @@ contains
    ! Multiplies the ft product at a series of k points, by the normalisation
    ! factors for the two gaussian shells.
      ft :: MAT{CPX}, target
-     ft_ab :: CPX*
-     anorm,bnorm :: VEC{REAL}*
+     ft_ab :: CPX@
+     anorm,bnorm :: VEC{REAL}@
      a,b,i,fa,fb,la,lb :: INT
 !     if (.a.l<=1 AND .b.l<=1) return  line from shell2.foo
      if (.a.l<2 AND .b.l<2) return
@@ -6917,7 +6881,7 @@ contains
       h,k,l :: REAL, target
 
       pos :: VEC{REAL}(3)
-      k_x,k_y,k_z :: REAL*
+      k_x,k_y,k_z :: REAL@
       g1_exa,g1_exb,e00 :: REAL
       pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       I :: CPX
@@ -6961,7 +6925,7 @@ contains
       h,k,l :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{CPX}*
+      W :: MAT{CPX}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -7001,9 +6965,9 @@ contains
       ft :: MAT{CPX}
       h1,h2,h3 :: REAL, target
 
-      ft_x,ft_y,ft_z :: MAT{CPX}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      k_x,k_y,k_z :: REAL*
+      ft_x,ft_y,ft_z :: MAT{CPX}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      k_x,k_y,k_z :: REAL@
       g1_exa,g1_exb :: REAL
       pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       a,b,fa,la,fb,lb :: INT
@@ -7072,7 +7036,7 @@ contains
       h,k,l :: REAL
       spherical :: BIN, optional
 
-      W :: MAT{CPX}*
+      W :: MAT{CPX}@
       is_spherical :: BIN
 
       is_spherical = FALSE
@@ -7112,10 +7076,10 @@ contains
       ft :: MAT{CPX}
       h1,h2,h3 :: REAL, target
 
-      ft_x,ft_y,ft_z :: MAT{CPX}*
-      pftp_x,pftp_y,pftp_z :: MAT{CPX}*
-      ax,ay,az,bx,by,bz :: VEC{INT}*
-      k_x,k_y,k_z :: REAL*
+      ft_x,ft_y,ft_z :: MAT{CPX}@
+      pftp_x,pftp_y,pftp_z :: MAT{CPX}@
+      ax,ay,az,bx,by,bz :: VEC{INT}@
+      k_x,k_y,k_z :: REAL@
       g1_exa,g1_exb :: REAL
       pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       a,b,fa,la,fb,lb :: INT
@@ -7195,8 +7159,8 @@ contains
       comp  :: INT, IN
       k_pts :: REAL, IN
 
-      e  :: MAT3{REAL}*
-      kp :: VEC{REAL}*
+      e  :: MAT3{REAL}@
+      kp :: VEC{REAL}@
       vr,vi :: REAL
       a,b,t,t_max :: INT
 
@@ -7254,8 +7218,8 @@ contains
       comp  :: INT, IN
       k_pts :: REAL, IN
 
-      e  :: MAT3{REAL}*
-      kp :: VEC{REAL}*
+      e  :: MAT3{REAL}@
+      kp :: VEC{REAL}@
       vr,vi :: REAL
       a,b,t,t_max :: INT
 

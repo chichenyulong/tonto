@@ -40,7 +40,7 @@ contains
 
 !  ==========
 !  Allocation
-!  ==========
+   ! Deallocate "self"
 
    create ::: get_from(OBJECT), leaky, PURE
    ! Allocate an object
@@ -58,55 +58,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  =======================
-!  Create/Destroy routines
-!  =======================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part ::: leaky
-   ! Nullify the pointer parts of self
-      .a.nullify_ptr_part
-      .b.nullify_ptr_part
-      .c.nullify_ptr_part
-      .d.nullify_ptr_part
-      nullify(.ab_exponent_sum)
-      nullify(.ab_exponent_inv)
-      nullify(.ab_contraction_prefactor)
-      nullify(.ab_contraction_s_prefactor)
-      nullify(.ab_contraction_p_prefactor)
-      nullify(.ab_pair_center)
-      nullify(.ab_center_diff)
-      nullify(.cd_exponent_sum)
-      nullify(.cd_exponent_inv)
-      nullify(.cd_contraction_prefactor)
-      nullify(.cd_contraction_s_prefactor)
-      nullify(.cd_contraction_p_prefactor)
-      nullify(.cd_pair_center)
-      nullify(.cd_center_diff)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of self
-      .destroy_ab
-      .destroy_cd
-   end
 
    destroy_ab ::: leaky
    ! Destroy the shella and shellb pointer parts of self
@@ -173,15 +124,6 @@ contains
 
    end
 
-   set_defaults
-   ! Set defaults
-
-      .is_spherical = FALSE
-      .ab_nullify = TRUE
-      .cd_nullify = TRUE
-
-   end
-
    set_spherical(val)
    ! Set sphericals to "val" defaults
       val :: BIN
@@ -227,7 +169,7 @@ contains
       pos_a,pos_b :: VEC{REAL}, IN
       same_center,skip :: BIN, IN
 
-      exponent_sum,exponent_inv :: VEC{REAL}*
+      exponent_sum,exponent_inv :: VEC{REAL}@
       AB,At,P,PAt,b_pos_b :: VEC{REAL}(3)
       a,b,r2ab,b_r2ab,ab_inv,prefac :: REAL
       i,j,bg,ag :: INT
@@ -360,7 +302,7 @@ contains
       shellpr :: SHELL1PAIR, IN, target
       pos_c,pos_d :: VEC{REAL}, IN
       same_center,skip :: BIN, IN
-      exponent_sum,exponent_inv :: VEC{REAL}*
+      exponent_sum,exponent_inv :: VEC{REAL}@
       CD,Ct,Q,QCt,d_pos_d :: VEC{REAL}(3)
       c,d,r2cd,d_r2cd,cd_inv,prefac :: REAL
       i,j,dg,cg :: INT
@@ -557,7 +499,7 @@ contains
       self :: IN
       abcd :: VEC{REAL}(*), OUT
 
-      W :: MAT4{REAL}*
+      W :: MAT4{REAL}@
 
       if (NOT .is_spherical) then
 
@@ -585,7 +527,7 @@ contains
  ! ENSURE(.n_ab==(.ab_last_gaussian-.ab_first_gaussian+1),"n_ab wrong")
  ! ENSURE(.n_cd==(.cd_last_gaussian-.cd_first_gaussian+1),"n_cd wrong")
 
-      esfs,escd :: VEC{REAL}*
+      esfs,escd :: VEC{REAL}@
       ssss :: REAL
 
       if      (.ab_l_sum==0 AND .cd_l_sum==0) then
@@ -625,12 +567,12 @@ contains
    ! Normalise a cartesian integral block "C" to a spherical integral
    ! block "S" . "C" is destroyed.
       self :: IN
-      C :: MAT4{REAL}*
+      C :: MAT4{REAL}@
       S :: MAT4{REAL}(.a.n_sph,.b.n_sph,.c.n_sph,.d.n_sph), OUT
 
-      UU  :: VEC{MAT_{REAL}}*
-      U :: MAT{REAL}*
-      W,WW :: MAT4{REAL}*
+      UU  :: VEC{MAT_{REAL}}@
+      U :: MAT{REAL}@
+      W,WW :: MAT4{REAL}@
 
       UU => GAUSSIAN_DATA::spherical_harmonics_for
 
@@ -787,9 +729,9 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !      self :: IN
 !      esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
-!      Ixa,Iya,Iza :: MAT3{REAL}*
-!      Ix,Iy,Iz :: MAT{REAL}*
-!      Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}*
+!      Ixa,Iya,Iza :: MAT3{REAL}@
+!      Ix,Iy,Iz :: MAT{REAL}@
+!      Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}@
 !      QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
 !      zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
 !      t2,t2_rz,t2_re,half_zinv,half_einv,f1_bb :: REAL
@@ -802,7 +744,7 @@ contains
 !      n_roots,dim1,dim2 :: INT
 !      e,f,fm1,ep1,fp1,n,i,j,k,n_sum :: INT
 !   ! j0,j1,j2,j3,k0,k1,k2,k3 :: INT
-!      rys :: RYS*
+!      rys :: RYS@
 !      ss :: BIN
 !      ss = .ab_l_max==0 AND .cd_l_max==0
 !      dim1 = .ab_l_sum + 1                            ! Space for 2D integrals
@@ -1018,7 +960,7 @@ contains
       Qx,Qy,Qz,Px,Py,Pz,QPx,QPy,QPz :: REAL
       zeta,eta,xx,ab_cc,cd_cc,rho :: REAL
       j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       rys.create(1)
 
@@ -1059,7 +1001,7 @@ contains
       Qx,Qy,Qz,Px,Py,Pz,QPx,QPy,QPz :: REAL
       v11,zeta,eta,xx,ab_cc,cd_cc,rho :: REAL
       j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       rys.create(1)
 
@@ -1106,7 +1048,7 @@ contains
       zeta,eta,xx,ab_cc,cd_cc,rho,zinv,rho_zinv :: REAL
       wt,t2,t2_rz :: REAL
       j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       rys.create(1)
 
@@ -1170,7 +1112,7 @@ contains
       zeta,eta,xx,ab_cc,cd_cc,rho,einv,rho_einv :: REAL
       wt,t2,t2_re :: REAL
       j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       rys.create(1)
 
@@ -1235,7 +1177,7 @@ contains
       Ix12,Iy12,Iz12,Ix21,Iy21,Iz21,Ix22,Iy22,Iz22 :: REAL
       v11,v21,v31,v12,v22,v32,v13,v23,v33 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -1330,8 +1272,8 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !     self :: IN
 !     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
 !     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
 !     zeta,eta,xx,ab_cc,cd_cc,zinv,rho,einv,rho_zinv,rho_einv :: REAL
 !     wt,t2,t2_rz,t2_re,bb,half_einv :: REAL
@@ -1339,7 +1281,7 @@ contains
 !     v11,v21,v31,v12,v22,v32,v13,v23,v33 :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     e,f,em1,fm1,ep1,fp1,n,i,j,k,n_sum :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     dim1 = .ab_l_sum + 1
 !     dim2 = .cd_l_sum + 1
@@ -1431,7 +1373,7 @@ contains
       Ix31,Iy31,Iz31 :: REAL
       v11,v21,v31,v41,v51,v61 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -1517,7 +1459,7 @@ contains
       Ix31,Iy31,Iz31 :: REAL
       v11,v21,v31,v41,v51,v61,v71,v81,v91,Iy21_wt :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -1604,8 +1546,8 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !     self :: IN
 !     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
 !     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,Px,Py,Pz :: REAL
 !     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,rho_zinv :: REAL
 !     wt,t2,t2_rz,t2_re,half_zinv,ce :: REAL
@@ -1614,7 +1556,7 @@ contains
 !     v11,v21,v31,v41,v51,v61 :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     n,i,j,k,n_sum :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     dim1 = .ab_l_sum + 1
 !     dim2 = .cd_l_sum + 1
@@ -1695,7 +1637,7 @@ contains
       Ix13,Iy13,Iz13 :: REAL
       v11,v12,v13,v14,v15,v16 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -1781,7 +1723,7 @@ contains
       Ix13,Iy13,Iz13 :: REAL
       v11,v18,v12,v19,v13,v16,v14,v15,v17,Iy12_wt :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -1868,8 +1810,8 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !     self :: IN
 !     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
 !     QPx,QPy,QPz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
 !     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_einv :: REAL
 !     wt,t2,t2_re,half_einv,cf :: REAL
@@ -1877,7 +1819,7 @@ contains
 !     Ix13,Iy13,Iz13 :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     n,i,j,k,n_sum :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     dim1 = .ab_l_sum + 1
 !     dim2 = .cd_l_sum + 1
@@ -1960,7 +1902,7 @@ contains
       v11,v21,v31,v41,v51,v61,v12,v22,v32 :: REAL
       v42,v52,v62,v13,v23,v33,v43,v53,v63 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -2101,7 +2043,7 @@ contains
       v12,v82,v22,v92,v32,v62,v42,v52,v72 :: REAL
       v13,v83,v23,v93,v33,v63,v43,v53,v73 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -2257,8 +2199,8 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !     self :: IN
 !     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
 !     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
 !     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
 !     wt,t2,t2_rz,t2_re,half_zinv,half_einv,ce,bb :: REAL
@@ -2266,7 +2208,7 @@ contains
 !     Ix31,Iy31,Iz31,Ix32,Iy32,Iz32 :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     n,i,j,k,n_sum :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     dim1 = .ab_l_sum + 1
 !     dim2 = .cd_l_sum + 1
@@ -2366,7 +2308,7 @@ contains
       v11,v21,v31,v12,v22,v32,v13,v23,v33 :: REAL
       v14,v24,v34,v15,v25,v35,v16,v26,v36 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -2506,7 +2448,7 @@ contains
       v29,v32,v39,v13,v16,v23,v26,v33,v36 :: REAL
       v14,v24,v34,v15,v25,v35,v17,v27,v37 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 2
       rys.create(n_roots)
@@ -2661,8 +2603,8 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !     self :: IN
 !     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
 !     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
 !     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
 !     wt,t2,t2_rz,t2_re,half_einv,cf,bb :: REAL
@@ -2670,7 +2612,7 @@ contains
 !     Ix13,Iy13,Iz13,Ix23,Iy23,Iz23 :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     n,i,j,k,n_sum :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     dim1 = .ab_l_sum + 1
 !     dim2 = .cd_l_sum + 1
@@ -2773,7 +2715,7 @@ contains
       v14,v24,v34,v44,v54,v64,v15,v25,v35 :: REAL
       v45,v55,v65,v16,v26,v36,v46,v56,v66 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 3
       rys.create(n_roots)
@@ -2978,7 +2920,7 @@ contains
       v15,v25,v35,v45,v55,v65 :: REAL
       v17,v27,v37,v47,v57,v67 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 3
       rys.create(n_roots)
@@ -3229,7 +3171,7 @@ contains
       v45,v55,v75,v16,v86,v26 :: REAL
       v96,v36,v66,v46,v56,v76 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 3
       rys.create(n_roots)
@@ -3481,7 +3423,7 @@ contains
       v15,v85,v25,v95,v35,v65,v45,v55,v75 :: REAL
       v17,v87,v27,v97,v37,v67,v47,v57,v77 :: REAL
       n_roots,n,j,k :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       n_roots = 3
       rys.create(n_roots)
@@ -3803,7 +3745,7 @@ contains
 !     Ix55,Iy55,Iz55                :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     n,j,k :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     v__1__1,v_11__1,v_27__1,v__1_11,v_11_11,v_27_11,v__1_27,v_11_27,v_27_27,v__2__1 :: REAL
 !     v_13__1,v_28__1,v__2_11,v_13_11,v_28_11,v__2_27,v_13_27,v_28_27,v__3__1,v__9__1 :: REAL
@@ -6381,9 +6323,9 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !     self :: IN
 !     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
-!     Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
+!     Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}@
 !     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
 !     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
 !     wt,t2,t2_rz,t2_re,half_zinv,half_einv,f1_bb :: REAL
@@ -6395,7 +6337,7 @@ contains
 !     Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     e,f,em1,fm1,ep1,fp1,n,i,j,k,n_sum :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     dim1 = .ab_l_sum + 1
 !     dim2 = .cd_l_sum + 1
@@ -6496,9 +6438,9 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !     self :: IN
 !     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
-!     Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
+!     Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}@
 !     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,Px,Py,Pz :: REAL
 !     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,rho_zinv :: REAL
 !     wt,t2,t2_rz,t2_re,half_zinv,f1_bb :: REAL
@@ -6510,7 +6452,7 @@ contains
 !     Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     e,f,em1,fm1,ep1,fp1,n,i,j,k,n_sum :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     dim1 = .ab_l_sum + 1
 !     dim2 = .cd_l_sum + 1
@@ -6587,9 +6529,9 @@ contains
 !   ! Makes the initial (es|fs) integrals, summed over the primitives
 !     self :: IN
 !     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
-!     Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
+!     Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}@
 !     QPx,QPy,QPz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
 !     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
 !     wt,t2,t2_rz,t2_re,half_zinv,half_einv,f1_bb :: REAL
@@ -6601,7 +6543,7 @@ contains
 !     Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
 !     n_roots,dim1,dim2 :: INT
 !     e,f,em1,fm1,ep1,fp1,n,i,j,k,n_sum :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !
 !     dim1 = .ab_l_sum + 1                            ! Space for 2D integrals
 !     dim2 = .cd_l_sum + 1
@@ -6679,8 +6621,8 @@ contains
       self :: IN
       esfs :: VEC{REAL}(.n_ab), OUT
 
-      Ixa,Iya,Iza :: MAT{REAL}*
-      Ix,Iy,Iz :: VEC{REAL}*
+      Ixa,Iya,Iza :: MAT{REAL}@
+      Ix,Iy,Iz :: VEC{REAL}@
       QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,Px,Py,Pz :: REAL
       zeta,eta,xx,ab_cc,cd_cc,rho,zinv,rho_zinv :: REAL
       t2,t2_rz,half_zinv :: REAL
@@ -6691,7 +6633,7 @@ contains
       Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
       n_roots,dim1,dim2 :: INT
       ep1,n,i,j,k,n_sum :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       dim1 = .ab_l_sum + 1
       dim2 = .cd_l_sum + 1 ! This is 1
@@ -6778,8 +6720,8 @@ contains
       self :: IN
       esfs :: VEC{REAL}(.n_cd), OUT
 
-      Ixa,Iya,Iza :: MAT{REAL}*
-      Ix,Iy,Iz :: VEC{REAL}*
+      Ixa,Iya,Iza :: MAT{REAL}@
+      Ix,Iy,Iz :: VEC{REAL}@
       QPx,QPy,QPz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
       zeta,eta,xx,ab_cc,cd_cc,rho,einv,rho_einv :: REAL
       t2,t2_re,half_einv :: REAL
@@ -6790,7 +6732,7 @@ contains
       Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
       n_roots,dim1,dim2 :: INT
       fp1,n,i,j,k,n_sum :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       dim1 = .ab_l_sum + 1 ! This is 1
       dim2 = .cd_l_sum + 1
@@ -6877,8 +6819,8 @@ contains
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
 
-      Ixa,Iya,Iza :: MAT3{REAL}*
-      Ix,Iy,Iz :: MAT{REAL}*
+      Ixa,Iya,Iza :: MAT3{REAL}@
+      Ix,Iy,Iz :: MAT{REAL}@
       QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
       zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
       t2,t2_rz,t2_re,half_zinv,half_einv :: REAL
@@ -6890,7 +6832,7 @@ contains
       Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
       n_roots,dim1,dim2 :: INT
       e,ep1,n,i,j,k,n_sum :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       dim1 = .ab_l_sum + 1                            ! Space for 2D integrals
       dim2 = .cd_l_sum + 1
@@ -7009,8 +6951,8 @@ contains
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
 
-      Ixa,Iya,Iza :: MAT3{REAL}*
-      Ix,Iy,Iz :: MAT{REAL}*
+      Ixa,Iya,Iza :: MAT3{REAL}@
+      Ix,Iy,Iz :: MAT{REAL}@
       QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
       zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
       t2,t2_rz,t2_re,half_einv :: REAL
@@ -7022,7 +6964,7 @@ contains
       Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
       n_roots,dim1,dim2 :: INT
       f,fp1,n,i,j,k,n_sum :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       dim1 = .ab_l_sum + 1
       dim2 = .cd_l_sum + 1
@@ -7140,9 +7082,9 @@ contains
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
 
-      Ixa,Iya,Iza :: MAT3{REAL}*
-      Ix,Iy,Iz :: MAT{REAL}*
-      Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}*
+      Ixa,Iya,Iza :: MAT3{REAL}@
+      Ix,Iy,Iz :: MAT{REAL}@
+      Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}@
       QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
       zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
       t2,t2_rz,t2_re,half_zinv,half_einv,f1_bb :: REAL
@@ -7154,7 +7096,7 @@ contains
       Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
       n_roots,dim1,dim2 :: INT
       e,f,fm1,ep1,n,i,j,k,n_sum :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       dim1 = .ab_l_sum + 1
       dim2 = .cd_l_sum + 1
@@ -7305,9 +7247,9 @@ contains
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
 
-      Ixa,Iya,Iza :: MAT3{REAL}*
-      Ix,Iy,Iz :: MAT{REAL}*
-      Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}*
+      Ixa,Iya,Iza :: MAT3{REAL}@
+      Ix,Iy,Iz :: MAT{REAL}@
+      Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}@
       QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
       zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
       t2,t2_rz,t2_re,half_zinv,half_einv,f1_bb :: REAL
@@ -7319,7 +7261,7 @@ contains
       Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
       n_roots,dim1,dim2 :: INT
       e,f,fm1,ep1,fp1,n,i,j,k,n_sum :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       dim1 = .ab_l_sum + 1
       dim2 = .cd_l_sum + 1
@@ -7470,9 +7412,9 @@ contains
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
 
-      Ixa,Iya,Iza :: MAT3{REAL}*
-      Ix,Iy,Iz :: MAT{REAL}*
-      Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}*
+      Ixa,Iya,Iza :: MAT3{REAL}@
+      Ix,Iy,Iz :: MAT{REAL}@
+      Ix_f,Iy_f,Iz_f,Ix_1,Iy_1,Iz_1 :: VEC{REAL}@
       QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
       zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
       t2,t2_rz,t2_re,half_zinv,half_einv,f1_bb :: REAL
@@ -7484,7 +7426,7 @@ contains
       Ixm1,Iym1,Izm1,Ixp1,Iyp1,Izp1 :: REAL
       n_roots,dim1,dim2 :: INT
       e,f,fm1,ep1,fp1,n,i,j,k,n_sum :: INT
-      rys :: RYS*
+      rys :: RYS@
 
       dim1 = .ab_l_sum + 1                            ! Space for 2D integrals
       dim2 = .cd_l_sum + 1
@@ -7671,8 +7613,8 @@ contains
       Ix,Iy,Iz :: MAT3{REAL}, IN
       wt :: VEC{REAL}, IN
 
-      ex,ey,ez :: VEC{INT}*
-      fx,fy,fz :: VEC{INT}*
+      ex,ey,ez :: VEC{INT}@
+      fx,fy,fz :: VEC{INT}@
       fe,le,ff,lf,e,f,ze,ye,xe,zf,yf,xf :: INT
 
       if      (.ab_l_max==0 AND .cd_l_max==0) then
@@ -7703,13 +7645,13 @@ contains
       Ix,Iy,Iz :: MAT{REAL}(n_sum,*), IN
       wt :: VEC{REAL}, IN
 
-      ex,ey,ez :: VEC{INT}*
+      ex,ey,ez :: VEC{INT}@
       fe,le,e,ze,ye,xe :: INT
 
-!     Ixy :: VEC{REAL}*
-!     exyz0,eyz0,exz0,exy0,ez0,ey0,ex0,en0,ea0,e0,erms :: VEC{INT}*
-!     fxyz0,fyz0,fxz0,fxy0,fz0,fy0,fx0,fn0,fa0,f0,frms :: VEC{INT}*
-!     er,fr :: RMS_INDICES*
+!     Ixy :: VEC{REAL}@
+!     exyz0,eyz0,exz0,exy0,ez0,ey0,ex0,en0,ea0,e0,erms :: VEC{INT}@
+!     fxyz0,fyz0,fxz0,fxy0,fz0,fy0,fx0,fn0,fa0,f0,frms :: VEC{INT}@
+!     er,fr :: RMS_INDICES@
 !     ee,em :: INT
 
       if      (.ab_l_max==0 AND .cd_l_max==0) then
@@ -7812,13 +7754,13 @@ contains
       Ix,Iy,Iz :: MAT{REAL}(n_sum,*), IN
       wt :: VEC{REAL}, IN
 
-      fx,fy,fz :: VEC{INT}*
+      fx,fy,fz :: VEC{INT}@
       ff,lf,f,zf,yf,xf :: INT
 
-!     Ixy :: VEC{REAL}*
-!     fxyz0,fyz0,fxz0,fxy0,fz0,fy0,fx0,fn0,fa0,f0,frms :: VEC{INT}*
-!     fr :: RMS_INDICES*
-!     fxy_rms :: VEC{VEC_{INT}}*
+!     Ixy :: VEC{REAL}@
+!     fxyz0,fyz0,fxz0,fxy0,fz0,fy0,fx0,fn0,fa0,f0,frms :: VEC{INT}@
+!     fr :: RMS_INDICES@
+!     fxy_rms :: VEC{VEC_{INT}}@
 !     fm :: INT
 
       if (.ab_l_max==0 AND .cd_l_max==0) then
@@ -7920,10 +7862,10 @@ contains
 !      wt :: VEC{REAL}(n_sum), IN
 !      n_sum,dim1,dim2 :: INT, IN
 !
-!      Ixy :: VEC{REAL}*
-!      do_Ixy_is_x,do_Ixy_is_y,do_Ixy :: VEC{BIN}*
-!      ef,efx,efy,efz :: VEC{INT}*
-!      rms2 :: RMS2_INDICES*
+!      Ixy :: VEC{REAL}@
+!      do_Ixy_is_x,do_Ixy_is_y,do_Ixy :: VEC{BIN}@
+!      ef,efx,efy,efz :: VEC{INT}@
+!      rms2 :: RMS2_INDICES@
 !      i,n1,nx,ny,n :: INT
 !
 !      if (.ab_l_max==0 AND .cd_l_max==0) then
@@ -7975,10 +7917,10 @@ contains
 !     n_sum,dim1,dim2 :: INT, IN
 !     Ix,Iy,Iz :: MAT3{REAL}(n_sum,dim1,dim2), target, IN
 !     wt :: VEC{REAL}(n_sum), IN
-!     Ixy :: VEC{REAL}*
-!     Ixy_is_1,Ixy_is_x,Ixy_is_y,Ixy_is_p :: VEC{INT}*
-!     ee,ex,ey,ez, ff,fx,fy,fz :: VEC{INT}*
-!     rms2 :: RMS2_INDICES*
+!     Ixy :: VEC{REAL}@
+!     Ixy_is_1,Ixy_is_x,Ixy_is_y,Ixy_is_p :: VEC{INT}@
+!     ee,ex,ey,ez, ff,fx,fy,fz :: VEC{INT}@
+!     rms2 :: RMS2_INDICES@
 !     k,nr,i1,i2,ir,e,f,ze,ye,xe,zf,yf,xf :: INT
 !     if      (.ab_l_max==0 AND .cd_l_max==0) then
 !        esfs(1,1) = sum(wt)
@@ -8063,11 +8005,11 @@ contains
 !     self :: IN
 !     Ix,Iy,Iz :: MAT3{REAL}, IN
 !     wt :: VEC{REAL}, IN
-!     Ixy :: VEC{REAL}*
-!     ex,ey,ez, exyz0,eyz0,exz0,exy0,ez0,ey0,ex0,en0,ea0,e0,erms :: VEC{INT}*
-!     fx,fy,fz, fxyz0,fyz0,fxz0,fxy0,fz0,fy0,fx0,fn0,fa0,f0,frms :: VEC{INT}*
-!     fxy_rms,exy_rms :: VEC{VEC_{INT}}*
-!     er,fr :: RMS_INDICES*
+!     Ixy :: VEC{REAL}@
+!     ex,ey,ez, exyz0,eyz0,exz0,exy0,ez0,ey0,ex0,en0,ea0,e0,erms :: VEC{INT}@
+!     fx,fy,fz, fxyz0,fyz0,fxz0,fxy0,fz0,fy0,fx0,fn0,fa0,f0,frms :: VEC{INT}@
+!     fxy_rms,exy_rms :: VEC{VEC_{INT}}@
+!     er,fr :: RMS_INDICES@
 !     fe,le,ff,lf,e,f,ee,   ze,ye,xe,zf,yf,xf,fs,es,fm,em :: INT
 !     xe1,ye1,xf1,yf1,xye1,xyf1,xy1 :: BIN
 !     if      (.ab_l_max==0 AND .cd_l_max==0) then
@@ -8378,7 +8320,7 @@ contains
 
    ENSURE(.c.l>=.d.l,"shell c must have higher momentum than d")
 
-      int_new,int_old :: MAT3{REAL}*
+      int_new,int_old :: MAT3{REAL}@
       e,c,d,c1,c2,c3,cc,d1,l,ne,nc,fc,nd,fd,pd,dd,t :: INT
 
       select case (.d.l)
@@ -8484,7 +8426,7 @@ contains
 
    ENSURE(.d.l>=.c.l,"shell d must have higher momentum than c")
 
-      int_new,int_old :: MAT3{REAL}*
+      int_new,int_old :: MAT3{REAL}@
       e,c,d,c1,d1,d2,d3,dd,l,ne,nd,fd,nc,fc,pc,cc,t :: INT
 
       select case (.c.l)
@@ -8590,7 +8532,7 @@ contains
 
    ENSURE(.c.l>=.d.l,"shell c must have higher momentum than d")
 
-      int_new,int_old :: MAT3{REAL}*
+      int_new,int_old :: MAT3{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,esfs_ec :: REAL
       e,c,d,c1,c2,c3,cc,d1,l,ne,nc,fc,nd,fd,pd,dd,t :: INT
@@ -8709,7 +8651,7 @@ contains
 
    ENSURE(.d.l>=.c.l,"shell d must have higher momentum than c")
 
-      int_new,int_old :: MAT3{REAL}*
+      int_new,int_old :: MAT3{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,esfs_ed :: REAL
       e,c,d,c1,d1,d2,d3,dd,l,ne,nd,fd,nc,fc,pc,cc,t :: INT
@@ -8852,7 +8794,7 @@ contains
 
    ENSURE(.c.l>=.d.l,"shell c must have higher momentum than d")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       c,d,c1,c2,c3,cc,d1,l,nc,fc,nd,fd,pd,dd,t :: INT
 
       select case (.d.l)
@@ -8946,7 +8888,7 @@ contains
 
    ENSURE(.d.l>=.c.l,"shell d must have higher momentum than c")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       c,d,c1,d1,d2,d3,dd,l,nd,fd,nc,fc,pc,cc,t :: INT
 
       select case (.c.l)
@@ -9041,7 +8983,7 @@ contains
 
    ENSURE(.c.l>=.d.l,"shell c must have higher momentum than d")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,esfs_ec :: REAL
       c,d,c1,c2,c3,cc,d1,l,nc,fc,nd,fd,pd,dd,t :: INT
@@ -9149,7 +9091,7 @@ contains
 
    ENSURE(.d.l>=.c.l,"shell d must have higher momentum than c")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,esfs_ed :: REAL
       c,d,c1,d1,d2,d3,dd,l,nd,fd,nc,fc,pc,cc,t :: INT
@@ -9281,7 +9223,7 @@ contains
 
    ENSURE(.c.l>=.d.l,"shell c must have higher momentum than d")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       c,d,c1,c2,c3,cc,d1,l,nc,fc,nd,fd,pd,dd,t :: INT
 
       select case (.d.l)
@@ -9375,7 +9317,7 @@ contains
 
    ENSURE(.d.l>=.c.l,"shell d must have higher momentum than c")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       c,d,c1,d1,d2,d3,dd,l,nd,fd,nc,fc,pc,cc,t :: INT
 
       select case (.c.l)
@@ -9470,7 +9412,7 @@ contains
 
    ENSURE(.c.l>=.d.l,"shell c must have higher momentum than d")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,esfs_ec :: REAL
       c,d,c1,c2,c3,cc,d1,l,nc,fc,nd,fd,pd,dd,t :: INT
@@ -9578,7 +9520,7 @@ contains
 
    ENSURE(.d.l>=.c.l,"shell d must have higher momentum than c")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,esfs_ed :: REAL
       c,d,c1,d1,d2,d3,dd,l,nd,fd,nc,fc,pc,cc,t :: INT
@@ -9710,7 +9652,7 @@ contains
 
    ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
 
-      int_new,int_old :: MAT3{REAL}*
+      int_new,int_old :: MAT3{REAL}@
       ncd,cd,a,b,a1,a2,a3,aa,b1,l,na,fa,nb,fb,pb,bb,t :: INT
       ncd = .c.n_comp*.d.n_comp
 
@@ -9821,7 +9763,7 @@ contains
 
    ENSURE(.b.l>=.a.l,"shell b must have higher momentum than a")
 
-      int_new,int_old :: MAT3{REAL}*
+      int_new,int_old :: MAT3{REAL}@
       ncd,cd,a,a1,b,b1,b2,b3,bb,l,nb,fb,na,fa,pa,aa,t :: INT
       ncd = .c.n_comp*.d.n_comp
 
@@ -9932,7 +9874,7 @@ contains
 
    ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
 
-      int_new,int_old :: MAT3{REAL}*
+      int_new,int_old :: MAT3{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,escd_acd :: REAL
       ncd,cd,a,b,a1,a2,a3,aa,b1,l,na,fa,nb,fb,pb,bb,t :: INT
@@ -10056,7 +9998,7 @@ contains
 
    ENSURE(.b.l>=.a.l,"shell b must have higher momentum than a")
 
-      int_new,int_old :: MAT3{REAL}*
+      int_new,int_old :: MAT3{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,escd_bcd :: REAL
       ncd,cd,a,a1,b,b1,b2,b3,bb,l,nb,fb,na,fa,pa,aa,t :: INT
@@ -10205,7 +10147,7 @@ contains
 
    ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       a,b,a1,a2,a3,aa,b1,l,na,fa,nb,fb,pb,bb,t :: INT
 
       select case (.b.l)
@@ -10302,7 +10244,7 @@ contains
 
    ENSURE(.b.l>=.a.l,"shell b must have higher momentum than a")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       a,a1,b,b1,b2,b3,bb,l,nb,fb,na,fa,pa,aa,t :: INT
 
       select case (.a.l)
@@ -10398,7 +10340,7 @@ contains
 
    ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,escd_acd :: REAL
       a,b,a1,a2,a3,aa,b1,l,na,fa,nb,fb,pb,bb,t :: INT
@@ -10507,7 +10449,7 @@ contains
 
    ENSURE(.b.l>=.a.l,"shell b must have higher momentum than a")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,escd_bcd :: REAL
       a,a1,b,b1,b2,b3,bb,l,nb,fb,na,fa,pa,aa,t :: INT
@@ -10641,7 +10583,7 @@ contains
 
    ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       a,b,a1,a2,a3,aa,b1,l,na,fa,nb,fb,pb,bb,t :: INT
 
       select case (.b.l)
@@ -10738,7 +10680,7 @@ contains
 
    ENSURE(.b.l>=.a.l,"shell b must have higher momentum than a")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       a,a1,b,b1,b2,b3,bb,l,nb,fb,na,fa,pa,aa,t :: INT
 
       select case (.a.l)
@@ -10834,7 +10776,7 @@ contains
 
    ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,escd_acd :: REAL
       a,b,a1,a2,a3,aa,b1,l,na,fa,nb,fb,pb,bb,t :: INT
@@ -10943,7 +10885,7 @@ contains
 
    ENSURE(.b.l>=.a.l,"shell b must have higher momentum than a")
 
-      int_new,int_old :: MAT{REAL}*
+      int_new,int_old :: MAT{REAL}@
       R :: VEC{REAL}(3)
       Rt,R1,R2,R3,escd_bcd :: REAL
       a,a1,b,b1,b2,b3,bb,l,nb,fb,na,fa,pa,aa,t :: INT
@@ -11051,12 +10993,12 @@ contains
 !     self :: IN
 !     e0f0 :: MAT{REAL}(.n_ab,.n_cd), OUT
 !
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
+!     Ixa,Iya,Iza :: MAT3{REAL}@
+!     Ix,Iy,Iz :: MAT{REAL}@
 !     QPx,QPy,QPz,PAx,PAy,PAz,Px,Py,Pz :: REAL
 !     ce,cf,bb,ce1,cf1 :: REAL
 !     n_roots,n,i,j,k :: INT
-!     rys :: RYS*
+!     rys :: RYS@
 !     ss :: BIN
 !
 !     ss = .ab_l_max==0 AND .cd_l_max==0
@@ -11164,8 +11106,8 @@ contains
    ENSURE(.n_ab==Pab.dim,"size of Pab wrong")
    ENSURE(.n_cd==Pcd.dim,"size of Pcd wrong")
 
-      esfs,Jab,Jcd :: MAT{REAL}*
-      evfv,ev,fv :: VEC{REAL}*
+      esfs,Jab,Jcd :: MAT{REAL}@
+      evfv,ev,fv :: VEC{REAL}@
       ssss :: REAL
 
       if      (.ab_l_sum==0 AND .cd_l_sum==0) then
@@ -11236,8 +11178,8 @@ contains
    ENSURE(.n_ab==Pab.dim,"size of Pab wrong")
    ENSURE(.n_cd==Pcd.dim,"size of Pcd wrong")
 
-      esfs :: MAT{REAL}*
-      evfv,ev,fv :: VEC{REAL}*
+      esfs :: MAT{REAL}@
+      evfv,ev,fv :: VEC{REAL}@
       ssss,fac :: REAL
 
       if      (.ab_l_sum==0 AND .cd_l_sum==0) then
@@ -11310,8 +11252,8 @@ contains
  ! ENSURE(.n_ab==Pab.dim,"size of Pab wrong")
  ! ENSURE(.n_cd==Pcd.dim,"size of Pcd wrong")
 
-      esfs :: MAT{REAL}*
-      evfv,ev,fv,I,escd :: VEC{REAL}*
+      esfs :: MAT{REAL}@
+      evfv,ev,fv,I,escd :: VEC{REAL}@
       ssss,fac,I_abcd :: REAL
       a,b,c,d,abcd :: INT
 
@@ -11447,8 +11389,8 @@ contains
       factor :: REAL, IN
       fa,la,fb,lb,fc,lc,fd,ld :: INT, IN
 
-      esfs :: MAT{REAL}*
-      evfv,ev,fv,I,escd :: VEC{REAL}*
+      esfs :: MAT{REAL}@
+      evfv,ev,fv,I,escd :: VEC{REAL}@
       ssss,fac,I_abcd :: REAL
       a,b,c,d,abcd :: INT
 
@@ -11635,8 +11577,8 @@ contains
 !   ENSURE(.n_cd==Jcd.dim,"size of Jcd wrong")
 !   ENSURE(.n_ab==Pab.dim,"size of Pab wrong")
 !   ENSURE(.n_cd==Pcd.dim,"size of Pcd wrong")
-!     esfs :: MAT{REAL}*
-!     evfv,ev,fv,abcd,escd :: VEC{REAL}*
+!     esfs :: MAT{REAL}@
+!     evfv,ev,fv,abcd,escd :: VEC{REAL}@
 !     ssss,fac :: REAL
 !     if (skip_J AND skip_K) return
 !     if      (.ab_l_sum==0 AND .cd_l_sum==0) then

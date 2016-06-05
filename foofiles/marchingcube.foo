@@ -471,82 +471,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not nullify point parts.
-   end
-
-   create_copy(s) ::: leaky
-   ! Create self as a duplicate of "s".
-      self :: PTR
-      s :: MARCHINGCUBE, IN
-      .create
-      .copy(s)
-   end
-
-   copy(s) ::: leaky
-   ! Copy the contents of "s" to self.
-      s :: MARCHINGCUBE, IN
-      self = s
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-!   nullify_ptr_part
-!   ! Nullify the pointer parts
-!   end
-
-!   destroy_ptr_part
-!   ! Destroy the pointer parts
-!   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   set_defaults ::: leaky
-   ! Set up default isosurface information.
-      .vertex_positions            = ZERO
-      .value_at_vertex       = ZERO
-      .vertex_gradient       = ZERO
-      .vertex_hessian        = ZERO
-      .x_side_length         = ZERO
-      .y_side_length         = ZERO
-      .z_side_length         = ZERO
-      .axes.to_unit_matrix
-      .inverse_axes.to_unit_matrix
-      .iso_value             = ONE
-      .accuracy              = TOL(3)
-      .case                  = -1  ! This is not a real case
-      .interior_case         = 0   ! Interior function values assumed larger than exterior
-      .exterior_case         = 255 ! 0 means all the vertices are larger than iso_value
-      .edge_bit_string       = 0
-      .skip_bit_string       = 0
-      .cube_bit_string       = 0
-      .n_edge                = 0
-      .n_active_edge         = 0
-      .n_triangle            = 0
-      .n_pt                  = 0
-      .triangle_edge_index   = 0
-      .triangle_vertex_index = 0
-      .edge_vertex_positions       = ZERO
-      .edge_vertex_value     = ZERO
-      .edge_vertex_gradient  = ZERO
-      .edge_vertex_hessian   = ZERO
-      .edge_mean_curvature   = ZERO
-      .edge_gaussian_curvature = ZERO
-      .edge_vertex_index     = 0
-      .vertex_edge_index     = 0
-   ! .destroy_ptr_part
-   ! .nullify_ptr_part
-   end
 
    reset ::: leaky
    ! Reset defaults. Compared to set_defaults, .iso_value is unchanged,
@@ -2418,7 +2342,7 @@ contains
    put_bitmask_info(output)
    ! Put the bit mask related info for the object.
       output :: TEXTFILE, target, optional
-      out :: TEXTFILE*
+      out :: TEXTFILE@
       if (present(output)) then; out => output
       else;                      out => TEXTFILE::stdout
       end
@@ -2446,7 +2370,7 @@ contains
    put_vertex_index_info(output)
    ! Put the list of indexc related entites.
       output :: TEXTFILE, target, optional
-      out :: TEXTFILE*
+      out :: TEXTFILE@
       if (present(output)) then; out => output
       else;                      out => TEXTFILE::stdout
       end
@@ -2464,7 +2388,7 @@ contains
    put_positional_info(output)
    ! Put the list of position and function related entities.
       output :: TEXTFILE, target, optional
-      out :: TEXTFILE*
+      out :: TEXTFILE@
       i :: INT
       if (present(output)) then; out => output
       else;                      out => TEXTFILE::stdout

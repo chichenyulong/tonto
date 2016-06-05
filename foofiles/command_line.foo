@@ -58,63 +58,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-! =================
-! Memory allocation
-! =================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of self
-      nullify(.item)
-      nullify(.option)
-      nullify(.option_value)
-      nullify(.arg)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of self
-      .item.destroy
-      .option.destroy
-      .option_value.destroy
-      .arg.destroy
-   end
-
-   create_copy(object) ::: get_from(OBJECT)
-   ! Create a copy of object
-   end
-
-   copy(object) ::: leaky
-   ! Copy the "object"
-      object :: COMMAND_LINE
-
-      self = object
-
-      .nullify_ptr_part
-
-      if (object.item.associated)         .item.create_copy(object.item)
-      if (object.option.associated)       .option.create_copy(object.option)
-      if (object.option_value.associated) .option_value.create_copy(object.option_value)
-      if (object.arg.associated)          .arg.create_copy(object.arg)
-
-   end
-
 ! ===========
 ! Set methods
 ! ===========

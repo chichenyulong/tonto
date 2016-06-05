@@ -55,15 +55,10 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not set defaults.
-   end
 
    create(symbol,use_spherical_basis) ::: leaky
    ! Create a pointgroup object, optionally with Schoenflies "symbol"
-      self :: PTR
+      self :: allocatable, INOUT
       symbol :: STR
       use_spherical_basis :: BIN, optional
 
@@ -74,76 +69,12 @@ contains
 
    end
 
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of the object
-      nullify(.table)
-      nullify(.mat)
-      nullify(.ptr)
-      nullify(.dtr)
-      nullify(.ftr)
-      nullify(.inverse)
-      nullify(.irrep)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of the object
-      .table.destroy
-      .mat.destroy
-      nullify(.ptr)
-      .dtr.destroy
-      .ftr.destroy
-      .gtr.destroy
-      .inverse.destroy
-      .irrep.destroy
-   end
-
-   create_copy(pg)
-   ! Copy the pointgroup "pg"
-      self :: PTR
-      pg :: POINTGROUP
-      .create
-      .copy(pg)
-   end
-
-   copy(pg) ::: leaky
-   ! Copy the pointgroup "pg"
-      pg :: POINTGROUP
-      self = pg
-      .nullify_ptr_part
-      if (pg.table.associated)   .table.create_copy(pg.table)
-      if (pg.mat.associated)     .mat.create_copy(pg.mat)
-      .ptr => .mat
-      if (pg.dtr.associated)     .dtr.create_copy(pg.dtr)
-      if (pg.ftr.associated)     .ftr.create_copy(pg.ftr)
-      if (pg.inverse.associated) .inverse.create_copy(pg.inverse)
-      if (pg.irrep.associated)   .irrep.create_copy(pg.irrep)
-   end
-
    set_symbol(symbol)
    ! Set the pointgroup Schonflies symbol
       symbol :: STR
       .symbol = symbol
       .ID_symbol = symbol
       .ID_symbol.to_lower_case
-   end
-
-   set_defaults
-   ! Set the default pointgroup, "C1"
-      .set_symbol("C1")
-      .use_spherical_basis = FALSE
-      .analyze
    end
 
 !  =============
@@ -436,7 +367,7 @@ contains
    ! Return the "n"-th representation matrix for xyz product found in
    ! a gaussian shell of angular momentum "l"
       n,l :: INT
-      res :: MAT{REAL}*
+      res :: MAT{REAL}@
    ENSURE(l>=0,"l must be non-negative")
    ENSURE(l<5, "l must be less than 5 (no h functions or higher)")
       select case (l)
@@ -495,8 +426,8 @@ contains
       e, i, n, n_max, dim :: INT
       theta :: REAL
       gen1, gen2, gen3 :: MAT3{REAL}(2,2,14), target  ! generator matrices
-      mat :: MAT3{REAL}*
-      g1,g2,g3 :: MAT{REAL}*
+      mat :: MAT3{REAL}@
+      g1,g2,g3 :: MAT{REAL}@
 
       odd_axis = NOT .axis_order==2*(.axis_order/2)
 
@@ -1071,7 +1002,7 @@ contains
    ! Display the pointgroup data to output file "out".
       output :: TEXTFILE, optional, target
 
-      out :: TEXTFILE*
+      out :: TEXTFILE@
       i,n,dim :: INT
       block,n_fields,n_block,f,l :: INT
 

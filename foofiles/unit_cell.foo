@@ -51,65 +51,9 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========================
-!  Create and destroy methods
-!  ==========================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not nullify point parts.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(unit_cell) ::: leaky
-   ! Create a copy of "unit_cell"
-      self :: PTR
-      unit_cell :: UNIT_CELL, IN
-      .create
-      .copy(unit_cell)
-   end
-
-   copy(unit_cell)
-   ! Set self to be "unit_cell"
-      unit_cell :: UNIT_CELL, IN
-      self = unit_cell
-   end
-
 !  ===========
 !  Set methods
 !  ===========
-
-   set_defaults ::: pure
-   ! Set up a default crystal object
-   ! NOTE: all in bohr/radian units
-      self :: INOUT
-
-      .angle        = HALF_PI
-      .angle_error  = ZERO
-
-      .length       = ONE
-      .length_error = ZERO
-
-      .volume       = -ONE
-      .volume_error = ZERO
-
-      .info_made    = FALSE
-
-      .make_info
-
-   end
 
    set_units_to(kind) ::: PURE
    ! Set the units of all parameters to the "kind" system
@@ -463,7 +407,7 @@ contains
 
    ENSURE(g.dim1==3,"dim1 is not 3")
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
 
       W.create_copy(g)
 
@@ -481,7 +425,7 @@ contains
 
    ENSURE(g.dim1==3,"dim1 is not 3")
 
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
 
       W.create_copy(g)
 
@@ -1122,8 +1066,8 @@ contains
    ENSURE(pos.dim2==mol_for.dim,"pos and mol_for, incompatible")
    ENSURE(mol_for.dim1==pos.dim2,"mol_for wrong size")
 
-      LL1 :: MAT{REAL}*
-      LL0 :: VEC{REAL}*
+      LL1 :: MAT{REAL}@
+      LL0 :: VEC{REAL}@
       W1, H1,G1 :: MAT{REAL}(3,3)
       W0, r0,rt,yt, H0,G0, t :: VEC{REAL}(3)
       p1,p2,k1,k2,i,j,m,t1,t2,t3 :: INT

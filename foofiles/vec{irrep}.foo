@@ -32,8 +32,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -42,48 +42,6 @@ contains
 
    destroyed result (res) ::: get_from(OBJECT), pure
    ! Returns true if self has *not* been allocated
-   end
-
-! Old
-
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Create space for object. This version does not set defaults.
-   end
-
-   destroy ::: get_from(VEC{OBJECT}), leaky
-   ! Destroy space for object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of an irrepvec
-       i :: INT
-      do i = 1,size(self)
-         self(i).nullify_ptr_part
-      end
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of an irrepvec
-       i :: INT
-      do i = 1,size(self)
-         self(i).destroy_ptr_part
-      end
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
    end
 
 end

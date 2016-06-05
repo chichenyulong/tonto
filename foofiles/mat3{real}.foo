@@ -57,7 +57,7 @@ contains
    end
 
    destroy ::: get_from(MAT3{INTRINSIC}), leaky, PURE
-   ! Destroy the object
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -336,7 +336,7 @@ contains
 !   ! xyz cartesian gaussian shell components from a list of the p xyz
 !   ! representation matrices.
 !   ! NOTE: nothing in self in pointer assigned, so it can be destroyed safely.
-!      res :: VEC{MAT3_{REAL}}*
+!      res :: VEC{MAT3_{REAL}}@
 !   ENSURE(.dim1==3,"wrong 1st dimension, self")
 !   ENSURE(.dim2==3,"wrong 1st dimension, self")
 !   ENSURE(.dim3>0,"no p-type representation matrices")
@@ -354,7 +354,7 @@ contains
    gaussian_d_xyz_matrices result (dtr) ::: leaky
    ! Return the representation matrices for d xyz products found in
    ! gaussian shells from the p xyz matrices.
-      dtr :: MAT3{REAL}*
+      dtr :: MAT3{REAL}@
 
    ENSURE(.dim1==3,"wrong 1st dimension, self")
    ENSURE(.dim2==3,"wrong 2nd dimension, self")
@@ -373,7 +373,7 @@ contains
    gaussian_f_xyz_matrices result (ftr) ::: leaky
    ! Return the representation matrices for f xyz products found in
    ! gaussian shells from the p xyz matrices
-      ftr :: MAT3{REAL}*
+      ftr :: MAT3{REAL}@
 
    ENSURE(.dim1==3,"wrong 1st dimension, self")
    ENSURE(.dim2==3,"wrong 2nd dimension, self")
@@ -392,7 +392,7 @@ contains
    gaussian_g_xyz_matrices result (gtr) ::: leaky
    ! Return the representation matrices for g xyz products found in
    ! gaussian shells from the p xyz matrices
-      gtr :: MAT3{REAL}*
+      gtr :: MAT3{REAL}@
 
    ENSURE(.dim1==3,"wrong 1st dimension, self")
    ENSURE(.dim2==3,"wrong 2nd dimension, self")

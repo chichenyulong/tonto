@@ -67,45 +67,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-
-!  ==========================
-!  Create and destroy methods
-!  ==========================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not nullify point parts.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(d) ::: leaky
-   ! Copy a dftgrid "d"
-      d :: DFT_FUNCTIONAL
-      self = d
-   end
-
-   set_defaults
-   ! Set up a defaults
-      .name = "none"
-      .Xalpha = DFT_FUNCTIONAL_XALPHA
-      .rho_cutoff = DFT_FUNCTIONAL_RHO_CUTOFF
-   end
 
    set_rho_cutoff(cutoff)
    ! If the density goes below ".rho_cutoff" then the functional, its energy

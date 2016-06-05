@@ -62,41 +62,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create space for object
-   end
-
-   create(lb,ub) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create the vector with lower bound "lb", upper bound "ub"
-   end
-
-   create(bounds) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create the vector with "bounds"
-   end
-
-   destroy ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Destroy space for object
-   end
-
-   create_copy(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Create a copy of vector "v".
-   end
-
-   copy(v) ::: get_from(VEC{INTRINSIC}), PURE
-   ! Copy vector "v".
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-
 !  ==================
 !  Size-of operations
 !  ==================
@@ -165,57 +130,6 @@ contains
    prune_element(k) ::: get_from(VEC{INTRINSIC}), leaky, PURE
    ! Removes the single element at position "k" from "self".
    ! Elements after that position are moved downward.
-   end
-
-! Old
-
-   shrink(dim) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Shrink self to dimension dim.  Contents are retained.
-   end
-
-   expand(dim,init) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expand self to dimension dim. New slots are left undefined
-   ! unless "init" is supplied.
-   end
-
-   resize(dim,init) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Resize self to dimension dim. New slots are left undefined
-   ! unless "init" is supplied.
-   end
-
-   append(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(v1,v2) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self and appends the contents of vectors "v1" and "v2".
-   end
-
-   append(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
-   end
-
-   prepend(v) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Prepend the vector "v" to "self". "self" is expanded.
-   end
-
-   prepend(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Prepend an single "value" to "self". "self" is expanded.
-   end
-
-   prune(values) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Removes the scalar "values" from the vector, if they are there.
-   ! The order of the elementsis otherwise unchanged.
-   end
-
-   prune(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Removes the single scalar "value" from the vector, if it is there.
-   ! The order of the elementsis otherwise unchanged.
-   end
-
-   prune_element(k) ::: get_from(VEC{INTRINSIC}), leaky, PURE
-   ! Removes the single element at position "k" from the vector.
-   ! The order of the elements is unchanged.
    end
 
 
@@ -469,7 +383,7 @@ contains
       pos :: VEC{REAL}, IN
 
       i :: INT
-      v :: VEC{REAL}*
+      v :: VEC{REAL}@
 
       v.create(.dim)
 
@@ -492,7 +406,7 @@ contains
       self :: IN
       res :: REAL
 
-      v :: VEC{REAL}*
+      v :: VEC{REAL}@
       mean :: REAL
 
       mean = .mean
@@ -1179,7 +1093,7 @@ contains
    ENSURE(.dim==old_gradient.dim, "vector size mismatch")
    ENSURE(.dim==hessian.dim1, "incorrect dimension for hessian matrix")
    ENSURE(.dim==hessian.dim2, "incorrect dimension for hessian matrix")
-      dx,dg,hdg,u :: VEC{REAL}*
+      dx,dg,hdg,u :: VEC{REAL}@
       dxdg,dghdg,dghdg_inv :: REAL
       dim :: INT
       dim = .dim
@@ -1230,7 +1144,7 @@ contains
 
       n,iter,i,itmax :: INT
       fac,fad,fae,fp,sumdg,sumxi,eps, stp,this_stp :: REAL
-      g,dg,hdg,pnew,xi :: VEC{REAL}*
+      g,dg,hdg,pnew,xi :: VEC{REAL}@
       hessian :: MAT{REAL}, PTR
       fail :: BIN
 
@@ -1347,7 +1261,7 @@ contains
       itmax :: INT = 200
       n,iter :: INT
       stp,this_stp,dgg,fp,gam,gg,dtol :: REAL
-      g,h,xi :: VEC{REAL}*
+      g,h,xi :: VEC{REAL}@
       alg :: STR
       fail :: BIN
 
@@ -1437,7 +1351,7 @@ contains
       itmax :: INT = 200
       n,iter,i,ibig :: INT
       del,fp,fptt,t :: REAL
-      pt,ptt,xit :: VEC{REAL}*
+      pt,ptt,xit :: VEC{REAL}@
       fail :: BIN
       n = size(p)
       pt.create(n)
@@ -1796,7 +1710,7 @@ contains
 
       n,iter,i,itmax :: INT
       fac,fad,fae,fp,sumdg,sumxi,eps, stp,this_stp :: REAL
-      g,dg,hdg,pnew,xi :: VEC{REAL}*
+      g,dg,hdg,pnew,xi :: VEC{REAL}@
       hessian :: MAT{REAL}, PTR
       fail :: BIN
 
@@ -1906,7 +1820,7 @@ contains
       itmax :: INT = 200
       n,iter :: INT
       stp,this_stp,dgg,fp,gam,gg,dtol :: REAL
-      g,h,xi :: VEC{REAL}*
+      g,h,xi :: VEC{REAL}@
       alg :: STR
       fail :: BIN
 
@@ -2308,7 +2222,7 @@ contains
    ! given "point". See the book by Helgaker, Olsen, and Simons, p. 416. 
    ! NOTE: "Rc" and "Rs" are created.
    ! NOTE: this routine is here because VEC{REAL} cannot use VEC{VEC_{REAL}}
-      Rc,Rs :: VEC{VEC_{REAL}}*
+      Rc,Rs :: VEC{VEC_{REAL}}@
       point :: VEC{REAL}(3), IN
       l_max :: INT, IN
 
@@ -2369,14 +2283,14 @@ contains
    ! Simons, p. 416. 
    ! NOTE: "Rc" and Rs are created.
    ! NOTE: this routine is here since VEC{REAL} cannot use VEC{VEC_{VEC_{REAL}}}
-      Rc,Rs :: VEC{VEC_{VEC_{REAL}}}*
+      Rc,Rs :: VEC{VEC_{VEC_{REAL}}}@
       points :: MAT{REAL}, target, IN
       l_max :: INT, IN
    
    ENSURE(points.dim2==3,"wrong 2nd dimension, points arrays")
    ENSURE(l_max>=0,"l_max must be non-negative")
 
-      r2,x,y,z :: VEC{REAL}*
+      r2,x,y,z :: VEC{REAL}@
       L,M,sn :: INT
       top,bot,fac :: REAL
 
@@ -2440,7 +2354,7 @@ contains
    ! a given set of "charges" located at a set of "points", up to a maximum
    ! angular momentum "l_max".  Reference: the book by Helgaker, Olsen, and
    ! Simons, p. 414. NOTE: "qc" and "qs" are created.
-      qc,qs :: VEC{REAL}*
+      qc,qs :: VEC{REAL}@
       charges :: VEC{REAL}, IN
       points :: MAT{REAL}, IN
       l_max :: INT, IN
@@ -2449,7 +2363,7 @@ contains
    ENSURE(points.dim2==3,"wrong 2nd dimension, points arrays")
    ENSURE(l_max>=0,"l_max must be non-negative")
 
-      Rc,Rs :: VEC{VEC_{VEC_{REAL}}}*
+      Rc,Rs :: VEC{VEC_{VEC_{REAL}}}@
       L,M,n,lm :: INT
 
       n = (l_max+1)*(l_max+2)/2
@@ -2487,7 +2401,7 @@ contains
    ! harmonic is, e.g. Rm(L).element(M).element(i) where "L" and "M" are the
    ! angular quantum numbers and "i" is the point number. See the book by
    ! Helgaker, Olsen, and Simons, p. 412 and p. 416. NOTE: "Rm" are created.
-      Rm :: VEC{VEC_{VEC_{REAL}}}*
+      Rm :: VEC{VEC_{VEC_{REAL}}}@
       points :: MAT{REAL}, IN
       l_max :: INT, IN
 
@@ -2495,7 +2409,7 @@ contains
    ENSURE(l_max>=0,"l_max must be non-negative")
 
       L,M :: INT
-      Rc,Rs :: VEC{VEC_{VEC_{REAL}}}*
+      Rc,Rs :: VEC{VEC_{VEC_{REAL}}}@
 
       allocate(Rm(0:l_max))
       do L = 0,l_max
@@ -2546,7 +2460,7 @@ contains
    ENSURE(points.dim2==3,"wrong 2nd dimension, points arrays")
    ENSURE(l_max>=0,"l_max must be non-negative")
 
-      Rm :: VEC{VEC_{VEC_{REAL}}}*
+      Rm :: VEC{VEC_{VEC_{REAL}}}@
       L,M,lm :: INT
 
       ! Leaky
@@ -2586,7 +2500,7 @@ contains
    ENSURE(points.dim2==3,"wrong 2nd dimension, points arrays")
    ENSURE(l_max>=0,"l_max must be non-negative")
 
-      Rm :: VEC{VEC_{VEC_{REAL}}}*
+      Rm :: VEC{VEC_{VEC_{REAL}}}@
       L,M,lm :: INT
 
       ! Leaky
@@ -2620,7 +2534,7 @@ contains
    ! for the given "point". See the book by Helgaker, Olsen, and Simons, p. 416.
    ! NOTE: "Ic" and "Is" are created.
    ! NOTE: this routine is here since VEC{REAL} cannot use VEC{VEC_{REAL}}
-      Ic,Is :: VEC{VEC_{REAL}}*
+      Ic,Is :: VEC{VEC_{REAL}}@
       point :: VEC{REAL}(3), IN
       l_max :: INT, IN
 
@@ -2676,14 +2590,14 @@ contains
    ! Helgaker, Olsen, and Simons, p. 416. 
    ! NOTE: "Ic" and "Is" are created.
    ! NOTE: this routine is here since VEC{REAL} cannot use VEC{VEC_{VEC_{REAL}}}
-      Ic,Is :: VEC{VEC_{VEC_{REAL}}}*
+      Ic,Is :: VEC{VEC_{VEC_{REAL}}}@
       points :: MAT{REAL}, IN
       l_max :: INT, IN
 
    ENSURE(points.dim2==3,"wrong 2nd dimension, points arrays")
    ENSURE(l_max>=0,"l_max must be non-negative")
 
-      r2,x,y,z :: VEC{REAL}*
+      r2,x,y,z :: VEC{REAL}@
       L,M,sn :: INT
       top,fac :: REAL
 
@@ -2744,7 +2658,7 @@ contains
    ! harmonic is, e.g. Im(L).element(M).element(i) where "L" and "M" are the
    ! angular quantum numbers and "i" is the point number. See the book by
    ! Helgaker, Olsen, and Simons, p. 412 and p. 416. NOTE: "Rm" are created.
-      Im :: VEC{VEC_{VEC_{REAL}}}*
+      Im :: VEC{VEC_{VEC_{REAL}}}@
       points :: MAT{REAL}, IN
       l_max :: INT, IN
 
@@ -2752,7 +2666,7 @@ contains
    ENSURE(l_max>=0,"l_max must be non-negative")
 
       L,M :: INT
-      Ic,Is :: VEC{VEC_{VEC_{REAL}}}*
+      Ic,Is :: VEC{VEC_{VEC_{REAL}}}@
 
       allocate(Im(0:l_max))
       do L = 0,l_max
@@ -2795,14 +2709,14 @@ contains
    ! evaluating the potential at the position "R" where a charge is located.
    ! See the book by Helgaker, Olsen, and Simons, equation (9.13.75), p. 415.
    ! NOTE: self is created.
-      self :: PTR
+      self :: allocatable, INOUT
       R :: VEC{REAL}(3), IN
       j_max :: INT, IN
 
    ENSURE(j_max>=0,"j_max must be non-negative")
    ENSURE(.dim==(j_max+1)*(j_max+1),"self has wrong length")
 
-      Ic,Is :: VEC{VEC_{REAL}}*
+      Ic,Is :: VEC{VEC_{REAL}}@
       j,k,jk,sj,sk, L :: INT
       fac,fk :: REAL
 

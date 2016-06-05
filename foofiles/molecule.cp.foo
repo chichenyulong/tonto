@@ -43,15 +43,15 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated, "no atom info")
 
-      P, Dx,Dy,Dz, Qxx,Qyy,Qzz,Qxy,Qxz,Qyz :: MAT{REAL}*
-      Oxxx,Oyyy,Ozzz,Oxxy,Oxxz,Oyyx,Oyyz,Ozzx,Ozzy,Oxyz :: MAT{REAL}*
+      P, Dx,Dy,Dz, Qxx,Qyy,Qzz,Qxy,Qxz,Qyz :: MAT{REAL}@
+      Oxxx,Oyyy,Ozzz,Oxxy,Oxxz,Oyyx,Oyyz,Ozzx,Ozzy,Oxyz :: MAT{REAL}@
       alpha,eigenvectors,mu2 :: MAT{REAL}(3,3)
       beta,mu3 :: MAT3{REAL}(3,3,3)
       bvec,eigenvalues,mu1 :: VEC{REAL}(3)
       b10vec :: VEC{REAL}(10)
-    ! Tx,Ty,Tz :: MAT3{REAL}*
-    ! alpha1 :: MAT3{REAL}*
-    ! alpha2 :: MAT4{REAL}*
+    ! Tx,Ty,Tz :: MAT3{REAL}@
+    ! alpha1 :: MAT3{REAL}@
+    ! alpha2 :: MAT4{REAL}@
       n,x,y,z, i, u,v,w :: INT
       delta,dm1,fac1,fac2,fnm1,fnm2,val1,val2,val3 :: REAL
 
@@ -394,8 +394,8 @@ contains
    ENSURE(.scfdata.scf_kind=="rhf","SOS polarisability only for RHF case")
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom info")
-      D  :: MAT3{REAL}*
-      MO :: MAT{REAL}*
+      D  :: MAT3{REAL}@
+      MO :: MAT{REAL}@
       e  :: VEC{REAL}@
       eigenvalues :: VEC{REAL}(3)
       alpha,eigenvectors :: MAT{REAL}(3,3)
@@ -802,8 +802,8 @@ contains
 
    make_scf_dipole_polarisability ::: leaky
    ! Make the SCF electric dipole polarisability
-      U,D_mo :: MAT3{REAL}*
-      alpha :: MAT{REAL}*
+      U,D_mo :: MAT3{REAL}@
+      alpha :: MAT{REAL}@
       n_vir,n_occ,l,m,a,i :: INT
       val :: REAL
 
@@ -909,9 +909,9 @@ contains
    put_big_dipole_pol_contr ::: leaky
    ! Put the main contributions to the SCF polarisability
    ! Tidied from mjt === dylan
-      U,D_mo :: MAT3{REAL}*
-      alpha_bar,alpha_abs :: VEC{REAL}*
-      indices :: VEC{INT}*
+      U,D_mo :: MAT3{REAL}@
+      alpha_bar,alpha_abs :: VEC{REAL}@
+      indices :: VEC{INT}@
       a,i,ai,l,n_vir,n_occ :: INT
       val :: REAL
 
@@ -987,8 +987,8 @@ contains
    make_scf_dipole_hyperpolarisa ::: leaky
    ! Calculate scf dipole hyperpolarisability
    ! Taken from Colwell et al, CPL 210, p. 261 (1993)
-      beta,U,F :: MAT3{REAL}*
-      xi_vv,xi_oo :: MAT{REAL}*
+      beta,U,F :: MAT3{REAL}@
+      xi_vv,xi_oo :: MAT{REAL}@
       n_occ,n_vir,l,m,n :: INT
       val,val1,val2 :: REAL
 
@@ -1049,7 +1049,7 @@ contains
 
    put_scf_dipole_hyperpolarisa ::: leaky
    ! Calculate the polarisability using Coupled Perturbed Hartree-Fock theory.
-      beta :: MAT3{REAL}*
+      beta :: MAT3{REAL}@
       bvec :: VEC{REAL}(3)
 
       ! Do it .....
@@ -1085,11 +1085,11 @@ contains
    ENSURE(.molecular_orbitals.associated,"no MO's")
    ENSURE(.molecular_orbitals.restricted.associated,"no restricted MO's")
 
-      U,D :: MAT3{REAL}*
-      MO,pt,NO :: MAT{REAL}*
-      wt,Wai,rhoi,occ :: VEC{REAL}*
+      U,D :: MAT3{REAL}@
+      MO,pt,NO :: MAT{REAL}@
+      wt,Wai,rhoi,occ :: VEC{REAL}@
       n_pt,i,a :: INT
-      atom_a :: ATOM*
+      atom_a :: ATOM@
 
       ! Make the U matrices/dipole integrals if needed
       if (.U_electric_dipole.disassociated) .CP:make_U_electric_dipole
@@ -1278,7 +1278,7 @@ contains
    ! Coupled Perturbed Hartree-Fock theory. NOTE: restricted case only
    ! so far.
 
-      U,D_mo :: MAT3{REAL}*
+      U,D_mo :: MAT3{REAL}@
       n_occ,n_vir :: INT
 
       ! Dimensions
@@ -1313,8 +1313,8 @@ contains
 
    ENSURE(.U_electric_dipole.associated,"no first order U matrices!")
 
-      U,U2,rhs,Doo,Dvv  :: MAT3{REAL}*
-      MO,xi,Axi,D,W,J,K :: MAT{REAL}*
+      U,U2,rhs,Doo,Dvv  :: MAT3{REAL}@
+      MO,xi,Axi,D,W,J,K :: MAT{REAL}@
       n_occ,n_vir, l,m,p :: INT
 
       ! Dimensions
@@ -1444,7 +1444,7 @@ contains
    DIE_IF(.molecular_orbitals.disassociated,"no MO's")
    DIE_IF(.molecular_orbitals.restricted.disassociated,"no restricted MO's")
 
-      MO   :: MAT{REAL}*
+      MO   :: MAT{REAL}@
 
       ! Get the dipole moment matrices in the AO basis.
       .INTS:make_dipole_matrices(D_mo(:,:,1),D_mo(:,:,2),D_mo(:,:,3))
@@ -1465,8 +1465,8 @@ contains
    DIE_IF(.molecular_orbitals.disassociated,"no MO's")
    DIE_IF(.molecular_orbitals.restricted.disassociated,"no restricted MO's")
 
-      D_ao :: MAT3{REAL}*
-      MO   :: MAT{REAL}*
+      D_ao :: MAT3{REAL}@
+      MO   :: MAT{REAL}@
       n_occ :: INT
 
       ! Get the dipole moment matrices in the AO basis.
@@ -1491,8 +1491,8 @@ contains
    DIE_IF(.molecular_orbitals.disassociated,"no MO's")
    DIE_IF(.molecular_orbitals.restricted.disassociated,"no restricted MO's")
 
-      D_ao :: MAT3{REAL}*
-      MO   :: MAT{REAL}*
+      D_ao :: MAT3{REAL}@
+      MO   :: MAT{REAL}@
       n_occ :: INT
 
       ! Get the dipole moment matrices in the AO basis.
@@ -1551,8 +1551,8 @@ contains
    ENSURE(U.dim3==rhs.dim3,"incompatible sizes, U and rhs")
 
       e_occ,e_vir, par,err :: VEC{REAL}@
-      U_old :: MAT3{REAL}*
-      MO,U_ao,AU,J,K,W :: MAT{REAL}*
+      U_old :: MAT3{REAL}@
+      MO,U_ao,AU,J,K,W :: MAT{REAL}@
       n_occ,n_vir,n_pert,n_vo, n :: INT
       tol0,test,delta :: REAL
       use_diis :: BIN
@@ -1707,7 +1707,7 @@ contains
 
    make_A_times_U(AU,U)
    ! Make the full A times U matrix in the MO basis
-      AU,U :: MAT3{REAL}*
+      AU,U :: MAT3{REAL}@
 
    ENSURE(.scfdata.associated,"no scf data")
    ENSURE(.basis_info_made,"no basis info")
@@ -1718,7 +1718,7 @@ contains
    ENSURE(AU.dim2==.n_bf,"wrong size, AU")
    ENSURE(U.dim3==AU.dim3,"incompatible sizes, U and AU")
 
-      MO,U_ao,J,K :: MAT{REAL}*
+      MO,U_ao,J,K :: MAT{REAL}@
       n :: INT
 
       MO => .molecular_orbitals.restricted
@@ -1744,7 +1744,7 @@ contains
    add_A_times_U(AU,U) ::: private
    ! Add the full A matrix times the full U matrix to "AU". "U" is the
    ! virtual-occupied block of the full U matrix.
-      AU,U :: MAT3{REAL}*
+      AU,U :: MAT3{REAL}@
 
    ENSURE(.scfdata.associated,"no scf data")
    ENSURE(.basis_info_made,"no basis info")
@@ -1755,7 +1755,7 @@ contains
    ENSURE(AU.dim2==.n_bf,"wrong size, AU")
    ENSURE(U.dim3==AU.dim3,"incompatible sizes, U and AU")
 
-      MO,J,K,W :: MAT{REAL}*
+      MO,J,K,W :: MAT{REAL}@
       n :: INT
 
       MO => .molecular_orbitals.restricted
@@ -1793,8 +1793,8 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      pt,E :: MAT{REAL}*
-      wt,r1,r2,r3 :: VEC{REAL}*
+      pt,E :: MAT{REAL}@
+      wt,r1,r2,r3 :: VEC{REAL}@
       c1,c2,c3 :: REAL
       n_pt,c :: INT
 
@@ -1871,12 +1871,12 @@ contains
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
 
-      ID :: VEC{STR}*
+      ID :: VEC{STR}@
       dim :: INT
-      qx,qy,qz    :: VEC{REAL}*
-      a1x,a1y,a1z :: VEC{REAL}*
-      a2x,a2y,a2z :: VEC{REAL}*
-      a3x,a3y,a3z :: VEC{REAL}*
+      qx,qy,qz    :: VEC{REAL}@
+      a1x,a1y,a1z :: VEC{REAL}@
+      a2x,a2y,a2z :: VEC{REAL}@
+      a3x,a3y,a3z :: VEC{REAL}@
       table :: VEC{TABLE_COLUMN}@
 
       ! Make and set the atom properties first ...

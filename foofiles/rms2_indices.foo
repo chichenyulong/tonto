@@ -53,14 +53,14 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
+   ! Deallocate "self"
 
    create ::: get_from(OBJECT), leaky
    ! Create an object. This version does not set defaults.
    end
 
    destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
+   ! Deallocate "self"
    end
  
    nullify_ptr_part
@@ -125,9 +125,9 @@ contains
       ex,ey,ez,fx,fy,fz :: VEC{INT}, IN
       ab_l_sum :: INT, IN
 
-      e0,erms,f0,frms :: VEC{INT}*
-      fxy_rms,exy_rms :: VEC{VEC_{INT}}*
-      Ixy_is_1,Ixy_is_x,Ixy_is_y,Ixy_is_p :: MAT{INT}*
+      e0,erms,f0,frms :: VEC{INT}@
+      fxy_rms,exy_rms :: VEC{VEC_{INT}}@
+      Ixy_is_1,Ixy_is_x,Ixy_is_y,Ixy_is_p :: MAT{INT}@
       n,m,ne,nf,ab,i,k,k1,kx,ky,aa,nn,an,na,e,f,ze,ye,xe,zf,yf,xf,fs,es,fm,em :: INT
       xe1,ye1,xf1,yf1,x1,y1,xy1 :: BIN
 
@@ -425,9 +425,9 @@ contains
 !   ! are equal to 1.
 !     er,fr :: RMS_INDICES, IN
 !     ex,ey,ez,fx,fy,fz :: VEC{INT}, IN
-!     e0,erms,f0,frms :: VEC{INT}*
-!     fxy_rms,exy_rms :: VEC{VEC_{INT}}*
-!     Ixy_is_1,Ixy_is_x,Ixy_is_y,Ixy_is_p :: MAT{INT}*
+!     e0,erms,f0,frms :: VEC{INT}@
+!     fxy_rms,exy_rms :: VEC{VEC_{INT}}@
+!     Ixy_is_1,Ixy_is_x,Ixy_is_y,Ixy_is_p :: MAT{INT}@
 !     n,ne,nf,i,k,k1,kx,ky,kp,aa,nn,an,na,nrms,e,f,ze,ye,xe,zf,yf,xf,fs,es,fm,em :: INT
 !     xe1,ye1,xf1,yf1,x1,y1,xy1 :: BIN
 !
@@ -724,9 +724,9 @@ contains
 !   ! are equal to 1.
 !     er,fr :: RMS_INDICES, IN
 !     ex,ey,ez,fx,fy,fz :: VEC{INT}, IN
-!     en0,ea0,e0,erms :: VEC{INT}*
-!     fn0,fa0,f0,frms :: VEC{INT}*
-!     fxy_rms,exy_rms :: VEC{VEC_{INT}}*
+!     en0,ea0,e0,erms :: VEC{INT}@
+!     fn0,fa0,f0,frms :: VEC{INT}@
+!     fxy_rms,exy_rms :: VEC{VEC_{INT}}@
 !     i,n,ne,nf,e,f,ze,ye,xe,zf,yf,xf,fs,es,fm,em :: INT
 !     xe1,ye1,xf1,yf1,xye1,xyf1,xy1 :: BIN
 !     ne = ex.dim
@@ -868,9 +868,9 @@ contains
 !     er,fr :: RMS_INDICES, IN
 !     ex,ey,ez,fx,fy,fz :: VEC{INT}, IN
 !   a,b,c,d :: INT, IN
-!     en0,ea0,e0,erms :: VEC{INT}*
-!     fn0,fa0,f0,frms :: VEC{INT}*
-!     fxy_rms,exy_rms :: VEC{VEC_{INT}}*
+!     en0,ea0,e0,erms :: VEC{INT}@
+!     fn0,fa0,f0,frms :: VEC{INT}@
+!     fxy_rms,exy_rms :: VEC{VEC_{INT}}@
 !     i,n,ne,nf,e,f,ze,ye,xe,zf,yf,xf,fs,es,fm,em :: INT
 !     xe1,ye1,xf1,yf1,xye1,xyf1,xy1 :: BIN
 !     xypart,zpart,sep :: STR
@@ -1216,9 +1216,9 @@ contains
 !     er,fr :: RMS_INDICES, IN
 !     ex,ey,ez,fx,fy,fz :: VEC{INT}, IN
 !   a,b,c,d :: INT, IN
-!     en0,ea0,e0,erms :: VEC{INT}*
-!     fn0,fa0,f0,frms :: VEC{INT}*
-!     fxy_rms,exy_rms :: VEC{VEC_{INT}}*
+!     en0,ea0,e0,erms :: VEC{INT}@
+!     fn0,fa0,f0,frms :: VEC{INT}@
+!     fxy_rms,exy_rms :: VEC{VEC_{INT}}@
 !     i,n,ne,nf,e,f,ze,ye,xe,zf,yf,xf,fs,es,fm,em :: INT
 !     xe1,ye1,xf1,yf1,xye1,xyf1,xy1 :: BIN
 !     xypart,zpart :: STR

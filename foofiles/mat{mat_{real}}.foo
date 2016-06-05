@@ -33,7 +33,7 @@ contains
    end
 
    destroy ::: get_from(MAT{MAT_{INTRINSIC}}), leaky
-   ! Destroy the object
+   ! Deallocate "self"
    end
 
    nullify_ptr_part ::: get_from(MAT{MAT_{INTRINSIC}})

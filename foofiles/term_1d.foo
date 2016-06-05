@@ -57,56 +57,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========================
-!  Create and destroy methods
-!  ==========================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not set defaults.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-      nullify(.d1_codes)
-      nullify(.parameters)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts
-      nullify(.d1_codes)
-      .parameters.destroy
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(x) ::: leaky
-   ! Create a copy of "x"
-      self :: PTR
-      x :: TERM_1D, IN
-      .create
-      .copy(x)
-   end
-
-   copy(x) ::: leaky
-   ! Set self to be a copy of "x"
-      x :: TERM_1D, IN
-
-      ! Copy all (pointer copy)
-      self = x
-
-   end
 
 !  ============
 !  Set routines
@@ -184,7 +134,7 @@ contains
 
       f,l :: INT
       val :: REAL
-      textfile :: TEXTFILE*
+      textfile :: TEXTFILE@
 
       ! Normalize descriptor
       .descriptor.to_lower_case

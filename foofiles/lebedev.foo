@@ -105,63 +105,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-! =========================
-! Create and destroy object
-! =========================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(l) ::: leaky
-   ! Copy a becke_grid "b"
-      l :: LEBEDEV
-      self = l
-      .nullify_ptr_part
-      if (l.point.associated) .point.create_copy(l.point)
-      if (l.weight.associated) .weight.create_copy(l.weight)
-      if (l.n_points_per_shell.associated) .n_points_per_shell.create_copy(l.n_points_per_shell)
-   end
-
-   nullify_ptr_part
-   ! Nullify the shell parts of self
-      nullify(.point)
-      nullify(.weight)
-      nullify(.n_points_per_shell)
-   end
-
-   destroy_ptr_part  ::: leaky
-   ! Destroy the shell parts of self
-      .point.destroy
-      .weight.destroy
-      .n_points_per_shell.destroy
-   end
-
-   set_defaults
-   ! Set up a default dftgrid object
-      .n_points = 0
-      .l = 0
-      .n = 0
-      .s = 0
-   end
 
 ! =================================================================
 ! Set the number of points or desired L quantum number to integrate
@@ -170,7 +113,7 @@ contains
    set_n_points(n_points) ::: leaky
    ! Set the number of points. If it is not one of the allowed number of points,
    ! it *increases* to the nearest number which is allowed.
-      self :: PTR
+      self :: allocatable, INOUT
       n_points :: INT
    ENSURE(n_points>=1,"n_points must be greater than 6")
    ENSURE(n_points<=5810,"n_points must be less than 5810")
@@ -215,7 +158,7 @@ contains
    ! Set the angular momentum order "l" to integrate.  If the angular momentum
    ! is not allowed the value of "l" used is the next largest one which is
    ! allowed.
-      self :: PTR
+      self :: allocatable, INOUT
       l :: INT
       select case (l)
          case (1:3);   .ld0006 ! ?
@@ -256,7 +199,7 @@ contains
 
    set(n_points,n_shell) ::: private, leaky
    ! Create the number of points, weights, shells
-      self :: PTR
+      self :: allocatable, INOUT
       n_points,n_shell :: INT, IN
       .n_points = n_points
       .point.create(n_points,3)

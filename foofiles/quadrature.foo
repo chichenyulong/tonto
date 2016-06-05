@@ -60,7 +60,7 @@ module QUADRATURE
 !   ! No of quadrature points, or the order of the quadrature
 !
 !   fold_weight_function_in :: BIN  DEFAULT(TRUE)
-!   ! The quadrature of I = Int f(x) dx is I = Sum_i f(x_i) w_i, i.e. no weight
+      self :: allocatable, INOUT
 !   ! function appears in the integrand; it has been folded into w_i.  If this
 !   ! switch is set FALSE then f(x) = F(x) W(x) and the quadrature is defined as
 !   ! I = Int F(x) W(x) dx = Sum_i F(x_i) W_i i.e. the function F(x) to be
@@ -105,67 +105,6 @@ contains
 
    destroyed result (res) ::: get_from(OBJECT), pure
    ! Returns true if self has *not* been allocated
-   end
-
-! Old
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-      self :: PTR
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-      nullify(.point)
-      nullify(.weight)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts
-      .point.destroy
-      .weight.destroy
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(q) ::: leaky
-   ! Make a copy of "q"
-      q :: QUADRATURE
-      self = q
-      .nullify_ptr_part
-      if (q.point.associated)  .point.create_copy(q.point)
-      if (q.weight.associated) .weight.create_copy(q.weight)
-   end
-
-   set_defaults 
-   ! Set up a defaults
-
-      .kind = " "
-      .n_points = 0
-      .fold_weight_function_in = TRUE
-      .lower_limit = -ONE
-      .upper_limit = ONE
-      .gauss_laguerre_alpha = ONE
-      .gauss_jacobi_alpha = ONE
-      .gauss_jacobi_beta = ONE
-      .eps = QUADRATURE_EPS
-      .maxit = QUADRATURE_MAXIT
-      .updated = FALSE
-
    end
 
 !  ===========
@@ -349,7 +288,7 @@ contains
    set_gauss_chebyshev_1st ::: private
    ! Set the Gauss-Legendre roots and weights
       i :: INT
-      root :: VEC{REAL}*
+      root :: VEC{REAL}@
       pi_n,c :: REAL
       .lower_limit = -ONE
       .upper_limit = ONE
@@ -368,7 +307,7 @@ contains
    set_gauss_chebyshev_2nd ::: private
    ! Set the Gauss-Legendre roots and weights
       i :: INT
-      root :: VEC{REAL}*
+      root :: VEC{REAL}@
       pi_n,c :: REAL
       .lower_limit = -ONE
       .upper_limit = ONE
@@ -387,7 +326,7 @@ contains
    set_gauss_chebyshev_3rd ::: private
    ! Set the Gauss-Legendre roots and weights
       i :: INT
-      root :: VEC{REAL}*
+      root :: VEC{REAL}@
       pi_n,c :: REAL
       .lower_limit = ZERO
       .upper_limit = ONE
@@ -408,7 +347,7 @@ contains
    ! Set the Gauss-Laguerre roots and weights
       i,j,n,i2,it :: INT
       a,p1,p2,p3,pp,z,z1,g1,g2 :: REAL
-      root :: VEC{REAL}*
+      root :: VEC{REAL}@
 
       .lower_limit = ZERO
       .upper_limit = huge(ONE)
@@ -467,7 +406,7 @@ contains
    ! Set the Gauss-Legendre roots and weights
       i,j,n,m,it :: INT
       p1,p2,p3,pp,x1,x2,xl,xm,z,z1 :: REAL
-      root :: VEC{REAL}*
+      root :: VEC{REAL}@
 
       .lower_limit = -ONE
       .upper_limit = ONE
@@ -518,7 +457,7 @@ contains
    ! Set the Gauss-Hermite roots and weights
       i,j,n,m,it :: INT
       pim4,p1,p2,p3,pp,z,z1 :: REAL
-      root :: VEC{REAL}*
+      root :: VEC{REAL}@
 
       .lower_limit = -huge(ONE)
       .upper_limit =  huge(ONE)
@@ -578,7 +517,7 @@ contains
    ! Set the Gauss-Jacobi roots and weights
       i,j,n,it :: INT
       al,be,albe,an,bn,a,b,c,r1,r2,r3,p1,p2,p3,pp,z,z1,tmp,g1,g2,g3,g4 :: REAL
-      root :: VEC{REAL}*
+      root :: VEC{REAL}@
 
       .lower_limit = -ONE
       .upper_limit = ONE
@@ -825,7 +764,7 @@ contains
    ENSURE(.weight.associated,"no weights")
 
       i :: INT
-      f :: VEC{REAL}*
+      f :: VEC{REAL}@
 
       f.create(.n_points)
 

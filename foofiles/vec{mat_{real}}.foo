@@ -44,8 +44,8 @@ contains
    ! Allocate the pointer parts
    end
 
-   destroy ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Destroy the object
+   destroy ::: get_from(OBJECT), leaky
+   ! Deallocate "self"
    end
 
    nullify_ptr_part ::: get_from(VEC{MAT_{INTRINSIC}})
@@ -91,7 +91,7 @@ contains
    ! ... 4) xyz cartesian gaussian shell components from a single p
    ! xyz representation matrix "ptr".
    ! NOTE: nothing in self in pointer assigned, it can be destroyed
-      self :: PTR
+      self :: allocatable, INOUT
       ptr :: MAT{REAL}
    
    ENSURE(ptr.is_square,"ptr matrix is not square")
@@ -162,7 +162,7 @@ contains
    DIE_IF(self(1).element.dim1/=vec(1).element.dim1,"vec.element: wrong dim1")
    DIE_IF(self(1).element.dim2/=vec(1).element.dim2,"vec.element: wrong dim2")
 
-     old,new :: MAT{REAL}*
+     old,new :: MAT{REAL}@
      fac,norm :: REAL
      n,p,dim1,dim2 :: INT
 
@@ -199,8 +199,8 @@ contains
      self :: target
      eigenvectors :: MAT{REAL}, IN
 
-     new :: MAT{REAL}*
-     resz,vec :: VEC{REAL}*
+     new :: MAT{REAL}@
+     resz,vec :: VEC{REAL}@
      fac :: REAL
      n,o,dim1,dim2,k,j,i :: INT
 
@@ -259,9 +259,9 @@ contains
      self :: target
      eigenvectors :: MAT{REAL}, IN
 
-     new :: MAT{REAL}*
-     resz :: VEC{REAL}*
-     vec :: VEC{REAL}*
+     new :: MAT{REAL}@
+     resz :: VEC{REAL}@
+     vec :: VEC{REAL}@
      fac :: REAL
      n,o,dim1,dim2,k,j,i :: INT
 
@@ -326,7 +326,7 @@ contains
      ld_tol :: REAL, optional
    ENSURE(NOT S.is_zero,"S is zero matrix")
    ENSURE(S.is_square,"S matrix is not square")
-     unorthovec :: MAT{REAL}*
+     unorthovec :: MAT{REAL}@
      unorthovec.create(.dim,.dim)
      unorthovec.to_unit_matrix !first index will run other the orthonormal vectors 
      if(present(ld_tol)) then
@@ -348,7 +348,7 @@ contains
    ! procedure. Only those vectors with norm more than the linear dependence
    ! tolerance are orthonormalised. the others are counted (n_dependent) 
    ! and normalised if the norm is not initially below a certain threshold. 
-     self :: PTR
+     self :: allocatable, INOUT
      keep :: VEC{MAT_{REAL}}
      S :: MAT{REAL} 
      scales :: VEC{REAL}, OUT
@@ -359,8 +359,8 @@ contains
    ENSURE(    S.is_square,"S matrix is not square")
    ENSURE(.dim==keep.dim, "keep: wrong size")
 
-     unorthovec :: MAT{REAL}*
-     indices :: VEC{INT}*
+     unorthovec :: MAT{REAL}@
+     indices :: VEC{INT}@
      i :: INT
 
      unorthovec.create(.dim,.dim)
@@ -381,7 +381,7 @@ contains
    flatten(vec_vec)
    ! flatten the matrices of a vector of matrices into vectors
    ! meant for singlet contraction_wfs at present
-     vec_vec :: VEC{VEC_{REAL}}*
+     vec_vec :: VEC{VEC_{REAL}}@
      ENSURE(vec_vec.associated,"vec_vec not created")
      n,o,p,dim1 :: INT
      counter :: INT
@@ -405,7 +405,7 @@ contains
    flatten(mat)
    ! flatten the matrices of a vector of matrices into vectors
    ! meant for singlet contraction_wfs at present
-     mat :: MAT{REAL}*
+     mat :: MAT{REAL}@
      ENSURE(mat.associated,"mat not created")
      n,o,p,dim1 :: INT
      counter :: INT
@@ -434,7 +434,7 @@ contains
      mat :: MAT{REAL}, IN
      use_transpose :: BIN, optional
      ENSURE(mat.dim1==self.dim,"dimension of mat does not match that of self")
-     new :: VEC{MAT_{REAL}}*
+     new :: VEC{MAT_{REAL}}@
      use_tr :: BIN
      dim,j :: INT
      use_tr = FALSE
@@ -450,10 +450,10 @@ contains
 
    expand(dim) ::: leaky
    ! Expands self to dimension dim.  Contents are retained.
-     self :: PTR
+     self :: allocatable, INOUT
      dim :: INT, IN
      ENSURE(dim>=.dim, "dimension given is too small")
-     old :: VEC{MAT_{REAL}}*
+     old :: VEC{MAT_{REAL}}@
      old_size :: INT
      mat_dim1,mat_dim2,i :: INT
      old => self

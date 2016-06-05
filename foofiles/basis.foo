@@ -171,7 +171,7 @@ contains
    ENSURE(cc.dim==lc.dim,"wrong size, cc")
 
       s,c,i,b :: INT
-      sh :: SHELL*
+      sh :: SHELL@
 
       i = 1
       b = 1
@@ -230,7 +230,7 @@ contains
 
    is_created_and_has_label result (res) ::: pure
    ! Return TRUE if self has a non-blank label
-      self :: PTR
+      self :: allocatable, INOUT
       res :: BIN
       res = .associated
       if (res) res = .label /=  " "
@@ -268,7 +268,7 @@ contains
    ENSURE(ccm.dim2==.n_bf,  "wrong 2nd dimension, ccm")
 
       b,p,n_p,n_b,i :: INT
-      sh :: SHELL*
+      sh :: SHELL@
 
       ccm = ZERO
 
@@ -453,8 +453,8 @@ contains
 
    ENSURE(.shell.created,"no shells")
 
-      ex,cc :: VEC{REAL}*
-      lc,bf :: VEC{STR}*
+      ex,cc :: VEC{REAL}@
+      lc,bf :: VEC{STR}@
       ns :: INT
       table :: VEC{TABLE_COLUMN}@
 

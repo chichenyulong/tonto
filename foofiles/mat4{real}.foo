@@ -57,7 +57,7 @@ contains
    end
 
    destroy ::: get_from(MAT4{INTRINSIC}), leaky, PURE
-   ! Destroy the object
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure

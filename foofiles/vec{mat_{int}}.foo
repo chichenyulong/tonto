@@ -36,8 +36,8 @@ contains
    ! Create the object with specified bounds
    end
 
-   destroy ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Destroy the object
+   destroy ::: get_from(OBJECT), leaky
+   ! Deallocate "self"
    end
 
    nullify_ptr_part ::: get_from(VEC{MAT_{INT}})

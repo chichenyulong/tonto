@@ -51,17 +51,12 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!===============================================================================
-!                             Create and Destroy Routines
-!===============================================================================
 
    create(name,nuc,n_geminals,i_geminals,n_bf) ::: leaky
    ! Create the geminal contraction "i_geminals" and the ground state geminal
    ! for the spectator contractions,  each geminal having
    ! coeficients matrix of dimension "n_bf".
-      self :: PTR
+      self :: allocatable, INOUT
       name :: STR
       nuc :: REAL
       n_geminals,i_geminals,n_bf :: INT
@@ -78,62 +73,6 @@ contains
    !   .set_singlet_agp
     !  .set_singlet_random
 
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of self
-
-      nullify(.contraction_wfs)
-      nullify(.contraction_energies)
-      nullify(.bra)
-      nullify(.ket)
-
-   end
-
-   destroy_ptr_part  ::: leaky
-   ! Destroy the pointer parts of self
-
-      .bra.destroy
-      .ket.destroy
-      .special_ket.destroy
-
-   end
-
-   create_copy(b) ::: leaky
-   ! Create a copy of "b".
-     self :: PTR
-     b :: GEMINAL_MF_SPECTRUM, IN
-
-     .create(b.name,b.nuclear_repulsion_energy,b.n_geminals,b.i_geminals,b.n_bf)
-     .copy(b)
-
-   end
-
-   copy(b) ::: leaky
-   ! Copy a basis "b" to "self". Make sure pointer parts are first
-   ! destroyed or nullified, as you want.
-      self :: OUT
-      b :: GEMINAL_MF_SPECTRUM, IN
-
-      self = b
-
-      if (b.bra.associated) .bra.create_copy(b.bra)
-      if (b.ket.associated) .ket.create_copy(b.ket)
-      if (b.contraction_wfs.associated) .contraction_wfs.create_copy(b.contraction_wfs)
-      if (b.contraction_energies.associated) .contraction_energies.create_copy(b.contraction_energies)
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
    end
 
 !  ===========
@@ -262,8 +201,8 @@ contains
      n_geminals,n_bf :: INT
      j,k,counter :: INT
      n_nonzero :: INT
-     R,S,T,U :: MAT{REAL}*
-     V,eigenvalues :: VEC{REAL}*
+     R,S,T,U :: MAT{REAL}@
+     V,eigenvalues :: VEC{REAL}@
      i :: INT
      val :: REAL
 
@@ -419,8 +358,8 @@ contains
      i_geminals :: INT
      n_geminals,n_bf :: INT
      j,k,counter :: INT
-     R,S,T,U :: MAT{REAL}*
-     V,eigenvalues :: VEC{REAL}*
+     R,S,T,U :: MAT{REAL}@
+     V,eigenvalues :: VEC{REAL}@
      i :: INT
      val :: REAL
 
@@ -627,9 +566,9 @@ contains
    ! reduced Hamiltonian of Bopp or electronic repulsion only
    ! depending on add-core flag in read_gmf_scheme. 
      n_bas :: INT
-     rhm :: MAT{REAL}*
-     extremal_gem :: MAT{REAL}*
-     extremal_val :: VEC{REAL}*
+     rhm :: MAT{REAL}@
+     extremal_gem :: MAT{REAL}@
+     extremal_val :: VEC{REAL}@
  !    extremal_archive :: ARCHIVE
 
      .set_singlet_defaults
@@ -667,7 +606,7 @@ contains
      n_geminals,n_bf :: INT
      j,k,counter :: INT
      n_nonzero,n_bas :: INT
-     ov :: MAT{REAL}*
+     ov :: MAT{REAL}@
 
      i_geminals = .i_geminals
      n_geminals = .n_geminals
@@ -1089,14 +1028,14 @@ contains
    ! Read in a new value of ".n_bf", which must be smaller than the initial
    ! basis set size. Truncate the coefficient matrices.
      j :: INT
-     mat :: MAT{REAL}*
+     mat :: MAT{REAL}@
 !     ENSURE(.bra.associated,"no bra")
 !     ENSURE(.bra(1).element.associated,"no bra elements")
 !     ENSURE(.ket.associated,"no ket")
 !     ENSURE(.ket(1).element.associated,"no ket elements")
 !     ENSURE(.contraction_wfs.associated,"no contraction_wfs")
 !     ENSURE(.contraction_wfs(1).element.associated,"no contraction_wfs elements")
-     in :: TEXTFILE*
+     in :: TEXTFILE@
      i,k,n,m :: INT
      name :: STR
 
@@ -1172,7 +1111,7 @@ contains
      ENSURE(.bra(.i_geminals).element.associated,".bra(.i_geminals) not created")
      ENSURE(.bra(1).element.associated,".bra(1) not created")
      ENSURE(.ket(1).element.associated,".ket(1) not created")
-     temp :: MAT{REAL}*
+     temp :: MAT{REAL}@
      
      temp=>.bra(.i_geminals).element
      .ket(.i_geminals).element=>.ket(1).element
@@ -1346,9 +1285,9 @@ contains
    ! Evaluate the electric_dipole x component matrix for a given geminal contraction
      res :: MAT{REAL}(.n_bas,.n_bas)
      ENSURE(.bra.dim==.ket.dim,"Bra and ket have different sizes!")
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      edm_archive :: ARCHIVE
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      i,j :: INT
 
      edm_archive.set(.name,"Dx_integrals")
@@ -1371,9 +1310,9 @@ contains
    ! Evaluate the electric_dipole y component matrix for a given geminal contraction
      res :: MAT{REAL}(.n_bas,.n_bas)
      ENSURE(.bra.dim==.ket.dim,"Bra and ket have different sizes!")
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      edm_archive :: ARCHIVE
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      i,j :: INT
 
      edm_archive.set(.name,"Dy_integrals")
@@ -1396,9 +1335,9 @@ contains
    ! Evaluate the electric_dipole z component matrix for a given geminal contraction
      res :: MAT{REAL}(.n_bas,.n_bas)
      ENSURE(.bra.dim==.ket.dim,"Bra and ket have different sizes!")
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      edm_archive :: ARCHIVE
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      i,j :: INT
 
      edm_archive.set(.name,"Dz_integrals")
@@ -1421,9 +1360,9 @@ contains
    ! Evaluate the hamiltonian matrix for a given geminal contraction
      res :: MAT{REAL}(.n_bas,.n_bas)
      ENSURE(.bra.dim==.ket.dim,"Bra and ket have different sizes!")
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      eri_archive :: ARCHIVE
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      i,j :: INT
 
      eri_archive.set(.name,"h_integrals")
@@ -1448,9 +1387,9 @@ contains
      i :: INT
      res :: VEC{REAL}(.n_bas)
      ENSURE(.bra.dim==.ket.dim,"Bra and ket have different sizes!")
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      eri_archive :: ARCHIVE
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
 
      eri_archive.set(.name,"h_integrals")
      v.create(.n_bf,.n_bf,.n_bf,.n_bf)
@@ -1470,9 +1409,9 @@ contains
      i,j :: INT
      res :: REAL
      ENSURE(.bra.dim==.ket.dim,"Bra and ket have different sizes!")
-     v :: MAT4{REAL}*
+     v :: MAT4{REAL}@
      eri_archive :: ARCHIVE
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
 
      eri_archive.set(.name,"h_integrals")
      v.create(.n_bf,.n_bf,.n_bf,.n_bf)
@@ -1488,8 +1427,8 @@ contains
 
    make_RHM(rhm)
    ! make reduced hamiltonian matrix 
-     rhm ::  MAT{REAL}*
-     v :: MAT4{REAL}*
+     rhm ::  MAT{REAL}@
+     v :: MAT4{REAL}@
      i,j,k,l,m,n :: INT
      eri_archive :: ARCHIVE
      rhm = ZERO
@@ -1538,34 +1477,34 @@ contains
      row_ind, col_ind :: INT
      ii,jj,kk,j,k,l,dim,bi1,bi2,bj1,bj2,bk1,bk2,bq1,bq2 :: INT
      fac :: REAL
-     reorder_ket,reorder_bra :: VEC{INT}*
-     temp_bra_q :: MAT{REAL}*
-     temp_bra_i :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_h2_q ::  MAT{REAL}*
-     temp_qa_h2 :: MAT4{REAL}*
-     temp_qb_h2 :: MAT4{REAL}*
-     temp_qa_h2_ja :: MAT4{REAL}*
-     temp_qa_h2_ja_ex :: MAT4{REAL}*
-     temp_qb_h2_jb :: MAT4{REAL}*
-     temp_qb_h2_jb_ex :: MAT4{REAL}*
-     temp_qa_h2_jb :: MAT4{REAL}*
-     temp_qb_h2_ja :: MAT4{REAL}*
-     temp_qa_h2_ja_kb :: MAT4{REAL}*
-     temp_qa_h2_jb_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_ka :: MAT4{REAL}*
-     temp_qb_h2_ja_kb :: MAT4{REAL}*
-     temp_qa_h2_ja_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_kb :: MAT4{REAL}*
-     temp_qa_h2_ja_ex_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_ex_kb :: MAT4{REAL}*
-     temp_qb_jb :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_q_h2_ja_kb :: MAT{REAL}*
-     temp_q_h2_jb_ka :: MAT{REAL}*
-     temp_qa_h2_j :: MAT{REAL}*
-     temp_qb_h2_j :: MAT{REAL}*
+     reorder_ket,reorder_bra :: VEC{INT}@
+     temp_bra_q :: MAT{REAL}@
+     temp_bra_i :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_h2_q ::  MAT{REAL}@
+     temp_qa_h2 :: MAT4{REAL}@
+     temp_qb_h2 :: MAT4{REAL}@
+     temp_qa_h2_ja :: MAT4{REAL}@
+     temp_qa_h2_ja_ex :: MAT4{REAL}@
+     temp_qb_h2_jb :: MAT4{REAL}@
+     temp_qb_h2_jb_ex :: MAT4{REAL}@
+     temp_qa_h2_jb :: MAT4{REAL}@
+     temp_qb_h2_ja :: MAT4{REAL}@
+     temp_qa_h2_ja_kb :: MAT4{REAL}@
+     temp_qa_h2_jb_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_ka :: MAT4{REAL}@
+     temp_qb_h2_ja_kb :: MAT4{REAL}@
+     temp_qa_h2_ja_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_kb :: MAT4{REAL}@
+     temp_qa_h2_ja_ex_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_ex_kb :: MAT4{REAL}@
+     temp_qb_jb :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_q_h2_ja_kb :: MAT{REAL}@
+     temp_q_h2_jb_ka :: MAT{REAL}@
+     temp_qa_h2_j :: MAT{REAL}@
+     temp_qb_h2_j :: MAT{REAL}@
 
      nullify(temp_qa_h2_ja)
      nullify(temp_qb_h2_jb)
@@ -3343,34 +3282,34 @@ contains
      row_ind :: INT
      ii,jj,kk,j,k,l,dim,bi1,bi2,bj1,bj2,bk1,bk2,bq1,bq2 :: INT
      fac :: REAL
-     reorder_ket,reorder_bra :: VEC{INT}*
-     temp_bra_q :: MAT{REAL}*
-     temp_bra_i :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_h2_q ::  MAT{REAL}*
-     temp_qa_h2 :: MAT4{REAL}*
-     temp_qb_h2 :: MAT4{REAL}*
-     temp_qa_h2_ja :: MAT4{REAL}*
-     temp_qa_h2_ja_ex :: MAT4{REAL}*
-     temp_qb_h2_jb :: MAT4{REAL}*
-     temp_qb_h2_jb_ex :: MAT4{REAL}*
-     temp_qa_h2_jb :: MAT4{REAL}*
-     temp_qb_h2_ja :: MAT4{REAL}*
-     temp_qa_h2_ja_kb :: MAT4{REAL}*
-     temp_qa_h2_jb_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_ka :: MAT4{REAL}*
-     temp_qb_h2_ja_kb :: MAT4{REAL}*
-     temp_qa_h2_ja_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_kb :: MAT4{REAL}*
-     temp_qa_h2_ja_ex_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_ex_kb :: MAT4{REAL}*
-     temp_qb_jb :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_q_h2_ja_kb :: MAT{REAL}*
-     temp_q_h2_jb_ka :: MAT{REAL}*
-     temp_qa_h2_j :: MAT{REAL}*
-     temp_qb_h2_j :: MAT{REAL}*
+     reorder_ket,reorder_bra :: VEC{INT}@
+     temp_bra_q :: MAT{REAL}@
+     temp_bra_i :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_h2_q ::  MAT{REAL}@
+     temp_qa_h2 :: MAT4{REAL}@
+     temp_qb_h2 :: MAT4{REAL}@
+     temp_qa_h2_ja :: MAT4{REAL}@
+     temp_qa_h2_ja_ex :: MAT4{REAL}@
+     temp_qb_h2_jb :: MAT4{REAL}@
+     temp_qb_h2_jb_ex :: MAT4{REAL}@
+     temp_qa_h2_jb :: MAT4{REAL}@
+     temp_qb_h2_ja :: MAT4{REAL}@
+     temp_qa_h2_ja_kb :: MAT4{REAL}@
+     temp_qa_h2_jb_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_ka :: MAT4{REAL}@
+     temp_qb_h2_ja_kb :: MAT4{REAL}@
+     temp_qa_h2_ja_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_kb :: MAT4{REAL}@
+     temp_qa_h2_ja_ex_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_ex_kb :: MAT4{REAL}@
+     temp_qb_jb :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_q_h2_ja_kb :: MAT{REAL}@
+     temp_q_h2_jb_ka :: MAT{REAL}@
+     temp_qa_h2_j :: MAT{REAL}@
+     temp_qb_h2_j :: MAT{REAL}@
 
      nullify(temp_qa_ja)
      nullify(temp_qb_jb)
@@ -4441,34 +4380,34 @@ contains
      ENSURE(row_ind>0 AND row_ind<=.n_bas,"row_ind out of range")
      ii,jj,kk,j,k,l,dim,bi1,bi2,bj1,bj2,bk1,bk2,bq1,bq2 :: INT
      fac :: REAL
-     reorder_ket,reorder_bra :: VEC{INT}*
-     temp_bra_q :: MAT{REAL}*
-     temp_bra_i :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_q_h2 ::  MAT{REAL}*
-     temp_qa_h2 :: MAT4{REAL}*
-     temp_qb_h2 :: MAT4{REAL}*
-     temp_qa_h2_ja :: MAT4{REAL}*
-     temp_qa_h2_ja_ex :: MAT4{REAL}*
-     temp_qb_h2_jb :: MAT4{REAL}*
-     temp_qb_h2_jb_ex :: MAT4{REAL}*
-     temp_qa_h2_jb :: MAT4{REAL}*
-     temp_qb_h2_ja :: MAT4{REAL}*
-     temp_qa_h2_ja_kb :: MAT4{REAL}*
-     temp_qa_h2_jb_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_ka :: MAT4{REAL}*
-     temp_qb_h2_ja_kb :: MAT4{REAL}*
-     temp_qa_h2_ja_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_kb :: MAT4{REAL}*
-     temp_qa_h2_ja_ex_ka :: MAT4{REAL}*
-     temp_qb_h2_jb_ex_kb :: MAT4{REAL}*
-     temp_qb_jb :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_q_h2_ja_kb :: MAT{REAL}*
-     temp_q_h2_jb_ka :: MAT{REAL}*
-     temp_qa_h2_j :: MAT{REAL}*
-     temp_qb_h2_j :: MAT{REAL}*
+     reorder_ket,reorder_bra :: VEC{INT}@
+     temp_bra_q :: MAT{REAL}@
+     temp_bra_i :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_q_h2 ::  MAT{REAL}@
+     temp_qa_h2 :: MAT4{REAL}@
+     temp_qb_h2 :: MAT4{REAL}@
+     temp_qa_h2_ja :: MAT4{REAL}@
+     temp_qa_h2_ja_ex :: MAT4{REAL}@
+     temp_qb_h2_jb :: MAT4{REAL}@
+     temp_qb_h2_jb_ex :: MAT4{REAL}@
+     temp_qa_h2_jb :: MAT4{REAL}@
+     temp_qb_h2_ja :: MAT4{REAL}@
+     temp_qa_h2_ja_kb :: MAT4{REAL}@
+     temp_qa_h2_jb_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_ka :: MAT4{REAL}@
+     temp_qb_h2_ja_kb :: MAT4{REAL}@
+     temp_qa_h2_ja_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_kb :: MAT4{REAL}@
+     temp_qa_h2_ja_ex_ka :: MAT4{REAL}@
+     temp_qb_h2_jb_ex_kb :: MAT4{REAL}@
+     temp_qb_jb :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_q_h2_ja_kb :: MAT{REAL}@
+     temp_q_h2_jb_ka :: MAT{REAL}@
+     temp_qa_h2_j :: MAT{REAL}@
+     temp_qb_h2_j :: MAT{REAL}@
 
      nullify(temp_qa_ja)
      nullify(temp_qb_jb)
@@ -6272,14 +6211,14 @@ contains
      ENSURE(order_ket.dim>0,"dim negative or zero")
      row_ind,col_ind :: INT
      q,jj,j,kk,k,dim,l,bq1,bj1,bj2,bk1,bk2 :: INT
-     reorder_ket :: VEC{INT}*
-     reorder_bra :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
+     reorder_bra :: VEC{INT}@
      fac :: REAL
-     temp_bra_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_qb_jb :: MAT{REAL}*
+     temp_bra_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_qb_jb :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_bra(dim)
@@ -6566,14 +6505,14 @@ contains
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      row_ind :: INT
      q,jj,j,kk,k,dim,l,bq1,bj1,bj2,bk1,bk2 :: INT
-     reorder_ket :: VEC{INT}*
-     reorder_bra :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
+     reorder_bra :: VEC{INT}@
      fac :: REAL
-     temp_bra_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_qb_jb :: MAT{REAL}*
+     temp_bra_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_qb_jb :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_bra(dim)
@@ -6777,14 +6716,14 @@ contains
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      ENSURE(row_ind>0 AND row_ind<=.n_bas,"row_ind out of range")
      q,jj,j,kk,k,dim,l,bq1,bj1,bj2,bk1,bk2 :: INT
-     reorder_ket :: VEC{INT}*
-     reorder_bra :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
+     reorder_bra :: VEC{INT}@
      fac :: REAL
-     temp_bra_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_qb_jb :: MAT{REAL}*
+     temp_bra_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_qb_jb :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_bra(dim)
@@ -7069,11 +7008,11 @@ contains
      ENSURE(.special_ket(1)[2]==0,"ket already set for contr 1")
      col_ind :: INT
      dim,bq1,bq2,q,jj,bj1,bj2,j,kk,bk1,bk2,k :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -7364,11 +7303,11 @@ contains
      ENSURE(order_ket.dim>1,"dimension less than two")
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      dim,bq1,bq2,q,jj,bj1,bj2,j,kk,bk1,bk2,k :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -7548,11 +7487,11 @@ contains
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      ENSURE(row_ind>0 AND row_ind<=.n_bas,"row_ind out of range")
      dim,bq1,bq2,q,jj,bj1,bj2,j,kk,bk1,bk2,k :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -7794,10 +7733,10 @@ contains
      ENSURE(.special_ket(order_ket(order_ket.dim))[2]>0,"no ket")
      col_ind :: INT
      dim,b3,b4,q,jj,bj1,bj2,j,kk,bk1,bk2,k,i :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -8097,10 +8036,10 @@ contains
      ENSURE(.special_ket(order_ket(order_ket.dim))[2]>0,"no ket")
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      dim,b3,b4,q,jj,bj1,bj2,j,kk,bk1,bk2,k :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -8292,10 +8231,10 @@ contains
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      ENSURE(row_ind>0 AND row_ind<=.n_bas,"row_ind out of range")
      dim,b3,b4,q,jj,bj1,bj2,j,kk,bk1,bk2,k :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -8493,10 +8432,10 @@ contains
      ENSURE(.special_ket(order_ket(order_ket.dim))[2]>0,"no ket")
      col_ind :: INT
      dim,b3,b4,q,jj,bj1,bj2,j,kk,bk1,bk2,k :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -8794,10 +8733,10 @@ contains
      ENSURE(.special_ket(order_ket(order_ket.dim))[2]>0,"no ket")
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      dim,b3,b4,q,jj,bj1,bj2,j,kk,bk1,bk2,k :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -8988,10 +8927,10 @@ contains
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      ENSURE(row_ind>0 AND row_ind<=.n_bas,"row_ind out of range")
      dim,b3,b4,q,jj,bj1,bj2,j,kk,bk1,bk2,k :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
 
      dim = order_ket.dim
      q=order_ket(dim)
@@ -9179,7 +9118,7 @@ contains
      res :: MAT{REAL}(.n_bas,.n_bas)
      ENSURE(.bra.dim==.ket.dim,"Bra and ket have different sizes!")
      i,row_ind,col_ind :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      reorder_ket.create(.n_geminals)
      reorder_ket = [ (i, i=1,.n_geminals) ]
      res = .overlap_for(reorder_ket)
@@ -9211,13 +9150,13 @@ contains
      ENSURE(order_ket.dim>0,"dim negative or zero")
      row_ind,col_ind :: INT
      jj,j,kk,k,dim,bq1,bj1,bj2,bk1,bk2 :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_bra_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_qb_jb :: MAT{REAL}*
+     temp_bra_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_qb_jb :: MAT{REAL}@
 
      dim = order_ket.dim
      res = ZERO
@@ -9511,13 +9450,13 @@ contains
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      row_ind :: INT
      jj,j,kk,k,dim,bq1,bj1,bj2,bk1,bk2 :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_bra_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_qb_jb :: MAT{REAL}*
+     temp_bra_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_qb_jb :: MAT{REAL}@
 
      dim = order_ket.dim
      res=ZERO
@@ -9717,13 +9656,13 @@ contains
      ENSURE(col_ind>0 AND col_ind<=.n_bas,"col_ind out of range")
      ENSURE(row_ind>0 AND row_ind<=.n_bas,"row_ind out of range")
      jj,j,kk,k,dim,bq1,bj1,bj2,bk1,bk2 :: INT
-     reorder_ket :: VEC{INT}*
+     reorder_ket :: VEC{INT}@
      fac :: REAL
-     temp_bra_q :: MAT{REAL}*
-     temp_ket_j :: MAT{REAL}*
-     temp_ket_k :: MAT{REAL}*
-     temp_qa_ja :: MAT{REAL}*
-     temp_qb_jb :: MAT{REAL}*
+     temp_bra_q :: MAT{REAL}@
+     temp_ket_j :: MAT{REAL}@
+     temp_ket_k :: MAT{REAL}@
+     temp_qa_ja :: MAT{REAL}@
+     temp_qb_jb :: MAT{REAL}@
 
      dim = order_ket.dim
      res = ZERO
@@ -10014,9 +9953,9 @@ contains
    ! built over orthonormal orbitals, and  print it if print_hamiltonian is true.
      print_hamiltonian :: BIN, optional, IN
      !res :: MAT{REAL}(.n_bas,.n_bas)
-     res :: MAT{REAL}*
-!     eigenvalues :: VEC{REAL}* 
-!     R :: MAT{REAL}* 
+     res :: MAT{REAL}@
+!     eigenvalues :: VEC{REAL}@
+!     R :: MAT{REAL}@
      print_default :: BIN
      print_default = FALSE
      if (present(print_hamiltonian)) print_default = print_hamiltonian
@@ -10054,16 +9993,16 @@ contains
      print_hamiltonian :: BIN, IN
      truncation_threshold :: REAL, IN
      do_electric_dipole :: BIN, IN
-     ham :: MAT{REAL}*
-     indices :: VEC{INT}*
-     increasing_vec :: VEC{MAT_{REAL}}*
-     increasing_values :: VEC{REAL}*
+     ham :: MAT{REAL}@
+     indices :: VEC{INT}@
+     increasing_vec :: VEC{MAT_{REAL}}@
+     increasing_values :: VEC{REAL}@
     ! j,k :: INT
      j :: INT
      n_nonzero,n_total :: INT
      n_bas,n_geminals,n_bf :: INT
-     eigenvec :: MAT{REAL}*
-     new_wfs :: VEC{MAT_{REAL}}*
+     eigenvec :: MAT{REAL}@
+     new_wfs :: VEC{MAT_{REAL}}@
      n_geminals=.n_geminals
      n_bf=.n_bf
    ! .put
@@ -10164,11 +10103,11 @@ contains
      word :: STR
      i,j,k :: INT
      n_bas,n_bf :: INT
-     ov :: MAT{REAL}*
-     norms :: VEC{REAL}*
-     keep,int_vec :: VEC{MAT_{REAL}}*
-     RDM,eigenvectors :: MAT{REAL}*
-     order_ket :: VEC{INT}*
+     ov :: MAT{REAL}@
+     norms :: VEC{REAL}@
+     keep,int_vec :: VEC{MAT_{REAL}}@
+     RDM,eigenvectors :: MAT{REAL}@
+     order_ket :: VEC{INT}@
      old_dim,new_dim :: INT
      n_geminals :: INT
      n_singlet :: INT
@@ -10305,10 +10244,10 @@ contains
    !  leaky because of the set_active_triplet_defaults
      print_hamiltonian :: BIN, IN
      i,n_bas :: INT
-     ov :: MAT{REAL}*
-     eigenvalues :: VEC{REAL}*
-     orthovec :: MAT{REAL}*
-   !  unorthovec :: MAT{REAL}*
+     ov :: MAT{REAL}@
+     eigenvalues :: VEC{REAL}@
+     orthovec :: MAT{REAL}@
+   !  unorthovec :: MAT{REAL}@
      .set_active_triplet_defaults
      n_bas=.n_bas
      ov.create(n_bas,n_bas)
@@ -10421,7 +10360,7 @@ contains
      order_ket :: VEC{INT}, IN
      b1,b2 :: INT, IN
      ENSURE(order_ket.dim==2,"no product for >2 gems")
-     g1,g2 :: MAT{REAL}*
+     g1,g2 :: MAT{REAL}@
      n_bf :: INT
      b3,b4 :: INT
      n_bf=.n_bf
@@ -10446,7 +10385,7 @@ contains
      order_ket :: VEC{INT}, IN
      b1,b2 :: INT, IN
      ENSURE(order_ket.dim==2,"no product for >2 gems")
-     g1,g2 :: MAT{REAL}*
+     g1,g2 :: MAT{REAL}@
      n_bf :: INT
      b3,b4 :: INT
      n_bf=.n_bf
@@ -10484,7 +10423,7 @@ contains
    make_gs_electric_dipole 
    ! make ground state electric dipole moment for geminal product
    ! function
-     dip :: MAT{REAL}*
+     dip :: MAT{REAL}@
      n_bas :: INT
      n_bas=.n_bas
      .n_bas=1

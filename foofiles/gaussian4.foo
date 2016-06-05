@@ -49,28 +49,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========
-!  Allocation
-!  ==========
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This does not nullify point parts or set
-   ! defaults.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
 
 !  =====
 !  ERI's
@@ -81,7 +59,7 @@ contains
       self :: IN
       I :: MAT4{REAL}, OUT
 
-      rys :: RYS*
+      rys :: RYS@
       Ix,Iy,Iz :: MAT5{REAL}@
       ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}@
       AB,CD,P,Q,PA,QC,QP :: VEC{REAL}(3)
@@ -322,7 +300,7 @@ contains
       self :: IN
       Sx,Sy,Sz,Ox,Oy,Oz :: MAT4{REAL}, OUT
 
-      rys :: RYS*
+      rys :: RYS@
       Ix,Iy,Iz,LLx,LLy,LLz,RRx,RRy,RRz :: MAT5{REAL}@
       ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}@
       AB,CD,P,Q,PA,QC,QP :: VEC{REAL}(3)
@@ -432,7 +410,7 @@ contains
    ! inspiration.
       Dxx,Dyy,Dzz,Dxy,Dxz,Dyz :: MAT4{REAL}, OUT
 
-      rys :: RYS*
+      rys :: RYS@
       Ix,Iy,Iz,Lx,Ly,Lz,Rx,Ry,Rz,LL,LR,RR :: MAT5{REAL}@
       ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}@
       AB,CD,P,Q,PA,QC,QP :: VEC{REAL}(3)
@@ -627,7 +605,7 @@ contains
 
    ENSURE(present(AA) OR present(BB) OR present(CC) OR present(DD),"no output!")
 
-      rys :: RYS*
+      rys :: RYS@
       IIx,IIy,IIz :: MAT5{REAL}@
       AAx,AAy,AAz :: MAT5{REAL}@
       BBx,BBy,BBz :: MAT5{REAL}@

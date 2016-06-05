@@ -1171,7 +1171,7 @@ contains
       normalise :: BIN, IN, optional
       res :: REAL
 
-      coeff :: VEC{REAL}*
+      coeff :: VEC{REAL}@
       x :: REAL
       i :: INT
 
@@ -1196,7 +1196,7 @@ contains
       n :: INT, IN
       res :: REAL
 
-      coeff :: VEC{REAL}*
+      coeff :: VEC{REAL}@
       x :: REAL
       i :: INT
 

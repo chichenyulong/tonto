@@ -36,8 +36,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -48,47 +48,9 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Create space for object
-   end
-
-   destroy ::: get_from(VEC{OBJECT}), leaky
-   ! Destroy space for object
-   end
-
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part ::: get_from(VEC{OBJECT})
-   ! Nullify the pointer parts of self
-   end
-
-   destroy_ptr_part ::: get_from(VEC{OBJECT})
-   ! Destroy the pointer parts of self
-   end
-
-   set_defaults ::: get_from(VEC{OBJECT})
-   ! Set default values
-   end
-
-! ===========================
-! Non-list based I/O routines
-! ===========================
+!  ====================
+!  Non-list based input
+!  ====================
 
    read_keywords ::: get_from(VEC{OBJECT})
    ! Read in and process normal (non list-type) keywords from "stdin".
@@ -96,7 +58,7 @@ contains
 
    process_keyword(keyword) 
    ! Process a normal (non list-type) "keyword".
-      self :: PTR
+      self :: allocatable, INOUT
       keyword :: STR
       word :: STR
       word = keyword

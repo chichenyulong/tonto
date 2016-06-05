@@ -48,47 +48,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not nullify point parts.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(G) ::: leaky
-   ! Create a copy of "G"
-      self :: PTR
-       G :: GAUSSIAN
-      .create
-      .copy(G)
-   end
-
-   copy(G)
-   ! Set the gaussian to "G"
-      G :: GAUSSIAN
-      self = G
-   end
-
-   set_defaults
-   ! Set defaults
-      .l = 0
-      .n_sph = 0
-      .exponent = ZERO
-      .position = ZERO
-      .first_gaussian = 0
-      .last_gaussian = 0
-   end
 
    set(G)
    ! Set the gaussian to "G"
@@ -262,7 +221,7 @@ contains
       pt :: MAT{REAL}, target
        g :: MAT{REAL}
    ENSURE(g.dim2==.n_comp,"incorrectly dimensioned")
-      x,y,z :: VEC{REAL}*
+      x,y,z :: VEC{REAL}@
       x => pt(:,1); y => pt(:,2); z => pt(:,3)
       .make_grid(g,x,y,z)
    end
@@ -273,7 +232,7 @@ contains
       x,y,z :: VEC{REAL}
       g :: MAT{REAL}
    ENSURE(g.dim2==.n_comp,"incorrectly dimensioned")
-      lx,ly,lz :: VEC{INT}*
+      lx,ly,lz :: VEC{INT}@
       n_pt,n,b,j, f,l :: INT
       rr,xx,yy,zz,posx,posy,posz,g0,gbn :: REAL
       n_pt = size(x)

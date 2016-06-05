@@ -55,46 +55,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========
-!  Allocation
-!  ==========
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not nullify point parts.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object. This version does not destroy pointer parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-!  ====
-!  Copy
-!  ====
-
-   create_copy(r) ::: leaky
-   ! Create a copy of the reflection "r"
-      self :: PTR
-      r :: REFLECTION
-      .create
-      .copy(r)
-   end
-
-   copy(r)
-   ! Make a copy of the reflection "r"
-      r :: REFLECTION
-      self = r
-   end
-
 !  ===========
 !  Set methods
 !  ===========

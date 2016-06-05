@@ -36,8 +36,8 @@ contains
    ! Allocate vector
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Deallocate the vector
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -54,8 +54,8 @@ contains
    ! Create space for object
    end
 
-   destroy ::: get_from(VEC{OBJECT}), leaky
-   ! Destroy space for object
+   destroy ::: get_from(OBJECT), leaky
+   ! Deallocate "self"
    end
 
    nullify_ptr_part ::: get_from(VEC{OBJECT})
@@ -96,7 +96,7 @@ contains
 !
 !   process_keyword(keyword) 
 !   ! Process a normal (non list-type) "keyword".
-!     self :: PTR
+!     self :: allocatable, INOUT
 !     keyword :: STR
 !     word :: STR
 !     word = keyword

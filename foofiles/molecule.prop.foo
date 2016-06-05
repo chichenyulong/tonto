@@ -36,7 +36,7 @@ contains
    ! Read the force constants as a flat vector in atomic units.
    ! SInce it is a symmetric matrix the order does not matter.
 
-      fc :: VEC{REAL}*
+      fc :: VEC{REAL}@
 
       ! Read
       stdin.read_ptr(fc)
@@ -55,8 +55,8 @@ contains
    ENSURE(.atom.associated,"no atoms")
 
       n3n,i,j :: INT
-      fc :: MAT{REAL}*
-      rm :: VEC{REAL}*
+      fc :: MAT{REAL}@
+      rm :: VEC{REAL}@
       rmi,rmj :: REAL
 
       n3n = 3*.atom.dim
@@ -100,8 +100,8 @@ contains
    ENSURE(.normal_mode_eigenvalues.associated, "no normal mode eigenvalues")
 
       table :: VEC{TABLE_COLUMN}@
-      eval :: VEC{REAL}*
-      ewav :: VEC{STR}*
+      eval :: VEC{REAL}@
+      ewav :: VEC{STR}@
       n3n,i :: INT
 
 
@@ -165,8 +165,8 @@ contains
    ENSURE(.atom.associated,"no atoms")
    ENSURE(.atom.dim==1, "must have more than one atom")
 
-      qtox :: MAT{REAL}*
-      m12,g12,geom0,delta :: VEC{REAL}*
+      qtox :: MAT{REAL}@
+      m12,g12,geom0,delta :: VEC{REAL}@
       n_modes,n3n,f,l,i,s :: INT
       step :: REAL
 
@@ -286,11 +286,11 @@ contains
 
    put_mulliken_populations ::: leaky
    ! sets the mulliken population matrix and the outputs it.
-      mulliken_matrix, density :: MAT{REAL}*
-      diagonals :: VEC{REAL}*
-      S2 :: MAT{REAL}*
-      mulliken_matrix2 :: MAT{CPX}*
-      diagonals2 :: VEC{CPX}*
+      mulliken_matrix, density :: MAT{REAL}@
+      diagonals :: VEC{REAL}@
+      S2 :: MAT{REAL}@
+      mulliken_matrix2 :: MAT{CPX}@
+      diagonals2 :: VEC{CPX}@
 
       ! Create space
       mulliken_matrix.create(.n_bf, .n_bf)
@@ -404,7 +404,7 @@ contains
 
       mulliken_matrix :: MAT{REAL}
       diagonals :: VEC{REAL}
-      atom_pop :: VEC{REAL}*
+      atom_pop :: VEC{REAL}@
       pop :: REAL
       o_count, a, b, c, n_comp :: INT
 
@@ -481,7 +481,7 @@ contains
 
    ! ENSURE(NOT .use_spherical_basis,"not implemented")
 
-      atom_pop :: VEC{REAL}*
+      atom_pop :: VEC{REAL}@
       pop :: REAL
       o_count, a, b, c, n_comp :: INT
 
@@ -551,8 +551,8 @@ contains
 
    get_gchf_na_nb ::: leaky
    ! alpha and beta populations of occupied GCHF spinorbitals
-   S :: MAT{REAL}*
-   CMOi :: VEC{CPX}*
+   S :: MAT{REAL}@
+   CMOi :: VEC{CPX}@
    i,k,l :: INT
    na,nb,atot,btot,II :: CPX
 
@@ -604,8 +604,8 @@ contains
    get_uhf_sx_sy_sz ::: leaky
    ! evaluation of expectation values of sigma_x, sigma_y and sigma_z
    ! n_x=0, n_y= and n_z= number of open shell electrons
-   S,orbs :: MAT{REAL}*
-   CMOi :: VEC{REAL}*
+   S,orbs :: MAT{REAL}@
+   CMOi :: VEC{REAL}@
    i,k,l :: INT
    z,x,y :: REAL
 
@@ -654,8 +654,8 @@ contains
    get_gchf_sx_sy_sz ::: leaky
    ! evaluation of expectation values of sigma_x, sigma_y and sigma_z
    ! n_x=0, n_y= and n_z= number of open shell electrons
-   S :: MAT{REAL}*
-   CMOi :: VEC{CPX}*
+   S :: MAT{REAL}@
+   CMOi :: VEC{CPX}@
    i,k,l :: INT
    z,x,y,II :: CPX
 
@@ -695,9 +695,9 @@ contains
    get_uhf_s2 ::: leaky
    ! s2 uhf expectation values 
    ! evaluated directly for the x, y and z components
-   S :: MAT{REAL}*
-   CMOi,CMOj :: VEC{REAL}*
-   sx,sy,sz,orbs :: MAT{REAL}*
+   S :: MAT{REAL}@
+   CMOi,CMOj :: VEC{REAL}@
+   sx,sy,sz,orbs :: MAT{REAL}@
    i,j,k,l :: INT
    x,y,z :: REAL
 
@@ -762,9 +762,9 @@ contains
 
    get_gchf_s2 ::: leaky
    ! S2 gchf expectation value evaluated via Sx^2 + Sy^2 + Sz^2 contributions
-   S :: MAT{REAL}*
-   CMOi,CMOj :: VEC{CPX}*
-   sx,sy,sz :: MAT{CPX}*
+   S :: MAT{REAL}@
+   CMOi,CMOj :: VEC{CPX}@
+   sx,sy,sz :: MAT{CPX}@
    i,j,k,l :: INT
    x,y,z :: CPX
 
@@ -823,9 +823,9 @@ contains
 
    get_uhf_s2_orig ::: leaky
    ! s2 uhf expectation value via the overlap of alpha and beta orbs.
-   S :: MAT{REAL}*
-   CMOi,CMOj :: VEC{REAL}*
-   aa,bb,ab,ba,orbs :: MAT{REAL}*
+   S :: MAT{REAL}@
+   CMOi,CMOj :: VEC{REAL}@
+   aa,bb,ab,ba,orbs :: MAT{REAL}@
    i,j,k,l :: INT
    x,y,z,na,nb :: REAL
 
@@ -904,9 +904,9 @@ contains
 
    get_gchf_s2_orig ::: leaky
    ! S2 gchf expectation value evaluated via S+-,  S-+ and Sz^2 contributions
-   S :: MAT{REAL}*
-   CMOi,CMOj :: VEC{CPX}*
-   aa,bb,ab,ba :: MAT{CPX}*
+   S :: MAT{REAL}@
+   CMOi,CMOj :: VEC{CPX}@
+   aa,bb,ab,ba :: MAT{CPX}@
    i,j,k,l :: INT
    x,y,z,na,nb :: CPX
    S2,S2e :: REAL
@@ -982,9 +982,9 @@ contains
 
    get_uhf_kramers ::: leaky
    !  analyse uhf kramers pairs 
-   S :: MAT{REAL}*
-   kramersA,kramersB :: MAT{REAL}*
-   MOi,MOj :: VEC{REAL}*
+   S :: MAT{REAL}@
+   kramersA,kramersB :: MAT{REAL}@
+   MOi,MOj :: VEC{REAL}@
    i,j,k,l :: INT
    X1,X2,X3,X4 :: REAL
 
@@ -1075,9 +1075,9 @@ contains
 
    get_gchf_kramers ::: leaky
    !  analyse kramers pairs 
-   S :: MAT{REAL}*
-   kramers :: MAT{CPX}*
-   CMOi,CMOj :: VEC{CPX}*
+   S :: MAT{REAL}@
+   kramers :: MAT{CPX}@
+   CMOi,CMOj :: VEC{CPX}@
    i,j,k,l :: INT
    X1,X2,X3,X4,II :: CPX
 
@@ -1169,10 +1169,10 @@ contains
    get_uhf_kramers_2 ::: leaky
    !  analyse uhf kramers pairs 
 
-      S :: MAT{REAL}*
-      kramersA,kramersB :: MAT{REAL}*
+      S :: MAT{REAL}@
+      kramersA,kramersB :: MAT{REAL}@
       ea,eb :: VEC{REAL}@
-      MOi,MOj :: VEC{REAL}*
+      MOi,MOj :: VEC{REAL}@
       i,j,k,l,lb,la :: INT
       X1,X2,X3,X4 :: REAL
 
@@ -1291,9 +1291,9 @@ contains
 
    get_gchf_kramers_2 ::: leaky
    !  analyse kramers pairs 
-   S :: MAT{REAL}*
-   kramers :: MAT{CPX}*
-   CMOi,CMOj :: VEC{CPX}*
+   S :: MAT{REAL}@
+   kramers :: MAT{CPX}@
+   CMOi,CMOj :: VEC{CPX}@
    i,j,k,l,li,lj :: INT
    X1,X2,X3,X4,II :: CPX
 
@@ -1399,12 +1399,12 @@ contains
 
    get_gchf_jz ::: leaky
    ! s, l and j eigenvalues not finished  at all
-   S :: MAT{REAL}*
-   S2,Lz2 :: MAT{CPX}*
-   CD,CMO :: MAT{CPX}*
-   Lx,Ly,Lz :: MAT{REAL}*
+   S :: MAT{REAL}@
+   S2,Lz2 :: MAT{CPX}@
+   CD,CMO :: MAT{CPX}@
+   Lx,Ly,Lz :: MAT{REAL}@
    II,jzi :: CPX
-   CMOi :: VEC{CPX}*
+   CMOi :: VEC{CPX}@
    i,k,l :: INT
 
    Lx.create(.n_bf,.n_bf);Ly.create(.n_bf,.n_bf);Lz.create(.n_bf,.n_bf)
@@ -1469,8 +1469,8 @@ contains
    !  i.e. the spatial overlap between alpha and beta spinors
    kramers :: MAT{REAL}
 
-   S :: MAT{REAL}*
-   MOi,MOj :: VEC{REAL}*
+   S :: MAT{REAL}@
+   MOi,MOj :: VEC{REAL}@
    i,j,k,l :: INT
 
    kramers=ZERO
@@ -1495,8 +1495,8 @@ contains
    !  get the overlap of kramers pairs
    kramers :: MAT{CPX}
 
-   S :: MAT{REAL}*
-   CMOi,CMOj :: VEC{CPX}*
+   S :: MAT{REAL}@
+   CMOi,CMOj :: VEC{CPX}@
    i,j,k,l :: INT
 
    kramers=(ZERO,ZERO)
@@ -1524,13 +1524,13 @@ contains
    ! sets the kramers unrestricted mulliken spin population matrix
    ! we use the unpaired electron density concept, which accounts for
    ! the total spin
-      mulliken_matrix, density :: MAT{REAL}*
-      diagonals :: VEC{REAL}*
-      S2,PSPS,S :: MAT{REAL}*
-      mulliken_matrix2,DS2,PSPS2 :: MAT{CPX}*
-      mulliken_ku_matrix2 :: MAT{CPX}*
-      CMO,CMO_ku :: MAT{CPX}*
-      diagonals2 :: VEC{CPX}*
+      mulliken_matrix, density :: MAT{REAL}@
+      diagonals :: VEC{REAL}@
+      S2,PSPS,S :: MAT{REAL}@
+      mulliken_matrix2,DS2,PSPS2 :: MAT{CPX}@
+      mulliken_ku_matrix2 :: MAT{CPX}@
+      CMO,CMO_ku :: MAT{CPX}@
+      diagonals2 :: VEC{CPX}@
 !      i,j,k,l,m,n :: INT
       Oij :: CPX
 
@@ -1803,12 +1803,12 @@ contains
    put_E_field_at_nuclei
    ! Put out the electric field at every nuclear position
 
-      cluster :: CLUSTER*
-      electronic,nuclear,molecule,LF,xyz, xtal, pos :: MAT{REAL}*
-      charge :: VEC{REAL}*
+      cluster :: CLUSTER@
+      electronic,nuclear,molecule,LF,xyz, xtal, pos :: MAT{REAL}@
+      charge :: VEC{REAL}@
       r,d,F :: VEC{REAL}(3)
       axis :: VEC{STR}(3)
-      symbol :: VEC{STR}*
+      symbol :: VEC{STR}@
       mol_rms,LF_rms,xtal_rms, d3 :: REAL
       a,i, n_charges :: INT
 
@@ -2028,9 +2028,9 @@ contains
    put_EFG_at_nuclei
    ! Put out the electric field gradient at every nuclear position
 
-      electronic,nuclear,total :: MAT{REAL}*
+      electronic,nuclear,total :: MAT{REAL}@
       axis :: VEC{STR}(6)
-      symbol :: VEC{STR}*
+      symbol :: VEC{STR}@
       a,i :: INT
 
       axis = [ "xx","yy","zz","xy","xz","yz" ]
@@ -2087,7 +2087,7 @@ contains
    ! and ones also perhaps for the gchf one
       ENSURE(.molecular_orbitals.alpha.associated, "no alpha orbitals")
       ENSURE(.molecular_orbitals.beta.associated, "no beta orbitals")
-      MSC,S,MOa,MOb :: MAT{REAL}*
+      MSC,S,MOa,MOb :: MAT{REAL}@
       SC,S2 :: REAL
       na,nb,i,j,k,l :: INT
 
@@ -2388,9 +2388,9 @@ contains
 
    put_scf_energy_in_mo_pairs
    ! Analyze the SCF energy into MO pairs
-      Di :: OPMATRIX*
-      core_energy :: VEC{REAL}*
-      pair_energy :: MAT{REAL}*
+      Di :: OPMATRIX@
+      core_energy :: VEC{REAL}@
+      pair_energy :: MAT{REAL}@
       i,j :: INT
       energy :: REAL
       direct :: BIN
@@ -2479,8 +2479,8 @@ contains
    ENSURE(.scfdata.associated,"no scfdata")
    ENSURE(.scfdata.scf_kind.is_one_of(["rhf","rks"]),"must be rhf/rks")
 
-      H :: MAT{REAL}*
-      mo_energy :: VEC{REAL}*
+      H :: MAT{REAL}@
+      mo_energy :: VEC{REAL}@
       i :: INT
 
       mo_energy.create(.n_a)
@@ -2513,7 +2513,7 @@ contains
    put_AO_energy_partition
    ! Put out the AO energy partition
 
-      Y :: MAT{REAL}*
+      Y :: MAT{REAL}@
 
       Y.create(.n_bf,.n_bf)
       Y.to_unit_matrix
@@ -2525,7 +2525,7 @@ contains
    put_SAO_energy_partition
    ! Put out the symmetric AO energy partition
 
-      Smh :: MAT{REAL}*
+      Smh :: MAT{REAL}@
 
       .INTS:make_overlap_matrix
 
@@ -2561,9 +2561,9 @@ contains
    ENSURE(size(.atom_group)==2,"must have only 2 groups")
    ENSURE(Y.dim1==.n_bf,"incorrect size for Y array")
 
-      X, T,Z,ZZ,C,K,P,PP,W,E_T,E_Z, EE :: MAT{REAL}*
-      E_ZZ :: MAT3{REAL}*
-      E_C,E_K :: MAT4{REAL}*
+      X, T,Z,ZZ,C,K,P,PP,W,E_T,E_Z, EE :: MAT{REAL}@
+      E_ZZ :: MAT3{REAL}@
+      E_C,E_K :: MAT4{REAL}@
       n_group,g,h,i,j :: INT
       fac :: REAL
       unit :: STR
@@ -2829,7 +2829,7 @@ contains
 !      coulomb_repulsion,net_coulomb :: REAL
 !      exchange_attraction,total_interaction :: REAL
 !      energy, promotion_energy, fac :: REAL
-!      P,P_A,P_B,MO,OM,Q,T,Z,C,K :: MAT{REAL}*
+!      P,P_A,P_B,MO,OM,Q,T,Z,C,K :: MAT{REAL}@
 !      n,f,l :: INT
 !      ENSURE(.atom_group.associated,"no atom group information")
 !      ENSURE(size(.atom_group)==2,"must have only 2 groups")
@@ -3007,7 +3007,7 @@ contains
       E_C,E_C_A,E_C_B, E_K,E_K_A,E_K_B, E_N,E_N_A,E_N_B :: REAL
       E0_C_A,E0_C_B, E0_K_A,E0_K_B :: REAL
       E_kin,E_att,E_rep,E_coul,E_net_coul,E_ex,E_int,E_prom,energy, fac :: REAL
-      P,P_A,P_B,MO,D,T,Z,C,K :: MAT{REAL}*
+      P,P_A,P_B,MO,D,T,Z,C,K :: MAT{REAL}@
       n,f,l :: INT
 
       ! Units
@@ -3217,7 +3217,7 @@ contains
 
       unit :: STR
       E_disp,fac :: REAL
-      mol_A, mol_B :: MOLECULE*
+      mol_A, mol_B :: MOLECULE@
 
       ! A & B molecules
       mol_A => .atom_group(1).mol
@@ -3254,7 +3254,7 @@ contains
 
       unit :: STR
       E_disp,E_rep,fac :: REAL
-      mol_A, mol_B :: MOLECULE*
+      mol_A, mol_B :: MOLECULE@
 
       ! A & B molecules
       mol_A => .atom_group(1).mol
@@ -3299,9 +3299,9 @@ contains
 
       unit :: STR
       E_pol,fac :: REAL
-      mol_A, mol_B :: MOLECULE*
-      electronic_at_A, nuclear_at_A, total_at_A, electronic_at_B, nuclear_at_B, total_at_B :: MAT{REAL}*
-      F_sq_A, F_sq_B :: VEC{REAL}*
+      mol_A, mol_B :: MOLECULE@
+      electronic_at_A, nuclear_at_A, total_at_A, electronic_at_B, nuclear_at_B, total_at_B :: MAT{REAL}@
+      F_sq_A, F_sq_B :: VEC{REAL}@
 
       ! A & B molecules
       mol_A => .atom_group(1).mol
@@ -3386,9 +3386,9 @@ contains
       E_C,E_C_A,E_C_B :: REAL
       E_N,E_N_A,E_N_B :: REAL
       E_att,E_rep,E_coul,E_net_coul, fac :: REAL
-      P,P_A,P_B,Z,C :: MAT{REAL}*
+      P,P_A,P_B,Z,C :: MAT{REAL}@
       n_a,n_b :: INT
-      mol_A,mol_B :: MOLECULE*
+      mol_A,mol_B :: MOLECULE@
 
       ! Units
       unit = "kJ/mol"
@@ -3494,10 +3494,10 @@ contains
 
       E_en,E_ke,E_1e,E_nn,E_ee,E_ex :: REAL
       E_tot,E_net,E_ABn,E_ABo, E_rep,E_XR :: REAL
-      X,X_A,X_B :: MAT{REAL}*
-      C,C_A,C_B :: MAT{REAL}*
-      K,K_A,K_B :: MAT{REAL}*
-      mol_A,mol_B :: MOLECULE*
+      X,X_A,X_B :: MAT{REAL}@
+      C,C_A,C_B :: MAT{REAL}@
+      K,K_A,K_B :: MAT{REAL}@
+      mol_A,mol_B :: MOLECULE@
 
       ! ======================
       ! Get non orthogonal MOs
@@ -3696,9 +3696,9 @@ contains
    ENSURE(.atom_group(2).mol.density_matrix.associated ,"no mol 2 DM!")
 
       E_net,E_en,E_nn,E_ee :: REAL
-      X,X_A,X_B :: MAT{REAL}*
-      C,C_A,C_B :: MAT{REAL}*
-      mol_A,mol_B :: MOLECULE*
+      X,X_A,X_B :: MAT{REAL}@
+      C,C_A,C_B :: MAT{REAL}@
+      mol_A,mol_B :: MOLECULE@
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       .SCF:merge_group_density_matrices_r
@@ -3804,11 +3804,11 @@ contains
 
       E_en,E_ke,E_1e,E_nn,E_ee,E_ex :: REAL
       E_tot,E_net,E_ABn,E_ABo, E_rep,E_XR :: REAL
-      X,X_A,X_B :: MAT{REAL}*
-      C,C_A,C_B :: MAT{REAL}*
-      K,K_A,K_B :: MAT{REAL}*
-      mol_A,mol_B :: MOLECULE*
-      saved_MOs_A, saved_MOs_B :: OPMATRIX*
+      X,X_A,X_B :: MAT{REAL}@
+      C,C_A,C_B :: MAT{REAL}@
+      K,K_A,K_B :: MAT{REAL}@
+      mol_A,mol_B :: MOLECULE@
+      saved_MOs_A, saved_MOs_B :: OPMATRIX@
 
       ! ======================
       ! Get non orthogonal MOs
@@ -4016,7 +4016,7 @@ contains
    ENSURE(.atom_group.dim==2 ,"must have only 2 groups")
 
       E, E_A, E_B :: REAL
-      mol_A,mol_B :: MOLECULE*
+      mol_A,mol_B :: MOLECULE@
 
       ! A & B molecules
       mol_A => .atom_group(1).mol
@@ -4051,7 +4051,7 @@ contains
    ENSURE(.atom_group(2).mol.density_matrix.associated ,"no mol 2 DM!")
 
       E,E_A,E_B :: REAL
-      mol_A,mol_B :: MOLECULE*
+      mol_A,mol_B :: MOLECULE@
 
       ! A & B molecules
       mol_A => .atom_group(1).mol
@@ -4410,7 +4410,7 @@ contains
 !   ENSURE(.basis_info_made, "no basis info")
 !   ENSURE(.n_atom==2,"can only do diatomics")
 !      arch :: ARCHIVE
-!      density_grid :: VEC{REAL}*
+!      density_grid :: VEC{REAL}@
 !      .move_origin_to_center_of_mass
 !      density_grid.create(.plot_grid.n_pt)
 !      .integrate_rho_grid(density_grid,-FOUR,FOUR,TOL(4))
@@ -4430,9 +4430,9 @@ contains
 !      a,b :: REAL
 !      accuracy :: REAL, optional
 !      fa0,fb0 :: VEC{REAL}*, optional
-!      res :: VEC{REAL}*
+!      res :: VEC{REAL}@
 !   ENSURE(.plot_grid.associated, "no grid")
-!      fa,fb,fm,one_trap,two_trap,left,right :: VEC{REAL}*
+!      fa,fb,fm,one_trap,two_trap,left,right :: VEC{REAL}@
 !      n_pt :: INT
 !      same :: BIN
 !      tol,h,m :: REAL
@@ -4483,7 +4483,7 @@ contains
 !   ! size or "rho" is .plot_grid.n_pt.
 !      q :: REAL
 !      rho :: VEC{REAL}
-!      pt :: MAT{REAL}*
+!      pt :: MAT{REAL}@
 !      re,w,mu, gamma,d,r, wt :: REAL
 !      n :: INT
 !      re = 2.0460259 ! N2
@@ -4546,7 +4546,7 @@ contains
 
 !   roby_energy_analysis
 !   ! directs the energy analysis of a diatomic
-!    roby_atom :: VEC{INT}*
+!    roby_atom :: VEC{INT}@
 !    Ep_A, Ep_B, Ep_AB, E_A, E_B, E_AB :: REAL
 !    a,b :: INT
 !    .read_roby_atom(roby_atom)
@@ -4576,7 +4576,7 @@ contains
 !     roby_atom :: VEC{INT}
 !     se, energy_subgroup, en_groups :: REAL
 !     m,k, n_k, n_roby_atom :: INT
-!     comb_mat :: MAT{INT}*
+!     comb_mat :: MAT{INT}@
 !     n_roby_atom = size(roby_atom)
 !     se = 0
 !     do k = 1,n_roby_atom
@@ -4619,7 +4619,7 @@ contains
 !   ! Evaluate and put the Roby shared energy for a group of atoms
 !      atoms :: VEC{INT}, OPTIONAL
 !      shared_energy :: REAL
-!      roby_atom :: VEC{INT}*
+!      roby_atom :: VEC{INT}@
 !      if (PRESENT(atoms)) then
 !          roby_atom.create(size(atoms))
 !          roby_atom = atoms
@@ -4637,7 +4637,7 @@ contains
 !   ! Evaluate and put the Roby ionic energy for a group of atoms
 !      atoms :: VEC{INT}, OPTIONAL
 !      n_roby_atom :: INT
-!      roby_atom :: VEC{INT}*
+!      roby_atom :: VEC{INT}@
 !      if (PRESENT(atoms)) then
 !          roby_atom.create(size(atoms))
 !          roby_atom = atoms
@@ -4656,7 +4656,7 @@ contains
 !   ! Evaluate and put the Roby ionic energy for a group of atoms
 !      atoms :: VEC{INT}, OPTIONAL
 !      n_roby_atom, i, a :: INT
-!      roby_atom :: VEC{INT}*
+!      roby_atom :: VEC{INT}@
 !      E_T, E_P, E_A :: REAL
 !      if (PRESENT(atoms)) then
 !          roby_atom.create(size(atoms))
@@ -4696,8 +4696,8 @@ contains
 !   ! indices are given in "roby_atom".
 !      roby_atom :: VEC{INT}
 !      energy :: REAL
-!      D,D_save :: OPMATRIX*
-!      P, Q :: MAT{REAL}*
+!      D,D_save :: OPMATRIX@
+!      P, Q :: MAT{REAL}@
 !      D_save => .density_matrix
 !      P.create(.n_bf, .n_bf)
 !      if (.spin_multiplicity/=1) then
@@ -4738,8 +4738,8 @@ contains
 !      output :: BIN, optional
 !      do_output :: BIN
 !      energy, E_k, Na_Em, Na_Ea, Ea_Nm, Ea_Em, Ea_Ea :: REAL
-!      Pa, Pb, Za, Zm, T :: MAT{REAL}*
-!      D, D_save :: MAT{REAL}*
+!      Pa, Pb, Za, Zm, T :: MAT{REAL}@
+!      D, D_save :: MAT{REAL}@
 !      do_output=TRUE
 !      if (present(output)) do_output=output              ! puts out the energies and sub-energies and all that
 !      T.create(.n_bf, .n_bf); Pa.create(.n_bf, .n_bf)
@@ -4839,7 +4839,7 @@ contains
 
 !   plot_roby_orbitals
 !   ! Plots the covalent and ionic orbitals to a grid
-!   roby_atom, roby_atom1, roby_atom2 :: VEC{INT}*
+!   roby_atom, roby_atom1, roby_atom2 :: VEC{INT}@
 !     .read_roby_groups(roby_atom,roby_atom1,roby_atom2)
 !     .plot_cos_sin_orbitals(roby_atom, roby_atom1, roby_atom2)
 !     roby_atom.destroy
@@ -4851,14 +4851,14 @@ contains
 !   ! Plots the cos and sin Roby-Gould orbitals
 !   ! =========================================
 !      roby_atom, roby_atom1, roby_atom2 :: VEC{INT}
-!      C, theta_c, S, theta_s :: MAT{REAL}*
-!      cval, sval :: VEC{REAL}*
-!      c_pair, s_pair, cs_pair :: VEC{INT}*
+!      C, theta_c, S, theta_s :: MAT{REAL}@
+!      cval, sval :: VEC{REAL}@
+!      c_pair, s_pair, cs_pair :: VEC{INT}@
 !      n_a, n_b, n_ab :: INT
 !      i, j, k, kk :: INT
-!      proj_COs, proj_SOs, saved_NOs :: OPMATRIX*
+!      proj_COs, proj_SOs, saved_NOs :: OPMATRIX@
 !      arch :: ARCHIVE
-!      gr :: VEC{REAL}*
+!      gr :: VEC{REAL}@
 !      pi_space, blurb :: BIN
 !   ! =========================================
 !      blurb = TRUE
@@ -4956,11 +4956,11 @@ contains
 
 !   get_gchf_atom_data ::: leaky
 !   ! s, l and j eigenvalues not finished  at all
-!   S :: MAT{REAL}*
-!   sigma,jj :: MAT{CPX}*
-!   Lx,Ly,Lz :: MAT{REAL}*
-!   Lix,Liy,Liz :: MAT{CPX}*
-!   CMOi,CMOj :: VEC{CPX}*
+!   S :: MAT{REAL}@
+!   sigma,jj :: MAT{CPX}@
+!   Lx,Ly,Lz :: MAT{REAL}@
+!   Lix,Liy,Liz :: MAT{CPX}@
+!   CMOi,CMOj :: VEC{CPX}@
 !   i,j,k,l :: INT
 !   II,sxi,syi,szi,lxi,lyi,lzi,CI :: CPX
 !
@@ -5094,13 +5094,13 @@ contains
 !
 !   get_gchf_j ::: leaky
 !   ! s, l and j eigenvalues not finished  at all
-!   S :: MAT{REAL}*
-!   Lx2,Ly2,Lz2 :: MAT{CPX}*
-!   CD,CMO :: MAT{CPX}*
-!   Lx,Ly,Lz :: MAT{REAL}*
+!   S :: MAT{REAL}@
+!   Lx2,Ly2,Lz2 :: MAT{CPX}@
+!   CD,CMO :: MAT{CPX}@
+!   Lx,Ly,Lz :: MAT{REAL}@
 !   II,jzi,jyi,jxi :: CPX
 !   ji :: REAL
-!   CMOi :: VEC{CPX}*
+!   CMOi :: VEC{CPX}@
 !   i,k,l :: INT
 !
 !   Lx.create(.n_bf,.n_bf);Ly.create(.n_bf,.n_bf);Lz.create(.n_bf,.n_bf)
@@ -5197,14 +5197,14 @@ contains
 !
 !   get_gchf_current_S ::: leaky
 !   ! s, l and j eigenvalues not finished  at all
-!   S :: MAT{REAL}*
-!   Lx2,Ly2,Lz2 :: MAT{CPX}*
-!   CD,CMO :: MAT{CPX}*
-!   Lx,Ly,Lz :: MAT{REAL}*
-!   Lax,Lay,Laz :: MAT{REAL}*
+!   S :: MAT{REAL}@
+!   Lx2,Ly2,Lz2 :: MAT{CPX}@
+!   CD,CMO :: MAT{CPX}@
+!   Lx,Ly,Lz :: MAT{REAL}@
+!   Lax,Lay,Laz :: MAT{REAL}@
 !   II,jzi,jyi,jxi :: CPX
 !   ji :: REAL
-!   CMOi :: VEC{CPX}*
+!   CMOi :: VEC{CPX}@
 !   i,j,k,l :: INT
 !
 !   !ENSURE(.molecular_orbitals.created("general_complex"),"no gchf mos'")
@@ -5366,7 +5366,7 @@ contains
 !
 !   put_mulliken_gchf_a_b
 !   ! Put all the available one elctron properties
-!   SD2 :: MAT{CPX}*
+!   SD2 :: MAT{CPX}@
 !
 !   SD2.create(2*.n_bf,2*.n_bf)
 !
@@ -5379,11 +5379,11 @@ contains
 !   get_mulliken_gchf_a_b(SD2) ::: leaky
 !   ! sets the mulliken population matrix and the outputs it.
 !     SD2 :: MAT{CPX}
-!      mulliken_matrix, density :: MAT{REAL}*
-!      diagonals,MO :: VEC{REAL}*
-!      S2 :: MAT{REAL}*
-!      mulliken_matrix2,density2 :: MAT{CPX}*
-!      diagonals2,CMO :: VEC{CPX}*
+!      mulliken_matrix, density :: MAT{REAL}@
+!      diagonals,MO :: VEC{REAL}@
+!      S2 :: MAT{REAL}@
+!      mulliken_matrix2,density2 :: MAT{CPX}@
+!      diagonals2,CMO :: VEC{CPX}@
 !      i,j,k :: INT
 !      a,b :: REAL
 !
@@ -5496,11 +5496,11 @@ contains
 !   get_mulliken_gchf_phase_a_b(SD2) ::: leaky
 !   ! sets the mulliken population matrix and the outputs it.
 !     SD2 :: MAT{CPX}
-!      mulliken_matrix, density :: MAT{REAL}*
-!      diagonals,MO :: VEC{REAL}*
-!      S2,S,Lx,Ly,Lz :: MAT{REAL}*
-!      mulliken_matrix2,density2 :: MAT{CPX}*
-!      diagonals2,CMO :: VEC{CPX}*
+!      mulliken_matrix, density :: MAT{REAL}@
+!      diagonals,MO :: VEC{REAL}@
+!      S2,S,Lx,Ly,Lz :: MAT{REAL}@
+!      mulliken_matrix2,density2 :: MAT{CPX}@
+!      diagonals2,CMO :: VEC{CPX}@
 !      szi,CI,II,lzi :: CPX
 !      i,j,k,l :: INT
 !      a,b :: REAL

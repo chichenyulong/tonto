@@ -27,7 +27,7 @@ module CRYSTAL
 
    implicit none
 
- ! saved_self :: CRYSTAL*
+ ! saved_self :: CRYSTAL@
 
    debug_list :: VEC{STR}*, private  DEFAULT_NULL
 
@@ -53,92 +53,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========================
-!  Create and destroy methods
-!  ==========================
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-      self :: PTR
-   end
-
-   destroy ::: leaky
-   ! Destroy an object
-      self :: PTR
-
-      if (.disassociated) return
-
-    ! .nullify_basis_part
-
-      .destroy_ptr_part
-
-      deallocate(self)
-
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of the crystal object
-
-      nullify(.fragment_atom)
-      nullify(.fragment_geometry)
-
-      nullify(.asymmetric_unit_geometry)
-      nullify(.asymmetric_unit_atom)
-
-      nullify(.unit_cell_geometry)
-      nullify(.unique_unit_cell_atom)
-      nullify(.is_asym_unit_cell_atom)
-      nullify(.asym_atom_for_unit_cell_atom)
-      nullify(.asym_symop_for_unit_cell_atom)
-      nullify(.asym_shift_for_unit_cell_atom)
-      nullify(.frag_parent_for_cell_atom)
-
-      nullify(.frag_atom_for_unit_cell_atom)
-      nullify(.unit_cell_atom_for_frag_atom)
-      nullify(.unit_cell_shft_for_frag_atom)
-      nullify(.frag_atom_for_asym_atom)
-      nullify(.asym_atom_for_frag_atom)
-
-      nullify(.unique_frag_atom)
-      nullify(.unique_atom_for_frag_atom)
-      nullify(.unique_symop_for_frag_atom)
-      nullify(.asym_symop_for_frag_atom)
-      nullify(.asym_shift_for_frag_atom)
-
-      nullify(.repetition_factor)
-      nullify(.asym_atom_rep_factor)
-
-      nullify(.unit_cell_mol_for_atom)
-
-      nullify(.stabilizer_symop)
-      nullify(.str)
-      nullify(.ptr)
-      nullify(.dtr)
-      nullify(.ftr)
-      nullify(.gtr)
-
-      nullify(.data)
-      nullify(.xray_data)
-      nullify(.pnd_data)
-      nullify(.xray_r_free_data)
-      nullify(.pnd_r_free_data)
-      nullify(.core_reflection)
-
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Erase all pointer information
-
-      .spacegroup.destroy
-      .unit_cell.destroy
-
-      .destroy_fragment_data
-      .destroy_asymmetric_unit
-      .destroy_data
-
-   end
 
    destroy_data ::: leaky
    ! Erase all data pointer information
@@ -214,18 +128,6 @@ contains
       .asymmetric_unit_geometry.destroy ! This is nothing to do with a fragment !
       .asymmetric_unit_atom.destroy
       .asymmetric_unit_source = "?"
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
    end
 
    copy(crystal) ::: leaky
@@ -388,14 +290,14 @@ contains
    ! Set the R free reflection data. "data" is destroyed and created
    ! again without those reflections in "free_data".
       self :: INOUT
-      data,free_data :: VEC{REFLECTION}*
+      data,free_data :: VEC{REFLECTION}@
 
    ENSURE(data.associated,"no diffraction data")
    ENSURE(free_data.disassociated,"r_free_data exists")
 
-      keep_data :: VEC{REFLECTION}*
-      harvest :: VEC{REAL}*
-      free,keep :: VEC{INT}*
+      keep_data :: VEC{REFLECTION}@
+      harvest :: VEC{REAL}@
+      free,keep :: VEC{INT}@
       percentage :: REAL
       i,n :: INT
 
@@ -666,7 +568,7 @@ contains
 
       name :: STR
       found :: BIN
-      cif :: CIF*
+      cif :: CIF@
 
       ! Read name from stdin
       stdin.read(name)
@@ -693,7 +595,7 @@ contains
       skip_atoms :: BIN, optional, IN
 
       skip,found :: BIN
-      itemvec :: VEC{STR}*
+      itemvec :: VEC{STR}@
 
       skip = FALSE
       if (present(skip_atoms)) skip = skip_atoms
@@ -741,7 +643,7 @@ contains
    ! Read in the asymmetric unit geometry in crystal coordinates.
    ! The coordinates are read in as a single vector ordered as x,y,z
    ! incrementing fastest, for the first to the last atom.
-      geometry :: VEC{REAL}*
+      geometry :: VEC{REAL}@
 
    WARN_IF(.asymmetric_unit_geometry.associated,"asymmetric_unit_geometry exists!")
 
@@ -981,7 +883,7 @@ contains
    ! 5. The set of symmetry operations which leave the fragment
    !    unchanged (the stabilizer) is made
       self :: INOUT
-      atom :: VEC{ATOM}*
+      atom :: VEC{ATOM}@
       assign_atom :: BIN, optional, IN
       warnings    :: BIN, optional, IN
 
@@ -1067,10 +969,10 @@ contains
    ENSURE(.asymmetric_unit_atom.associated,         "no .asymmetric_unit_atom")
    ENSURE(.asym_atom_for_unit_cell_atom.associated, "no .asym_atom_for_unit_cell_atom")
 
-      atom  :: VEC{ATOM}*
-      list  :: VEC{INT}*
+      atom  :: VEC{ATOM}@
+      list  :: VEC{INT}@
       pf,pu :: VEC{REAL}(3)
-      fg :: MAT{REAL}*
+      fg :: MAT{REAL}@
       n_frag_atoms,f,u,a :: INT
       tol :: REAL
       cart,found :: BIN
@@ -1161,11 +1063,11 @@ contains
 
       pa :: VEC{REAL}(3)
       offset :: VEC{INT}(3)
-      asymmetric_unit_geometry :: MAT{REAL}*
+      asymmetric_unit_geometry :: MAT{REAL}@
       n,a,b,s,col, i :: INT
       prune,warn,new,unique,frac,redundant,mess :: BIN
-      pruned :: MAP{INT,INT}*
-      list,cols :: VEC{INT}*
+      pruned :: MAP{INT,INT}@
+      list,cols :: VEC{INT}@
       tol :: REAL
 
       ! Set default options
@@ -1550,8 +1452,8 @@ contains
    ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom list")
 
       new :: VEC{VEC_{INT}}@
-      unit_cell_mol_for_atom,unique :: VEC{INT}*
-      geom0,geom1 :: MAT{REAL}*
+      unit_cell_mol_for_atom,unique :: VEC{INT}@
+      geom0,geom1 :: MAT{REAL}@
       rcm :: MAT{REAL}(3,3)
       pos_i,pos_j,offset :: VEC{REAL}(3)
       i,j,par_i,par_j, h1,h2,h3, mi,mj :: INT
@@ -1722,7 +1624,7 @@ contains
    ENSURE(.unit_cell_mol_for_atom.created,"no unit_cell_mol_for_atom list")
 
       vdw :: VEC{VEC_{INT}}@
-      geom0,geom1 :: MAT{REAL}*
+      geom0,geom1 :: MAT{REAL}@
       rcm :: MAT{REAL}(3,3)
       pos_i,pos_j,offset :: VEC{REAL}(3)
       i,j,par_i,par_j, h1,h2,h3 :: INT
@@ -1971,9 +1873,9 @@ contains
    ! TRUE if at least on the H atom positions was reset.
    ! *Multiple bonded H atom (from unit cell conn. table) *ignored*
    ! WARNING: this routine destroys all the fragment data.
-      self :: PTR
-      atom :: VEC{ATOM}*
-      H_bond_length :: VEC{REAL}*
+      self :: allocatable, INOUT
+      atom :: VEC{ATOM}@
+      H_bond_length :: VEC{REAL}@
       reset :: BIN, optional, OUT
 
    ENSURE(H_bond_length.associated,"no H_bond_length array")
@@ -2207,7 +2109,7 @@ contains
    ! *transpose* of the matrices in Hall's paper.
    !               S_cartesian  =  D  S^_crystal  D^-1
    ! NOTE: I think they are not transposed any more ...
-      res :: MAT3{REAL}*
+      res :: MAT3{REAL}@
 
    ENSURE(.spacegroup.seitz.associated,"no Seitz matrices")
 
@@ -2224,7 +2126,7 @@ contains
    xyz_seitz_matrices result (res) ::: leaky
    ! Create and return a list of the 3x3 part of the seitz matrices
    ! in the cartesian axis system.
-      res :: MAT3{REAL}*
+      res :: MAT3{REAL}@
 
    ENSURE(.spacegroup.seitz.associated,"no Seitz matrices")
 
@@ -2241,7 +2143,7 @@ contains
    transposed_xyz_seitz_matrices result (res) ::: leaky
    ! Create and return a list of the 3x3 part of the seitz matrices
    ! in the cartesian axis system.
-      res :: MAT3{REAL}*
+      res :: MAT3{REAL}@
 
    ENSURE(.spacegroup.seitz.associated,"no Seitz matrices")
 
@@ -2270,7 +2172,7 @@ contains
    ! NOTE: geometries NOT whole-shifted to unit cell ... should they ! be?
       self :: INOUT
 
-      g1,gi :: MAT{REAL}*
+      g1,gi :: MAT{REAL}@
       i,n :: INT
       identical :: BIN
 
@@ -2316,7 +2218,7 @@ contains
    ENSURE(geom_i.dim2==geom_j.dim2,"incompatible sizes for geom_i, geom_j")
 
       i,j,n_atom :: INT
-      skip :: VEC{BIN}*
+      skip :: VEC{BIN}@
       same :: BIN
       tol :: REAL
 
@@ -2347,7 +2249,7 @@ contains
    xyz_stabilizer_matrices result (res) ::: leaky
    ! Create and return a list of the 3x3 part of the seitz matrices
    ! in the cartesian axis which stabilize the fragment geometry.
-      res :: MAT3{REAL}*
+      res :: MAT3{REAL}@
    ENSURE(.spacegroup.seitz.associated,"no Seitz matrices")
    ENSURE(.stabilizer_symop.associated,"no stabilizer symop matrices")
       i,s :: INT
@@ -2365,7 +2267,7 @@ contains
    ! p'(r) = p(S^{-1}r) = p(r)R, and S is a stabilizer symop.
    ! WARNING: this routine is tied to an explicit ordering of the cartesian
    ! gaussian basis functions in a shell.
-      str :: MAT3{REAL}*
+      str :: MAT3{REAL}@
 
       .str.destroy
       .ptr.destroy
@@ -2387,7 +2289,7 @@ contains
    ! Return the "n"-th stabilizer representation matrix for xyz
    ! product found in a gaussian shell of angular momentum "l"
       n,l :: INT
-      res :: MAT{REAL}*
+      res :: MAT{REAL}@
    ENSURE(l>=0,"l must be non-negative")
    ENSURE(l<5, "l must be less than 5 (no h functions or higher)")
       select case (l)
@@ -2469,7 +2371,7 @@ contains
    ENSURE(.data.reflections.associated,"no reflection data")
 
       list :: VEC{VEC_{INT}}@
-      reflections :: VEC{REFLECTION}*
+      reflections :: VEC{REFLECTION}@
       n_unique,n_refl,n,i :: INT
 
       n_refl = .data.reflections.n_refl
@@ -2565,7 +2467,7 @@ contains
    ENSURE(.data.reflections.associated,"no reflection data")
 
       list :: VEC{VEC_{INT}}@
-      reflections :: VEC{REFLECTION}*
+      reflections :: VEC{REFLECTION}@
       n_unique,n_refl,n,i :: INT
 
       n_refl = .data.reflections.n_refl
@@ -2602,7 +2504,7 @@ contains
    ENSURE(.data.reflections.associated,"no reflection data")
 
       list :: VEC{VEC_{INT}}@
-      reflections :: VEC{REFLECTION}*
+      reflections :: VEC{REFLECTION}@
       n_unique,n_refl,n_max,n,i,j,g :: INT
       p,q,r :: VEC{INT}(3)
       same :: BIN
@@ -2777,7 +2679,7 @@ contains
 !     pi2,tx,ty,tz,dot :: REAL
 !     s,n,n_refl,h,k,l :: INT
 !     seitz :: MAT{REAL}(4,4)
-!     refl :: VEC{REFLECTION}*
+!     refl :: VEC{REFLECTION}@
 !
 !     refl => .data.reflections
 !     n_refl = refl.dim
@@ -2835,8 +2737,8 @@ contains
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
-!     phase :: MAT3{CPX}*
-!     q :: MAT{REAL}*
+!     phase :: MAT3{CPX}@
+!     q :: MAT{REAL}@
 !     u,uf,n,n_refl :: INT
 !
 !     n_refl = .data.reflections.n_refl
@@ -2909,8 +2811,8 @@ contains
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
-!     phase :: MAT3{CPX}*
-!     q :: MAT{REAL}*
+!     phase :: MAT3{CPX}@
+!     q :: MAT{REAL}@
 !     u,uf,n,n_refl :: INT
 !
 !     n_refl = .data.reflections.n_refl
@@ -2967,9 +2869,9 @@ contains
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
-!     phase :: VEC{CPX}*
-!     q :: MAT{REAL}*
-!     ints :: MAT{CPX}*
+!     phase :: VEC{CPX}@
+!     q :: MAT{REAL}@
+!     ints :: MAT{CPX}@
 !     u,uf,n,n_refl :: INT
 !
 !     n_refl = .data.reflections.n_refl
@@ -3036,9 +2938,9 @@ contains
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
-!     phase :: VEC{CPX}*
-!     q :: MAT{REAL}*
-!     ints :: MAT3{CPX}*
+!     phase :: VEC{CPX}@
+!     q :: MAT{REAL}@
+!     ints :: MAT3{CPX}@
 !     u,uf,n,n_refl :: INT
 !     ci :: CPX
 !
@@ -3106,9 +3008,9 @@ contains
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
-!      phase :: VEC{CPX}*
-!      q :: MAT{REAL}*
-!      ints :: MAT3{CPX}*
+!      phase :: VEC{CPX}@
+!      q :: MAT{REAL}@
+!      ints :: MAT3{CPX}@
 !      u,uf,n,n_refl :: INT
 !
 !      n_refl = .data.reflections.n_refl
@@ -3171,7 +3073,7 @@ contains
 !   ENSURE(ft_ints.dim1==.data.reflections.n_refl,"wrong size, array ft_ints")
 !   ENSURE(unique_ft_ints.dim1==.spacegroup.n_unique_SF_symops*.data.reflections.n_refl,"wrong size, array unique_ft_ints")
 !
-!     phase :: VEC{CPX}*
+!     phase :: VEC{CPX}@
 !     u,uf, n,n_refl :: INT
 !
 !     n_refl = .data.reflections.n_refl
@@ -3211,10 +3113,10 @@ contains
 !      F :: MAT{REAL}, OUT
 !      sphere_sum :: BIN, optional
 !
-!      symop :: MAT3{REAL}*
-!      pos,L0,L1 :: MAT{REAL}*
-!      charge,dipole :: VEC{REAL}*
-!      mol :: VEC{INT}*
+!      symop :: MAT3{REAL}@
+!      pos,L0,L1 :: MAT{REAL}@
+!      charge,dipole :: VEC{REAL}@
+!      mol :: VEC{INT}@
 !      fac :: REAL
 !      n_atom,dim, u,a,s, fu,lu :: INT
 !
@@ -3624,8 +3526,8 @@ contains
    ENSURE(.fragment_info_made,                 "no fragment info")
 
       fac :: REAL
-      v :: VEC{REAL}*
-      dF :: MAT{REAL}*
+      v :: VEC{REAL}@
+      dF :: MAT{REAL}@
 
       ! Create refinement arrays & initialize (leaky)
       ! - asymmetric atom and fragment atom pADPs are set.
@@ -3733,9 +3635,9 @@ contains
    ENSURE(.data_exists,"no diffraction data")
    ENSURE(.fragment_info_made,"no fragment info")
 
-      X :: VEC{REAL}*
-      labels, refine_U3,refine_U4 :: VEC{STR}*
-      atom_a,atom_f :: ATOM*
+      X :: VEC{REAL}@
+      labels, refine_U3,refine_U4 :: VEC{STR}@
+      atom_a,atom_f :: ATOM@
       f,a, n_p,n_f :: INT
       fac :: REAL
 
@@ -3789,7 +3691,7 @@ contains
 
    ENSURE(.data_exists,"no diffraction data")
 
-      labels, refine_U3,refine_U4 :: VEC{STR}*
+      labels, refine_U3,refine_U4 :: VEC{STR}@
       n_p :: INT
 
       ! Get labels
@@ -3845,9 +3747,9 @@ contains
    ENSURE(.data.associated,                        "no data")
    ENSURE(.fragment_info_made,                  "no fragment info")
 
-      dFa  :: MAT{REAL}*
-      sf_d,dFc :: MAT{CPX}*
-      sf_e,Fc :: VEC{CPX}*
+      dFa  :: MAT{REAL}@
+      sf_d,dFc :: MAT{CPX}@
+      sf_e,Fc :: VEC{CPX}@
       n_refl,n_k,n_p :: INT
 
       ! Constants
@@ -3935,9 +3837,9 @@ contains
    ENSURE(.data.associated,                        "no data")
    ENSURE(.fragment_info_made,                  "no fragment info")
 
-      dIa  :: MAT{REAL}*
-      sf_d,dFc :: MAT{CPX}*
-      sf_e,Fc :: VEC{CPX}*
+      dIa  :: MAT{REAL}@
+      sf_d,dFc :: MAT{CPX}@
+      sf_e,Fc :: VEC{CPX}@
       n_refl,n_k,n_p :: INT
 
       ! Constants
@@ -4008,8 +3910,8 @@ contains
 
       d1,d2,d3, k1,k2,k3, kr  :: REAL
       n_k, u,f, k :: INT
-      sf_u :: VEC{CPX}*
-      k_pt :: MAT{REAL}*
+      sf_u :: VEC{CPX}@
+      k_pt :: MAT{REAL}@
 
       ! Get the k points
       n_k = .n_unique_SF_k_pts
@@ -4056,7 +3958,7 @@ contains
    ENSURE(.data.associated,"no data")
    ENSURE(.data.fragment_covariance_matrix.associated,"no data.fragment_covariance_matrix")
 
-      esd :: VEC{REAL}*
+      esd :: VEC{REAL}@
 
       ! Get the fragment covariances
       .set_frag_from_asym_cov_mx
@@ -4084,8 +3986,8 @@ contains
    ENSURE(.fragment_info_made,"no fragment info")
 
       f,a,s :: INT
-      f_atom,a_atom :: ATOM*
-      seitz :: MAT3{REAL}*
+      f_atom,a_atom :: ATOM@
+      seitz :: MAT3{REAL}@
       CM :: MAT{REAL}(3,3)
       shift :: VEC{REAL}(3)
 
@@ -4170,9 +4072,9 @@ contains
    ENSURE(.data.dX.associated,"no data.dX")
 
       u,f,a,s, n, ub,uf,ul, ab,af,al :: INT
-      dA,Apar,Xpar :: VEC{REAL}*
-      seitz :: MAT3{REAL}*
-      a_atom :: ATOM*
+      dA,Apar,Xpar :: VEC{REAL}@
+      seitz :: MAT3{REAL}@
+      a_atom :: ATOM@
       X_atom :: ATOM
 
       ! Debug
@@ -4259,10 +4161,10 @@ contains
 
       a, n,ab,af,al, n_stab,s,t :: INT
       stabilizer :: VEC{INT}@
-      Xpar :: VEC{REAL}*
-      seitz :: MAT3{REAL}*
+      Xpar :: VEC{REAL}@
+      seitz :: MAT3{REAL}@
       X_atom,Y_atom :: ATOM
-      a_atom :: ATOM*
+      a_atom :: ATOM@
       fac :: REAL
 
       ! Debug
@@ -4382,9 +4284,9 @@ contains
       u1,f1,a1,s1,n1, u1b,u1f,u1l, a1b,a1f,a1l :: INT
       u2,f2,a2,s2,n2, u2b,u2f,u2l, a2b,a2f,a2l :: INT
       dim  :: INT
-      diag :: VEC{REAL}*
-      T1,T2, asyma_covariance_matrix,acov,ucov :: MAT{REAL}*
-      seitz :: MAT3{REAL}*
+      diag :: VEC{REAL}@
+      T1,T2, asyma_covariance_matrix,acov,ucov :: MAT{REAL}@
+      seitz :: MAT3{REAL}@
 
       ! *Inverse* symops (see below)
       seitz => .transposed_xyz_seitz_matrices
@@ -4493,8 +4395,8 @@ contains
 
       f1,a1,s1,n1, f1b,f1f,f1l, a1b,a1f,a1l :: INT
       f2,a2,s2,n2, f2b,f2f,f2l, a2b,a2f,a2l :: INT
-      T1,T2, acov,fcov :: MAT{REAL}*
-      seitz :: MAT3{REAL}*
+      T1,T2, acov,fcov :: MAT{REAL}@
+      seitz :: MAT3{REAL}@
 
       ! Symops
       seitz => .xyz_seitz_matrices
@@ -4700,15 +4602,15 @@ contains
 !   ENSURE(sf_n.dim1==.n_unique_SF_k_pts,         "sf_n, wrong dim1")
 !   ENSURE(sf_n.dim2==.n_unique_frag_atoms,       "sf_n, wrong dim2")
 !
-!      f_atom :: ATOM*
+!      f_atom :: ATOM@
 !      adp3 :: MAT3{REAL}(3,3,3)
 !      adp4 :: MAT4{REAL}(3,3,3,3)
 !      kv   :: VEC{REAL}(3)
 !      v3   :: VEC{REAL}(10)
 !      v4   :: VEC{REAL}(15)
-!      sf_u :: VEC{CPX}*
-!      k_pt,kU :: MAT{REAL}*
-!      u1v,u2v,u3v :: VEC{REAL}*
+!      sf_u :: VEC{CPX}@
+!      k_pt,kU :: MAT{REAL}@
+!      u1v,u2v,u3v :: VEC{REAL}@
 !      u1,u2,u3, k1,k2,k3, tf, c3,c4 :: REAL
 !      k1_k1,k2_k2,k3_k3,k1_k2,k1_k3,k2_k3 :: REAL
 !      n_k,f,u,k,base :: INT
@@ -4894,7 +4796,7 @@ contains
 !   ENSURE(sf_d.dim2==25,"sf_d, wrong dim2")
 !
 !      f,p,s :: INT
-!      f_atom :: ATOM*
+!      f_atom :: ATOM@
 !      step,fac :: REAL
 !
 !      step = TOL(6)
@@ -4948,7 +4850,7 @@ contains
 !   DIE_IF(NOT .data.refine_anharmonicity, "must be refining anharmonicity")
 !   ENSURE(sf_e.dim ==.n_unique_SF_k_pts,         "sf_e, wrong dim")
 !
-!      f_atom :: ATOM*
+!      f_atom :: ATOM@
 !      adp2 :: MAT{REAL}(3,3)
 !      adp3 :: MAT3{REAL}(3,3,3)
 !      adp4 :: MAT4{REAL}(3,3,3,3)
@@ -4956,8 +4858,8 @@ contains
 !      v2   :: VEC{REAL}(6)
 !      v3   :: VEC{REAL}(10)
 !      v4   :: VEC{REAL}(15)
-!      sf_u :: VEC{CPX}*
-!      k_pt :: MAT{REAL}*
+!      sf_u :: VEC{CPX}@
+!      k_pt :: MAT{REAL}@
 !      k1,k2,k3, tf, c2,c3,c4 :: REAL
 !      k1_k1,k2_k2,k3_k3,k1_k2,k1_k3,k2_k3 :: REAL
 !      n_k,f, k,base :: INT
@@ -5064,14 +4966,14 @@ contains
 !   DIE_IF(NOT .data.refine_anharmonicity, "must be refining anharmonicity")
 !   ENSURE(sf_e.dim ==.n_unique_SF_k_pts,         "sf_e, wrong dim")
 !
-!      f_atom :: ATOM*
+!      f_atom :: ATOM@
 !      adp3 :: MAT3{REAL}(3,3,3)
 !      adp4 :: MAT4{REAL}(3,3,3,3)
 !      v3   :: VEC{REAL}(10)
 !      v4   :: VEC{REAL}(15)
-!      sf_u :: VEC{CPX}*
-!      k_pt,kU :: MAT{REAL}*
-!      u1v,u2v,u3v :: VEC{REAL}*
+!      sf_u :: VEC{CPX}@
+!      k_pt,kU :: MAT{REAL}@
+!      u1v,u2v,u3v :: VEC{REAL}@
 !      u1,u2,u3, k1,k2,k3, tf, c3,c4 :: REAL
 !      k1_k1,k2_k2,k3_k3,k1_k2,k1_k3,k2_k3 :: REAL
 !      n_k,f, k,base :: INT
@@ -5200,13 +5102,13 @@ contains
       adp2 :: MAT{REAL}(3,3)
       adp3 :: MAT3{REAL}(3,3,3)
       adp4 :: MAT4{REAL}(3,3,3,3)
-      sf_u :: VEC{CPX}*
-      k_pt :: MAT{REAL}*
+      sf_u :: VEC{CPX}@
+      k_pt :: MAT{REAL}@
       k1,k2,k3, c2,c3,c4 :: REAL
       k1_k1,k2_k2,k3_k3,k1_k2,k1_k3,k2_k3 :: REAL
       n_k,f,u,k,base :: INT
       II,sfh,sf1,sf2,sf4,sf6,sf24 :: CPX
-      f_atom :: ATOM*
+      f_atom :: ATOM@
 
       ! Constants
       II  = IMAGIFY(ONE)
@@ -5493,9 +5395,9 @@ contains
    ENSURE(.data.associated, "no reflection data")
    ENSURE(.xray_data.associated, "no x-ray reflection data")
 
-      k_pt,kU  :: MAT{REAL}*
-      sf_u :: VEC{CPX}*
-      u1,u2,u3 :: VEC{REAL}*
+      k_pt,kU  :: MAT{REAL}@
+      sf_u :: VEC{CPX}@
+      u1,u2,u3 :: VEC{REAL}@
       k1k,k2k,k3k,tf :: REAL
       n_k,f,u,k,base :: INT
       II,sf,sf2 :: CPX
@@ -5587,9 +5489,9 @@ contains
    ENSURE(.xray_data.associated, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without ADP's")
 
-      k_pt,kU  :: MAT{REAL}*
-      sf_u :: VEC{CPX}*
-      u1,u2,u3 :: VEC{REAL}*
+      k_pt,kU  :: MAT{REAL}@
+      sf_u :: VEC{CPX}@
+      u1,u2,u3 :: VEC{REAL}@
       k1k,k2k,k3k,tf :: REAL
       n_k,f,u,k,base :: INT
       II,sf :: CPX
@@ -5674,9 +5576,9 @@ contains
    ENSURE(.xray_data.associated, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without positions")
 
-      k_pt,kU  :: MAT{REAL}*
-      sf_u :: VEC{CPX}*
-      u1,u2,u3 :: VEC{REAL}*
+      k_pt,kU  :: MAT{REAL}@
+      sf_u :: VEC{CPX}@
+      u1,u2,u3 :: VEC{REAL}@
       k1k,k2k,k3k,tf :: REAL
       n_k,f,u,k,base :: INT
       sf,sf2 :: CPX
@@ -5764,9 +5666,9 @@ contains
    ENSURE(.xray_data.associated, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without H ADP's")
 
-      k_pt,kU  :: MAT{REAL}*
-      sf_u :: VEC{CPX}*
-      u1,u2,u3 :: VEC{REAL}*
+      k_pt,kU  :: MAT{REAL}@
+      sf_u :: VEC{CPX}@
+      u1,u2,u3 :: VEC{REAL}@
       k1k,k2k,k3k,tf :: REAL
       n_k,f,u,k,base :: INT
       II,sf,sf2 :: CPX
@@ -5888,9 +5790,9 @@ contains
    ENSURE(.xray_data.associated, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without positions")
 
-      k_pt,kU  :: MAT{REAL}*
-      sf_u :: VEC{CPX}*
-      u1,u2,u3 :: VEC{REAL}*
+      k_pt,kU  :: MAT{REAL}@
+      sf_u :: VEC{CPX}@
+      u1,u2,u3 :: VEC{REAL}@
       k1k,k2k,k3k,tf :: REAL
       n_k,f,u,k,base :: INT
       sf,sf2 :: CPX
@@ -6002,9 +5904,9 @@ contains
    ENSURE(.xray_data.associated, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without H ADP's")
 
-      k_pt,kU  :: MAT{REAL}*
-      sf_u :: VEC{CPX}*
-      u1,u2,u3 :: VEC{REAL}*
+      k_pt,kU  :: MAT{REAL}@
+      sf_u :: VEC{CPX}@
+      u1,u2,u3 :: VEC{REAL}@
       k1k,k2k,k3k,tf :: REAL
       n_k,f,u,k,base :: INT
       II,sf,sf2 :: CPX
@@ -6128,9 +6030,9 @@ contains
    ENSURE(.xray_data.associated, "no x-ray reflection data")
    DIE_IF(.data.refine_anharmonicity, "don't refine anharmonicity without H ADP's")
 
-      k_pt,kU  :: MAT{REAL}*
-      sf_u :: VEC{CPX}*
-      u1,u2,u3 :: VEC{REAL}*
+      k_pt,kU  :: MAT{REAL}@
+      sf_u :: VEC{CPX}@
+      u1,u2,u3 :: VEC{REAL}@
       k1k,k2k,k3k,tf :: REAL
       n_k,f,u,k,base :: INT
       II,sf,sf2 :: CPX
@@ -6248,9 +6150,9 @@ contains
    ENSURE(.unique_atom_for_frag_atom.associated,"no crystal unq_atom_for_frag_atom")
    DIE_IF(.data.refine_anharmonicity, "refine anharmonicity with pos and H ADP's")
 
-      k_pt,kU  :: MAT{REAL}*
-      sf_u :: VEC{CPX}*
-      u1,u2,u3 :: VEC{REAL}*
+      k_pt,kU  :: MAT{REAL}@
+      sf_u :: VEC{CPX}@
+      u1,u2,u3 :: VEC{REAL}@
       k1k,k2k,k3k,tf :: REAL
       n_k,f,u,k,base :: INT
       sf,sf2 :: CPX
@@ -6471,9 +6373,9 @@ contains
    ENSURE(.data.correlation_matrix.associated,"no data.correlation_matrix")
    ENSURE(.asymmetric_unit_atom.associated,"no .asymmetric_unit_atom's")
 
-      val :: VEC{REAL}*
-      row,col,ind :: VEC{INT}*
-      label,labr,labc :: VEC{STR}*
+      val :: VEC{REAL}@
+      row,col,ind :: VEC{INT}@
+      label,labr,labc :: VEC{STR}@
       table :: VEC{TABLE_COLUMN}@
       min_corr :: REAL
       n_corr :: INT
@@ -6605,7 +6507,7 @@ contains
 
       f1,n1,f1b,c1b :: INT
       f2,n2,f2b,c2b :: INT
-      cm :: MAT{REAL}*
+      cm :: MAT{REAL}@
 
       ! Turn off printing if refining
       if (.data.refine_structure) return
@@ -6650,7 +6552,7 @@ contains
 
    make_pos_covariance_matrix(cm) ::: leaky
    ! Allocate and make the positional covarinace matrix "cm".
-      cm :: MAT{REAL}*
+      cm :: MAT{REAL}@
 
    ENSURE(.data.associated,   "no data")
    ENSURE(.data.fragment_covariance_matrix.associated,"no fragment_covariance_matrix")
@@ -6695,9 +6597,9 @@ contains
    ENSURE(.data.associated,   "no data")
    ENSURE(.data.fragment_covariance_matrix.associated,"no fragment_covariance_matrix")
 
-      cm :: MAT{REAL}*
+      cm :: MAT{REAL}@
       name :: STR
-      save,file :: TEXTFILE*
+      save,file :: TEXTFILE@
 
       ! Read the name
       stdin.read(name)
@@ -6851,7 +6753,7 @@ contains
    ! Put out the cartesian seitz matrices.
       self :: IN
 
-      symop :: MAT3{REAL}*
+      symop :: MAT3{REAL}@
 
 
       stdout.save
@@ -6881,8 +6783,8 @@ contains
    ENSURE(.asym_atom_rep_factor.associated,"no asym_atom_rep_factor")
    ENSURE(.asym_atom_stabilizer.created,"no asym_atom_stabilizer")
 
-      ID :: VEC{STR}*
-      rf :: VEC{INT}*
+      ID :: VEC{STR}@
+      rf :: VEC{INT}@
       table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
@@ -6975,9 +6877,9 @@ contains
    ENSURE(.frag_atom_for_unit_cell_atom.associated, "no frag_atom_for_cell_atom")
    ENSURE(.frag_parent_for_cell_atom.associated,    "no frag_parent_for_cell_atom")
 
-      ID :: VEC{STR}*
-      is_asym :: VEC{BIN}*
-      asym_atom,asym_symp,frag_atom,frag_parn :: VEC{INT}*
+      ID :: VEC{STR}@
+      is_asym :: VEC{BIN}@
+      asym_atom,asym_symp,frag_atom,frag_parn :: VEC{INT}@
       table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
@@ -7046,7 +6948,7 @@ contains
    ! Put unit cell information
    ! CRYST1   31.595   32.369   24.219  90.00  90.00  90.00 P 21 21 21    8
       self :: IN
-      pdbfile :: TEXTFILE*
+      pdbfile :: TEXTFILE@
 
       factor :: REAL
 
@@ -7207,7 +7109,7 @@ contains
 
       n_pADPs :: INT
       thresh :: STR
-      esd :: VEC{REAL}*
+      esd :: VEC{REAL}@
 
       ! Spacegroup information
       .spacegroup.put_CIF
@@ -7257,7 +7159,7 @@ contains
    ENSURE(atom(1).pos_axis_system==atom(1).ADP_axis_system, "inconsistent pos and ADP axis systems")
    ENSURE(atom(1).pos_axis_system==atom(1).ADPn_axis_system,"inconsistent pos and ADPn axis systems")
 
-      T,C :: MAT{REAL}*
+      T,C :: MAT{REAL}@
       n_pADPs :: INT
       a,n, ab,af,al :: INT
 
@@ -7340,7 +7242,7 @@ contains
    ENSURE(.data.covariance_matrix.associated,"no covariance_matrix")
    ENSURE(.asymmetric_unit_atom.associated,"no asymmetric_unit_atom list")
 
-      esd :: VEC{REAL}*
+      esd :: VEC{REAL}@
       n_pADPs :: INT
 
       ! Cell line
@@ -7611,9 +7513,9 @@ contains
 
    ENSURE(.fragment_info_made,"no fragment info")
 
-      ID :: VEC{STR}*
-      as4f,sy4f,un4f,rf :: VEC{INT}*
-      sh4f :: MAT{REAL}*
+      ID :: VEC{STR}@
+      as4f,sy4f,un4f,rf :: VEC{INT}@
+      sh4f :: MAT{REAL}@
       table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
@@ -7796,7 +7698,7 @@ contains
    DIE_IF(.data.disassociated,"no reflection data")
 
       lambda :: REAL
-      save,file :: TEXTFILE*
+      save,file :: TEXTFILE@
 
       ! Fit analysis
       stdout.flush
@@ -7926,8 +7828,8 @@ contains
    ENSURE(.data.have_F_exp, "no experimental structure factors")
    ENSURE(pts.dim2==3,  "incorrect dimension for points array")
 
-      k  :: MAT{REAL}*
-      dF :: VEC{CPX}*
+      k  :: MAT{REAL}@
+      dF :: VEC{CPX}@
       fac,res,kp,p1,p2,p3,k1,k2,k3 :: REAL
       ci  :: CPX
       n_refl,n,r :: INT

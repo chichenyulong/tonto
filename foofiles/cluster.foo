@@ -64,59 +64,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  ==========
-!  Allocation
-!  ==========
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not set defaults.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-
-      nullify(.crystal)
-      nullify(.asymmetric_unit_atom)
-      nullify(.fragment_geometry)
-
-      nullify(.geometry)
-      nullify(.shift)
-      nullify(.shift_for_atom)
-      nullify(.is_fragment_atom)
-      nullify(.occupation_list)
-      nullify(.molecule_centroid)
-      nullify(.unique_molecule_for)
-      nullify(.unique_symcode_for)
-
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts
-
-      ! Never destroy these, they are always pointer assigned
-      nullify(.crystal)
-      nullify(.asymmetric_unit_atom)
-      nullify(.fragment_geometry)
-
-      .geometry.destroy
-      .shift.destroy
-      .shift_for_atom.destroy
-      .is_fragment_atom.destroy
-      .occupation_list.destroy
-      .molecule_for_atom.destroy
-      .molecule.destroy
-      .molecule_centroid.destroy
-      .unique_molecule_for.destroy
-      .unique_symcode_for.destroy
-      .atom_connection.destroy
-
-   end
 
    destroy_cluster_info_ptr_part ::: leaky
    ! Destroy the non-symop informational ptr parts. These incclude the actual
@@ -135,18 +82,6 @@ contains
       .unique_symcode_for.destroy
       .atom_connection.destroy
 
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
    end
 
    copy(cluster) ::: leaky
@@ -173,8 +108,8 @@ contains
 
    create(crystal) ::: leaky
    ! Create the object from the supplied "crystal".
-      self :: PTR
-      crystal :: CRYSTAL*
+      self :: allocatable, INOUT
+      crystal :: CRYSTAL@
 
    ENSURE(crystal.associated,"no crystal created!")
    ENSURE(crystal.asymmetric_unit_atom.associated,"no crystal asymmetric unit atoms!")
@@ -193,7 +128,7 @@ contains
    ! is essentially a crystal with additional operations based on the
    ! .fragment_geometry. Thus we must keep the crystal.fragment_geometry
    ! in sync with the cluster.fragment geometry.
-      crystal :: CRYSTAL*
+      crystal :: CRYSTAL@
 
    ENSURE(crystal.associated,"no crystal created!")
    ENSURE(crystal.asymmetric_unit_atom.associated,"no crystal asymmetric unit atoms!")
@@ -343,7 +278,7 @@ contains
    ENSURE(.crystal.associated,"no crystal defined")
    ENSURE(.crystal.asymmetric_unit_atom.associated,"no asymmetric atoms!")
 
-      occ :: VEC{REAL}*
+      occ :: VEC{REAL}@
 
       occ.create(.asymmetric_unit_atom.dim)
       occ = 1.0
@@ -413,8 +348,8 @@ contains
    ! positions of actual atoms in the crystal lattice.
    ENSURE(.crystal.associated,"no crystal defined")
 
-      fragment_geometry :: MAT{REAL}*
-      tmp :: VEC{REAL}*
+      fragment_geometry :: MAT{REAL}@
+      tmp :: VEC{REAL}@
       n :: INT
 
       stdin.read_ptr(tmp)
@@ -514,7 +449,7 @@ contains
       radius,two_angstrom :: REAL
       pos,b,t :: VEC{REAL}(3)
       f,u,h000,uc :: INT
-      fragment_geometry :: MAT{REAL}*
+      fragment_geometry :: MAT{REAL}@
 
       select case (.generation_method)
 
@@ -754,11 +689,11 @@ contains
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.crystal.unit_cell_geometry.associated,"no crystal unit_cell_geometry")
 
-      geom0,frag :: MAT{REAL}*
+      geom0,frag :: MAT{REAL}@
       rcm :: MAT{REAL}(3,3)
       pos,off,d,frac_radius :: VEC{REAL}(3)
-      hlist,ulist,match :: VEC{INT}*
-      uskip :: VEC{BIN}*
+      hlist,ulist,match :: VEC{INT}@
+      uskip :: VEC{BIN}@
       d2,radius2 :: REAL
       within_radius,has_frag_atoms,not000,offset, has_atoms_to_suppress :: BIN
       n_unit_cell_atoms, h0,h1,h2,h3, hcode,code, k,u :: INT
@@ -1083,7 +1018,7 @@ contains
    do_defragment(occupation_list) ::: leaky
    ! Defragment the "occupation_list"
       self :: IN
-      occupation_list :: VEC{INT}*
+      occupation_list :: VEC{INT}@
 
    ENSURE(occupation_list.associated,"no occupation_list")
    ENSURE(.crystal.associated,"no crystal")
@@ -1151,9 +1086,9 @@ contains
    ! Defragment a single atom "u" in the unit cell and produce a
    ! "geometry" in crystal coordinates.
       u :: INT, IN
-      geometry :: MAT{REAL}*
+      geometry :: MAT{REAL}@
 
-      occupation_list :: VEC{INT}*
+      occupation_list :: VEC{INT}@
 
       ! Creat one-atom occ list
       occupation_list.create(1)
@@ -1180,7 +1115,7 @@ contains
       pos :: MAT{REAL}, OUT
       mass   :: VEC{REAL}, OUT
 
-      occupation_list :: VEC{INT}*
+      occupation_list :: VEC{INT}@
 
       ! Get symop for cell atom "u"
       symop = .crystal.asym_symop_for_unit_cell_atom(u)
@@ -1209,7 +1144,7 @@ contains
       charge,dipole :: VEC{REAL}, OUT
       frag_atom :: VEC{INT}, optional
 
-      occupation_list :: VEC{INT}*
+      occupation_list :: VEC{INT}@
 
       ! Make the coded occupation_list for this atom
       occupation_list.create(1)
@@ -1242,7 +1177,7 @@ contains
       alpha_q :: MAT{REAL}, OUT
       alpha_m :: MAT3{REAL}, OUT
 
-      occupation_list :: VEC{INT}*
+      occupation_list :: VEC{INT}@
 
       ! Make the coded occupation_list for this atom
       occupation_list.create(1)
@@ -1264,7 +1199,7 @@ contains
 
    ENSURE(.molecule_for_atom.created,"no molecule_for_atom")
 
-      unique :: VEC{INT}*
+      unique :: VEC{INT}@
       mi,mj, a,m :: INT
 
       ! Get molecule indices & sort ascdending
@@ -1305,7 +1240,7 @@ contains
    ENSURE(.molecule_for_atom.created,"no molecule_for_atom")
 
       li,lj :: VEC{INT}@
-      ci,cj,ui,uj,ai,aj, permutation, new :: VEC{INT}*
+      ci,cj,ui,uj,ai,aj, permutation, new :: VEC{INT}@
       mi,mj, ni, s,si,sj, ic,i0,i1,i2,i3, jc,j0,j1,j2,j3 :: INT
       pi,pj,ps :: VEC{REAL}(3)
       shift :: VEC{INT}(3)
@@ -1607,7 +1542,7 @@ contains
    ! Extract the "geometry" (fractional) from an "occupation_list".
       self :: IN
       occupation_list :: VEC{INT}, IN
-      geometry :: MAT{REAL}*
+      geometry :: MAT{REAL}@
 
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.crystal.unit_cell_geometry.associated,"no crystal unit cell geometry")
@@ -1706,7 +1641,7 @@ contains
    ENSURE(charge.dim==occupation_list.dim, "charge, wrong size")
    ENSURE(dipole.dim==3*occupation_list.dim, "dipole, wrong size")
 
-      seitz :: MAT3{REAL}*
+      seitz :: MAT3{REAL}@
       i,l,code,h1,h2,h3,u, p,s :: INT
       q :: VEC{REAL}(3)
 
@@ -1794,8 +1729,8 @@ contains
    ENSURE(all(shape(alpha_q)==[3,occupation_list.dim]),"alpha_q, wrong size")
    ENSURE(all(shape(alpha_m)==[3,3,occupation_list.dim]), "alpha_m, wrong size")
 
-      T  :: MAT{REAL}*
-      inverse_seitz :: MAT3{REAL}*
+      T  :: MAT{REAL}@
+      inverse_seitz :: MAT3{REAL}@
       i,code,h1,h2,h3,u, p,s :: INT
       q :: VEC{REAL}(3)
 
@@ -1887,7 +1822,7 @@ contains
 
    create_fragment_atom_list(fragment_atom) ::: leaky
    ! Create the "fragment_atom" list.
-      fragment_atom :: VEC{ATOM}*
+      fragment_atom :: VEC{ATOM}@
 
    ENSURE(.n_fragment_atoms>0,"no fragment atoms")
    ENSURE(.is_fragment_atom.associated,"no fragment atoms")
@@ -1915,10 +1850,10 @@ contains
    ENSURE(.crystal.asym_atom_for_unit_cell_atom.associated,"no asym_atom-cell_atom")
    ENSURE(.asymmetric_unit_atom.has_cartesian_axes, "pADPs must be in cartn axis system")
 
-      ulist :: VEC{INT}*
-      seitz :: MAT3{REAL}*
+      ulist :: VEC{INT}@
+      seitz :: MAT3{REAL}@
       a,f,u,p,s :: INT
-      atom_f, atom_p :: ATOM*
+      atom_f, atom_p :: ATOM@
 
       ! Unit cell atoms which correspond to the fragment atoms
       ulist.create(.n_atoms)
@@ -1972,7 +1907,7 @@ contains
 
    create_mol_atom_list(mol_atom,m) ::: leaky
    ! Create the "mol_atom" ATOM list for molecule "m".
-      mol_atom :: VEC{ATOM}*
+      mol_atom :: VEC{ATOM}@
       m :: INT, IN
 
    ENSURE(.molecule.created,"no molecule list")
@@ -1998,10 +1933,10 @@ contains
    ENSURE(.crystal.asym_atom_for_unit_cell_atom.associated,"no asym_atom-cell_atom")
    ENSURE(.asymmetric_unit_atom.has_cartesian_axes, "pADPs must be in cartn axis system")
 
-      ulist :: VEC{INT}*
-      seitz :: MAT3{REAL}*
+      ulist :: VEC{INT}@
+      seitz :: MAT3{REAL}@
       f,a, u,p,s :: INT
-      atom_f, atom_p :: ATOM*
+      atom_f, atom_p :: ATOM@
 
       ! Unit cell atoms which correspond to the molecule's atoms
       ulist.create(.n_atoms)
@@ -2164,7 +2099,7 @@ contains
    ! Create and make a new atom list for the cluster
    ! NOTE: basis sets are pointer copied!
       self :: IN
-      atom :: VEC{ATOM}*
+      atom :: VEC{ATOM}@
 
    ENSURE(.fragment_geometry.associated, "no crystal fragment geometry")
    ENSURE(.crystal.associated, "no crystal data")
@@ -2193,10 +2128,10 @@ contains
    ENSURE(.asymmetric_unit_atom.associated, "no asymmetric_cell_atom data")
    ENSURE(.molecule_for_atom.created, "no molecule_for_atom info")
 
-      ulist :: VEC{INT}*
-      seitz :: MAT3{REAL}*
+      ulist :: VEC{INT}@
+      seitz :: MAT3{REAL}@
       a,u,p,s :: INT
-      atom_p, atom_a :: ATOM*
+      atom_p, atom_a :: ATOM@
 
       ! Unit cell atoms which correspond to the fragment atoms
       ulist.create(.n_atoms)
@@ -2262,10 +2197,10 @@ contains
    ENSURE(.asymmetric_unit_atom.associated, "no asymmetric_cell_atom data")
    ENSURE(.asymmetric_unit_atom.has_cartesian_axes, "pADPs must be in cartn axis system")
 
-      ulist :: VEC{INT}*
-      seitz :: MAT3{REAL}*
+      ulist :: VEC{INT}@
+      seitz :: MAT3{REAL}@
       a,u,p,s :: INT
-      atom_p, atom_a :: ATOM*
+      atom_p, atom_a :: ATOM@
 
       ! Unit cell atoms which correspond to the *list* fragment atoms
       ulist.create(list.dim)
@@ -2328,7 +2263,7 @@ contains
    ENSURE(.crystal.fragment_info_made,"no crystal fragment info")
    ENSURE(.asymmetric_unit_atom.associated, "no asymmetric_cell_atom data")
 
-      seitz  :: MAT3{REAL}*
+      seitz  :: MAT3{REAL}@
       dipole :: VEC{REAL}(3)
       d,mu,q :: REAL
       a,i,code,h1,h2,h3,u, p,s :: INT
@@ -2402,7 +2337,7 @@ contains
    ENSURE(.crystal.fragment_info_made,"no crystal fragment info")
    ENSURE(.asymmetric_unit_atom.associated, "no asymmetric_cell_atom data")
 
-      seitz  :: MAT3{REAL}*
+      seitz  :: MAT3{REAL}@
       dipole,eval :: VEC{REAL}(3)
       quadrupole,evec :: MAT{REAL}(3,3)
       d,mu,q :: REAL
@@ -2532,8 +2467,8 @@ contains
    ENSURE(.crystal.fragment_info_made,"no crystal fragment info")
    ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 
-      ulist :: VEC{INT}*
-      seitz :: MAT3{REAL}*
+      ulist :: VEC{INT}@
+      seitz :: MAT3{REAL}@
       tensor0,tensor1 :: TENSOR_TYPE
       m,a,u,s :: INT
 
@@ -2607,7 +2542,7 @@ contains
 !     matrix :: MAT{REAL}
 !   ENSURE(.asymmetric_unit_atom.associated, "no atom data")
 !     n_atom,a1,a2,f1,l1,f2,l2 :: INT
-!     first_basis_fn_for_atom,last_basis_fn_for_atom :: VEC{INT}*
+!     first_basis_fn_for_atom,last_basis_fn_for_atom :: VEC{INT}@
 !     factor :: REAL
 !     .asymmetric_unit_atom.make_atom_basis_fn_limits(first_basis_fn_for_atom,last_basis_fn_for_atom)
 !     n_atom = .asymmetric_unit_atom.n_atom
@@ -2632,7 +2567,7 @@ contains
 !     matrix :: MAT{REAL}
 !   ENSURE(.asymmetric_unit_atom.associated, "no atom data")
 !     n_atom,a1,a2,f1,l1,f2,l2 :: INT
-!     first_basis_fn_for_atom,last_basis_fn_for_atom :: VEC{INT}*
+!     first_basis_fn_for_atom,last_basis_fn_for_atom :: VEC{INT}@
 !     factor :: REAL
 !     .asymmetric_unit_atom.make_atom_basis_fn_limits(first_basis_fn_for_atom,last_basis_fn_for_atom)
 !     n_atom = .asymmetric_unit_atom.n_atom
@@ -2662,12 +2597,12 @@ contains
 !   ENSURE(D.is_square AND D.dim1==.asymmetric_unit_atom.n_bf,"D wrong shape")
 !   ENSURE(P.is_square AND P.dim1==atom.n_bf,"P wrong shape")
 !   ENSURE(.partition_factor.associated,"no partition factors")
-!     ptr :: MAT3{REAL}*
-!     tr :: VEC{MAT3_{REAL}}*
-!     tr1,tr2,pc, W :: MAT{REAL}*
+!     ptr :: MAT3{REAL}@
+!     tr :: VEC{MAT3_{REAL}}@
+!     tr1,tr2,pc, W :: MAT{REAL}@
 !     f1,l1,s1,n1,m1,a1,c1,f2,l2,s2,n2,m2,a2,c2 :: INT
 !     n_shell, q,s,f3,l3,f4,l4 :: INT
-!     atom_for_shell, first,last, first_fn,last_fn :: VEC{INT}*
+!     atom_for_shell, first,last, first_fn,last_fn :: VEC{INT}@
 !     n_shell = .asymmetric_unit_atom.n_shell
 !     atom_for_shell => .asymmetric_unit_atom.atom_for_shell
 !     .asymmetric_unit_atom.make_atom_basis_fn_limits(first,last)
@@ -2722,12 +2657,12 @@ contains
 !   ! P.D. Dacre, CPL (1970) 7, 47
 !   ! M. Elder, IJQC (1973) 7, 75
 !   ! M. Dupuis and H.F> King, IJQC (1977) 11, 613
-!     n2 :: MAT{REAL}*
+!     n2 :: MAT{REAL}@
 !   ENSURE(.asymmetric_unit_atom.associated, "no atom data")
 !   ENSURE(.atom_for_cell_atom.associated, "no atom_for_cell_atom data")
 !     s1,a1,c1,s2,a2,c2 :: INT
 !     n_shell,q :: INT
-!     atom_for_shell :: VEC{INT}*
+!     atom_for_shell :: VEC{INT}@
 !     n2.create(.n_atoms,.n_atoms)
 !     n_shell = .asymmetric_unit_atom.n_shell
 !     atom_for_shell => .asymmetric_unit_atom.atom_for_shell
@@ -2759,9 +2694,9 @@ contains
    ENSURE(.asymmetric_unit_atom.associated,"no asymetric cell atoms")
 
       n_mol,n_H,n,a,i1,i2,j1,j2,k1,k2,m1,m2 :: INT
-      pos,pos0,com,L,L0,L1 :: MAT{REAL}*
-      symop,non_H,par,mol,mol0 :: VEC{INT}*
-      label0 :: VEC{STR}*
+      pos,pos0,com,L,L0,L1 :: MAT{REAL}@
+      symop,non_H,par,mol,mol0 :: VEC{INT}@
+      label0 :: VEC{STR}@
 
       ! Header
       stdout.flush
@@ -2910,9 +2845,9 @@ contains
    ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 
       n,i,k1,k2,m1,m2 :: INT
-      L0,L1 :: MAT{REAL}*
-      centroid,W :: MAT{REAL}*
-      mol_for  :: VEC{INT}*
+      L0,L1 :: MAT{REAL}@
+      centroid,W :: MAT{REAL}@
+      mol_for  :: VEC{INT}@
 
       ! Header
       stdout.flush
@@ -2997,8 +2932,8 @@ contains
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
       n,k,k1,k2 :: INT
-      L2 :: MAT3{REAL}*
-      centroid,W :: MAT{REAL}*
+      L2 :: MAT3{REAL}@
+      centroid,W :: MAT{REAL}@
 
       ! Header
       stdout.flush
@@ -3079,7 +3014,7 @@ contains
    ENSURE(all(shape(centroid)==[3,.crystal.n_unit_cell_mols]),"wrong shape, centroid")
 
       m,u :: INT
-      geometry :: MAT{REAL}*
+      geometry :: MAT{REAL}@
 
       centroid = ZERO
 
@@ -3113,7 +3048,7 @@ contains
 !   ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 !   ENSURE(centroid.dim1==3 AND centroid.dim2==.crystal.n_unit_cell_mols,"wrong shape, centroid")
 !      m,u :: INT
-!      geometry :: MAT{REAL}*
+!      geometry :: MAT{REAL}@
 !      centroid = ZERO
 !      do m = 1,.crystal.n_unit_cell_mols
 !         nullify(geometry)
@@ -3135,10 +3070,10 @@ contains
    ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 
       n,k1,k2,m1,m2 :: INT
-      L0,L1 :: MAT{REAL}*
-      mol,par :: VEC{INT}*
-      pos,coc,com,alpha_q :: MAT{REAL}*
-      symop,alpha_m :: MAT3{REAL}*
+      L0,L1 :: MAT{REAL}@
+      mol,par :: VEC{INT}@
+      pos,coc,com,alpha_q :: MAT{REAL}@
+      symop,alpha_m :: MAT3{REAL}@
 
       ! Get the unit cell molecule atom info
       .get_uc_molecule_info(mol,symop,par,pos,coc,com,alpha_q,alpha_m)
@@ -3217,8 +3152,8 @@ contains
 !   ENSURE(L.dim1==.crystal.n_unit_cell_mols,"wrong size, L")
 !
 !      n_mol,n_H,n,a,i1,i2,j1,j2,k1,k2,m1,m2 :: INT
-!      pos,pos0,com, L0,L1 :: MAT{REAL}*
-!      symop,non_H,par,mol,mol0 :: VEC{INT}*
+!      pos,pos0,com, L0,L1 :: MAT{REAL}@
+!      symop,non_H,par,mol,mol0 :: VEC{INT}@
 !
 !      ! Get the positions, COM's for the molecules in the unit cell.
 !      ! By construction, the atoms in each molecule occur consecutively.
@@ -3282,7 +3217,7 @@ contains
       alpha_mol :: MAT{REAL}(3,3), IN
 
       alpha_uc :: MAT{REAL}(3,3)
-      D :: MAT{REAL}*
+      D :: MAT{REAL}@
       fac :: REAL
 
       .make_alpha_uc(alpha_uc,alpha_mol)
@@ -3307,9 +3242,9 @@ contains
    ENSURE(.crystal.associated,"no crystal")
 
       alpha :: MAT{REAL}(3,3)
-      mol,symop,par :: VEC{INT}*
-      pos,com :: MAT{REAL}*
-      inverse_seitz :: MAT3{REAL}*
+      mol,symop,par :: VEC{INT}@
+      pos,com :: MAT{REAL}@
+      inverse_seitz :: MAT3{REAL}@
       n_mol,m :: INT
 
       ! Get the unit cell molecule atom info
@@ -3356,9 +3291,9 @@ contains
       chi1 :: MAT{REAL}(3,3), OUT
       alpha_mol :: MAT{REAL}(3,3), IN
 
-      mol,mol0,symop,par :: VEC{INT}*
-      inverse_seitz,alpha :: MAT3{REAL}*
-      pos,com, L0,L1, D,Df :: MAT{REAL}*
+      mol,mol0,symop,par :: VEC{INT}@
+      inverse_seitz,alpha :: MAT3{REAL}@
+      pos,com, L0,L1, D,Df :: MAT{REAL}@
       alph :: MAT{REAL}(3,3)
       n_mol,dim,a,b,i,j,m :: INT
       fac :: REAL
@@ -3465,9 +3400,9 @@ contains
       chi1 :: MAT{REAL}(3,3), OUT
       alpha_mol :: MAT{REAL}(3,3), IN
 
-      mol,mol0,symop,par,non_H :: VEC{INT}*
-      inverse_seitz,alpha :: MAT3{REAL}*
-      pos,pos0,com, L0,L1, D,Df :: MAT{REAL}*
+      mol,mol0,symop,par,non_H :: VEC{INT}@
+      inverse_seitz,alpha :: MAT3{REAL}@
+      pos,pos0,com, L0,L1, D,Df :: MAT{REAL}@
       alph :: MAT{REAL}(3,3)
       n,n_mol,n_non_H,n_non_H_per_mol,dim,a,b,i,j,m :: INT
       fac :: REAL
@@ -3586,9 +3521,9 @@ contains
       chi1 :: MAT{REAL}(3,3), OUT
       alpha_mol :: MAT{REAL}(3,3), IN
 
-      mol,mol0,symop,par,non_H :: VEC{INT}*
-      inverse_seitz,alpha :: MAT3{REAL}*
-      pos,pos0,com, L,L0,L1, D,Df :: MAT{REAL}*
+      mol,mol0,symop,par,non_H :: VEC{INT}@
+      inverse_seitz,alpha :: MAT3{REAL}@
+      pos,pos0,com, L,L0,L1, D,Df :: MAT{REAL}@
       alph :: MAT{REAL}(3,3)
       n,n_mol,n_non_H,n_non_H_per_mol,dim, i1,i2,j1,j2,k1,k2,m1,m2, a,b,i,j,m :: INT
       fac :: REAL
@@ -3714,10 +3649,10 @@ contains
 
       alph0 :: MAT{REAL}(3,3)
       beta0 :: MAT3{REAL}(3,3,3)
-      inverse_seitz,alpha :: MAT3{REAL}*
-      beta :: MAT4{REAL}*
-      pos,pos0,com, L,L0,L1, D,Df :: MAT{REAL}*
-      mol,mol0,symop,par,non_H :: VEC{INT}*
+      inverse_seitz,alpha :: MAT3{REAL}@
+      beta :: MAT4{REAL}@
+      pos,pos0,com, L,L0,L1, D,Df :: MAT{REAL}@
+      mol,mol0,symop,par,non_H :: VEC{INT}@
       n,n_mol,n_non_H,n_non_H_per_mol,dim, i1,i2,j1,j2,k1,k2,m1,m2, a,b,i,j,m :: INT
       fac :: REAL
 
@@ -3860,11 +3795,11 @@ contains
 
       alph,al :: MAT{REAL}(3,3)
       beta,be :: MAT3{REAL}(3,3,3)
-      L0,L1,Lm,D,Dnc,Ddo,Dd,AA, df :: MAT{REAL}*
-      pos,pos0,coc,com,coc0,alpha_q :: MAT{REAL}*
-      mol,mol0,par,non_H :: VEC{INT}*
-      r,Lq :: VEC{REAL}*
-      symop,alpha_m,alpha :: MAT3{REAL}*
+      L0,L1,Lm,D,Dnc,Ddo,Dd,AA, df :: MAT{REAL}@
+      pos,pos0,coc,com,coc0,alpha_q :: MAT{REAL}@
+      mol,mol0,par,non_H :: VEC{INT}@
+      r,Lq :: VEC{REAL}@
+      symop,alpha_m,alpha :: MAT3{REAL}@
       n,n_m,n_a,n_H,nH,a,b,i,j,m :: INT
       fac :: REAL
 
@@ -4231,11 +4166,11 @@ contains
    ENSURE(D.is_square,  "non square D")
    ENSURE(.crystal.associated,"no crystal")
 
-      mol,par :: VEC{INT}*
-      symop,alpha_m :: MAT3{REAL}*
-      pos,coc,com,alpha_q :: MAT{REAL}*
-      L0,L1,Lm, DD :: MAT{REAL}*
-      Lq :: VEC{REAL}*
+      mol,par :: VEC{INT}@
+      symop,alpha_m :: MAT3{REAL}@
+      pos,coc,com,alpha_q :: MAT{REAL}@
+      L0,L1,Lm, DD :: MAT{REAL}@
+      Lq :: VEC{REAL}@
       n,dim,a,b,i,j :: INT
       fac :: REAL
 
@@ -4305,10 +4240,10 @@ contains
    ENSURE(Dnc.is_square,"non square Dnc")
    ENSURE(.crystal.associated,"no crystal")
 
-      mol,par :: VEC{INT}*
-      symop,alpha_m :: MAT3{REAL}*
-      pos,coc,com,alpha_q :: MAT{REAL}*
-      L0,L1,Lm, DD :: MAT{REAL}*
+      mol,par :: VEC{INT}@
+      symop,alpha_m :: MAT3{REAL}@
+      pos,coc,com,alpha_q :: MAT{REAL}@
+      L0,L1,Lm, DD :: MAT{REAL}@
       n,dim,a,b,i,j :: INT
       fac :: REAL
 
@@ -4376,9 +4311,9 @@ contains
       F :: MAT{REAL}, OUT
       sphere_sum :: BIN, optional
 
-      mol,frag_atom :: VEC{INT}*
-      charge,dipole :: VEC{REAL}*
-      pos,L0,L1 :: MAT{REAL}*
+      mol,frag_atom :: VEC{INT}@
+      charge,dipole :: VEC{REAL}@
+      pos,L0,L1 :: MAT{REAL}@
       fac :: REAL
       n_atom,dim, u,a, fu,lu :: INT
 
@@ -4437,9 +4372,9 @@ contains
       I1 :: MAT{REAL}, OUT
       sphere_sum :: BIN, optional
 
-      mol,frag_atom :: VEC{INT}*
-      charge,dipole :: VEC{REAL}*
-      pos,L0,L1 :: MAT{REAL}*
+      mol,frag_atom :: VEC{INT}@
+      charge,dipole :: VEC{REAL}@
+      pos,L0,L1 :: MAT{REAL}@
       fac :: REAL
       n_atom,dim, u,a, fu,lu :: INT
 
@@ -4491,17 +4426,17 @@ contains
    ! an atom in the unit cell. "pos" are the positions. "par" is the
    ! asymmetric unit atom parent. "com" are the molecular center of
    ! masses.
-      mol,symop,par :: VEC{INT}*
-      pos,com :: MAT{REAL}*
+      mol,symop,par :: VEC{INT}@
+      pos,com :: MAT{REAL}@
 
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 
       n_atom,n_mol,n,m,u,a :: INT
-      mass,mass0 :: VEC{REAL}*
+      mass,mass0 :: VEC{REAL}@
       cm  :: VEC{REAL}(3)
-      par0 :: VEC{INT}*
-      pos0 :: MAT{REAL}*
+      par0 :: VEC{INT}@
+      pos0 :: MAT{REAL}@
       fac :: REAL
 
       ! Create the info arrays
@@ -4559,19 +4494,19 @@ contains
    get_uc_molecule_info(mol,symop,par,pos,coc,com,alpha_q,alpha_m) ::: leaky
    ! Get the unit cell molecule information for a distributed local field factor
    ! (LFF) calculation. "coc" are the molecular center of charges.
-      mol,par :: VEC{INT}*
-      pos,coc,com,alpha_q :: MAT{REAL}*
-      symop,alpha_m :: MAT3{REAL}*
+      mol,par :: VEC{INT}@
+      pos,coc,com,alpha_q :: MAT{REAL}@
+      symop,alpha_m :: MAT3{REAL}@
 
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 
       n_atom,n_mol,n,m,u,a :: INT
-      charge,charge0,mass,mass0 :: VEC{REAL}*
+      charge,charge0,mass,mass0 :: VEC{REAL}@
       e_dipole,cm  :: VEC{REAL}(3)
-      par0 :: VEC{INT}*
-      symop0,pos0,dipole,dipole0,alpha_q0 :: MAT{REAL}*
-      alpha_m0 :: MAT3{REAL}*
+      par0 :: VEC{INT}@
+      symop0,pos0,dipole,dipole0,alpha_q0 :: MAT{REAL}@
+      alpha_m0 :: MAT3{REAL}@
       fac :: REAL
 
       ! Sizes
@@ -4672,18 +4607,18 @@ contains
 !   get_uc_molecule_info(mol,pos,charge,dipole,frag_atom) ::: leaky
 !   ! Get the unit cell molecule information for a distributed local field factor
 !   ! (LFF) calculation. "coc" are the molecular center of charges.
-!      mol :: VEC{INT}*
-!      pos :: MAT{REAL}*
-!      charge,dipole :: VEC{REAL}*
-!      frag_atom :: VEC{INT}*
+!      mol :: VEC{INT}@
+!      pos :: MAT{REAL}@
+!      charge,dipole :: VEC{REAL}@
+!      frag_atom :: VEC{INT}@
 !
 !   ENSURE(.crystal.associated,"no crystal")
 !   ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 !
 !      n_atom,n_mol,n,n3,m,u :: INT
-!      charge0,dipole0 :: VEC{REAL}*
-!      mol0 :: VEC{INT}*
-!      pos0 :: MAT{REAL}*
+!      charge0,dipole0 :: VEC{REAL}@
+!      mol0 :: VEC{INT}@
+!      pos0 :: MAT{REAL}@
 !
 !      ! Create the info arrays
 !      n_mol  = .crystal.n_unit_cell_mols
@@ -4733,18 +4668,18 @@ contains
    get_uc_molecule_info(mol,pos,charge,dipole,frag_atom) ::: leaky
    ! Get the unit cell molecule information for a distributed local field factor
    ! (LFF) calculation. "coc" are the molecular center of charges.
-      mol :: VEC{INT}*
-      pos :: MAT{REAL}*
-      charge,dipole :: VEC{REAL}*
-      frag_atom :: VEC{INT}*
+      mol :: VEC{INT}@
+      pos :: MAT{REAL}@
+      charge,dipole :: VEC{REAL}@
+      frag_atom :: VEC{INT}@
 
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 
       n_atom,n_mol, n,n3,m,u :: INT
-      charge0,dipole0 :: VEC{REAL}*
-      occupation_list,frag_atom0 :: VEC{INT}*
-      pos0 :: MAT{REAL}*
+      charge0,dipole0 :: VEC{REAL}@
+      occupation_list,frag_atom0 :: VEC{INT}@
+      pos0 :: MAT{REAL}@
 
       ! Sizes
       n_mol  = .crystal.n_unit_cell_mols
@@ -4805,11 +4740,11 @@ contains
 !   get_atom_LFF_tensors(L2)
 !   ! Get the local field factor tensors for the atom centers of all
 !   ! molecules in the unit cell.
-!      L2 :: MAT3{REAL}*
+!      L2 :: MAT3{REAL}@
 !   ENSURE(.crystal.associated,"no crystal")
 !   ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 !      nu,m,u,n,k,k1,k2 :: INT
-!      pos :: MAT{REAL}*
+!      pos :: MAT{REAL}@
 !      nu = .crystal.n_unit_cell_atoms
 !      L2.create(3,3,nu.triangle)
 !      pos.create(3,nu)
@@ -4828,7 +4763,7 @@ contains
 !   ENSURE(.crystal.unit_cell_mol_for_atom.associated,"no cell_mol_for_atom")
 !   ENSURE(pos.dim1==3 AND pos.dim2==.crystal.n_unit_cell_atoms,"wrong shape, centroid")
 !      m,n,na,u :: INT
-!      geometry :: MAT{REAL}*
+!      geometry :: MAT{REAL}@
 !      n = 0
 !      do m = 1,.crystal.n_unit_cell_mols
 !         nullify(geometry)
@@ -4977,8 +4912,8 @@ contains
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.fragment_geometry.associated,"no fragment_geometry")
 
-      ID :: VEC{STR}*
-      ind :: VEC{INT}*
+      ID :: VEC{STR}@
+      ind :: VEC{INT}@
       table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
@@ -5020,8 +4955,8 @@ contains
    ENSURE(.crystal.unit_cell_geometry.associated,"no crystal unit cell geometry")
 
       fi :: VEC{INT}@
-      h1,h2,h3,hc,ui :: VEC{INT}*
-      r1,r2,r3 :: VEC{REAL}*
+      h1,h2,h3,hc,ui :: VEC{INT}@
+      r1,r2,r3 :: VEC{REAL}@
       table :: VEC{TABLE_COLUMN}@
       a,n :: INT
 
@@ -5168,7 +5103,7 @@ contains
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.crystal.fragment_info_made,"no crystal fragment info")
 
-      asym_atom_for_atom,unique :: VEC{INT}*
+      asym_atom_for_atom,unique :: VEC{INT}@
       a,u :: INT
 
       asym_atom_for_atom.create(.n_atoms)
@@ -5218,7 +5153,7 @@ contains
    ENSURE(.asymmetric_unit_atom.associated,"no atom data")
    ENSURE(.crystal.associated,"no crystal data")
 
-      seitz :: MAT3{REAL}*
+      seitz :: MAT3{REAL}@
       therm :: MAT{REAL}(3,3)
       a,u,p,s :: INT
 
@@ -5279,11 +5214,11 @@ contains
    ENSURE(.crystal.fragment_info_made,"no crystal fragment_info")
 
       u,a,s,n,i,j :: INT
-      geometry :: MAT{REAL}*
-      ulist :: VEC{INT}*
+      geometry :: MAT{REAL}@
+      ulist :: VEC{INT}@
       therm :: MAT{REAL}(3,3)
       angst :: BIN
-      seitz :: MAT3{REAL}*
+      seitz :: MAT3{REAL}@
 
       angst = FALSE
       if (present(angstrom)) angst = angstrom

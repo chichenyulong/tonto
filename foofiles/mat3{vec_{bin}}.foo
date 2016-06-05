@@ -57,7 +57,7 @@ contains
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
-   ! Deallocate an object
+   ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure

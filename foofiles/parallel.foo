@@ -176,7 +176,7 @@ contains
 
    ENSURE(.is_parallel,"must be in a parallel enviornoment")
 
-      tmp :: VEC{X?}*
+      tmp :: VEC{X?}@
 
       vec = vec
 
@@ -259,7 +259,7 @@ contains
 
    ENSURE(.is_parallel,"must be in a parallel enviornoment")
 
-      tmp :: VEC{X?}*
+      tmp :: VEC{X?}@
 
       vec = vec
 
@@ -307,7 +307,7 @@ contains
 
    ENSURE(.is_parallel,"must be in a parallel environment")
 
-      tmp :: MAT{X?}*
+      tmp :: MAT{X?}@
 
       mat = mat
 
@@ -344,7 +344,7 @@ contains
    ENSURE(.is_parallel,"must be in a parallel environment")
    ENSURE(mat.dim1==mat.dim2,"mat must be square")
 
-      invec,outvec :: VEC{REAL}*
+      invec,outvec :: VEC{REAL}@
       tri_size,dim :: INT
 
       .mpi_status = 0
@@ -374,7 +374,7 @@ contains
 
    ENSURE(.is_parallel,"must be in a parallel enviornoment")
 
-      tmp :: MAT3{X?}*
+      tmp :: MAT3{X?}@
 
       .mpi_status = 0
       allocate(tmp(mat.dim1,mat.dim2,mat.dim3))
@@ -406,7 +406,7 @@ contains
 
    ENSURE(.is_parallel,"must be in a parallel enviornoment")
 
-      tmp :: MAT4{X?}*
+      tmp :: MAT4{X?}@
 
       .mpi_status = 0
       allocate(tmp(mat.dim1,mat.dim2,mat.dim3,mat.dim4))

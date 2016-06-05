@@ -57,109 +57,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
-   end
-
-   create(root_name,name,diis_kind,format,keep) ::: leaky
-   ! Create the DIIS object, but no archive name
-      self :: PTR
-      root_name,name :: STR
-      diis_kind,format :: STR, optional
-      keep :: INT, IN, optional
-      .create
-      .archive.set(root_name,name,diis_kind,format)
-      .set_keep(keep)
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of self
-      .archive.nullify_ptr_part
-      .nullify_matrices
-   end
-
-   nullify_matrices
-   ! Nullify the matrices which are stored for DIIS. 
-      nullify(.oldest)
-      ! The following should never be destroyed
-      nullify(.S) 
-      nullify(.F)
-      nullify(.D)
-      nullify(.J)
-      nullify(.energy)
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of self
-      .delete_archives
-      .oldest.destroy
-      .archive.destroy_ptr_part
-   end
-
-   create_copy(diis) ::: leaky
-   ! Make a copy of the diis object
-      self :: PTR
-      diis :: FOCK_DIIS
-      .create
-      .copy(diis)
-   end
-
-   copy(diis) ::: leaky
-   ! Make a copy of the diis object
-      diis :: FOCK_DIIS
-      self = diis
-      .nullify_ptr_part
-      .archive.copy(diis.archive)
-   end
-
-   set_defaults ::: leaky
-   ! Set up the default settings
-      .set_genre(DIIS_GENRE)
-      .start_iteration = DIIS_START_ITERATION
-      .save_iteration = DIIS_SAVE_ITERATION
-      .iteration = -1 ! The first time called it is iteration 0
-      .keep = DIIS_KEEP
-      .kept = 0
-      .new = 0
-      .oldest.destroy ! Leaky here
-      .oldest.create(.keep)
-      .oldest = 0
-      .error_length = huge(ONE)
-      .convergence_tolerance = DIIS_CONVERGENCE_TOLERANCE
-      .start_tolerance = DIIS_START_TOLERANCE
-      .encore_iterations = DIIS_ENCORE_ITERATIONS
-      .encore = 0
-      .stage = 0
-      .replacement_method = DIIS_REPLACEMENT_METHOD
-      .par_tag = "fock_matrix"
-      .err_tag = "pulay_error"
-      .lhs_tag = "lhs,diis,restricted"
-      .F_tag = "fock_matrix"
-      .J_tag = "coulomb_matrix"
-      .D_tag = "density_matrix"
-      .e_tag = "energy"
-      .force_convexity = DIIS_FORCE_CONVEXITY ! FALSE for DIIS and DDIIS
-      .micro_iteration_method = DIIS_MICRO_ITERATION_METHOD
-      .micro_convergence_tol = DIIS_MICRO_CONVERGENCE_TOL
-      .micro_max_iterations = DIIS_MICRO_MAX_ITERATIONS
-      .micro_damp_factor = DIIS_MICRO_DAMP_FACTOR
-      .archive.set_defaults
-      .archive.destroy_ptr_part
-   end
 
    reset_iteration_defaults ::: leaky
    ! Set up the default settings
@@ -723,9 +620,9 @@ contains
    ENSURE(.lhs_tag/=" ","no lhs tag specified")
    ENSURE(.kept>0,"no stored vectors")
 
-      lhs :: MAT{REAL}*
-      diag,rhs :: VEC{REAL}*
-  !   clhs :: MAT{CPX}*
+      lhs :: MAT{REAL}@
+      diag,rhs :: VEC{REAL}@
+  !   clhs :: MAT{CPX}@
       dim :: INT
 
       dim = .dimension
@@ -789,8 +686,8 @@ contains
 !      res :: INT
 !   ENSURE(.lhs_tag/=" ","no lhs tag specified")
 !   ENSURE(.kept>0,"no stored vectors")
-!      lhs :: MAT{REAL}*
-!      diag,rhs :: VEC{REAL}*
+!      lhs :: MAT{REAL}@
+!      diag,rhs :: VEC{REAL}@
 !      dim :: INT
 !      dim = .dimension
 !      select case (.lhs_tag)
@@ -843,8 +740,8 @@ contains
       res :: INT
    ENSURE(.lhs_tag/=" ","no lhs tag specified")
    ENSURE(.kept>0,"no stored vectors")
-      lhs :: MAT{REAL}*
-      diag,rhs :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      diag,rhs :: VEC{REAL}@
       dim :: INT
       dim = .dimension
       select case (.lhs_tag)
@@ -910,7 +807,7 @@ contains
 !   keep_the_best
 !   ! Keep only the best item
 !   ENSURE(.kept>1,"no vectors kept")
-!      W :: OPMATRIX*
+!      W :: OPMATRIX@
 !      dimv,best :: INT
 !      e,ea,eb :: REAL
 !      genre :: STR
@@ -995,8 +892,8 @@ contains
    ! Make the real DIIS commutator matrix, C = FDS - SDF and set the diis
    ! .error_length to be sqrt(C-.C). The minus sign is because C is
    ! antisymmetric.
-      F,D :: OPMATRIX*
-      S :: MAT{REAL}*
+      F,D :: OPMATRIX@
+      S :: MAT{REAL}@
 
    ENSURE(F.associated,"no Fock matrix")
    ENSURE(F.any_created,"no Fock matrix")
@@ -1006,7 +903,7 @@ contains
    ENSURE(F.n_bf==S.dim1,"Incompatible F and S")
    ENSURE(D.n_bf==S.dim1,"Incompatible D and S")
 
-      C :: OPMATRIX*
+      C :: OPMATRIX@
       spinorbital_kind :: STR
 
       spinorbital_kind = F.spinorbital_kind
@@ -1048,7 +945,7 @@ contains
    ! Make the real DIIS commutator matrix, C = FDS - SDF.
       C :: MAT{REAL}
       F,D,S :: MAT{REAL}, IN
-      W :: MAT{REAL}*
+      W :: MAT{REAL}@
 
       W.create(F.dim1,F.dim1)
       W.to_product_of(D,S)
@@ -1064,7 +961,7 @@ contains
       C :: MAT{CPX}
       F,D :: MAT{CPX}, IN
       S :: MAT{REAL}, IN
-      O,W :: MAT{CPX}*
+      O,W :: MAT{CPX}@
 
       W.create(F.dim1,F.dim1)
 
@@ -1198,8 +1095,8 @@ contains
    ENSURE(.archive.file_name/=" ","no archive name specified")
 
       dim,old :: INT
-      lhs :: MAT{REAL}*
-      rhs,coeff :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs,coeff :: VEC{REAL}@
 
       ! The dimension of the new LHS (never larger than .keep+1)
       dim = .dimension 
@@ -1261,7 +1158,7 @@ contains
    ! simply used as space to hold the old error vectors. NOTE: whatever is in
    ! "old_err" is trashed.  The "lhs" is saved to disk for the next iteration
    ! unless "save_lhs" is present and set to FALSE.
-      lhs :: MAT{REAL}*
+      lhs :: MAT{REAL}@
       err :: ERR?, IN
       old_err :: ERR?, INOUT
       save_lhs :: BIN, optional
@@ -1334,7 +1231,7 @@ contains
       lhs :: MAT{REAL}
    ENSURE(.err_tag/=" ","no err_tag specified")
    ENSURE(.lhs_tag/=" ","no lhs_tag specified")
-      diag :: VEC{REAL}*
+      diag :: VEC{REAL}@
       dim,j :: INT
       val :: REAL
       dim = .dimension
@@ -1371,7 +1268,7 @@ contains
    ! disk. The "lhs" matrix is saved to disk. Also, resets the index ".new".
    ! "e_i" and "e_j" are used as workspace; whatever is in them is trashed.
       e_i,e_j :: ERR?
-      lhs :: MAT{REAL}*
+      lhs :: MAT{REAL}@
       dim,i,j :: INT
       fac :: REAL
 
@@ -1427,9 +1324,9 @@ contains
    accelerate(F,D,S,energy,J)
    ! DIIS acceleration -- includes Pulay DIIS, Cances EDIIS, and Jayatilaka
    ! DDIIS methods.
-      F,D :: OPMATRIX*
-      S :: MAT{REAL}*
-      energy :: VEC{REAL}*
+      F,D :: OPMATRIX@
+      S :: MAT{REAL}@
+      energy :: VEC{REAL}@
       J :: OPMATRIX*, optional
    ENSURE(.archive.file_name/=" ","no archive name specified")
       .F => F; .D => D; .S => S
@@ -1449,8 +1346,8 @@ contains
    ! Recalculates the Fock matrices saved in the archive so that an extra amount
    ! "lambda_step" of the constraint is added to them. Only the archives of
    ! "genre" are recalculated.
-      FF :: OPMATRIX*
-      SS :: MAT{REAL}*
+      FF :: OPMATRIX@
+      SS :: MAT{REAL}@
       lambda_step :: REAL
    ENSURE(FF.associated,"no Fock matrix")
    ENSURE(FF.any_created,"no Fock matrix")
@@ -1459,7 +1356,7 @@ contains
    ENSURE(.new>0,"No vector was last saved")
    ENSURE(.new<.dimension,"index of last saved vector exceeds DIIS subspace dimension")
       dimv,i :: INT
-      F,C :: OPMATRIX*
+      F,C :: OPMATRIX@
       genre :: STR
       .F => FF
       .S => SS
@@ -1488,9 +1385,9 @@ contains
 
    ediis_plus_diis(F,D,S,energy,J)
    ! Combined EDIIS at the start + DIIS or FDIIS at the end.
-      F,D :: OPMATRIX*
-      S :: MAT{REAL}*
-      energy :: VEC{REAL}*
+      F,D :: OPMATRIX@
+      S :: MAT{REAL}@
+      energy :: VEC{REAL}@
       J :: OPMATRIX*, optional
    ENSURE(.archive.file_name/=" ","no archive name specified")
       .F => F; .D => D; .S => S
@@ -1533,9 +1430,9 @@ contains
 
 !   ediis_plus_ddiis(F,D,S,energy,J)
 !   ! Combined EDIIS at the start + DIIS or FDIIS at the end.
-!      F,D :: OPMATRIX*
-!      S :: MAT{REAL}*
-!      energy :: VEC{REAL}*
+!      F,D :: OPMATRIX@
+!      S :: MAT{REAL}@
+!      energy :: VEC{REAL}@
 !      J :: OPMATRIX*, optional
 !   ENSURE(.archive.file_name/=" ","no archive name specified")
 !      .F => F; .D => D; .S => S
@@ -1583,9 +1480,9 @@ contains
    ! which generated ".F". ".S" is the overlap matrix. This assumes that the DIIS
    ! object has been repeatedly called, previously, so that it has all the
    ! previous information on disk. 
-      F,D :: OPMATRIX*
-      S :: MAT{REAL}*
-      energy :: VEC{REAL}*
+      F,D :: OPMATRIX@
+      S :: MAT{REAL}@
+      energy :: VEC{REAL}@
       J :: OPMATRIX*, optional
       spinorbital_kind :: STR
       .F => F; .D => D; .S => S
@@ -1616,9 +1513,9 @@ contains
    ENSURE(.energy.dim==1,"must have 1 RHF energy")
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
-      C :: OPMATRIX*
-      lhs :: MAT{REAL}*
-      rhs,coeff :: VEC{REAL}*
+      C :: OPMATRIX@
+      lhs :: MAT{REAL}@
+      rhs,coeff :: VEC{REAL}@
       dim,old,best :: INT
       e :: REAL
 
@@ -1705,9 +1602,9 @@ contains
    ENSURE(.energy.dim==2,"must have two UHF energies")
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
-      C :: OPMATRIX*
-      lhs :: MAT{REAL}*
-      rhs,coeff :: VEC{REAL}*
+      C :: OPMATRIX@
+      lhs :: MAT{REAL}@
+      rhs,coeff :: VEC{REAL}@
       dim,old,best :: INT
       e :: VEC{REAL}(2)
 
@@ -1802,9 +1699,9 @@ contains
    ENSURE(.energy.dim==2,"must have two UHF energies")
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
-      C :: OPMATRIX*
-      lhs :: MAT{REAL}*
-      rhs,coeff,coeff_a,coeff_b :: VEC{REAL}*
+      C :: OPMATRIX@
+      lhs :: MAT{REAL}@
+      rhs,coeff,coeff_a,coeff_b :: VEC{REAL}@
       dim,old,best :: INT
       e :: VEC{REAL}(2)
 
@@ -1904,9 +1801,9 @@ contains
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
 
-      C :: OPMATRIX*
-      lhs :: MAT{REAL}*
-      rhs,coeff :: VEC{REAL}*
+      C :: OPMATRIX@
+      lhs :: MAT{REAL}@
+      rhs,coeff :: VEC{REAL}@
       dim,old,best :: INT
       e :: REAL
 
@@ -1993,10 +1890,10 @@ contains
 !   ! LB xxx  ??? how to make this properly
 !   ! ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
 !   ! ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
-!      C :: OPMATRIX*
-!      lhs :: MAT{CPX}*
-!      rhs,coeff :: VEC{CPX}*
-!   !   rhs,coeff :: VEC{REAL}*
+!      C :: OPMATRIX@
+!      lhs :: MAT{CPX}@
+!      rhs,coeff :: VEC{CPX}@
+!   !   rhs,coeff :: VEC{REAL}@
 !      dimf,dim,dim2,old,best :: INT
 !      e :: REAL
 !
@@ -2110,12 +2007,12 @@ contains
    ! side, "rhs". "dimv" is the dimension of the DIIS vector. We replace only
    ! column/row ".new" in the old DIIS "lhs" matrix. The DIIS "lhs" matrix is
    ! saved to disk and reused next time.
-      lhs :: MAT{REAL}*
-      rhs :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs :: VEC{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(rhs.disassociated,"rhs exists")
    ENSURE(.S.associated,"no overlap matrix")
-      F,D,C_new,C_old :: OPMATRIX*
+      F,D,C_new,C_old :: OPMATRIX@
       dim,dimv,old :: INT
 
       ! Get the saved LHS (leaky)
@@ -2161,11 +2058,11 @@ contains
    ! column/row ".new" in the old DIIS "lhs". The DIIS "lhs" matrix is saved to
    ! disk and reused next time.  NOTE: this version uses a concatenation of the
    ! alpha and beta parts.
-      lhs :: MAT{REAL}*
-      rhs :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs :: VEC{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(rhs.disassociated,"rhs exists")
-      F,D,C_new,C_old :: OPMATRIX*
+      F,D,C_new,C_old :: OPMATRIX@
       dimv,dim,old :: INT
 
       ! Get the saved LHS (leaky)
@@ -2211,13 +2108,13 @@ contains
    ! side, "rhs". "dimv" is the dimension of the DIIS vector. We replace only
    ! column/row ".new" in the alpha-alpha and beta-beta part of the old DIIS
    ! "lhs". The DIIS "lhs" matrix is saved to disk and reused next time.
-      lhs :: MAT{REAL}*
-      rhs :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs :: VEC{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(rhs.disassociated,"rhs exists")
-      F,D,C_new,C_old :: OPMATRIX*
-      lhs_aa,lhs_bb :: MAT{REAL}*
-      rhs_a,rhs_b :: VEC{REAL}*
+      F,D,C_new,C_old :: OPMATRIX@
+      lhs_aa,lhs_bb :: MAT{REAL}@
+      rhs_a,rhs_b :: VEC{REAL}@
       dimv,dim,old :: INT
 
       ! Get the saved LHS
@@ -2272,13 +2169,13 @@ contains
    ! vector. We replace only column/row ".new" in the old DIIS "lhs"
    ! matrix. The DIIS "lhs" matrix is saved to disk and reused next
    ! time.
-      lhs :: MAT{REAL}*
-      rhs :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs :: VEC{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(rhs.disassociated,"rhs exists")
    ENSURE(.S.associated,"no overlap matrix")
-      F,D,C_new,C_old :: OPMATRIX*
-      Wr,Wi :: MAT{REAL}*
+      F,D,C_new,C_old :: OPMATRIX@
+      Wr,Wi :: MAT{REAL}@
       dim,dimv,dim2,old :: INT
 
       ! Get the saved LHS (leaky)
@@ -2334,15 +2231,15 @@ contains
 !   ! side, "rhs". "dimv" is the dimension of the DIIS vector. We replace only
 !   ! column/row ".new" in the old DIIS "lhs" matrix. The DIIS "lhs" matrix is
 !   ! saved to disk and reused next time.
-!   !   lhs :: MAT{CPX}*
-!   !   rhs :: VEC{CPX}*
-!      lhs :: MAT{CPX}*
-!      rhs :: VEC{CPX}*
+!   !   lhs :: MAT{CPX}@
+!   !   rhs :: VEC{CPX}@
+!      lhs :: MAT{CPX}@
+!      rhs :: VEC{CPX}@
 !   ENSURE(lhs.disassociated,"lhs exists")
 !   ENSURE(rhs.disassociated,"rhs exists")
 !   ENSURE(.S.associated,"no overlap matrix")
-!      F,D,C_new,C_old :: OPMATRIX*
-!   !   F,D,C_new,C_old :: MAT{CPX}*
+!      F,D,C_new,C_old :: OPMATRIX@
+!   !   F,D,C_new,C_old :: MAT{CPX}@
 !      dim,dim1,dim2,dimv,old :: INT
 !      e :: REAL
 !
@@ -2424,8 +2321,8 @@ contains
    ENSURE(.S.associated,"no overlap matrix")
    ENSURE(.F_tag/=" ","no fock matrix tag")
    ENSURE(.D_tag/=" ","no density matrix tag")
-      lhs :: MAT{REAL}*
-      C_i,C_j,F_i,F_j,D_i,D_j :: OPMATRIX*
+      lhs :: MAT{REAL}@
+      C_i,C_j,F_i,F_j,D_i,D_j :: OPMATRIX@
       dimv,dim,i,j :: INT
 
       ! Make temporaries
@@ -2474,8 +2371,8 @@ contains
    ENSURE(.S.associated,"no overlap matrix")
    ENSURE(.F_tag/=" ","no fock matrix tag")
    ENSURE(.D_tag/=" ","no density matrix tag")
-      lhs :: MAT{REAL}*
-      C_i,C_j,F_i,F_j,D_i,D_j :: OPMATRIX*
+      lhs :: MAT{REAL}@
+      C_i,C_j,F_i,F_j,D_i,D_j :: OPMATRIX@
       dimv,dim,i,j :: INT
 
       ! Make temporaries
@@ -2523,8 +2420,8 @@ contains
    ENSURE(.S.associated,"no overlap matrix")
    ENSURE(.F_tag/=" ","no fock matrix tag")
    ENSURE(.D_tag/=" ","no density matrix tag")
-      lhs :: MAT{CPX}*
-      C_i,C_j,F_i,F_j,D_i,D_j :: OPMATRIX*
+      lhs :: MAT{CPX}@
+      C_i,C_j,F_i,F_j,D_i,D_j :: OPMATRIX@
       dimv,dim,i,j :: INT
 
       ! Make temporaries
@@ -2576,9 +2473,9 @@ contains
 !   ENSURE(.S.associated,"no overlap matrix")
 !   ENSURE(.F_tag/=" ","no fock matrix tag")
 !   ENSURE(.D_tag/=" ","no density matrix tag")
-!      lhs :: MAT{REAL}*
-!      C_i,C_j,F_i,F_j,D_i,D_j :: OPMATRIX*
-!      lhs_aa,lhs_bb :: MAT{REAL}*
+!      lhs :: MAT{REAL}@
+!      C_i,C_j,F_i,F_j,D_i,D_j :: OPMATRIX@
+!      lhs_aa,lhs_bb :: MAT{REAL}@
 !      dimv,dim,i,j :: INT
 !
 !      ! Make temporaries
@@ -2634,9 +2531,9 @@ contains
    ! required only for unrestricted EDIIS.  This assumes that the DIIS object
    ! has been repeatedly called, previously, so that it has all the previous
    ! information on disk. 
-      F,D :: OPMATRIX*
-      S :: MAT{REAL}*
-      energy :: VEC{REAL}*
+      F,D :: OPMATRIX@
+      S :: MAT{REAL}@
+      energy :: VEC{REAL}@
       J :: OPMATRIX*, optional
       spinorbital_kind :: STR
       .F => F; .D => D; .S => S
@@ -2666,9 +2563,9 @@ contains
    ENSURE(.energy.associated,"no RHF electronic energy")
    ENSURE(.energy.dim==1,"must have 1 RHF energy")
    ENSURE(.F.n_bf==.D.n_bf,"Incompatible F and D")
-      C :: OPMATRIX*
-      lhs :: MAT{REAL}*
-      rhs,coeff :: VEC{REAL}*
+      C :: OPMATRIX@
+      lhs :: MAT{REAL}@
+      rhs,coeff :: VEC{REAL}@
       dim,old,best :: INT 
       e,emin :: REAL
 
@@ -2753,9 +2650,9 @@ contains
    ENSURE(.energy.dim==2,"must have two UHF energies")
    ENSURE(.F.n_bf==.D.n_bf,"Incompatible F and D")
    ENSURE(.J.n_bf==.D.n_bf,"Incompatible J and D")
-      C :: OPMATRIX*
-      lhs, lhs_aa,lhs_bb,lhs_ba,lhs_ab :: MAT{REAL}*
-      rhs,coeff,coeff_a,coeff_b, rhs_a,rhs_b :: VEC{REAL}*
+      C :: OPMATRIX@
+      lhs, lhs_aa,lhs_bb,lhs_ba,lhs_ab :: MAT{REAL}@
+      rhs,coeff,coeff_a,coeff_b, rhs_a,rhs_b :: VEC{REAL}@
       dim,old,best :: INT
       compress :: BIN
       e :: VEC{REAL}(2)
@@ -2880,11 +2777,11 @@ contains
    ! matrices, respectively. They are used to replace column/row ".new" in the
    ! EDIIS equations. The EDIIS "lhs" matrix is saved to disk. See reference
    ! Kudin, Scuseria, Cances (2002) JCP 116, p. 8255
-      lhs :: MAT{REAL}*
-      rhs :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs :: VEC{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(rhs.disassociated,"rhs exists")
-      F_old,D_old :: OPMATRIX*
+      F_old,D_old :: OPMATRIX@
       dimv,dim,old :: INT
 
       ! Get the saved LHS & RHS (leaky)
@@ -2927,13 +2824,13 @@ contains
    ! Density matrices, respectively. They are used to replace column/row ".new"
    ! in the EDIIS equations. The EDIIS "lhs" matrix is saved to disk. See
    ! reference Kudin, Scuseria, Cances (2002) JCP 116, p. 8255
-      lhs :: MAT{REAL}*
-      rhs :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs :: VEC{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(rhs.disassociated,"rhs exists")
-      F_old,J_old,D_old :: OPMATRIX*
-      lhs_aa,lhs_bb,lhs_ba :: MAT{REAL}*
-      rhs_a,rhs_b :: VEC{REAL}*
+      F_old,J_old,D_old :: OPMATRIX@
+      lhs_aa,lhs_bb,lhs_ba :: MAT{REAL}@
+      rhs_a,rhs_b :: VEC{REAL}@
       dimv,dim,old,i,j :: INT
 
       ! Get the saved LHS & RHS (leaky)
@@ -3021,8 +2918,8 @@ contains
    ENSURE(.F_tag/=" ","no F_tag specified")
    ENSURE(.D_tag/=" ","no D_tag specified")
    ENSURE(.e_tag/=" ","e_tag is not specified")
-      lhs :: MAT{REAL}*
-      F_i,F_j,D_i,D_j :: OPMATRIX*
+      lhs :: MAT{REAL}@
+      F_i,F_j,D_i,D_j :: OPMATRIX@
       dimv,dim,i,j :: INT
       modify :: BIN
       e :: REAL
@@ -3087,8 +2984,8 @@ contains
    ENSURE(.F_tag/=" ","no F_tag specified")
    ENSURE(.D_tag/=" ","no D_tag specified")
    ENSURE(.e_tag/=" ","e_tag is not specified")
-      lhs,lhs_aa,lhs_bb,lhs_ba :: MAT{REAL}*
-      F_i,F_j,J_i,J_j,D_i,D_j :: OPMATRIX*
+      lhs,lhs_aa,lhs_bb,lhs_ba :: MAT{REAL}@
+      F_i,F_j,J_i,J_j,D_i,D_j :: OPMATRIX@
       dimv,dim,i,j :: INT
       e_a,e_b :: REAL
       modify :: BIN
@@ -3167,9 +3064,9 @@ contains
    ! matrix extrapolation, only ".F" is updated. This assumes that the DIIS
    ! object has been repeatedly called, previously, so that it has all the
    ! previous information on disk. 
-      D,F :: OPMATRIX*
-      S :: MAT{REAL}*
-      energy :: VEC{REAL}*
+      D,F :: OPMATRIX@
+      S :: MAT{REAL}@
+      energy :: VEC{REAL}@
       J :: OPMATRIX*, optional
       spinorbital_kind :: STR
       .D => D; .F => F; .S => S
@@ -3202,9 +3099,9 @@ contains
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
 
-      C :: OPMATRIX*
-      lhs :: MAT{REAL}*
-      rhs,coeff,old_coeff :: VEC{REAL}*
+      C :: OPMATRIX@
+      lhs :: MAT{REAL}@
+      rhs,coeff,old_coeff :: VEC{REAL}@
       dim,old,iter,best :: INT
       length,tol,e :: REAL
 
@@ -3316,9 +3213,9 @@ contains
    ENSURE(.F.n_bf==.S.dim1,"Incompatible F and S")
    ENSURE(.D.n_bf==.S.dim1,"Incompatible D and S")
    ENSURE(.J.n_bf==.S.dim1,"Incompatible D and S")
-      C :: OPMATRIX*
-      lhs :: MAT{REAL}*
-      rhs,coeff,coeff1,old_coeff,coeff_a,coeff_b,c1a,c1b :: VEC{REAL}*
+      C :: OPMATRIX@
+      lhs :: MAT{REAL}@
+      rhs,coeff,coeff1,old_coeff,coeff_a,coeff_b,c1a,c1b :: VEC{REAL}@
       length,tol :: REAL
       dim,old,iter,best :: INT
       e :: VEC{REAL}(2)
@@ -3441,14 +3338,14 @@ contains
    ! This routine makes only *one* version of the "lhs" which depends on the
    ! "coeff" solution.  Every DDIIS "lhs" matrix is saved to disk but it is NOT
    ! reused.
-      lhs :: MAT{REAL}*
-      rhs,coeff :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs,coeff :: VEC{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(rhs.disassociated,"rhs exists")
    ENSURE(coeff.associated,"no coeff's supplied")
-      F,D :: OPMATRIX*
-      e1 :: MAT3{REAL}*
-      C :: MAT{REAL}*
+      F,D :: OPMATRIX@
+      e1 :: MAT3{REAL}@
+      C :: MAT{REAL}@
       dim,dimv,i,j :: INT
 
       ! Make temporaries
@@ -3503,16 +3400,16 @@ contains
    ! the "lhs" from scratch. This routine makes only *one* version of the "lhs"
    ! which depends on the "coeff" solution.  Every DDIIS "lhs" matrix is saved
    ! to disk but it is NOT reused.
-      lhs :: MAT{REAL}*
-      rhs,coeff :: VEC{REAL}*
+      lhs :: MAT{REAL}@
+      rhs,coeff :: VEC{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(rhs.disassociated,"rhs exists")
    ENSURE(coeff.associated,"no rhs supplied")
-      F,G,D :: OPMATRIX*
+      F,G,D :: OPMATRIX@
       dim,dimv,i,j,aj,bj,ai,bi :: INT
-      C,Wa,Wb,lhs_aa,lhs_bb,lhs_ab,lhs_ba :: MAT{REAL}*
-      rhs_a,rhs_b :: VEC{REAL}*
-      e1 :: MAT3{REAL}*
+      C,Wa,Wb,lhs_aa,lhs_bb,lhs_ab,lhs_ba :: MAT{REAL}@
+      rhs_a,rhs_b :: VEC{REAL}@
+      e1 :: MAT3{REAL}@
 
       ! Make temporaries
       dim = .kept + 1
@@ -3620,12 +3517,12 @@ contains
       dl :: VEC{REAL}, optional, OUT
    ENSURE(saved_self.associated,"saved_self not defined")
    ENSURE(saved_self.dimension>=3,"dimension too small")
-      F,D :: OPMATRIX*
-      e1 :: MAT3{REAL}*
-      C,lhs :: MAT{REAL}*
-      coeff1 :: VEC{REAL}*
+      F,D :: OPMATRIX@
+      e1 :: MAT3{REAL}@
+      C,lhs :: MAT{REAL}@
+      coeff1 :: VEC{REAL}@
       dim,dimv,i,j :: INT
-      self :: FOCK_DIIS*
+      self :: FOCK_DIIS@
 
       self => saved_self
 
@@ -3687,13 +3584,13 @@ contains
       dl :: VEC{REAL}, optional, OUT
    ENSURE(saved_self.associated,"saved_self not defined")
    ENSURE(saved_self.dimension>=3,"dimension too small")
-      F,G,D :: OPMATRIX*
+      F,G,D :: OPMATRIX@
       dim,dimv,i,j,aj,bj,ai,bi :: INT
-      lhs,C,Wa,Wb, lhs_aa,lhs_bb,lhs_ab,lhs_ba :: MAT{REAL}*
-      coeff0,coeff1,c1a,c1b,dla,dlb,da,db :: VEC{REAL}*
-      outside :: VEC{BIN}*
-      e0,e1 :: MAT3{REAL}*
-      self :: FOCK_DIIS*
+      lhs,C,Wa,Wb, lhs_aa,lhs_bb,lhs_ab,lhs_ba :: MAT{REAL}@
+      coeff0,coeff1,c1a,c1b,dla,dlb,da,db :: VEC{REAL}@
+      outside :: VEC{BIN}@
+      e0,e1 :: MAT3{REAL}@
+      self :: FOCK_DIIS@
 
       self => saved_self
 
@@ -3848,7 +3745,7 @@ contains
    ENSURE(lhs.dim1==solution.dim,"lhs and solution are incompatible")
 
       emin :: REAL, optional
-      plist,keep0 :: VEC{INT}*
+      plist,keep0 :: VEC{INT}@
       dim,k :: INT
       fail :: BIN
 
@@ -3882,7 +3779,7 @@ contains
    ENSURE(lhs.dim1==solution.dim,"lhs and solution are incompatible")
    ENSURE(rhs.dim.is_even,"rhs must have an even dimension")
 
-      plist :: VEC{INT}*
+      plist :: VEC{INT}@
       dim,k :: INT
       fail :: BIN
 
@@ -3917,10 +3814,10 @@ contains
 !
 !      i,j,dim :: INT
 !      a,b :: REAL
-!      lhs2 :: MAT{REAL}*
-!      rhs2,solution2 :: VEC{REAL}*
-!  !    coeff :: VEC{CPX}*
-!  !    plist,keep0 :: VEC{INT}*
+!      lhs2 :: MAT{REAL}@
+!      rhs2,solution2 :: VEC{REAL}@
+!  !    coeff :: VEC{CPX}@
+!  !    plist,keep0 :: VEC{INT}@
 !  !    dim,k :: INT
 !  !    fail :: BIN
 !   !   if (.force_convexity) then
@@ -3999,10 +3896,10 @@ contains
    ENSURE(plist.dim<=lhs.dim1,"plist to large")
    ENSURE(plist.all_in_range([1,lhs.dim1]),"plist indices out of range")
       pdim,rdim,k,n,n_combinations :: INT
-      ulist,list,comb :: VEC{INT}*
-      combination :: MAT{INT}*
-      lhs0 :: MAT{REAL}*
-      sol,sol0,rhs0 :: VEC{REAL}*
+      ulist,list,comb :: VEC{INT}@
+      combination :: MAT{INT}@
+      lhs0 :: MAT{REAL}@
+      sol,sol0,rhs0 :: VEC{REAL}@
       e,e0 :: REAL
       found_one,no_solution :: BIN
     ! even :: BIN
@@ -4106,7 +4003,7 @@ contains
    ! Get the old DIIS left hand side matrix in "lhs". The "lhs" is created to be
    ! the correct size for the *current* DIIS problem. The new parts required are
    ! not set. This is a GENERIC version.
-      lhs :: MAT{REAL}*
+      lhs :: MAT{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(.lhs_tag/=" ","no lhs_tag specified")
       dim,iter :: INT
@@ -4144,7 +4041,7 @@ contains
    ! Get the old restricted DIIS left hand side matrix in "lhs". The "lhs" is
    ! created to be the correct size for the *current* DIIS problem. The new
    ! parts required are not set.
-      lhs :: MAT{REAL}*
+      lhs :: MAT{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(.lhs_tag/=" ","no lhs_tag specified")
       dim,iter :: INT
@@ -4183,7 +4080,7 @@ contains
 !   ! Get the old restricted DIIS left hand side matrix in "lhs". The "lhs" is
 !   ! created to be the correct size for the *current* DIIS problem. The new
 !   ! parts required are not set.
-!      lhs :: MAT{CPX}*
+!      lhs :: MAT{CPX}@
 !   ENSURE(lhs.disassociated,"lhs exists")
 !   ENSURE(.lhs_tag/=" ","no lhs_tag specified")
 !      dim,iter :: INT
@@ -4223,11 +4120,11 @@ contains
    ! created to be the correct size for the *current* DIIS problem. It is twice
    ! as big as the restricted DIIS matrix. WARNING: The new parts required are
    ! not set.
-      lhs :: MAT{REAL}*
+      lhs :: MAT{REAL}@
    ENSURE(lhs.disassociated,"lhs exists")
    ENSURE(.lhs_tag/=" ","no lhs_tag specified")
       dim,iter :: INT
-      old_lhs,lhs_aa,lhs_bb,lhs_ba,lhs_ab :: MAT{REAL}*
+      old_lhs,lhs_aa,lhs_bb,lhs_ba,lhs_ab :: MAT{REAL}@
 
       dim = 2*.dimension
       lhs.create(dim,dim)
@@ -4272,7 +4169,7 @@ contains
    get_old_r_rhs(rhs) ::: leaky, private
    ! Get the old EDIIS "rhs" from disk. These will usually be energies. In fact,
    ! one of these energies should be new, not old.
-      rhs :: VEC{REAL}*
+      rhs :: VEC{REAL}@
    ENSURE(rhs.disassociated,"rhs exists")
    ENSURE(.e_tag/=" ","e_tag is not specified")
       dim,old :: INT
@@ -4290,11 +4187,11 @@ contains
    get_old_u_rhs(rhs) ::: leaky, private
    ! Get the old EDIIS "rhs" from disk. These will usually be energies. In fact,
    ! one of these energies should be new, not old.
-      rhs :: VEC{REAL}*
+      rhs :: VEC{REAL}@
    ENSURE(rhs.disassociated,"rhs exists")
    ENSURE(.e_tag/=" ","e_tag is not specified")
       dim,old :: INT
-      rhs_a,rhs_b :: VEC{REAL}*
+      rhs_a,rhs_b :: VEC{REAL}@
       e_a,e_b :: REAL
 
       dim = .dimension

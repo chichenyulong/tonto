@@ -57,56 +57,6 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-   create ::: get_from(OBJECT), leaky
-   ! Create an object. This version does not set defaults.
-   end
-
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-
-      nullify(.cif_file_name)
-      nullify(.equality_constraints)
-      nullify(.decoupled_parameters)
-      nullify(.atom)
-      nullify(.temperature)
-      nullify(.temperature_sigma)
-      nullify(.unit_cell)
-      nullify(.unit_cell_sigma)
-      nullify(.ADP)
-      nullify(.ADP_cov)
-      nullify(.ADP_wt)
-      nullify(.V_coeff)
-      nullify(.Delta_V_on_V)
-      nullify(.parameter_description)
-      nullify(.L)
-      nullify(.lambda)
-      nullify(.omega)
-      nullify(.amplitude)
-      nullify(.gamma_G)
-      nullify(.near_0_eigenvalues)
-      nullify(.near_0_eigenvectors)
-      nullify(.delta_p)
-      nullify(.covariance_matrix)
-      nullify(.correlation_matrix)
-
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts
-
-      .cif_file_name.destroy
-      .equality_constraints.destroy
-      .decoupled_parameters.destroy
-
-      .destroy_data_ptr_part
-
-   end
 
    destroy_data_ptr_part ::: leaky
    ! Destroy the pointer parts
@@ -132,53 +82,6 @@ contains
       .delta_p.destroy
       .covariance_matrix.destroy
       .correlation_matrix.destroy
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(object) ::: leaky
-   ! Copy an object
-      object :: MULTI_T_ADP, IN
-
-      self = object
-
-      .nullify_ptr_part
-
-      COPY_FROM_OBJECT(equality_constraints)
-      COPY_FROM_OBJECT(decoupled_parameters)
-      COPY_FROM_OBJECT(atom)
-      COPY_FROM_OBJECT(cif_file_name)
-      COPY_FROM_OBJECT(temperature)
-      COPY_FROM_OBJECT(temperature_sigma)
-      COPY_FROM_OBJECT(unit_cell)
-      COPY_FROM_OBJECT(unit_cell_sigma)
-      COPY_FROM_OBJECT(ADP)
-      COPY_FROM_OBJECT(ADP_cov)
-      COPY_FROM_OBJECT(ADP_wt)
-      COPY_FROM_OBJECT(V_coeff)
-      COPY_FROM_OBJECT(Delta_V_on_V)
-      COPY_FROM_OBJECT(parameter_description)
-      COPY_FROM_OBJECT(L)
-      COPY_FROM_OBJECT(lambda)
-      COPY_FROM_OBJECT(omega)
-      COPY_FROM_OBJECT(amplitude)
-      COPY_FROM_OBJECT(gamma_G)
-      COPY_FROM_OBJECT(near_0_eigenvalues)
-      COPY_FROM_OBJECT(near_0_eigenvectors)
-      COPY_FROM_OBJECT(delta_p)
-      COPY_FROM_OBJECT(covariance_matrix)
-      COPY_FROM_OBJECT(correlation_matrix)
 
    end
 
@@ -642,9 +545,9 @@ contains
    ! Set up the starting info
    ENSURE(.cif_file_name.associated,"no cif_files")
 
-      cif :: CIF*
-      atom :: VEC{ATOM}*
-      cov :: MAT{REAL}*
+      cif :: CIF@
+      atom :: VEC{ATOM}@
+      cov :: MAT{REAL}@
       found :: BIN
       name :: STR
       i,a :: INT
@@ -953,8 +856,8 @@ contains
    ENSURE(.unit_cell.associated,"no unit_cells")
    ENSURE(.temperature.associated,"no temperatures")
 
-      Y :: VEC{REAL}*
-      X,M :: MAT{REAL}*
+      Y :: VEC{REAL}@
+      X,M :: MAT{REAL}@
       n,fi, t,i,j :: INT
 
       ! Expansion order
@@ -1070,7 +973,7 @@ contains
    ENSURE(.V_coeff.associated,"no .V_coeffs")
    ENSURE(.Delta_V_on_V.associated,"no .Delta_V_on_V")
 
-      coeff :: VEC{REAL}*
+      coeff :: VEC{REAL}@
       t :: INT
 
       stdout.flush
@@ -1144,9 +1047,9 @@ contains
    ENSURE(.V_coeff.associated,"no V_coeff's")
 
       .use_fixed_H_modes,LL,fac :: REAL
-      XX,X0,dX, GG :: VEC{REAL}*
-      HH :: MAT{REAL}*
-      MM :: MAT3{REAL}*
+      XX,X0,dX, GG :: VEC{REAL}@
+      HH :: MAT{REAL}@
+      MM :: MAT3{REAL}@
       np,nt :: INT
       finished,chi2_increased :: BIN
 
@@ -1278,8 +1181,8 @@ contains
       HH :: MAT{REAL}(.n_total_parameters,.n_total_parameters)
       MM :: MAT3{REAL}(.n_parameters,.n6N,.n_T)
 
-      Delta,Welta :: MAT{REAL}*
-      d_Delta,d_Welta :: MAT3{REAL}*
+      Delta,Welta :: MAT{REAL}@
+      d_Delta,d_Welta :: MAT3{REAL}@
       nL,nw,nG,nt :: INT
 
       ! No of parameters
@@ -1694,7 +1597,7 @@ contains
    ! Return the value of the chi2
       res :: REAL
 
-      Delta,Welta :: MAT{REAL}*
+      Delta,Welta :: MAT{REAL}@
    
       ! Make Delta: differences between calc & obs
       Delta.create(.n6N,.n_T)

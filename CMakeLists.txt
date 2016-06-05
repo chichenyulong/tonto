@@ -257,6 +257,7 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/coppens_orbital.F90
     ${CMAKE_CURRENT_BINARY_DIR}/cpx.F90
     ${CMAKE_CURRENT_BINARY_DIR}/crystal.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/debug.F90
     ${CMAKE_CURRENT_BINARY_DIR}/dft_functional.F90
     ${CMAKE_CURRENT_BINARY_DIR}/diffraction_data.F90
     ${CMAKE_CURRENT_BINARY_DIR}/diis.F90
@@ -269,29 +270,48 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/geminal_mf_spectrum.F90
     ${CMAKE_CURRENT_BINARY_DIR}/int.F90
     ${CMAKE_CURRENT_BINARY_DIR}/interpolator.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/intrinsic.F90
     ${CMAKE_CURRENT_BINARY_DIR}/irrep.F90
     ${CMAKE_CURRENT_BINARY_DIR}/isosurface.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/json.F90
     ${CMAKE_CURRENT_BINARY_DIR}/lebedev.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/map_int_int.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/map_vec_int_vec_int.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/map\{int,int\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/map\{key,val\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/map\{str,int\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/map\{vec\{int\},vec\{int\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/map\{vec\{key\},vec\{val\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/marchingcube.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat3_cpx.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat3_int.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat3_real.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat3_vec_int.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat4_cpx.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat4_int.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat4_real.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat5_cpx.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat5_real.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat_bin.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat_cpx.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat_int.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat_real.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat_rms2_indices.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat_rms_indices.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat_shell1pair.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat_str.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{bin\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{cpx\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{intrinsic\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{int\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{real\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{bin\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{intrinsic\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{int\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{real\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat4\{cpx\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat4\{intrinsic\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat4\{int\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat4\{object\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat4\{real\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat4\{rms2_indices\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat5\{cpx\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat5\{intrinsic\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat5\{int\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat5\{real\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{bin\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{cpx\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{intrinsic\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{int\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{mat_\{intrinsic\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{mat_\{real\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{object\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{real\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{rms2_indices\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{rms_indices\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{shell1pair\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/mat\{str\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mo_localiser.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.base.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.ce.F90
@@ -308,8 +328,10 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.scf.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.tad.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.xtal.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/object.F90
     ${CMAKE_CURRENT_BINARY_DIR}/opmatrix.F90
     ${CMAKE_CURRENT_BINARY_DIR}/opvector.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/parallel.F90
     ${CMAKE_CURRENT_BINARY_DIR}/plot_grid.F90
     ${CMAKE_CURRENT_BINARY_DIR}/pointgroup.F90
     ${CMAKE_CURRENT_BINARY_DIR}/quadrature.F90
@@ -332,38 +354,49 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/spherical.F90
     ${CMAKE_CURRENT_BINARY_DIR}/str.F90
     ${CMAKE_CURRENT_BINARY_DIR}/system.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/system_command.F90
     ${CMAKE_CURRENT_BINARY_DIR}/table_column.F90
     ${CMAKE_CURRENT_BINARY_DIR}/textfile.F90
     ${CMAKE_CURRENT_BINARY_DIR}/time.F90
     ${CMAKE_CURRENT_BINARY_DIR}/types.F90
     ${CMAKE_CURRENT_BINARY_DIR}/unit_cell.F90
     ${CMAKE_CURRENT_BINARY_DIR}/unit_number.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_atom_group.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_atom.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_basis.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_bin.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_coppens_basis.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_coppens_orbital.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_cpx.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_diis.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_interpolator.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_int.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_irrep.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_mat3_real.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_mat_real.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_quadrature.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_real.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_reflection.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_shell.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_slater_basis.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_slater_shell.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_str.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_table_column.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_vec_bin.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_vec_int.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_vec_real.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_vec_str.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec_vec_vec_int.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{atom_group\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{atom\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{basis\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{bin\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{coppens_basis\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{coppens_orbital\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{cpx\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{diis\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{interpolator\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{intrinsic\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{int\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{irrep\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat3_\{intrinsic\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat3_\{real\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat4_\{intrinsic\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat4_\{real\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat_\{intrinsic\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat_\{real\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{object\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{quadrature\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{real\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{reflection\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{shell\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{slater_basis\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{slater_shell\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{str\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{table_column\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{unit_cell\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{bin\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{intrinsic\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{int\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{real\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{str\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{vec_\{intrinsic\}\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{vec_\{int\}\}\}.F90
+    ${CMAKE_CURRENT_BINARY_DIR}/vec\{vec_\{vec_\{real\}\}\}.F90
 )
 # Set up runfiles
 set(RUNFILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/runfiles)
@@ -384,10 +417,12 @@ foreach(foopath ${SRC})
     string(REGEX REPLACE ".foo\$" ".F90" F90file ${foofile})
     # This is just so Make doesn't panic about unescaped { or ,
     # and the end result is the filenames in FORTRAN_SRC
-    string(REGEX REPLACE "{|}|," "_" F90file ${F90file})
-    string(REGEX REPLACE "___" "_" F90file ${F90file})
-    string(REGEX REPLACE "__" "_" F90file ${F90file})
-    string(REGEX REPLACE "_.F90" ".F90" F90file ${F90file})
+    string(REGEX REPLACE "{" "\{" F90file ${F90file})
+    string(REGEX REPLACE "}" "\}" F90file ${F90file})
+  # string(REGEX REPLACE "{|}|," "_" F90file ${F90file})
+  # string(REGEX REPLACE "___" "_" F90file ${F90file})
+  # string(REGEX REPLACE "__" "_" F90file ${F90file})
+  # string(REGEX REPLACE "_.F90" ".F90" F90file ${F90file})
     add_custom_command(
         OUTPUT ${F90file}
         COMMAND ${PERL_EXECUTABLE}

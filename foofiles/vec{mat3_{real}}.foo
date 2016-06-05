@@ -36,8 +36,8 @@ contains
    ! Create the object with lower and upper bounds "lb" and "ub"
    end
 
-   destroy ::: get_from(VEC{MAT3_{INTRINSIC}}), leaky
-   ! Destroy the object
+   destroy ::: get_from(OBJECT), leaky
+   ! Deallocate "self"
    end
 
    nullify_ptr_part ::: get_from(VEC{MAT3_{INTRINSIC}})
@@ -77,7 +77,7 @@ contains
    ! xyz cartesian gaussian shell components from a list of the p xyz
    ! representation matrices.
    ! NOTE: nothing in self in pointer assigned, so it can be destroyed safely.
-      self :: PTR
+      self :: allocatable, INOUT
       ptr :: MAT3{REAL}
 
    ENSURE(ptr.dim1==3,"wrong 1st dimension, self")

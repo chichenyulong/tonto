@@ -39,7 +39,7 @@
 ! modify it under the terms of the GNU Library General Public
 ! License as published by the Free Software Foundation; either
 ! version 2 of the License, or (at your option) any later version.
-!
+      self :: allocatable, INOUT
 ! This library is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -83,16 +83,11 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
-
-!  =============================
-!  File creation type operations
-!  =============================
 
    create_stdin ::: leaky
    ! Create a the standard input file object, if needed.
    ! Return a pointer to it if already created
-      self :: PTR
+      self :: allocatable, INOUT
 
       if (stdin.disassociated) then
 
@@ -100,7 +95,7 @@ contains
          allocate(stdin)
          stdin.nullify_ptr_part
 
-         ! Set defaults
+      self :: allocatable, INOUT
          .set_defaults
 
          ! Reset some defaults
@@ -121,7 +116,7 @@ contains
    create_stdout ::: leaky
    ! Create a standard output file object.
    ! Return a pointer to it if already created
-      self :: PTR
+      self :: allocatable, INOUT
 
       if (stdout.disassociated) then
 
@@ -151,7 +146,7 @@ contains
    create_stderr ::: leaky
    ! Create a standard output file object.
    ! Return a pointer to it if already created
-      self :: PTR
+      self :: allocatable, INOUT
 
       if (stderr.disassociated) then
 
@@ -179,7 +174,7 @@ contains
 
    create(name) ::: leaky
    ! Create a textfile, and optionally set the name. Does not open the file.
-      self :: PTR
+      self :: allocatable, INOUT
       name :: STR, optional
 
       ! Allocate and nullify
@@ -202,7 +197,7 @@ contains
 
    create(internal) ::: leaky
    ! Create an internal textfile
-      self :: PTR
+      self :: allocatable, INOUT
       internal :: VEC{STR}, IN
 
    ENSURE(.internal.disassociated,"internal file already exists")
@@ -229,99 +224,10 @@ contains
 
    end
 
-   destroy ::: leaky, recursive
-   ! Destroy a textfile
-      self :: PTR
-
-      if (.disassociated) return
-
-      .destroy_ptr_part
-
-      if (.is_open) .close
-
-      UNIT_NUMBER:free_the_used_unit_number(.unit)
-
-      deallocate(self)
-
-   end
-
-   nullify_ptr_part ::: pure
-   ! Nullify the pointer parts of "self".
-      self :: INOUT
-
-      nullify(.replacement_list)
-      nullify(.internal)
-      nullify(.saved)
-
-      .buffer.nullify_ptr_part
-
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of "self", including any saved parts,
-   ! which are destroyed recursively.
-      .buffer.destroy_ptr_part
-      .replacement_list.destroy
-      .internal.destroy
-      .saved.destroy
-   end
-
    destroy_replacement_list ::: leaky
    ! Destroy the .replacement_list; needed if set_replacement_list is used
       .replacement_list.destroy
       .buffer.replacement_list.destroy
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-!  ====
-!  Copy
-!  ====
-
-   create_copy(file) ::: recursive, leaky
-   ! Create a copy of this textfile
-      self :: PTR
-      file :: TEXTFILE
-
-      ! Create fresh file, with no name
-      .create
-
-      ! Free nameless file unit
-      UNIT_NUMBER:free_the_used_unit_number(.unit)
-
-      ! Copy the file, unit and all
-      .copy(file)
-
-   end
-
-   copy(file,copy_saved) ::: recursive, leaky
-   ! Make a copy of this textfile. If "saved" is TRUE, recursively
-   ! copy the .saved component. Default is *not* to recursively copy.
-      file :: TEXTFILE
-      copy_saved :: BIN, optional
-
-      ! Non pointer (simple) copy
-      self = file
-
-      ! Pointer parts are create-copied
-      .nullify_ptr_part
-      .buffer.copy(file.buffer)
-      if (file.internal.associated)         .internal.create_copy(file.internal)
-      if (file.replacement_list.associated) .replacement_list.create_copy(file.replacement_list)
-
-      ! Copy saved only if requested (recursive)
-      if (present(copy_saved)) then
-      if (copy_saved) then
-      if (file.saved.associated)            .saved.create_copy(file.saved)
-      end
-      end
-
    end
 
 !  ===================
@@ -331,10 +237,10 @@ contains
    save ::: leaky
    ! Saved everything about the current textfile "self" in ".saved"
    ! Do not open a new textfile. Can be used to save style settings.
-      self :: PTR
+      self :: allocatable, INOUT
    ENSURE(.associated,"no self")
 
-      saved :: TEXTFILE*
+      saved :: TEXTFILE@
 
       ! Keep self in saved
       saved => self
@@ -356,10 +262,10 @@ contains
    unsave ::: leaky
    ! Go back to previously saved textfile settings. Note that this
    ! is not the same as reverting to a previously redirected textfile
-      self :: PTR
+      self :: allocatable, INOUT
    ENSURE(.saved.associated,"no previous settings")
 
-      saved :: TEXTFILE*
+      saved :: TEXTFILE@
 
       ! Keep the old .saved component
       saved => .saved
@@ -407,10 +313,10 @@ contains
    ! Save all the info for the current file in ".saved", and open a
    ! new textfile.  This is used for input, or output redirection.
    ! The new file retains the style settings of the saved file
-      self :: PTR
+      self :: allocatable, INOUT
       name :: STR
 
-      saved :: TEXTFILE*
+      saved :: TEXTFILE@
 
       ! Keep self in saved
       saved => self
@@ -438,10 +344,10 @@ contains
    ! Save all the info for the current file in ".saved", and open a
    ! new internal textfile. This is used for *only* input redirection.
    ! The new file retains the style settings of the saved file
-      self :: PTR
+      self :: allocatable, INOUT
       internal :: VEC{STR}, IN
 
-      saved :: TEXTFILE*
+      saved :: TEXTFILE@
 
       ! Keep self in saved
       saved => self
@@ -476,11 +382,11 @@ contains
    revert ::: leaky
    ! Revert to the previously redirected textfile, but keep current
    ! style settings, including (for example) any default_units settings.
-      self :: PTR
+      self :: allocatable, INOUT
 
    ENSURE(.saved.associated,"no previous settings")
 
-      saved :: TEXTFILE*
+      saved :: TEXTFILE@
 
       ! Preserve current style settings
       .saved.use_style(self)
@@ -861,7 +767,7 @@ contains
 
    set_replacement_list(list) ::: leaky
    ! Set the replacement_list.
-      list :: MAT{STR}*
+      list :: MAT{STR}@
    ENSURE(list.associated,"list destroyed")
    ENSURE(list.dim2==2,"second dimension must be 2")
       .replacement_list.destroy
@@ -1023,8 +929,8 @@ contains
 
    read_keywords(in)
    ! Read the default output style parameters from another textfile, "in"
-      self :: PTR
-      in :: TEXTFILE*
+      self :: allocatable, INOUT
+      in :: TEXTFILE@
 
    ENSURE(in.action=="read","file in is not an input file")
 
@@ -1046,11 +952,11 @@ contains
    process_keyword(keyword,infile) ::: leaky
    ! Process a command "keyword". Input keywords are optionally taken
    ! from "infile".
-      self :: PTR
+      self :: allocatable, INOUT
       keyword :: STR
       infile :: TEXTFILE*, optional
 
-      input :: TEXTFILE*
+      input :: TEXTFILE@
       word,sty :: STR
       bin :: BIN
       val :: INT
@@ -2800,7 +2706,7 @@ contains
          .read(word)
          ENSURE(word=="}","list does not end with a {")
 
-      ! Plain old VEC{INT}*
+      ! Plain old VEC{INT}@
       else
 
          ! Backtrack before "{"
@@ -2821,7 +2727,7 @@ contains
    end
 
 !  ===============
-!  Read VEC{TYPE}*
+!  Read VEC{TYPE}@
 !  ===============
 
    read_ptr(v) ::: template
@@ -2873,7 +2779,7 @@ contains
    ! Read in a fancy vector pointer "v" sequentially. Fancy because a
    ! looping construct in understood. Line breaks are not significant.
    ! The "v" vector pointer is created.
-      v :: VEC{INT}*
+      v :: VEC{INT}@
 
       dim,f,l,i :: INT
       word,first,second :: STR
@@ -2902,7 +2808,7 @@ contains
          .read(word)
          ENSURE(word=="}","list does not end with a {")
 
-      ! Plain old VEC{INT}*
+      ! Plain old VEC{INT}@
       else
 
          ! Backtrack before "{"
@@ -3121,7 +3027,7 @@ contains
    end
 
 !  ===============
-!  Read MAT{TYPE}*
+!  Read MAT{TYPE}@
 !  ===============
 
    get_matrix_shape(dim) ::: private
@@ -3291,7 +3197,7 @@ contains
 
       line,item :: INT
       word :: STR
-      v :: VEC{STR}*
+      v :: VEC{STR}@
 
       ! Store original pos
       line = .line_number
@@ -5440,7 +5346,7 @@ contains
 
       dim,dim1,dim2 :: INT
       is_ptr :: BIN
-      v :: VEC{TYPE?}*
+      v :: VEC{TYPE?}@
 
       ! Is this a pointer?
       is_ptr = FALSE
@@ -5501,7 +5407,7 @@ contains
 
       dim,dim1,dim2,dim3 :: INT
       is_ptr :: BIN
-      v :: VEC{TYPE?}*
+      v :: VEC{TYPE?}@
 
       ! Is this a pointer?
       is_ptr = FALSE
@@ -5566,7 +5472,7 @@ contains
    end
 
 !  ===============
-!  Dump VEC{TYPE}*
+!  Dump VEC{TYPE}@
 !  ===============
 
    dmpp(varname,value) ::: get_from(TEXTFILE, VALUE?=>VEC{STR})
@@ -5590,7 +5496,7 @@ contains
    end
 
 !  ===============
-!  Dump MAT{TYPE}*
+!  Dump MAT{TYPE}@
 !  ===============
 
    dmpp(varname,value) ::: get_from(TEXTFILE, VALUE?=>MAT{STR})
@@ -5614,7 +5520,7 @@ contains
    end
 
 !  ================
-!  Dump MAT3{TYPE}*
+!  Dump MAT3{TYPE}@
 !  ================
 
    dmpp(varname,value) ::: get_from(TEXTFILE, VALUE?=>MAT3{BIN})

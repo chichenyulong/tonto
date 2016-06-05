@@ -41,7 +41,7 @@ contains
    ! NOTE: If you set core=TRUE then for ROHF, both types of core
    !       matrix should exist. See initialize_scf. If possible, use
    !       the SCF:make_fock_matrix routine.
-      P,F :: OPMATRIX*
+      P,F :: OPMATRIX@
       core,r12,xc :: BIN, optional
 
    ENSURE(.scfdata.associated,"no scfdata")
@@ -111,7 +111,7 @@ contains
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
       direct,core,r12 :: BIN, optional
-      P,F :: OPMATRIX*
+      P,F :: OPMATRIX@
 
    ENSURE(P.associated,"no density matrix")
    ENSURE(F.associated,"no fock matrix")
@@ -119,7 +119,7 @@ contains
    ENSURE(P.n_bf==.n_bf, "Density matrix dimensions wrong")
    ENSURE(P.restricted.associated, "no density matrix")
 
-      J,K :: MAT{REAL}*
+      J,K :: MAT{REAL}@
       do_direct,add_core,add_r12 :: BIN
 
       ! Recreate
@@ -172,7 +172,7 @@ contains
    ! If present and FALSE, "r12"  removes the two electron contribution
    ! If present and FALSE, "xc"  removes the exchange correlation part
       direct,core,r12,xc :: BIN, optional
-      P,F :: OPMATRIX*
+      P,F :: OPMATRIX@
 
    ENSURE(P.associated,"no density matrix")
    ENSURE(F.associated,"no fock matrix")
@@ -180,7 +180,7 @@ contains
    ENSURE(P.n_bf==.n_bf, "Density matrix dimensions wrong")
    ENSURE(P.restricted.associated, "no density matrix")
 
-      J :: MAT{REAL}*
+      J :: MAT{REAL}@
       do_direct,add_core,add_r12,add_xc :: BIN
 
       ! Recreate
@@ -228,7 +228,7 @@ contains
    ! If present and TRUE , "direct" means calculate integrals on the fly
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
-      P,F :: OPMATRIX*
+      P,F :: OPMATRIX@
       direct,core,r12 :: BIN, optional
 
    ENSURE(P.associated,"no density matrix")
@@ -238,7 +238,7 @@ contains
    ENSURE(F.n_bf==.n_bf, "Fock matrix dimensions wrong")
    ENSURE(P.n_bf==.n_bf, "Density matrix dimensions wrong")
 
-      J,K :: OPMATRIX*
+      J,K :: OPMATRIX@
       do_direct,add_core,add_r12 :: BIN
 
       F.destroy("unrestricted")
@@ -289,7 +289,7 @@ contains
    ! If present and FALSE, "r12"  removes the two electron contribution
    ! If present and FALSE, "xc"   removes the exchange correlation
       core,r12,xc :: BIN, optional
-      P,F :: OPMATRIX*
+      P,F :: OPMATRIX@
 
    ENSURE(P.associated,"no density matrix")
    ENSURE(F.associated,"no fock matrix")
@@ -298,7 +298,7 @@ contains
    ENSURE(P.alpha.associated, "no density matrix")
    ENSURE(P.beta.associated, "no density matrix")
 
-      J,Pab :: MAT{REAL}*
+      J,Pab :: MAT{REAL}@
       add_core,add_r12,add_xc :: BIN
 
       F.destroy("unrestricted")
@@ -351,13 +351,13 @@ contains
    ! If present and TRUE , "direct" means calculate integrals on the fly
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
-      F,P :: OPMATRIX*
+      F,P :: OPMATRIX@
       direct,core,r12 :: BIN, optional
 
    ENSURE(P.restricted.associated,"no restricted density")
    ENSURE(.molecular_orbitals.restricted.associated,"no orbitals")
 
-      Fr,Fa,Fb,W :: MAT{REAL}*
+      Fr,Fa,Fb,W :: MAT{REAL}@
 
       ! Clean
       F.destroy("restricted")
@@ -398,7 +398,7 @@ contains
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
       direct,core,r12 :: BIN, optional
-      P,F :: OPMATRIX*
+      P,F :: OPMATRIX@
 
    ENSURE(P.associated,"no density matrix")
    ENSURE(F.associated,"no fock matrix")
@@ -406,8 +406,8 @@ contains
    ENSURE(F.n_bf==.n_bf, "Fock matrix dimensions wrong")
    ENSURE(P.n_bf==.n_bf, "Density matrix dimensions wrong")
 
-      Ka,Kb,Kba,Pa,Pb,Pba,Fgc :: MAT{CPX}*
-      J, Pab :: MAT{REAL}*
+      Ka,Kb,Kba,Pa,Pb,Pba,Fgc :: MAT{CPX}@
+      J, Pab :: MAT{REAL}@
       do_direct,add_core,add_r12 :: BIN
 
       F.destroy("general_complex")
@@ -469,7 +469,7 @@ contains
    add_gc_so_fock(P,F,direct) ::: leaky
    ! Make the general complex two electron spin orbit contribution to the Fock
    ! matrix.
-      P,F :: OPMATRIX*
+      P,F :: OPMATRIX@
       direct :: BIN, optional
 
    ENSURE(P.associated,"no density matrix")
@@ -480,8 +480,8 @@ contains
    ENSURE(P.n_bf==.n_bf, "Density matrix dimensions wrong")
 
       JS,KS,JO,KO :: MAT5{CPX}@
-      Pgc :: MAT4{CPX}*
-      Faa,Fbb,Fba :: MAT{CPX}*
+      Pgc :: MAT4{CPX}@
+      Faa,Fbb,Fba :: MAT{CPX}@
       I :: CPX
       fac :: REAL
       a,b,x,y,z :: INT
@@ -578,7 +578,7 @@ contains
 
    ENSURE(.precomputed_basis_shellpair.associated,"no precomputed shell pair information")
 
-      I,max_P :: VEC{REAL}*
+      I,max_P :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld,na,nb,nc,nd :: INT
       atom_a,atom_b,atom_c,atom_d,a,b,c,d,abcd :: INT
@@ -703,7 +703,7 @@ contains
    ENSURE(.precomputed_basis_shellpair.associated,"no precomputed shell pair information")
 
       PP,JJ :: VEC{VEC_{REAL}}@, target
-      max_P,Jab,Jcd,Pab,Pcd :: VEC{REAL}*
+      max_P,Jab,Jcd,Pab,Pcd :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld :: INT
       na,nb,nc,nd,atom_a,atom_b,atom_c,atom_d :: INT
@@ -842,7 +842,7 @@ contains
 
    ENSURE(.precomputed_basis_shellpair.associated,"no precomputed shell pair information")
 
-      I,max_P :: VEC{REAL}*
+      I,max_P :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld,na,nb,nc,nd :: INT
       atom_a,atom_b,atom_c,atom_d,a,b,c,d,abcd :: INT
@@ -958,7 +958,7 @@ contains
    ENSURE(.precomputed_basis_shellpair.associated,"no precomputed shell pair information")
 
       PP,JJ :: VEC{VEC_{REAL}}@, target
-      max_P,Jab,Jcd,Pab,Pcd :: VEC{REAL}*
+      max_P,Jab,Jcd,Pab,Pcd :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld :: INT
       na,nb,nc,nd,atom_a,atom_b,atom_c,atom_d :: INT
@@ -1070,7 +1070,7 @@ contains
    ! directly.
       K,P :: MAT{REAL}
 
-      I,max_P :: VEC{REAL}*
+      I,max_P :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld,na,nb,nc,nd :: INT
       atom_a,atom_b,atom_c,atom_d,a,b,c,d,abcd :: INT
@@ -1188,7 +1188,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
 
       eri_archive,ind_archive :: ARCHIVE
-      I :: MAT4{REAL}*
+      I :: MAT4{REAL}@
       q,a,b,c,d,fa,la,fb,lb,fc,lc,fd,ld,n_quartets :: INT
       I_abcd,P_dc,P_db,P_cb :: REAL
 
@@ -1263,7 +1263,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
 
       eri_archive,ind_archive :: ARCHIVE
-      I :: MAT4{REAL}*
+      I :: MAT4{REAL}@
       q,a,b,c,d,fa,la,fb,lb,fc,lc,fd,ld,n_quartets :: INT
       I_abcd,P_dc :: REAL
 
@@ -1328,7 +1328,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
 
       eri_archive,ind_archive :: ARCHIVE
-      I :: MAT4{REAL}*
+      I :: MAT4{REAL}@
       q,a,b,c,d,fa,la,fb,lb,fc,lc,fd,ld,n_quartets :: INT
       I_abcd,P_db,P_cb :: REAL
 
@@ -1390,8 +1390,8 @@ contains
    ! density matrix "P" which has no permutational symmetry.
       J,P :: MAT{REAL}
 
-      I :: VEC{REAL}*
-      max_P :: VEC{REAL}*
+      I :: VEC{REAL}@
+      max_P :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd :: INT
       a,b,c,d,abcd,fa,fb,fc,fd,la,lb,lc,ld :: INT
@@ -1501,8 +1501,8 @@ contains
    ! density matrix "P" which has no permutational symmetry.
       J,K,P :: MAT{REAL}
 
-      I :: VEC{REAL}*
-      max_P :: VEC{REAL}*
+      I :: VEC{REAL}@
+      max_P :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd :: INT
       a,b,c,d,abcd,fa,fb,fc,fd,la,lb,lc,ld :: INT
@@ -1620,14 +1620,14 @@ contains
    ! Make the unrestricted coulomb matrices "J" and unrestricted
    ! exchange matrix "K" matrix from density matrix "P".
    ! This does not use th JK matrix engine
-      J,K,P :: OPMATRIX*
+      J,K,P :: OPMATRIX@
 
    ENSURE(J.created("unrestricted"),"unrestricted J not created")
    ENSURE(K.created("unrestricted"),"unrestricted K not created")
    ENSURE(P.created("unrestricted"),"unrestricted P not created")
 
-      PP :: MAT{REAL}*
-      I,max_P :: VEC{REAL}*
+      PP :: MAT{REAL}@
+      I,max_P :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld,na,nb,nc,nd :: INT
       atom_a,atom_b,atom_c,atom_d,a,b,c,d,abcd :: INT
@@ -1750,7 +1750,7 @@ contains
    make_u_JK_engine(J,K,P)
    ! Make the real coulomb matrix "J" from a symmetric density matrix "P"
    ! directly. This uses the J matrix engine, but it can be easily disabled.
-      J,K,P :: OPMATRIX*
+      J,K,P :: OPMATRIX@
 
    ENSURE(.precomputed_basis_shellpair.associated,"no precomputed shell pair information")
    ENSURE(J.created("unrestricted"),"unrestricted J not created")
@@ -1758,7 +1758,7 @@ contains
    ENSURE(P.created("unrestricted"),"unrestricted P not created")
 
       PA,PB,JA,JB :: VEC{VEC_{REAL}}@, target
-      max_P,JAab,JBab,JAcd,JBcd,PAab,PBab,PAcd,PBcd :: VEC{REAL}*
+      max_P,JAab,JBab,JAcd,JBcd,PAab,PBab,PAcd,PBcd :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld :: INT
       na,nb,nc,nd,atom_a,atom_b,atom_c,atom_d :: INT
@@ -1907,8 +1907,8 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      I :: MAT4{REAL}*
-      eri_archive,ind_archive :: ARCHIVE*
+      I :: MAT4{REAL}@
+      eri_archive,ind_archive :: ARCHIVE@
       q,n_quartets,a,b,c,d,fa,fb,fc,fd,la,lb,lc,ld :: INT
       I_abcd,P_dc,Pa_db,Pa_cb,Pb_db,Pb_cb :: REAL
 
@@ -1990,9 +1990,9 @@ contains
       J,P :: MAT{REAL}
       Ka,Kb,Kba,Pa,Pb,Pba :: MAT{CPX}
 
-      I :: VEC{REAL}*
-      abs_P :: MAT{REAL}*
-      max_P :: VEC{REAL}*
+      I :: VEC{REAL}@
+      abs_P :: MAT{REAL}@
+      max_P :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd :: INT
       a,b,c,d,abcd,fa,fb,fc,fd,la,lb,lc,ld :: INT
@@ -2124,8 +2124,8 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      I :: MAT4{REAL}*
-      eri_archive,ind_archive :: ARCHIVE*
+      I :: MAT4{REAL}@
+      eri_archive,ind_archive :: ARCHIVE@
       q,n_quartets,a,b,c,d,fa,fb,fc,fd,la,lb,lc,ld :: INT
       I_abcd :: REAL
 
@@ -2333,7 +2333,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      S,O :: MAT4{REAL}*
+      S,O :: MAT4{REAL}@
       SO_archive,ind_archive :: ARCHIVE
       q,n_quartets :: INT
       a,b,c,d,fa,fb,fc,fd,la,lb,lc,ld,m,n :: INT
@@ -2691,7 +2691,7 @@ contains
 
       ab,sa,sb,fa,fb,la,lb,na,nb, a,b :: INT
       sh4q :: SHELL1QUARTET
-      Iabab :: MAT4{REAL}*
+      Iabab :: MAT4{REAL}@
       Imax :: REAL
 
       do ab = 1, .n_shell_pairs
@@ -2800,7 +2800,7 @@ contains
 
       R :: VEC{REAL}(3)
       R1,R2,R3,T1,T2,T3,fx,fy,fz,P_ab :: REAL
-      Rx,Ry,Rz, ab :: VEC{REAL}*
+      Rx,Ry,Rz, ab :: VEC{REAL}@
       ax,ay,az,bx,by,bz,binx,biny,binz :: VEC{INT}@
       q,fa,la,na,fb,lb,nb,atom_a,atom_b,aa,bb,af,al,bf,bl,f :: INT
       i,k,a,b,x,y,z,xa,ya,za,xb,yb,zb,xx,yy,zz :: INT
@@ -3107,8 +3107,8 @@ contains
    ENSURE(J.is_square,"wrong shape, J")
 
       q,fa,la,na,fb,lb,nb :: INT
-      ab :: VEC{REAL}*
-      W  :: MAT{REAL}*
+      ab :: VEC{REAL}@
+      W  :: MAT{REAL}@
       sh :: SHELL2
 
       do q = 1,.n_shell_pairs
@@ -3318,7 +3318,7 @@ contains
 
    add_XC_matrix(K) ::: leaky
    ! Add the DFT exchange correlation matrix to "K".
-      K :: OPMATRIX*
+      K :: OPMATRIX@
 
    ENSURE(.scfdata.associated,"no scfdata")
    ENSURE(.scfdata.is_DFT_calculation,"this is not a DFT calculation")
@@ -3383,10 +3383,10 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
 
-      wt, N0,V0,E0 :: VEC{REAL}*
-      V,D, pt  :: MAT{REAL}*
+      wt, N0,V0,E0 :: VEC{REAL}@
+      V,D, pt  :: MAT{REAL}@
       bf_skip  :: VEC{VEC_{BIN}}@
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      bf_grid0 :: VEC{MAT_{REAL}}@
       n_pt, c  :: INT
 
       ! Main temporaries
@@ -3465,11 +3465,11 @@ contains
    ENSURE(.becke_grid.associated, "no becke_grid")
    ENSURE(.becke_grid.updated,"becke_grid not updated")
 
-      ga0,gb0 :: VEC{REAL}*
-      pi,pj,pn :: VEC{INT}*
-      skipab, skipa,skipb :: VEC{BIN}*
-      VV,DD :: MAT{REAL}*
-      grida0,gridb0 :: MAT{REAL}*
+      ga0,gb0 :: VEC{REAL}@
+      pi,pj,pn :: VEC{INT}@
+      skipab, skipa,skipb :: VEC{BIN}@
+      VV,DD :: MAT{REAL}@
+      grida0,gridb0 :: MAT{REAL}@
       Dab, fac,val,wal, ga,gb,gab :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, a,b,p,i,j,n :: INT
@@ -3624,10 +3624,10 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
 
-      wt, N0,Nx,Ny,Nz, V0,Vx,Vy,Vz, E0 :: VEC{REAL}*
-      V,D, pt  :: MAT{REAL}*
+      wt, N0,Nx,Ny,Nz, V0,Vx,Vy,Vz, E0 :: VEC{REAL}@
+      V,D, pt  :: MAT{REAL}@
       bf_skip  :: VEC{VEC_{BIN}}@
-      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}*
+      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}@
       n_pt, c  :: INT
 
       ! Main temporaries
@@ -3728,13 +3728,13 @@ contains
    ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
 
-      ga0,gax,gay,gaz :: VEC{REAL}*
-      gb0,gbx,gby,gbz :: VEC{REAL}*
-      pi,pj,pn :: VEC{INT}*
-      skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridax,griday,gridaz :: MAT{REAL}*
-      gridb0,gridbx,gridby,gridbz :: MAT{REAL}*
-      VV,DD :: MAT{REAL}*
+      ga0,gax,gay,gaz :: VEC{REAL}@
+      gb0,gbx,gby,gbz :: VEC{REAL}@
+      pi,pj,pn :: VEC{INT}@
+      skipab, skipa,skipb :: VEC{BIN}@
+      grida0,gridax,griday,gridaz :: MAT{REAL}@
+      gridb0,gridbx,gridby,gridbz :: MAT{REAL}@
+      VV,DD :: MAT{REAL}@
       Dab, fac,val,wal, ga,gb,gab :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, a,b,p,i,j,n :: INT
@@ -4003,10 +4003,10 @@ contains
    ENSURE(.density_matrix.alpha.associated,"no alpha density matrix")
    ENSURE(.density_matrix.beta.associated,"no alpha density matrix")
 
-      wt, N0a,N0b,V0a,V0b,E0 :: VEC{REAL}*
-      Va,Vb,Da,Db, pt  :: MAT{REAL}*
+      wt, N0a,N0b,V0a,V0b,E0 :: VEC{REAL}@
+      Va,Vb,Da,Db, pt  :: MAT{REAL}@
       bf_skip  :: VEC{VEC_{BIN}}@
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      bf_grid0 :: VEC{MAT_{REAL}}@
       n_pt, c  :: INT
 
       ! Main temporaries
@@ -4101,11 +4101,11 @@ contains
    ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
 
-      ga0,gb0 :: VEC{REAL}*
-      pi,pj,pn :: VEC{INT}*
-      skipab, skipa,skipb :: VEC{BIN}*
-      VVa,VVb,DDa,DDb :: MAT{REAL}*
-      grida0,gridb0 :: MAT{REAL}*
+      ga0,gb0 :: VEC{REAL}@
+      pi,pj,pn :: VEC{INT}@
+      skipab, skipa,skipb :: VEC{BIN}@
+      VVa,VVb,DDa,DDb :: MAT{REAL}@
+      grida0,gridb0 :: MAT{REAL}@
       Da_ab,Db_ab, fac,vala,valb,wal, ga,gb,gab :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, a,b,p,i,j,n :: INT
@@ -4273,12 +4273,12 @@ contains
    ENSURE(.density_matrix.alpha.associated,"no alpha density matrix")
    ENSURE(.density_matrix.beta.associated,"no alpha density matrix")
 
-      wt, E0 :: VEC{REAL}*
-      N0a,Nxa,Nya,Nza, V0a,Vxa,Vya,Vza :: VEC{REAL}*
-      N0b,Nxb,Nyb,Nzb, V0b,Vxb,Vyb,Vzb :: VEC{REAL}*
-      Va,Vb,Da,Db, pt  :: MAT{REAL}*
+      wt, E0 :: VEC{REAL}@
+      N0a,Nxa,Nya,Nza, V0a,Vxa,Vya,Vza :: VEC{REAL}@
+      N0b,Nxb,Nyb,Nzb, V0b,Vxb,Vyb,Vzb :: VEC{REAL}@
+      Va,Vb,Da,Db, pt  :: MAT{REAL}@
       bf_skip  :: VEC{VEC_{BIN}}@
-      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}*
+      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}@
       n_pt, c  :: INT
 
       ! Main temporaries
@@ -4408,13 +4408,13 @@ contains
    ENSURE(.becke_grid.updated,"becke_grid not updated")
    ENSURE(.overlapping_atoms_for_atom.created,"no overlapping_atoms_for_atom")
 
-      ga0,gax,gay,gaz :: VEC{REAL}*
-      gb0,gbx,gby,gbz :: VEC{REAL}*
-      pi,pj,pn :: VEC{INT}*
-      skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridax,griday,gridaz :: MAT{REAL}*
-      gridb0,gridbx,gridby,gridbz :: MAT{REAL}*
-      VVa,VVb,DDa,DDb :: MAT{REAL}*
+      ga0,gax,gay,gaz :: VEC{REAL}@
+      gb0,gbx,gby,gbz :: VEC{REAL}@
+      pi,pj,pn :: VEC{INT}@
+      skipab, skipa,skipb :: VEC{BIN}@
+      grida0,gridax,griday,gridaz :: MAT{REAL}@
+      gridb0,gridbx,gridby,gridbz :: MAT{REAL}@
+      VVa,VVb,DDa,DDb :: MAT{REAL}@
       Da_ab,Db_ab, fac,vala,valb,wal, ga,gb,gab,gx,gy,gz :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, a,b,p,i,j,n :: INT
@@ -4664,8 +4664,8 @@ contains
 !   ENSURE(.basis_info_made, "no basis info")
 !   ENSURE(.atom.associated,  "no atom list")
 !   ENSURE(.dftgrid.associated, "need to specify dftgrid")
-!     pt :: MAT{REAL}*
-!     wt,p :: VEC{REAL}*
+!     pt :: MAT{REAL}@
+!     wt,p :: VEC{REAL}@
 !     n_pt :: INT
 !     n_pt = .dftgrid.n_pts*.n_atom
 !     p.create(n_pt)
@@ -4687,11 +4687,11 @@ contains
 !   ENSURE(.basis_info_made, "no basis info")
 !   ENSURE(.atom.associated,  "no atom list")
 !   ENSURE(.dftgrid.associated, "need to specify dftgrid")
-!     JJ,pt :: MAT{REAL}*
-!     wt,q :: VEC{REAL}*
+!     JJ,pt :: MAT{REAL}@
+!     wt,q :: VEC{REAL}@
 !     n_pt, p,fa,la,fb,lb,atom_a,atom_b :: INT
 !     sh :: SHELL2
-!     atom :: VEC{ATOM}*
+!     atom :: VEC{ATOM}@
 !     n_pt = .dftgrid.n_pts*.n_atom
 !     q.create(n_pt)
 !     pt.create(n_pt,3)
@@ -4762,7 +4762,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
 
       sh4 :: SHELL4
-      ERI :: MAT4{REAL}*
+      ERI :: MAT4{REAL}@
       q,a,b,c,d,skipped,atom_a,atom_b,atom_c,atom_d :: INT
       factor :: REAL
 
@@ -4932,7 +4932,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
 
       sh4 :: SHELL4
-      Sx,Sy,Sz,Ox,Oy,Oz :: MAT4{REAL}*
+      Sx,Sy,Sz,Ox,Oy,Oz :: MAT4{REAL}@
       q,a,b,c,d,skipped,atom_a,atom_b,atom_c,atom_d,na,nb,nc,nd :: INT
       factor :: REAL
       cutoff :: STR
@@ -5036,7 +5036,7 @@ contains
    ENSURE(all(shape(v)==[.n_bf,.n_bf,.n_bf,.n_bf]),"wrong shape for array v")
 
      sh4n :: SHELL1QUARTET
-     I :: VEC{REAL}*
+     I :: VEC{REAL}@
      ab,aa,bb,fa,la,na,fb,lb,nb,atom_a,atom_b :: INT
      cd,cc,dd,fc,lc,nc,fd,ld,nd,atom_c,atom_d, a,b,c,d,abcd :: INT
      val :: REAL
@@ -5105,9 +5105,9 @@ contains
    ENSURE(.core_matrix.restricted.associated,"no restricted core matrix")
    ENSURE(.overlap_matrix.associated,"no overlap matrix")
 
-     new_v :: MAT4{REAL}*
-     P :: MAT{REAL}*
-     H,S :: MAT{REAL}*
+     new_v :: MAT4{REAL}@
+     P :: MAT{REAL}@
+     H,S :: MAT{REAL}@
      a,b,c,d :: INT
      core :: BIN
 
@@ -5204,11 +5204,11 @@ contains
    ENSURE(.core_matrix.restricted.associated,"no restricted core matrix")
    ENSURE(.overlap_matrix.associated,"no overlap matrix")
 
-     new_v :: MAT4{REAL}*
-     P,H,S :: MAT{REAL}*
+     new_v :: MAT4{REAL}@
+     P,H,S :: MAT{REAL}@
      a,b,c,d :: INT
      core :: BIN
-     in :: TEXTFILE*
+     in :: TEXTFILE@
 
      if (present(new_n_bf)) then
         P.create(.n_bf,new_n_bf)
@@ -5305,9 +5305,9 @@ contains
 
      n_bf :: INT
      Dx_archive,Dy_archive,Dz_archive :: ARCHIVE
-     v,new_v :: MAT4{REAL}*
-     P :: MAT{REAL}*
-     Dx,Dy,Dz,S :: MAT{REAL}*
+     v,new_v :: MAT4{REAL}@
+     P :: MAT{REAL}@
+     Dx,Dy,Dz,S :: MAT{REAL}@
      a,b,c,d :: INT
 
      Dx_archive.set(.name,"Dx_integrals")
@@ -5506,11 +5506,11 @@ contains
 
      n_bf :: INT
      Dx_archive,Dy_archive,Dz_archive :: ARCHIVE
-     v,new_v :: MAT4{REAL}*
-     P :: MAT{REAL}*
-     Dx,Dy,Dz,S :: MAT{REAL}*
+     v,new_v :: MAT4{REAL}@
+     P :: MAT{REAL}@
+     Dx,Dy,Dz,S :: MAT{REAL}@
      a,b,c,d :: INT
-     in :: TEXTFILE*
+     in :: TEXTFILE@
 
      if (present(new_n_bf)) then
         P.create(.n_bf,new_n_bf)
@@ -5709,7 +5709,7 @@ contains
    ! from the AO integrals
 
       v :: MAT4{REAL}
-      P :: MAT{REAL}*
+      P :: MAT{REAL}@
       a,b,c,d :: INT
 
       P.create(.n_bf,.n_bf)
@@ -5743,7 +5743,7 @@ contains
    ! AO integrals
 
       v :: MAT4{REAL}
-      P,H :: MAT{REAL}*
+      P,H :: MAT{REAL}@
       a,b,r,s :: INT
  
       P.create(.n_bf,.n_bf)
@@ -5802,7 +5802,7 @@ contains
    ! by a factor of three
 
      vaa,vbb,vab :: MAT4{REAL}
-     Pa,Pb,H :: MAT{REAL}*
+     Pa,Pb,H :: MAT{REAL}@
      a,b,r,s :: INT
 
      Pa.create(.n_bf,.n_bf)
@@ -5883,8 +5883,8 @@ contains
    !!!! NOT SURE WHETHER IT WORKS CORRECTLY
    !
      v :: MAT4{CPX}
-     P,H :: MAT{CPX}*
-     vr :: MAT4{REAL}*
+     P,H :: MAT{CPX}@
+     vr :: MAT4{REAL}@
      a,b,r,s :: INT
      x1 :: CPX
 
