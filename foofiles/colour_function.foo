@@ -60,12 +60,14 @@ contains
    end
 
 
-   create(range) ::: leaky
+   create(range) ::: leaky, PURE
    ! Create the object
       self :: allocatable, INOUT
-      range :: VEC{REAL}(2)
+      range :: VEC{REAL}(2), IN
+
       .create
       .set_defaults(range)
+
    end
 
    set_defaults(range) ::: leaky, PURE
@@ -75,8 +77,6 @@ contains
 
       .n_data = 3
 
-      .data.destroy
-      .data.create(3)
       .data     = [ZERO,HALF, ONE]
 
       .RGB.destroy
@@ -93,18 +93,22 @@ contains
 
    set_reverse_defaults(range)
    ! Set up reversed defaults
-      range :: VEC{REAL}(2), optional
-      .n_data = 3
-      .data.destroy
-      .data.create(3)
+      self :: INOUT
+      range :: VEC{REAL}(2), optional, IN
+
+      .n_data   = 3
       .data     = [ZERO,HALF, ONE]
+
       .RGB.destroy
       .RGB.create(3,3)
       .RGB(:,1) = [ ONE,ZERO,ZERO]
       .RGB(:,2) = [ZERO, ONE,ZERO]
       .RGB(:,3) = [ZERO,ZERO, ONE]
+
       if (present(range)) .rescale_data(range)
+
       .updated = TRUE
+
    end
 
 !  =============
@@ -118,18 +122,22 @@ contains
    process_keyword(keyword) ::: leaky
    ! Process command "keyword". Any required data needed by the "keyword" is
    ! inputted from "stdin".
-      keyword :: STR
+      self :: INOUT
+      keyword :: STR, IN
+
       word :: STR
+
       word = keyword
       word.to_lower_case
+
       select case (word)
-         case ("}               ")  ! exit case
-       ! case ("data_and_colour="); .read_data_and_colour
-         case ("data_and_rgb=   "); .read_data_and_RGB
-         case ("put             "); .put
-         case ("units=          "); .read_units
-         case default;         UNKNOWN(word)
+      case ("}               ")  ! exit case
+      case ("data_and_rgb=   "); .read_data_and_RGB
+      case ("put             "); .put
+      case ("units=          "); .read_units
+      case default;         UNKNOWN(word)
       end
+
    end
 
    read_units ::: get_from(OBJECT), private
@@ -140,13 +148,22 @@ contains
    ! Read in the data-colour pair. The colour must be an RGB real triple
    ! And the list of data and colour triples, a list of four real numbers, must
    ! be entered as a single vector.
+      self :: INOUT
+
       length,i,k :: INT
       data_and_colour :: VEC{REAL}@
+
       stdin.read_ptr(data_and_colour)
       ENSURE(mod(data_and_colour.dim,4)==0,"data and colour array must be divisible by 4")
+
       length = data_and_colour.dim/4
-      .data.destroy; .data.create(length)
-      .RGB.destroy;  .RGB.create(3,length)
+
+      .data.destroy
+      .data.create(length)
+
+      .RGB.destroy
+      .RGB.create(3,length)
+
       k = 0
       do i = 1,length
          .data(i)  = data_and_colour(k+1)
@@ -155,92 +172,73 @@ contains
          .RGB(3,i) = data_and_colour(k+4)
          k = k + 4
       end
-      data_and_colour.destroy
-   end
 
-!   read_data_and_colour ::: leaky
-!   ! Read in the data-colour pair. The colour can be a text string of a known
-!   ! colour, an RGB 255 integer triple, or an RGB real triple. Only the latter
-!   ! is used and stored.
-!   ENSURE(stdin.next_item=="{","open bracket '{' expected")
-!      word :: STR
-!      colour :: COLOUR
-!      length,line,item,i :: INT
-!      data :: REAL
-!      stdin.read(word)
-!      stdin.read(word)
-!      length = 0
-!      line = stdin.line_number
-!      item = stdin.previous_line_item
-!      do
-!         stdin.move_to_previous_item
-!         stdin.read(data)
-!         colour.read
-!         length = length + 1
-!         stdin.read(word)
-!         word.to_lower_case
-!         if (word=="}") exit
-!      end
-!      stdin.move_to_line(line)
-!      stdin.move_to_line_item(item)
-!      .data.destroy
-!      .data.create(length)
-!      .RGB.destroy
-!      .RGB.create(3,length)
-!      do i = 1,length
-!         stdin.read(data)
-!         colour.read
-!         .data(i)  = data
-!         .RGB(:,i) = colour.RGB
-!      end
-!      stdin.read(word)
-!      word.to_lower_case
-!      ENSURE(word=="}","expecting a }")
-!   end
+      data_and_colour.destroy
+
+      .updated = FALSE
+
+   end
 
    update ::: leaky
    ! Check everything is OK after reading data. Saturation must exist but it is
    ! applied into the RGB triples and then destroyed.
+      self :: INOUT
+
    ENSURE(.data.created,"no data values")
    ENSURE(.RGB.created,"no RGB values")
    ENSURE(.data.dim==.RGB.dim2,"incompatible #: data and RGB")
    ENSURE(all(.RGB>=ZERO),"negative RGB values exist")
    ENSURE(all(.RGB<=ONE),"some RGB values greater than 1")
    ENSURE(all(.RGB.column_norms<=THREE),"some RGB norms larger than 3")
+
       order :: VEC{INT}@
+
       .n_data = .data.dim
-      order.create(.n_data)
+
       ! Re-order from smallest to largest
+      order.create(.n_data)
       .data.quick_sort(order)
       .data       = .data(order)
       .RGB        = .RGB(:,order)
       order.destroy
+
       .updated = TRUE
+
    end
 
 !  ============
 !  Set routines
 !  ============
 
-   set_data(data) ::: leaky
-   ! Set the data. Make sure that .update is called after all set routines.
-      data :: VEC{REAL}
-      .data.destroy
-      .data.create_copy(data)
+   set_data(data) ::: pure
+   ! Set the ".data". Make sure that .update is called after all set
+   ! routines.
+      self :: INOUT
+      data :: VEC{REAL}, IN
+
+      .data = data
+
+      .updated = FALSE
+
    end
 
-   set_RGB(RGB) ::: leaky
-   ! Set the RGB's. Make sure that .update is called after all set routines.
-      RGB :: MAT{REAL}
-      .RGB.destroy
-      .RGB.create_copy(RGB)
+   set_RGB(RGB) ::: pure
+   ! Set the "RGB" colour triple. Make sure that .update is called
+   ! after all set routines.
+      self :: INOUT
+      RGB :: MAT{REAL}, IN
+
+      .RGB = RGB
+
+      .updated = FALSE
+
    end
 
 !  ================
 !  Colours for data
 !  ================
 
-   RGB_for(value,truncate_to_range) result (res)
+   RGB_for(value,truncate_to_range) result (res) ::: PURE
    ! Return the RGB triple corresponding to a certain "value".
       self :: IN
       value :: REAL, IN
@@ -260,10 +258,10 @@ contains
       if (present(truncate_to_range)) truncate = truncate_to_range
 
       if (NOT truncate) then
-        ENSURE(thevalue.is_in_range(.data.element_range),"value out of range")
+         ENSURE(thevalue.is_in_range(.data.element_range),"value out of range")
       else
-        thevalue = min(thevalue,maxval(.data))
-        thevalue = max(thevalue,minval(.data))
+         thevalue = min(thevalue,maxval(.data))
+         thevalue = max(thevalue,minval(.data))
       end
 
       i1 = count(.data<=thevalue) ! assuming .data is ordered !
@@ -276,9 +274,10 @@ contains
 
    end
 
-   RGB255_for(value) result (res)
+   RGB255_for(value) result (res) ::: PURE
    ! Return the RGB255 triple corresponding to a certain "value".
-      value :: REAL
+      self :: IN
+      value :: REAL, IN
       res :: VEC{INT}(3)
 
    ENSURE(.updated,"not updated")
@@ -298,56 +297,74 @@ contains
 
    end
 
-   get_RGB_for(values,RGB)
+   get_RGB_for(values,RGB) ::: PURE
    ! Return the "RGB" triples corresponding to a set of "values".
-      values :: VEC{REAL}
-      RGB :: MAT{REAL}
+      self :: IN
+      values :: VEC{REAL}, IN
+      RGB :: MAT{REAL}, OUT
+
    ENSURE(.updated,"not updated")
    ENSURE(RGB.dim1==3,"first dimension of RGB array must be 3")
    ENSURE(RGB.dim2==values.dim,"values and RGB are incompatible")
+
       i,n :: INT
+
       n = values.dim
+
       do i = 1,n
          RGB(:,i) = .RGB_for(values(i))
       end
+
    end
 
-   get_RGB_for(values,RGB)
+   get_RGB_for(values,RGB) ::: PURE
    ! Return the "RGB" triples corresponding to a set of "values".
-      values :: VEC{REAL}
-      RGB :: MAT{INT}
+      self :: IN
+      values :: VEC{REAL}, IN
+      RGB :: MAT{INT}, OUT
+
    ENSURE(.updated,"not updated")
    ENSURE(RGB.dim1==3,"first dimension of RGB array must be 3")
    ENSURE(RGB.dim2==values.dim,"values and RGB are incompatible")
+
       i,n :: INT
+
       n = values.dim
+
       do i = 1,n
          RGB(:,i) = nint(.RGB_for(values(i)))
       end
+
    end
 
-   get_RGB_for(values,RGB)
+   get_RGB_for(values,RGB) ::: PURE
    ! Return the "RGB" triples corresponding to a set of "values".
-      values :: MAT{REAL}
-      RGB :: MAT3{INT}
+      self :: IN
+      values :: MAT{REAL}, IN
+      RGB :: MAT3{INT}, OUT
+
    ENSURE(.updated,"not updated")
    ENSURE(RGB.dim1==3,"first dimension of RGB array must be 3")
    ENSURE(RGB.dim2==values.dim1,"values and RGB are incompatible")
    ENSURE(RGB.dim3==values.dim2,"values and RGB are incompatible")
+
       i,j,n,m :: INT
+
       n = values.dim2
       m = values.dim1
+
       do j = 1,n
-        do i = 1,m
-          RGB(:,i,j) = nint(.RGB_for(values(i,j)))
-        end
+      do i = 1,m
+         RGB(:,i,j) = nint(.RGB_for(values(i,j)))
+      end
       end
    end
 
-   get_RGB255_for(values,RGB255)
+   get_RGB255_for(values,RGB255) ::: PURE
    ! Return the "RGB255" triples corresponding to a set of "values".
-      values :: VEC{REAL}
-      RGB255 :: MAT{INT}
+      self :: IN
+      values :: VEC{REAL}, IN
+      RGB255 :: MAT{INT}, OUT
 
    ENSURE(.updated,"not updated")
    ENSURE(RGB255.dim2==values.dim,"values and RGB255 are incompatible")
@@ -383,28 +400,28 @@ contains
 
    end
 
-  rescale_RGB(range) ::: PURE
-  ! Rescale the .RGB so that the lowest value corresponds to
-  ! range(1), and the largest value corresponds to range(2).
-    self :: INOUT
-    range :: VEC{REAL}(2), IN
-
-  ENSURE(.RGB.created,"no data")
-  ENSURE(.n_data>1,"not enough data")
-
-    minv,maxv,del,frac :: VEC{REAL}(3)
-    i :: INT
-
-    minv = [ minval(.RGB(:,1)),minval(.RGB(:,2)),minval(.RGB(:,3)) ]
-    maxv = [ maxval(.RGB(:,1)),maxval(.RGB(:,2)),maxval(.RGB(:,3)) ]
-    del  = maxv - minv
-
-    do i = 1,.n_data
-       frac = (.RGB(i,:) - minv)/del
-       .RGB(i,:) = range(1) + frac*(range(2)-range(1))
-    end
-
-  end
+   rescale_RGB(range) ::: PURE
+   ! Rescale the .RGB so that the lowest value corresponds to
+   ! range(1), and the largest value corresponds to range(2).
+      self :: INOUT
+      range :: VEC{REAL}(2), IN
+ 
+   ENSURE(.RGB.created,"no data")
+   ENSURE(.n_data>1,"not enough data")
+ 
+      minv,maxv,del,frac :: VEC{REAL}(3)
+      i :: INT
+ 
+      minv = [ minval(.RGB(:,1)),minval(.RGB(:,2)),minval(.RGB(:,3)) ]
+      maxv = [ maxval(.RGB(:,1)),maxval(.RGB(:,2)),maxval(.RGB(:,3)) ]
+      del  = maxv - minv
+     
+      do i = 1,.n_data
+         frac = (.RGB(i,:) - minv)/del
+         .RGB(i,:) = range(1) + frac*(range(2)-range(1))
+      end
+ 
+   end
 
    set_default_colours(values) ::: leaky, PURE
    ! Set up default colours for a set of "values".
@@ -415,17 +432,22 @@ contains
 
    end
 
-!  ==============
-!  Output methods
-!  ==============
+!  ======
+!  Output
+!  ======
 
    put
    ! Put the list of interpolating colours.
+      self :: IN
+
       i :: INT
+
       stdout.flush
       stdout.text("Colour function data")
+
       stdout.flush
       stdout.show("No. of interpolating data points =",.n_data)
+
       stdout.flush
       stdout.dash(int_fields=1,real_fields=4)
       stdout.put("#",int_width=TRUE)
@@ -444,6 +466,7 @@ contains
          stdout.flush
       end
       stdout.dash(int_fields=1,real_fields=4)
+
    end
 
 end

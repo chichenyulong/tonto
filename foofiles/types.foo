@@ -691,18 +691,14 @@ module TYPES
      eliminate_specials :: BIN  DEFAULT(TRUE)
      ! If TRUE then non-ascii characters are set to blank
 
-     replacement_list :: MAT{STR}@
-     ! A list of strings and their replacements, to be applied when every line is
-     ! inputted, if required.
-
-     buffer :: BUFFER  DEFAULT(BUFFER_TYPE(0,0,0,0,FALSE,BUFFER_COMMENT_CHARS,BUFFER_QUOTE_CHARS,FALSE,TRUE,NULL," "))
+     buffer :: BUFFER
      ! The output buffer which holds one line of output to be flushed
      ! i.e. written to the output file
 
      internal :: VEC{STR}@
      ! Used to keep a record of of the entire file, internally
 
-     saved :: TEXTFILE* DEFAULT_NULL ! ptr ok
+     saved :: TEXTFILE* DEFAULT_NULL ! ptr ok - replaced when gfortran allows
      ! Used to keep a record of a previous file, say for input redirect
 
    end
@@ -4240,7 +4236,7 @@ module TYPES
      ! The RGB values corresponding to each data value. Their norm should be
      ! between zero and 3.
 
-     updated :: BIN  DEFAULT(TRUE)
+     updated :: BIN  DEFAULT(FALSE)
      ! Set TRUE if the object is ready for use
 
    end

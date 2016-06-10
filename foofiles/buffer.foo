@@ -84,6 +84,15 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
+
+   destroy_ptr_part ::: leaky, PURE
+   ! Destroy the pointer parts
+      self :: INOUT
+
+      .replacement_list.destroy
+
+   end
+
 !  ==============
 !  Set operations
 !  ==============
@@ -178,9 +187,7 @@ contains
    ! Define a "replacement_list" which replaces certain strings before
    ! the buffer is analyzed.
       self :: INOUT
-      replacement_list :: MAT{STR}@
-
-   ENSURE(replacement_list.created,"replacement_list destroyed")
+      replacement_list :: MAT{STR}, IN
 
       .replacement_list = replacement_list
 
