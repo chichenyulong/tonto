@@ -72,11 +72,11 @@ contains
    end
 
 
-   create(name) ::: leaky
+   create(name) ::: leaky, PURE
    ! Create a file-label object. Does not open the file.  Sets the filename if
    ! present.
       self :: allocatable, INOUT
-      name :: STR
+      name :: STR, IN
 
       .create
 
@@ -84,73 +84,25 @@ contains
 
    end
 
-
-!  ====
-!  Copy
-!  ====
-
-   create_copy(f) ::: leaky
-   ! Create a copy a file "f"
-      self :: allocatable, INOUT
-       f :: FILE
-      .create
-      .copy(f)
-   end
-
-   copy(f) ::: leaky
-   ! Copy a file "f"
-      f :: FILE
-      self = f
-      .nullify_ptr_part
-      if (f.int_buffer.created) &
-         .int_buffer.create_copy(f.int_buffer)
-      if (f.real_buffer.created) &
-         .real_buffer.create_copy(f.real_buffer)
-      if (f.cpx_buffer.created) &
-         .cpx_buffer.create_copy(f.cpx_buffer)
-   end
-
-
-!  ===========
-!  Set methods
-!  ===========
-
-   set_defaults
-   ! Set up defaults
-
-      .record = 1
-
-      .io_status   = 0
-      .file_status = "unknown"
-
-      .action   = "readwrite"
-      .buffered = FALSE
-
-      .real_buffer_pos = 1
-      .int_buffer_pos  = 1
-      .cpx_buffer_pos  = 1
-
-   end
-
-
 !  ==============================
 !  Opening, closing, and deletion
 !  ==============================
 
-   open_for(action,buffered,type) ::: leaky
+   open_for(action,buffered,buffer_type) ::: leaky
    ! Open the file. The file object must already be created.
    ! * If present, "action" indicated whether the file is "read_write",
    !   "read-only" or "write-only"
    ! * If present, "buffered" indicated whether the file is to be
-   !   buffered, and the "type" of the buffer must also be specified as
+   !   buffered, and the "buffer_type" must also be specified as
    !   "real" or "int"
-      action :: STR, optional
-      buffered :: BIN,    optional
-      type :: STR, optional
+      self :: INOUT
+      action :: STR, optional, IN
+      buffered :: BIN, optional, IN
+      buffer_type :: STR, optional, IN
 
-   ENSURE(present(buffered) EQV present(type),"buffered and type not both present")
+   ENSURE(present(buffered) EQV present(buffer_type),"buffered and buffer_type not both present")
 
-      type1 :: STR
+      bufftype :: STR
 
       if (present(action)) then
 
@@ -188,30 +140,30 @@ contains
 
       if (.buffered) then
 
-        ENSURE(present(type),"type of buffer must be specified")
-        ENSURE(.action/="readwrite","buffer must be either read-only or write-only")
-
-        type1 = type
-        type1.to_lower_case
-
-        select case (type1)
-
-           case("real")
-              .real_buffer.create(FILE_BUFFER_LENGTH)
-              if (.action == "read") .get_real_buffer
-
-           case("int")
-              .int_buffer.create(FILE_BUFFER_LENGTH)
-              if (.action == "read") .get_int_buffer
-
-           case("cpx")
-              .cpx_buffer.create(FILE_BUFFER_LENGTH)
-              if (.action == "read") .get_cpx_buffer
-
-           case default
-              DIE("unknown buffer type, "//trim(type))
-
-        end
+         ENSURE(present(buffer_type),"type of buffer must be specified")
+         ENSURE(.action/="readwrite","buffer must be either read-only or write-only")
+         
+         bufftype = buffer_type
+         bufftype.to_lower_case
+         
+         select case (bufftype)
+         
+         case("real")
+            .real_buffer.create(FILE_BUFFER_LENGTH)
+            if (.action == "read") .get_real_buffer
+         
+         case("int")
+            .int_buffer.create(FILE_BUFFER_LENGTH)
+            if (.action == "read") .get_int_buffer
+         
+         case("cpx")
+            .cpx_buffer.create(FILE_BUFFER_LENGTH)
+            if (.action == "read") .get_cpx_buffer
+         
+         case default
+            DIE("unknown buffer type, "//trim(type))
+         
+         end
 
       end
 
@@ -219,36 +171,57 @@ contains
 
    close ::: leaky
    ! Close the file
+      self :: INOUT
+
       opened :: BIN
-      WARN_IF(NOT .is_open,"file is not open")
+
+   ENSURE(.is_open,"file is not open")
+
       if (.action=="write") then
-       if (.real_buffer_pos > 1) .flush_real_buffer
-       if (.int_buffer_pos > 1) .flush_int_buffer
-       if (.cpx_buffer_pos > 1) .flush_cpx_buffer
+         if ( .int_buffer_pos > 1) .flush_int_buffer
+         if (.real_buffer_pos > 1) .flush_real_buffer
+         if ( .cpx_buffer_pos > 1) .flush_cpx_buffer
       end
-      .destroy_ptr_part
+
+       .int_buffer.destroy
+      .real_buffer.destroy
+       .cpx_buffer.destroy
+
       if (IO_IS_ALLOWED) then
-       inquire(unit=.unit,opened=opened)
-       if (opened) then
-         close(unit=.unit)
-       end
+         inquire(unit=.unit,opened=opened)
+         if (opened) then
+            close(unit=.unit,iostat=.io_status)
+         end
       end
+
+      PARALLEL_BROADCAST(.io_status,0)
       DIE_IF(.io_status/=0,"error closing "//trim(.file_status)//" file "//.name)
+
    end
 
    close_and_delete ::: leaky
    ! Close the file and delete it from the file system
-      WARN_IF(NOT .is_open,"file is not open")
+      self :: INOUT
+
+   ENSURE(.is_open,"file is not open")
+
       if (.action=="write") then
-       if (.real_buffer_pos > 1) .flush_real_buffer
-       if (.int_buffer_pos > 1) .flush_int_buffer
-       if (.cpx_buffer_pos > 1) .flush_cpx_buffer
+         if ( .int_buffer_pos > 1) .flush_int_buffer
+         if (.real_buffer_pos > 1) .flush_real_buffer
+         if ( .cpx_buffer_pos > 1) .flush_cpx_buffer
       end
-      .destroy_ptr_part
+
+       .int_buffer.destroy
+      .real_buffer.destroy
+       .cpx_buffer.destroy
+
       if (IO_IS_ALLOWED) then
-      close(unit=.unit,status="delete",iostat=.io_status)
+         close(unit=.unit,status="delete",iostat=.io_status)
       end
+
+      PARALLEL_BROADCAST(.io_status,0)
       DIE_IF(.io_status/=0,"error closing and deleting"//trim(.file_status)//" file "//.name)
+
    end
 
    delete
@@ -270,7 +243,8 @@ contains
 
    read(value) ::: template
    ! Read a "value" from the file.
-      value :: VALUE?
+      self :: INOUT
+      value :: VALUE?, OUT
 
       if (.buffered) then
 
@@ -280,8 +254,13 @@ contains
 
          if (IO_IS_ALLOWED) then
             read(unit=.unit,iostat=.io_status) value
-            ENSURE(.io_status==0,"read error, #"// trim(.io_status.to_str))
          end
+
+         ! Error?
+         PARALLEL_BROADCAST(.io_status,0)
+         DIE_IF(.io_status/=0,"error closing and deleting"//trim(.file_status)//" file "//.name)
+
+         ! Broadcast
          PARALLEL_BROADCAST(value,0)
          
          .record = .record + 1
@@ -314,7 +293,8 @@ contains
 
    read(values) ::: template
    ! Read a series of "values" from the file.
-      values :: VALUES?
+      self :: INOUT
+      values :: VALUES?, OUT
 
       if (.buffered) then
 
@@ -326,6 +306,12 @@ contains
             read(unit=.unit,iostat=.io_status) values
             ENSURE(.io_status==0,"read error, #"// trim(.io_status.to_str))
          end
+
+         ! Error?
+         PARALLEL_BROADCAST(.io_status,0)
+         DIE_IF(.io_status/=0,"error closing and deleting"//trim(.file_status)//" file "//.name)
+
+         ! Broadcast
          PARALLEL_BROADCAST(values,0)
 
          .record = .record + 1
@@ -349,9 +335,14 @@ contains
 
          if (IO_IS_ALLOWED) then
             read(unit=.unit,iostat=.io_status) vals
-            ENSURE(.io_status==0,"read error, #"// trim(.io_status.to_str))
             values = vals
          end
+
+         ! Error?
+         PARALLEL_BROADCAST(.io_status,0)
+         DIE_IF(.io_status/=0,"error closing and deleting"//trim(.file_status)//" file "//.name)
+
+         ! Broadcast
          PARALLEL_BROADCAST(values,0)
 
          .record = .record + 1
@@ -379,7 +370,8 @@ contains
    read(values) 
    ! Read a series of *string* "values" from the file.
    ! For Sun Fortran 8.6, on Linux
-      values :: MAT{STR}
+      self :: INOUT
+      values :: MAT{STR}, OUT
 
       vals :: MAT{STR}(len=len(values(1,1)),values.dim1,values.dim2)
 
@@ -394,6 +386,12 @@ contains
             ENSURE(.io_status==0,"read error, #"// trim(.io_status.to_str))
             values = vals
          end
+
+         ! Error?
+         PARALLEL_BROADCAST(.io_status,0)
+         DIE_IF(.io_status/=0,"error closing and deleting"//trim(.file_status)//" file "//.name)
+
+         ! Broadcast
          PARALLEL_BROADCAST(values,0)
 
          .record = .record + 1
@@ -418,10 +416,6 @@ contains
    ! Read a series of "values" from the file.
    end
 
-!   read(values) ::: get_from(FILE, VALUES?=>MAT3{STR}, .read_buffered(values)=>DIE("unavailable"))
-!   ! Read a series of "values" from the file.
-!   end
-
    read(values) ::: get_from(FILE, VALUES?=>MAT3{BIN}, .read_buffered(values)=>DIE("unavailable"))
    ! Read a series of "values" from the file.
    end
@@ -438,14 +432,6 @@ contains
    ! Read a series of "values" from the file.
    end
 
-!   read(values) ::: get_from(FILE, VALUES?=>MAT4{STR})
-!   ! Read a series of "values" from the file.
-!   end
-
-!   read(values) ::: get_from(FILE, VALUES?=>MAT4{BIN})
-!   ! Read a series of "values" from the file.
-!   end
-
    read(values) ::: get_from(FILE, VALUES?=>MAT4{INT})
    ! Read a series of "values" from the file.
    end
@@ -457,18 +443,6 @@ contains
    read(values) ::: get_from(FILE, VALUES?=>MAT4{CPX})
    ! Read a series of "values" from the file.
    end
-
-!   read(values) ::: get_from(FILE, VALUES?=>MAT5{STR})
-!   ! Read a series of "values" from the file.
-!   end
-
-!   read(values) ::: get_from(FILE, VALUES?=>MAT5{BIN})
-!   ! Read a series of "values" from the file.
-!   end
-
-!   read(values) ::: get_from(FILE, VALUES?=>MAT5{INT})
-!   ! Read a series of "values" from the file.
-!   end
 
    read(values) ::: get_from(FILE, VALUES?=>MAT5{REAL})
    ! Read a series of "values" from the file.
