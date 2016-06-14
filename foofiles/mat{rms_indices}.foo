@@ -83,7 +83,7 @@ contains
    ENSURE(lbound(self,2)==0,"lower bound 2 wrong")
    ENSURE(ubound(self,1)==l_max,"upper bound 1 wrong")
    ENSURE(ubound(self,2)==l_max,"upper bound 2 wrong")
-   ENSURE(nx.dim==GAUSSIAN_DATA::n_comp_up_to(2*l_max),"wrong size, nx")
+   ENSURE(nx.dim== ::n_comp_up_to(2*l_max),"wrong size, nx")
    ENSURE(ny.dim==nx.dim,"wrong size, ny")
    ENSURE(nz.dim==nx.dim,"wrong size, nz")
 
@@ -92,14 +92,19 @@ contains
       do lmax = 0,l_max   ! Maximum l for one shell
       do lmin = 0,lmax    ! l for the other shell
 
-         f = GAUSSIAN_DATA::n_comp_up_to(lmax-1)+1
-         l = GAUSSIAN_DATA::n_comp_up_to(lmin+lmax)
+         f = ::n_comp_up_to(lmax-1)+1
+         l = ::n_comp_up_to(lmin+lmax)
 
          self(lmax,lmin).set_indices(nx(f:l),ny(f:l),nz(f:l),px(f:l),py(f:l),pz(f:l))
 
       end
       end
 
+   end
+
+   n_comp_up_to(l) result (res) ::: get_from(GAUSSIAN_DATA), selfless, private, pure
+   ! No. of gaussian cartesian component functions up to and including the shell
+   ! with momentum "l".
    end
 
 end
