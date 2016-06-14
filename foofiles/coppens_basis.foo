@@ -62,7 +62,7 @@ contains
 
    end
 
-   update ::: pure
+   update ::: PURE
    ! Update the shell data, if it exists
       self :: INOUT
 
@@ -456,7 +456,7 @@ contains
    ! Make the interpolator for the coppens atom density. If present,
    ! "interpolator" is used as a template to get the settings needed.
    ! Otherwise a default interpolator is used.
-      self :: IN
+      self :: INOUT
       interpolator :: INTERPOLATOR@, optional, IN
 
    ENSURE(.orbital.created,"no coppens orbitals defined!")

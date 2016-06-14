@@ -22,8 +22,6 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: shell1.foo 4341 2014-05-02 07:34:48Z bucinsky $
-!
 !-------------------------------------------------------------------------------
 
 module SHELL1
@@ -83,21 +81,100 @@ contains
       shell :: SHELL, IN
       pos :: VEC{REAL}(3), optional, IN
 
-      if (present(shell)) then
-         .l              = shell.l
-         .l_chr          = shell.l_chr
-         .is_spherical   = shell.is_spherical
-         .n_comp         = shell.n_comp
-         .n_sph          = shell.n_sph
-         .first_gaussian = shell.first_gaussian
-         .last_gaussian  = shell.last_gaussian
-         .n_cc           = shell.n_cc
-         .exponent       = shell.exponent
-         .contraction    = shell.contraction
-      end
+      .l              = shell.l
+      .l_chr          = shell.l_chr
+      .is_spherical   = shell.is_spherical
+      .n_comp         = shell.n_comp
+      .n_sph          = shell.n_sph
+      .first_gaussian = shell.first_gaussian
+      .last_gaussian  = shell.last_gaussian
+      .n_cc           = shell.n_cc
+      .exponent       = shell.exponent
+      .contraction    = shell.contraction
 
       if (present(pos)) .position = pos
 
+   end
+
+!  ======
+!  Update
+!  ======
+
+   update ::: get_from(SHELL), pure
+   ! Update shell basis function info
+   end
+
+!  =======
+!  Inquiry
+!  =======
+
+   same_shell_as(sh) result (same) ::: get_from(SHELL:same_as), private, pure
+   ! Return TRUE if the shell "self" is the same as "sh".
+   end
+
+   same_as(sh) result(same) ::: pure
+   ! Return TRUE if the shell "self" is the same as "sh".
+      self :: IN
+      sh :: SHELL1, IN
+      same :: BIN
+
+      ! Check position ...
+      same = .position.same_as(sh.position) AND .same_shell_as(sh)
+
+   end
+
+   l_chr(l) result (res) ::: get_from(SHELL), selfless, private, PURE
+   ! Return a character representation for angular momentum "l"
+   end
+
+   n_prim result (res) ::: get_from(SHELL), pure
+   ! Return the number of primitive gaussians in the shell
+   end
+
+   r_max(cutoff) result (res) ::: get_from(SHELL), pure
+   ! Return the radius where all basis functions becomes smaller than "cutoff".
+   end
+
+   r2_max(cutoff) result (res) ::: get_from(SHELL), pure
+   ! Return the radius where all basis functions becomes smaller than "cutoff".
+   end
+
+!  =========================
+!  Normalisation/contraction
+!  =========================
+
+   unnormalise ::: get_from(SHELL), pure
+   ! Assuming the existing .contraction's are initially with respect
+   ! to NORMALISED primitive gaussians, take out this normalisation
+   ! factor of each primitive and put it in the contraction
+   ! coefficient. The normalisation factor removed is that for the
+   ! cartesian component x^l.
+   ! NOTE: It is up to you to correct this factor with appropriate
+   ! double factorial square roots for other components. The factor
+   ! should be: 
+   !   fac = 1/sqrt(df(nx)*df(ny)*df(nz))
+   ! where nx,ny,nz are the cartesian powers of the basis component
+   end
+
+   renormalise ::: get_from(SHELL), pure
+   ! Assuming the existing contraction coefficients are with respect to raw
+   ! UNNORMALISED primitive gaussians, put back this normalisation factor for
+   ! each primitive gaussian, by removing this factor from from the contraction
+   ! coefficients. The result will be contraction coefficients relative to
+   ! normalised primitive gausian. This will undo routine "unnormalise" routine
+   ! above.  The ((TWO*PI)**(THREE/FOUR)) / .norm factor is supposed to make the
+   ! contraction coefficient equal to 1 for a shell with one primitive i.e. the
+   ! shell is not *really* normalised. This seems to be the usual convention.
+   end
+
+   norm result (res) ::: get_from(SHELL), pure
+   ! Return the norm of the shell, assuming that the existing contraction
+   ! coefficients are with respect to NORMALISED primitive gaussians.
+   end
+
+   make_contraction_matrix(ccm) ::: get_from(SHELL), PURE
+   ! Return the contraction coefficient matrix "ccm". The primitives
+   ! are by default *unnormalised*.
    end
 
 !  =============
@@ -177,83 +254,15 @@ contains
       stdin.read_quantity(.position)
    end
 
-!  =====================
-!  Miscellaneous methods
-!  =====================
-
-   l_chr(l) result (res) ::: get_from(SHELL), selfless, private, PURE
-   ! Return a character representation for angular momentum "l"
-   end
-
-   same_shell_as(sh) result (same) ::: get_from(SHELL:same_as), private, pure
-   ! Return TRUE if the shell "self" is the same as "sh".
-   end
-
-   same_as(sh) result(same) ::: pure
-   ! Return TRUE if the shell "self" is the same as "sh".
-      sh :: SHELL1
-      same :: BIN
-
-      ! Check position ...
-      same = .position.same_as(sh.position) AND .same_shell_as(sh)
-
-   end
-
-   make_contraction_matrix(ccm) ::: get_from(SHELL), PURE
-   ! Return the contraction coefficient matrix "ccm". The primitives
-   ! are by default *unnormalised*.
-   end
-
-   norm result (res) ::: get_from(SHELL), pure
-   ! Return the norm of the shell, assuming that the existing contraction
-   ! coefficients are with respect to NORMALISED primitive gaussians.
-   end
-
-   unnormalise ::: get_from(SHELL), pure
-   ! Assuming the existing .contraction's are initially with respect
-   ! to NORMALISED primitive gaussians, take out this normalisation
-   ! factor of each primitive and put it in the contraction
-   ! coefficient. The normalisation factor removed is that for the
-   ! cartesian component x^l.
-   ! NOTE: It is up to you to correct this factor with appropriate
-   ! double factorial square roots for other components. The factor
-   ! should be: 
-   !   fac = 1/sqrt(df(nx)*df(ny)*df(nz))
-   ! where nx,ny,nz are the cartesian powers of the basis component
-   end
-
-   renormalise ::: get_from(SHELL), pure
-   ! Assuming the existing contraction coefficients are with respect to raw
-   ! UNNORMALISED primitive gaussians, put back this normalisation factor for
-   ! each primitive gaussian, by removing this factor from from the contraction
-   ! coefficients. The result will be contraction coefficients relative to
-   ! normalised primitive gausian. This will undo routine "unnormalise" routine
-   ! above.  The ((TWO*PI)**(THREE/FOUR)) / .norm factor is supposed to make the
-   ! contraction coefficient equal to 1 for a shell with one primitive i.e. the
-   ! shell is not *really* normalised. This seems to be the usual convention.
-   end
-
-   n_prim result (res) ::: get_from(SHELL)
-   ! Return the number of primitive gaussians in the shell
-   end
-
 !  ============
 !  Grid methods
 !  ============
 
-   r_max(cutoff) result (res) ::: get_from(SHELL)
-   ! Return the radius where all basis functions becomes smaller than "cutoff".
-   end
-
-   r2_max(cutoff) result (res) ::: get_from(SHELL)
-   ! Return the radius where all basis functions becomes smaller than "cutoff".
-   end
-
-
-   make_skip_list(skip,n_keep,r2,preskip,n_pt,cutoff) ::: public
+   make_skip_list(skip,n_keep,r2,preskip,n_pt,cutoff) ::: pure
    ! From a list of squared distances "r2" and preskipped points
    ! "preskip" return those distances where the basis function has a
    ! significant value above "cutoff".
+      self :: IN
       n_pt :: INT, IN
       skip :: VEC{BIN}(n_pt), OUT
       n_keep :: INT, OUT
@@ -286,22 +295,25 @@ contains
 
    end
 
-   make_significant_points(x,y,z,r2,skip,pt,cutoff) ::: leaky
+   make_significant_points(x,y,z,r2,skip,pt,cutoff) ::: leaky, PURE
    ! From a given list of points "pt" return the significant displacements "x",
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE.
-      x,y,z,r2 :: VEC{REAL}@
-      skip :: VEC{BIN}@
+      self :: IN
+      x,y,z,r2 :: VEC{REAL}@, OUT
+      skip :: VEC{BIN}@, OUT
       pt :: MAT{REAL}, IN
       cutoff :: REAL, IN
 
-      xx,yy,zz,rr, x0,y0,z0, r2_max :: REAL
+      x1,y1,z1,rr, x0,y0,z0, r2_max :: REAL
       n_pt,n,k :: INT
 
       n_pt = pt.dim1
       skip.create(n_pt)
-      x.create(n_pt); y.create(n_pt); z.create(n_pt)
+      x.create(n_pt)
+      y.create(n_pt)
+      z.create(n_pt)
       r2.create(n_pt)
 
       ! Square cutoff distance
@@ -313,18 +325,25 @@ contains
       z0 = .position(3) 
 
       k = 0
+
       do n = 1,n_pt
-         xx = pt(n,1) - x0 
-         yy = pt(n,2) - y0
-         zz = pt(n,3) - z0 
-         rr = xx*xx + yy*yy + zz*zz
+
+         x1 = pt(n,1) - x0 
+         y1 = pt(n,2) - y0
+         z1 = pt(n,3) - z0 
+
+         rr = x1*x1 + y1*y1 + z1*z1
+
          skip(n) = rr>r2_max
+
          if (skip(n)) cycle
+
          k = k + 1
-         x(k) = xx
-         y(k) = yy
-         z(k) = zz
+         x(k)  = x1
+         y(k)  = y1
+         z(k)  = z1
          r2(k) = rr
+
       end
 
       if (k==0) then
@@ -339,29 +358,25 @@ contains
    end
 
 
-   make_grid(F,pt)
+   make_grid(F,pt) ::: PURE
    ! Return "F(i,n)", the value of the basis function "n" on grid
    ! point "i" given a set of grid points "pt(i,1:3)"
-      F :: MAT{REAL}
-      pt :: MAT{REAL}, target
+      self :: IN
+      F :: MAT{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
-      x,y,z :: VEC{REAL}@
-
-      x => pt(:,1)
-      y => pt(:,2)
-      z => pt(:,3)
-
-      .make_grid(F,x,y,z)
+      .make_grid(F,pt(:,1),pt(:,2),pt(:,3))
 
    end
 
-   make_grid(F,x,y,z)
+   make_grid(F,x,y,z) ::: PURE
    ! Return "F(i,n)", the value of the basis function "n" on grid
    ! point "i" given a set of grid points "pt(i,1:3)"
-      F :: MAT{REAL}
-      x,y,z :: VEC{REAL}
+      self :: IN
+      F :: MAT{REAL}, OUT
+      x,y,z :: VEC{REAL}, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Fc :: MAT{REAL}@
       n_pt :: INT
 
@@ -370,34 +385,35 @@ contains
       else if (.l<2) then
          .make_grid_c(F,x,y,z)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = x.dim
          Fc.create(n_pt,.n_comp)
          .make_grid_c(Fc,x,y,z)
-         F.to_product_of(Fc,UU(.l).element)
+         F.to_product_of(Fc,UU)
          Fc.destroy
       end
 
    end
 
-   make_grid_c(f,x,y,z) ::: private
-   ! Return "f(i,n)", the value of the shell component "n" on grid point "i"
+   make_grid_c(F,x,y,z) ::: private, PURE
+   ! Return "F(i,n)", the value of the shell component "n" on grid point "i"
    ! given a set of grid points "(x(i),y(i),z(i))"
    ! Note: it is assumed that the shell is normalised to the component x^2; the
    ! appropriate double factorial normalising factors are introduced for each
    ! component (if required) so that each component is properly normalised.
-      f :: MAT{REAL}
-      x,y,z :: VEC{REAL}
+      self :: IN
+      F :: MAT{REAL}, OUT
+      x,y,z :: VEC{REAL}, IN
 
-   ENSURE(f.dim1==x.dim,"inconsistent f and x")
-   ENSURE(f.dim1==y.dim,"inconsistent f and x")
-   ENSURE(f.dim1==z.dim,"inconsistent f and x")
+   ENSURE(F.dim1==x.dim,"inconsistent F and x")
+   ENSURE(F.dim1==y.dim,"inconsistent F and x")
+   ENSURE(F.dim1==z.dim,"inconsistent F and x")
 
       bx,by,bz :: VEC{REAL}@
       lx,ly,lz :: VEC{INT}@
-      n_pt,n,b, ff,lf :: INT
-      rr,xx,yy,zz,x0,y0,z0,f0,bxb,byb,bzb :: REAL
-      xx2,yy2,zz2,xx3,yy3,zz3,zz_f0 :: REAL
+      n_pt,n,b,b1, ff,lf :: INT
+      rr,x1,y1,z1,x0,y0,z0,f0 :: REAL
+      x2,y2,z2,x3,y3,z3,z1_f0 :: REAL
 
       n_pt = x.dim
 
@@ -408,112 +424,124 @@ contains
 
       select case (.l)
 
-        case (0) ! S function ...........
-          do n = 1,n_pt
-             xx = x(n) - x0
-             yy = y(n) - y0
-             zz = z(n) - z0
-             rr = xx*xx + yy*yy + zz*zz
-             f(n,1) = sum(.contraction * exp( -rr * .exponent ))
-          end
+      case (0) 
+         ! S function ...........
+         do n = 1,n_pt
+            x1 = x(n) - x0
+            y1 = y(n) - y0
+            z1 = z(n) - z0
+            rr = x1*x1 + y1*y1 + z1*z1
+            F(n,1) = sum(.contraction * exp(-rr * .exponent))
+         end
 
-        case (1) ! P function ...........
-          do n = 1,n_pt
-             xx = x(n) - x0
-             yy = y(n) - y0
-             zz = z(n) - z0
-             rr = xx*xx + yy*yy + zz*zz
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             f(n,1) = xx*f0
-             f(n,2) = yy*f0
-             f(n,3) = zz*f0
-          end
+      case (1) 
+         ! P function ...........
+         do n = 1,n_pt
+            x1 = x(n) - x0
+            y1 = y(n) - y0
+            z1 = z(n) - z0
+            rr = x1*x1 + y1*y1 + z1*z1
+            f0 = sum(.contraction * exp(-rr * .exponent))
+            F(n,1) = x1*f0
+            F(n,2) = y1*f0
+            F(n,3) = z1*f0
+         end
 
-        case (2) ! D function ...........
-          do n = 1,n_pt
-             xx = x(n) - x0
-             yy = y(n) - y0
-             zz = z(n) - z0
-             rr = xx*xx + yy*yy + zz*zz
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             zz_f0 = zz*f0
-             f(n,1) = xx*xx*f0
-             f(n,2) = yy*yy*f0
-             f(n,3) = zz*zz*f0
-             f(n,4) = xx*yy*f0
-             f(n,5) = xx*zz_f0
-             f(n,6) = yy*zz_f0
-          end
+      case (2) 
+         ! D function ...........
+         do n = 1,n_pt
+            x1 = x(n) - x0
+            y1 = y(n) - y0
+            z1 = z(n) - z0
+            rr = x1*x1 + y1*y1 + z1*z1
+            f0 = sum(.contraction * exp(-rr * .exponent))
+            z1_f0 = z1*f0
+            F(n,1) = x1*x1*f0
+            F(n,2) = y1*y1*f0
+            F(n,3) = z1*z1_f0
+            F(n,4) = x1*y1*f0
+            F(n,5) = x1*z1_f0
+            F(n,6) = y1*z1_f0
+         end
 
-        case (3) ! F function ...........
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          do n = 1,n_pt
-             xx = x(n) - x0
-             yy = y(n) - y0
-             zz = z(n) - z0
-             xx2 = xx*xx
-             yy2 = yy*yy
-             zz2 = zz*zz
-             xx3 = xx2*xx
-             yy3 = yy2*yy
-             zz3 = zz2*zz
-             rr = xx2 + yy2 + zz2
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             f(n,1)  = f0*xx3
-             f(n,2)  = f0*yy3
-             f(n,3)  = f0*zz3
-             f(n,4)  = f0*xx2*yy
-             f(n,5)  = f0*xx2*zz
-             f(n,6)  = f0*xx*yy2
-             f(n,7)  = f0*yy2*zz
-             f(n,8)  = f0*xx*zz2
-             f(n,9)  = f0*yy*zz2
-             f(n,10) = f0*xx*yy*zz
-          end
+      case (3) 
+         ! F function ...........
+         ff = .first_gaussian
+         lf = .last_gaussian
+         do n = 1,n_pt
+            x1 = x(n) - x0
+            y1 = y(n) - y0
+            z1 = z(n) - z0
+            x2 = x1*x1
+            y2 = y1*y1
+            z2 = z1*z1
+            x3 = x2*x1
+            y3 = y2*y1
+            z3 = z2*z1
+            rr = x2 + y2 + z2
+            f0 = sum(.contraction * exp( -rr * .exponent ))
+            z1_f0 = z1*f0
+            F(n,1)  = x3      *f0
+            F(n,2)  = y3      *f0
+            F(n,3)  = z3      *f0
+            F(n,4)  = x2*y1   *f0
+            F(n,5)  = x2*   z1_f0
+            F(n,6)  = x1*y2   *f0
+            F(n,7)  = y2*   z1_f0
+            F(n,8)  = x1*z2   *f0
+            F(n,9)  = y1*z2   *f0
+            F(n,10) = x1*y1*z1_f0
+         end
 
-        case default ! General l function ...........
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l)
-          by.create(0,.l)
-          bz.create(0,.l)
-          do n = 1,n_pt
-             xx = x(n) - x0
-             yy = y(n) - y0
-             zz = z(n) - z0
-             rr = xx*xx + yy*yy + zz*zz
-             f0 = sum( .contraction * exp( -rr * .exponent ))
-             ! Cartesian orbital part
-             ! x**b,y**b,z**b for b=0,.l
-             bx(0) = ONE;   by(0) = ONE;   bz(0) = ONE
-             bx(1) = xx;    by(1) = yy;    bz(1) = zz
-             bxb = xx;      byb = yy;      bzb = zz
-             do b=2,.l
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Combine cartesian orbital powers with the exponential part
-             f(n,:) = f0*bx(lx(:))*by(ly(:))*bz(lz(:))
-          end
-          bz.destroy; by.destroy; bx.destroy
+      case default 
+         ! General l function ...........
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
+         bx.create(0,.l)
+         by.create(0,.l)
+         bz.create(0,.l)
+         
+         do n = 1,n_pt
+            x1 = x(n) - x0
+            y1 = y(n) - y0
+            z1 = z(n) - z0
+            rr = x1*x1 + y1*y1 + z1*z1
+            f0 = sum( .contraction * exp(-rr * .exponent))
+            ! Cartesian orbital part
+            ! x**b,y**b,z**b for b=0,.l
+            bx(0) = ONE; by(0) = ONE; bz(0) = ONE
+            bx(1) =  x1; by(1) =  y1; bz(1) =  z1
+            do b = 2,.l
+               b1 = b - 1
+               bx(b) = x1*bx(b1)
+               by(b) = y1*by(b1)
+               bz(b) = z1*bz(b1)
+            end
+            ! Combine cartesian orbital powers with the exponential part
+            F(n,:) = f0*bx(lx(:))*by(ly(:))*bz(lz(:))
+         end
+         
+         bz.destroy
+         by.destroy
+         bx.destroy
 
       end
 
    end
 
 
-   make_grid(F,x,y,z,r2,cutoff)
+   make_grid(F,x,y,z,r2,cutoff) ::: PURE
    ! Return "F(i,n)", the value of the basis function "n" on grid
    ! point "i" given a set of grid points "pt(i,1:3)"
+      self :: IN
       F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
       cutoff :: REAL
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Fc :: MAT{REAL}@
       n_pt :: INT
 
@@ -522,29 +550,30 @@ contains
       else if (.l<2) then
          .make_grid_c(F,x,y,z,r2,cutoff)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = x.dim1
          Fc.create(n_pt,.n_comp)
          .make_grid_c(Fc,x,y,z,r2,cutoff)
-         F.to_product_of(Fc,UU(.l).element)
+         F.to_product_of(Fc,UU)
          Fc.destroy
       end
 
    end
 
-   make_grid_c(F,x,y,z,r2,cutoff) ::: private
+   make_grid_c(F,x,y,z,r2,cutoff) ::: private, PURE
    ! Return "F(i,n)", the value of the shell component "n" on grid point "i".
    ! "x", "y", "z" are the differences between the points "pt" and the shell
    ! center, "r2" is an array for the square of the distance from the points
    ! "pt" to ".position". These arrays can be efficiently precalculated under some
    ! circumstances, when shell belonging to a whole atom are being calculated.
+      self :: IN
       F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
       cutoff :: REAL
 
-   ENSURE(f.dim1==x.dim,"inconsistent f and x")
-   ENSURE(f.dim1==y.dim,"inconsistent f and x")
-   ENSURE(f.dim1==z.dim,"inconsistent f and x")
+   ENSURE(F.dim1==x.dim,"inconsistent f and x")
+   ENSURE(F.dim1==y.dim,"inconsistent f and x")
+   ENSURE(F.dim1==z.dim,"inconsistent f and x")
 
       bx,by,bz :: VEC{REAL}@
       lx,ly,lz :: VEC{INT}@
@@ -559,102 +588,108 @@ contains
 
       select case (.l)
 
-        case (0) ! S function ...........
-          do n = 1,n_pt
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             F(n,1) = sum(.contraction * exp( -rr * .exponent ))
-          end
+      case (0) 
+         ! S function ...........
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            F(n,1) = sum(.contraction * exp( -rr * .exponent ))
+         end
 
-        case (1) ! P function ...........
-          do n = 1,n_pt
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             F(n,1) = xx*f0
-             F(n,2) = yy*f0
-             F(n,3) = zz*f0
-          end
+      case (1) 
+         ! P function ...........
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            f0 = sum(.contraction * exp(-rr * .exponent))
+            F(n,1) = xx*f0
+            F(n,2) = yy*f0
+            F(n,3) = zz*f0
+         end
 
-        case (2) ! D function ...........
-          do n = 1,n_pt
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             zz_f0 = zz*f0
-             F(n,1) = xx*xx*f0
-             F(n,2) = yy*yy*f0
-             F(n,3) = zz*zz*f0
-             F(n,4) = xx*yy*f0
-             F(n,5) = xx*zz_f0
-             F(n,6) = yy*zz_f0
-          end
+      case (2) 
+         ! D function ...........
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            f0 = sum(.contraction * exp(-rr * .exponent))
+            zz_f0 = zz*f0
+            F(n,1) = xx*xx*f0
+            F(n,2) = yy*yy*f0
+            F(n,3) = zz*zz*f0
+            F(n,4) = xx*yy*f0
+            F(n,5) = xx*zz_f0
+            F(n,6) = yy*zz_f0
+         end
 
-        case (3) ! F function ...........
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          do n = 1,n_pt
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             xx2 = xx*xx
-             yy2 = yy*yy
-             zz2 = zz*zz
-             xx3 = xx2*xx
-             yy3 = yy2*yy
-             zz3 = zz2*zz
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             F(n,1)  = f0*xx3
-             F(n,2)  = f0*yy3
-             F(n,3)  = f0*zz3
-             F(n,4)  = f0*xx2*yy
-             F(n,5)  = f0*xx2*zz
-             F(n,6)  = f0*xx*yy2
-             F(n,7)  = f0*yy2*zz
-             F(n,8)  = f0*xx*zz2
-             F(n,9)  = f0*yy*zz2
-             F(n,10) = f0*xx*yy*zz
-          end
+      case (3) 
+         ! F function ...........
+         ff = .first_gaussian
+         lf = .last_gaussian
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            xx2 = xx*xx
+            yy2 = yy*yy
+            zz2 = zz*zz
+            xx3 = xx2*xx
+            yy3 = yy2*yy
+            zz3 = zz2*zz
+            f0 = sum(.contraction * exp(-rr * .exponent))
+            F(n,1)  = f0*xx3
+            F(n,2)  = f0*yy3
+            F(n,3)  = f0*zz3
+            F(n,4)  = f0*xx2*yy
+            F(n,5)  = f0*xx2*zz
+            F(n,6)  = f0*xx*yy2
+            F(n,7)  = f0*yy2*zz
+            F(n,8)  = f0*xx*zz2
+            F(n,9)  = f0*yy*zz2
+            F(n,10) = f0*xx*yy*zz
+         end
 
-        case default ! General l function ...........
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l)
-          by.create(0,.l)
-          bz.create(0,.l)
-          do n = 1,n_pt
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             f0 = sum( .contraction * exp( -rr * .exponent ))
-             ! Cartesian orbital part
-             ! x**b,y**b,z**b for b=0,.l
-             bx(0) = ONE;   by(0) = ONE;   bz(0) = ONE
-             bx(1) = xx;    by(1) = yy;    bz(1) = zz
-             bxb = xx;      byb = yy;      bzb = zz
-             do b=2,.l
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Combine cartesian orbital powers with the exponential part
-             F(n,:) = f0*bx(lx(:))*by(ly(:))*bz(lz(:))
-          end
-          bz.destroy; by.destroy; bx.destroy
+      case default 
+         ! General l function ...........
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
+         bx.create(0,.l)
+         by.create(0,.l)
+         bz.create(0,.l)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            f0 = sum( .contraction * exp( -rr * .exponent ))
+            ! Cartesian orbital part
+            ! x**b,y**b,z**b for b=0,.l
+            bx(0) = ONE;   by(0) = ONE;   bz(0) = ONE
+            bx(1) = xx;    by(1) = yy;    bz(1) = zz
+            bxb = xx;      byb = yy;      bzb = zz
+            do b=2,.l
+              bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+              bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
+            end
+            ! Combine cartesian orbital powers with the exponential part
+            F(n,:) = f0*bx(lx(:))*by(ly(:))*bz(lz(:))
+         end
+         bz.destroy; by.destroy; bx.destroy
 
       end
 
@@ -867,114 +902,120 @@ contains
 
       select case (.l)
 
-        case (0) ! S function ...........
-          i = 0
-          do n = 1,n_pt
-             if (skip(n)) cycle
-             i = i + 1
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             F(i,1) = sum(.contraction * exp( -rr * .exponent ))
-          end
+      case (0) 
+         ! S function ...........
+         i = 0
+         do n = 1,n_pt
+            if (skip(n)) cycle
+            i = i + 1
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            F(i,1) = sum(.contraction * exp( -rr * .exponent ))
+         end
 
-        case (1) ! P function ...........
-          i = 0
-          do n = 1,n_pt
-             if (skip(n)) cycle
-             i = i + 1
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             F(i,1) = xx*f0
-             F(i,2) = yy*f0
-             F(i,3) = zz*f0
-          end
+      case (1) 
+         ! P function ...........
+         i = 0
+         do n = 1,n_pt
+            if (skip(n)) cycle
+            i = i + 1
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            f0 = sum(.contraction * exp( -rr * .exponent ))
+            F(i,1) = xx*f0
+            F(i,2) = yy*f0
+            F(i,3) = zz*f0
+         end
 
-        case (2) ! D function ...........
-          i = 0
-          do n = 1,n_pt
-             if (skip(n)) cycle
-             i = i + 1
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             zz_f0 = zz*f0
-             F(i,1) = xx*xx*f0
-             F(i,2) = yy*yy*f0
-             F(i,3) = zz*zz*f0
-             F(i,4) = xx*yy*f0
-             F(i,5) = xx*zz_f0
-             F(i,6) = yy*zz_f0
-          end
+      case (2)
+         ! D function ...........
+         i = 0
+         do n = 1,n_pt
+            if (skip(n)) cycle
+            i = i + 1
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            f0 = sum(.contraction * exp( -rr * .exponent ))
+            zz_f0 = zz*f0
+            F(i,1) = xx*xx*f0
+            F(i,2) = yy*yy*f0
+            F(i,3) = zz*zz*f0
+            F(i,4) = xx*yy*f0
+            F(i,5) = xx*zz_f0
+            F(i,6) = yy*zz_f0
+         end
 
-        case (3) ! F function ...........
-          ff = .first_gaussian
-          lf = .last_gaussian
-          i = 0
-          do n = 1,n_pt
-             if (skip(n)) cycle
-             i = i + 1
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             xx2 = xx*xx
-             yy2 = yy*yy
-             zz2 = zz*zz
-             xx3 = xx2*xx
-             yy3 = yy2*yy
-             zz3 = zz2*zz
-             f0 = sum(.contraction * exp( -rr * .exponent ))
-             F(i,1)  = f0*xx3
-             F(i,2)  = f0*yy3
-             F(i,3)  = f0*zz3
-             F(i,4)  = f0*xx2*yy
-             F(i,5)  = f0*xx2*zz
-             F(i,6)  = f0*xx*yy2
-             F(i,7)  = f0*yy2*zz
-             F(i,8)  = f0*xx*zz2
-             F(i,9)  = f0*yy*zz2
-             F(i,10) = f0*xx*yy*zz
-          end
+      case (3) 
+         ! F function ...........
+         ff = .first_gaussian
+         lf = .last_gaussian
+         i = 0
+         do n = 1,n_pt
+            if (skip(n)) cycle
+            i = i + 1
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            xx2 = xx*xx
+            yy2 = yy*yy
+            zz2 = zz*zz
+            xx3 = xx2*xx
+            yy3 = yy2*yy
+            zz3 = zz2*zz
+            f0 = sum(.contraction * exp( -rr * .exponent ))
+            F(i,1)  = f0*xx3
+            F(i,2)  = f0*yy3
+            F(i,3)  = f0*zz3
+            F(i,4)  = f0*xx2*yy
+            F(i,5)  = f0*xx2*zz
+            F(i,6)  = f0*xx*yy2
+            F(i,7)  = f0*yy2*zz
+            F(i,8)  = f0*xx*zz2
+            F(i,9)  = f0*yy*zz2
+            F(i,10) = f0*xx*yy*zz
+         end
 
-        case default ! General l function ...........
-          ff = .first_gaussian; lf = .last_gaussian
-          lx = GAUSSIAN_DATA::px(ff:lf)
-          ly = GAUSSIAN_DATA::py(ff:lf)
-          lz = GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l)
-          by.create(0,.l)
-          bz.create(0,.l)
-          i = 0
-          do n = 1,n_pt
-             if (skip(n)) cycle
-             i = i + 1
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             f0 = sum( .contraction * exp( -rr * .exponent ))
-             ! Cartesian orbital part
-             ! x**b,y**b,z**b for b=0,.l
-             bx(0) = ONE;   by(0) = ONE;   bz(0) = ONE
-             bx(1) = xx;    by(1) = yy;    bz(1) = zz
-             bxb = xx;      byb = yy;      bzb = zz
-             do b=2,.l
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Combine cartesian orbital powers with the exponential part
-             F(i,:) = f0*bx(lx(:))*by(ly(:))*bz(lz(:))
-          end
-          bz.destroy
-          by.destroy
-          bx.destroy
+      case default 
+         ! General l function ...........
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
+         bx.create(0,.l)
+         by.create(0,.l)
+         bz.create(0,.l)
+         i = 0
+         do n = 1,n_pt
+            if (skip(n)) cycle
+            i = i + 1
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            f0 = sum( .contraction * exp( -rr * .exponent ))
+            ! Cartesian orbital part
+            ! x**b,y**b,z**b for b=0,.l
+            bx(0) = ONE;   by(0) = ONE;   bz(0) = ONE
+            bx(1) = xx;    by(1) = yy;    bz(1) = zz
+            bxb = xx;      byb = yy;      bzb = zz
+            do b=2,.l
+              bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+              bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
+            end
+            ! Combine cartesian orbital powers with the exponential part
+            F(i,:) = f0*bx(lx(:))*by(ly(:))*bz(lz(:))
+         end
+         bz.destroy
+         by.destroy
+         bx.destroy
 
       end
    end
@@ -1926,9 +1967,9 @@ contains
       case default
          ff = .first_gaussian
          lf = .last_gaussian
-         lx  => GAUSSIAN_DATA::px(ff:lf)
-         ly  => GAUSSIAN_DATA::py(ff:lf)
-         lz  => GAUSSIAN_DATA::pz(ff:lf)
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
          do n = 1,n_pt
@@ -2102,9 +2143,9 @@ contains
       case default
          ff = .first_gaussian
          lf = .last_gaussian
-         lx  => GAUSSIAN_DATA::px(ff:lf)
-         ly  => GAUSSIAN_DATA::py(ff:lf)
-         lz  => GAUSSIAN_DATA::pz(ff:lf)
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
          do n = 1,n_pt
@@ -2297,9 +2338,9 @@ contains
       case default
          ff = .first_gaussian
          lf = .last_gaussian
-         lx  => GAUSSIAN_DATA::px(ff:lf)
-         ly  => GAUSSIAN_DATA::py(ff:lf)
-         lz  => GAUSSIAN_DATA::pz(ff:lf)
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
 
          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
@@ -2710,9 +2751,9 @@ contains
       case default
          ff = .first_gaussian
          lf = .last_gaussian
-         lx  => GAUSSIAN_DATA::px(ff:lf)
-         ly  => GAUSSIAN_DATA::py(ff:lf)
-         lz  => GAUSSIAN_DATA::pz(ff:lf)
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
 
          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
@@ -2929,9 +2970,9 @@ contains
       case default
          ff = .first_gaussian
          lf = .last_gaussian
-         lx  => GAUSSIAN_DATA::px(ff:lf)
-         ly  => GAUSSIAN_DATA::py(ff:lf)
-         lz  => GAUSSIAN_DATA::pz(ff:lf)
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
 
          do n = 1,n_pt
             x = pt(n,1) - x0
