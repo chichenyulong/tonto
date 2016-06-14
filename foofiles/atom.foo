@@ -5203,89 +5203,85 @@ contains
 !  Density plotting routines
 !  =========================
 
-   make_density_grid(density_grid,pt,occ)
+   make_density_grid(density_grid,pt,occ) ::: PURE
    ! Make the electron "density_grid" on "pt" using ".natural orbitals" and
    ! the ".occupation_numbers" vector.
       self :: IN
       density_grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-      occ :: REAL, IN, optional
+      occ :: REAL, optional, IN
 
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
+   ENSURE(.basis_kind.is_one_of(["gaussian","slater  ","coppens "]),"unknown basis_kind : "//trim(.basis_kind))
 
       select case (.basis_kind)
 
-         case ("gaussian")
-            if (.use_interpolator AND .interpolator.created) then
-               .make_interpolated_density(density_grid,pt,occ)
-            else
-               ENSURE(.basis.created,"no basis")
-               ENSURE(.natural_orbitals.created,"no natural_orbitals")
-               if (.natural_orbitals.number_kind=="real") then; .make_density_grid_r(density_grid,pt,occ)
-               else;                                            .make_density_grid_c(density_grid,pt,occ)
-               end
+      case ("gaussian")
+         if (.use_interpolator AND .interpolator.created) then
+            .make_interpolated_density(density_grid,pt,occ)
+         else
+            ENSURE(.basis.created,"no basis")
+            ENSURE(.natural_orbitals.created,"no natural_orbitals")
+            if (.natural_orbitals.number_kind=="real") then; .make_density_grid_r(density_grid,pt,occ)
+            else;                                            .make_density_grid_c(density_grid,pt,occ)
             end
+         end
 
-         case ("slater")
-            ENSURE(.slaterbasis.created,"no slaterbasis")
-            .slaterbasis.make_density_grid(density_grid,pt,.position,occ)
+      case ("slater")
+         ENSURE(.slaterbasis.created,"no slaterbasis")
+         .slaterbasis.make_density_grid(density_grid,pt,.position,occ)
 
-         case ("coppens")
-            ENSURE(.coppensbasis.created,"no coppensbasis")
-            .coppensbasis.make_density_grid(density_grid,pt,.position,occ)
-
-         case default
-            UNKNOWN(.basis_kind)
+      case ("coppens")
+         ENSURE(.coppensbasis.created,"no coppensbasis")
+         .coppensbasis.make_density_grid(density_grid,pt,.position,occ)
 
       end
 
    end
 
-   add_density_grid(density_grid,pt,occ)
+   add_density_grid(density_grid,pt,occ) ::: PURE
    ! Add the electron "density_grid" on "pt" using ".natural orbitals" and
    ! the ".occupation_numbers" vector.
       self :: IN
       density_grid :: VEC{REAL}, INOUT
       pt :: MAT{REAL}, IN
-      occ :: REAL, IN, optional
+      occ :: REAL, optional, IN
 
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
+   ENSURE(.basis_kind.is_one_of(["gaussian","slater  ","coppens "]),"unknown basis_kind : "//trim(.basis_kind))
 
       select case (.basis_kind)
 
-         case ("gaussian")
-            if (.use_interpolator AND .interpolator.created) then
-               .add_interpolated_density(density_grid,pt,occ)
-            else
-               ENSURE(.basis.created,"no basis")
-               ENSURE(.natural_orbitals.created,"no natural orbitals")
-               if (.natural_orbitals.number_kind=="real") then; .add_density_grid_r(density_grid,pt,occ)
-               else;                                            .add_density_grid_c(density_grid,pt,occ)
-               end
+      case ("gaussian")
+         if (.use_interpolator AND .interpolator.created) then
+            .add_interpolated_density(density_grid,pt,occ)
+         else
+            ENSURE(.basis.created,"no basis")
+            ENSURE(.natural_orbitals.created,"no natural orbitals")
+            if (.natural_orbitals.number_kind=="real") then; .add_density_grid_r(density_grid,pt,occ)
+            else;                                            .add_density_grid_c(density_grid,pt,occ)
             end
+         end
 
-         case ("slater")
-            ENSURE(.slaterbasis.created,"no slaterbasis")
-            .slaterbasis.add_density_grid(density_grid,pt,.position,occ)
+      case ("slater")
+         ENSURE(.slaterbasis.created,"no slaterbasis")
+         .slaterbasis.add_density_grid(density_grid,pt,.position,occ)
 
-         case ("coppens")
-            ENSURE(.coppensbasis.created,"no coppensbasis")
-            .coppensbasis.add_density_grid(density_grid,pt,.position,occ)
-
-         case default
-            UNKNOWN(.basis_kind)
+      case ("coppens")
+         ENSURE(.coppensbasis.created,"no coppensbasis")
+         .coppensbasis.add_density_grid(density_grid,pt,.position,occ)
 
       end
 
    end
 
-   make_density_grid_r(density_grid,pt,occ)
+   make_density_grid_r(density_grid,pt,occ) ::: PURE
    ! Make the "density_grid" for the supplied points "pt" from restricted real
    ! natural orbitals
       self :: IN
       density_grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-      occ :: REAL, IN, optional
+      occ :: REAL, optional, IN
 
    ENSURE(pt.dim2==3,"wrong dimension for points array")
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
@@ -5310,8 +5306,8 @@ contains
       n_occ = .no_of_occupied_NOs
 
       do n = 1,n_occ
-       .make_orbital_grid_r(NO,.natural_orbitals.restricted(:,n),pt,.position)
-       density_grid = density_grid + .occupation_numbers.restricted(n)*NO*NO
+         .make_orbital_grid_r(NO,.natural_orbitals.restricted(:,n),pt,.position)
+         density_grid = density_grid + .occupation_numbers.restricted(n)*NO*NO
       end
 
       if (do_occ) density_grid = occ*density_grid
@@ -5320,13 +5316,13 @@ contains
 
    end
 
-   add_density_grid_r(density_grid,pt,occ)
+   add_density_grid_r(density_grid,pt,occ) ::: PURE
    ! Add the "density_grid" for the supplied points "pt" from restricted real
    ! natural orbitals
       self :: IN
       density_grid :: VEC{REAL}, INOUT
       pt :: MAT{REAL}, IN
-      occ :: REAL, IN, optional
+      occ :: REAL, optional, IN
 
    ENSURE(pt.dim2==3,"wrong dimension for points array")
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
@@ -5346,31 +5342,36 @@ contains
       end
 
       NO.create(pt.dim1)
+
       n_occ = .no_of_occupied_NOs
 
       if (do_occ) then
-        do n = 1,n_occ
-          .make_orbital_grid_r(NO,.natural_orbitals.restricted(:,n),pt,.position)
-          density_grid = density_grid + occ*.occupation_numbers.restricted(n)*NO*NO
-        end
+
+         do n = 1,n_occ
+            .make_orbital_grid_r(NO,.natural_orbitals.restricted(:,n),pt,.position)
+            density_grid = density_grid + occ*.occupation_numbers.restricted(n)*NO*NO
+         end
+
       else
-        do n = 1,n_occ
-          .make_orbital_grid_r(NO,.natural_orbitals.restricted(:,n),pt,.position)
-          density_grid = density_grid +     .occupation_numbers.restricted(n)*NO*NO
-        end
+
+         do n = 1,n_occ
+            .make_orbital_grid_r(NO,.natural_orbitals.restricted(:,n),pt,.position)
+            density_grid = density_grid +     .occupation_numbers.restricted(n)*NO*NO
+         end
+
       end
 
       NO.destroy
 
    end
 
-   make_density_grid_c(density_grid,pt,occ)
+   make_density_grid_c(density_grid,pt,occ) ::: PURE
    ! Make the "density_grid" for the supplied points "pt" from restricted
    ! complex natural orbitals.
       self :: IN
       density_grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-      occ :: REAL, IN, optional
+      occ :: REAL, optional, IN
 
    ENSURE(pt.dim2==3,"wrong dimension for points array")
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
@@ -5389,10 +5390,11 @@ contains
       end
       end
 
-      density_grid = ZERO ! set to zero
-
       NO.create(pt.dim1)
+
       n_occ = .no_of_occupied_NOs
+
+      density_grid = ZERO
 
       do n = 1,n_occ
          .make_orbital_grid_c(NO,.natural_orbitals.restricted_complex(:,n),pt,.position)
@@ -5405,13 +5407,13 @@ contains
 
    end
 
-   add_density_grid_c(density_grid,pt,occ)
+   add_density_grid_c(density_grid,pt,occ) ::: PURE
    ! Make the "density_grid" for the supplied points "pt" from restricted
    ! complex natural orbitals.
       self :: IN
       density_grid :: VEC{REAL}, INOUT
       pt :: MAT{REAL}, IN
-      occ :: REAL, IN, optional
+      occ :: REAL, optional, IN
 
    ENSURE(pt.dim2==3,"wrong dimension for points array")
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
@@ -5431,34 +5433,39 @@ contains
       end
 
       NO.create(pt.dim1)
+
       n_occ = .no_of_occupied_NOs
 
       if (do_occ) then
+
          do n = 1,n_occ
             .make_orbital_grid_c(NO,.natural_orbitals.restricted_complex(:,n),pt,.position)
             density_grid = density_grid &
                          + occ*.occupation_numbers.restricted(n)*REALIFY(conjg(NO)*NO)
          end
+
       else
+
          do n = 1,n_occ
             .make_orbital_grid_c(NO,.natural_orbitals.restricted_complex(:,n),pt,.position)
             density_grid = density_grid &
                          + .occupation_numbers.restricted(n)*REALIFY(conjg(NO)*NO)
          end
+
       end
 
       NO.destroy
 
    end
 
-   make_density_grid(density_grid,pt,D,occ)
+   make_density_grid(density_grid,pt,D,occ) ::: PURE
    ! Make the "density_grid" for the supplied points "pt" from a
    ! density matrix "D"
       self :: IN
       density_grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
       D :: MAT{REAL}, IN
-      occ :: REAL, IN, optional
+      occ :: REAL, optional, IN
 
    ENSURE(pt.dim2==3,"wrong dimension for points array")
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
@@ -5485,7 +5492,7 @@ contains
 
       do i = 1,pt.dim1
          W.to_product_of(D,g(i,:),transpose_a=TRUE)
-         density_grid(i) = VEC{REAL}:sum_elements(W*g(i,:))
+         density_grid(i) = sum(W*g(i,:))
       end
 
       if (do_occ) density_grid = occ*density_grid
@@ -5495,14 +5502,14 @@ contains
 
    end
 
-   add_density_grid(density_grid,pt,D,occ)
+   add_density_grid(density_grid,pt,D,occ) ::: PURE
    ! Add the "density_grid" for the supplied points "pt" from a
    ! density matrix "D"
       self :: IN
       density_grid :: VEC{REAL}, INOUT
       pt :: MAT{REAL}, IN
       D :: MAT{REAL}, IN
-      occ :: REAL, IN, optional
+      occ :: REAL, optional, IN
 
    ENSURE(pt.dim2==3,"wrong dimension for points array")
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
@@ -5531,14 +5538,14 @@ contains
 
         do i = 1,pt.dim1
            W.to_product_of(D,g(i,:),transpose_a=TRUE)
-           density_grid(i) = density_grid(i) + occ*VEC{REAL}:sum_elements(W*g(i,:))
+           density_grid(i) = density_grid(i) + occ*sum(W*g(i,:))
         end
 
       else
 
         do i = 1,pt.dim1
            W.to_product_of(D,g(i,:),transpose_a=TRUE)
-           density_grid(i) = density_grid(i) + VEC{REAL}:sum_elements(W*g(i,:))
+           density_grid(i) = density_grid(i) +     sum(W*g(i,:))
         end
 
       end
@@ -5548,42 +5555,14 @@ contains
 
    end
 
-
-!   make_d_density_grid(d0_density,d1_density,d2_density,pt)
-!   ! Work out the 1st derivative density "d1_density" and 2nd
-!   ! derivative "d2_density" on a set of points "pt" for interpolated
-!   ! densities.
-!      self :: IN
-!      d0_density :: VEC{REAL}, OUT
-!      d1_density :: MAT{REAL}, OUT
-!      d2_density :: MAT3{REAL}, OUT
-!      pt :: MAT{REAL}, IN
-!   ENSURE(d0_density.dim==pt.dim1,"inconsistent number of points")
-!      select case (.basis_kind)
-!         case ("gaussian")
-!            DIE("gaussian case, use different routines")
-!         case ("slater")
-!            ENSURE(.slaterbasis.created,"no slaterbasis")
-!            .slaterbasis.make_d_density_grid(d0_density,d1_density,d2_density,pt,.position)
-!         case ("coppens")
-!            DIE("not implemented yet")
-!         case default
-!            UNKNOWN(.basis_kind)
-!      end
-!      if (NOT .site_occupancy.same_as(ONE)) then
-!         d0_density = .site_occupancy*d0_density
-!         d1_density = .site_occupancy*d1_density
-!         d2_density = .site_occupancy*d2_density
-!      end
-!   end
-
 !  ========================
 !  Orbital density routines
 !  ========================
 
-   make_AO_grid(g,pt,pos)
+   make_AO_grid(g,pt,pos) ::: PURE
    ! Evaluate the AO density grid "g" on a set of grid points "pt" for an atom at position
    ! "pos".
+      self :: IN
       g :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
       pos :: VEC{REAL}(3), IN
@@ -5605,12 +5584,11 @@ contains
          sh.set(.basis.shell(s),pos)
 
          f = l + 1
-         if (sh.is_spherical)then
-           l = l + sh.n_sph  ! LBXXX
+         if (sh.is_spherical) then
+            l = l + sh.n_sph  ! LBXXX
          else
-           l = l + sh.n_comp
+            l = l + sh.n_comp
          end if
-         !l = l + sh.n_comp
 
          sh.make_grid(g(:,f:l),pt)
 
@@ -5618,7 +5596,7 @@ contains
 
    end
 
-   make_orbital_grid_r(g,orb,pt,pos,square)
+   make_orbital_grid_r(g,orb,pt,pos,square) ::: PURE
    ! Evaluate the orbital density grid "g" for *one* AO-basis coefficient
    ! orbital vector "orb" on a set of grid points "pt" for an atom at position
    ! "pos". If "square" is present and TRUE, the square of the orbital density
@@ -5653,11 +5631,11 @@ contains
 
          f = l + 1
          if (sh.is_spherical)then
-           l = f + sh.n_sph - 1
-           sh_grid.create(n_pt,sh.n_sph)
+            l = f + sh.n_sph - 1
+            sh_grid.create(n_pt,sh.n_sph)
          else
-           l = f + sh.n_comp - 1
-           sh_grid.create(n_pt,sh.n_comp)
+            l = f + sh.n_comp - 1
+            sh_grid.create(n_pt,sh.n_comp)
          end if
 
 
@@ -5672,7 +5650,7 @@ contains
 
    end
 
-   make_orbital_grid_c(g,orb,pt,pos,square)
+   make_orbital_grid_c(g,orb,pt,pos,square) ::: PURE
    ! Evaluate the orbital density grid "g" for *one* AO-basis coefficient
    ! orbital vector "orb" on a set of grid points "pt" for an atom at position
    ! "pos". If "square" is present and TRUE, the square of the orbital density
@@ -5708,11 +5686,11 @@ contains
 
          f = l + 1
          if (sh.is_spherical)then
-           l = f + sh.n_sph - 1
-           sh_grid.create(n_pt,sh.n_sph)
+            l = f + sh.n_sph - 1
+            sh_grid.create(n_pt,sh.n_sph)
          else
-           l = f + sh.n_comp - 1
-           sh_grid.create(n_pt,sh.n_comp)
+            l = f + sh.n_comp - 1
+            sh_grid.create(n_pt,sh.n_comp)
          end if
 
          sh.make_grid(sh_grid,pt)
@@ -5730,83 +5708,51 @@ contains
 !  Spherical density at R
 !  ======================
 
-   density_at_radius(R) result (res)
+   density_at_radius(R) result (res) ::: PURE
    ! Work out the electron at radius "R".
+      self :: IN
       R :: REAL, IN
       res :: REAL
+
+   ENSURE(.basis_kind.is_one_of(["gaussian","slater  ","coppens "]),"unknown basis_kind : "//trim(.basis_kind))
 
       density_grid :: VEC{REAL}(1)
       pt :: MAT{REAL}(1,3)
 
       res = ZERO
       select case (.basis_kind)
-         case ("gaussian")
-            ENSURE(.basis.created,"no basis")
-            pt(1,:) = .position + [R,ZERO,ZERO]
-            if (.natural_orbitals.number_kind == "real") then; .make_density_grid_r(density_grid,pt)
-            else;                                              .make_density_grid_c(density_grid,pt)
-            end
-            res = density_grid(1)
-         case ("slater")
-            ENSURE(.slaterbasis.created,"no slaterbasis")
-            ENSURE(.slaterbasis.shell.created,"no slaterbasis shells")
-            res = .slaterbasis.density_at_radius(R)
-         case ("coppens")
-            ENSURE(.coppensbasis.created,"no coppensbasis")
-            ENSURE(.coppensbasis.orbital.created,"no coppensbasis orbital")
-            res = .coppensbasis.density_at_radius(R)
-         case default
-            UNKNOWN(.basis_kind)
+
+      case ("gaussian")
+         ENSURE(.basis.created,"no basis")
+         pt(1,:) = .position + [R,ZERO,ZERO]
+         if (.natural_orbitals.number_kind == "real") then; .make_density_grid_r(density_grid,pt)
+         else;                                              .make_density_grid_c(density_grid,pt)
+         end
+         res = density_grid(1)
+
+      case ("slater")
+         ENSURE(.slaterbasis.created,"no slaterbasis")
+         ENSURE(.slaterbasis.shell.created,"no slaterbasis shells")
+         res = .slaterbasis.density_at_radius(R)
+
+      case ("coppens")
+         ENSURE(.coppensbasis.created,"no coppensbasis")
+         ENSURE(.coppensbasis.orbital.created,"no coppensbasis orbital")
+         res = .coppensbasis.density_at_radius(R)
+
       end
 
    end
 
-   density_value_at_radius(R) result (res) ::: selfless, public
+   density_value_at_radius(R) result (res) ::: selfless, public, PURE
    ! Return the density values at the radial value "R".
    ! This assumes that the atomic density is spherical!
       R :: REAL, IN
       res :: REAL
-      self :: ATOM@
-      self => saved_self
-      res = .density_at_radius(R)
+
+      res = saved_self.density_at_radius(R)
+
    end
-
-!   density_at_sqrt_radius2(R2) result (res) ::: selfless, public
-!   ! Return the density values at the square root of radial value "R2".
-!   ! This assumes that the atomic density is spherical!
-!     R2 :: REAL, IN
-!     res :: REAL
-!     R :: REAL
-!     self :: ATOM@
-!     self => saved_self
-!     R = sqrt(R2)
-!     res = .density_at_radius(R)
-!   end
-
-!   density_at_sqrt_x1x(x) result (res) ::: selfless, public
-!   ! The function r2 = (x/1-x) maps [0,1] -> [0,inf]. An even spacing
-!   ! of points in x will lead to a distribution of points in r in the
-!   ! range [0,inf] on which the density rho can be calculated. An
-!   ! interpolation table of rho vs. x can be made.  The inverse of the
-!   ! function is x = (r2/1+r2). These values of x can easily be
-!   ! calculated from a given r2. The value of rho can then be
-!   ! interpolated. This assumes that the atomic density is spherical!
-!     x :: REAL, IN
-!     res :: REAL
-!
-!     R :: REAL
-!     self :: ATOM@
-!
-!
-!     if (x>=ONE) then
-!        res = ZERO
-!     else
-!        self => saved_self
-!        R = .bragg_slater_radius*BOHR_PER_ANGSTROM*sqrt(x/(ONE-x))
-!        res = .density_at_radius(R)
-!     end
-!
-!   end
 
 !  ============
 !  Interpolator
@@ -5849,13 +5795,15 @@ contains
       interpolator :: INTERPOLATOR@
 
       interpolator.create
+
       .set_saved_self   ! Used by function below
       length = interpolator.the_table_length(ATOM::density_value_at_radius,tol)
+
       interpolator.destroy
 
    end
 
-   make_interpolated_density(density,pt,occ)
+   make_interpolated_density(density,pt,occ) ::: PURE
    ! Make the spherical atomic "density" for the supplied points "pt"
    ! using a precalculated interpolator.
       self :: IN
@@ -5878,21 +5826,21 @@ contains
 
       ! Get squared distances R2
       do n = 1,n_pt
-        x = pt(n,1) - .position(1)
-        y = pt(n,2) - .position(2)
-        z = pt(n,3) - .position(3)
-        R2(n) = x*x + y*y + z*z
+         x = pt(n,1) - .position(1)
+         y = pt(n,2) - .position(2)
+         z = pt(n,3) - .position(3)
+         R2(n) = x*x + y*y + z*z
       end
 
       ! Get the interpolated density values
-      .interpolator.values_for(R2,density,occ)
+      .interpolator.values_for(R3,density,occ)
 
       ! Clean up
       R2.destroy
 
    end
 
-   add_interpolated_density(density,pt,occ)
+   add_interpolated_density(density,pt,occ) ::: PURE
    ! Add the spherical atomic "density" for the supplied points "pt"
    ! using a precalculated interpolator.
       self :: IN
@@ -5933,37 +5881,40 @@ contains
 !  Nabla density grid routines
 !  ===========================
 
-   make_nabla_density_grid(nabla_grid,pts)
+   make_nabla_density_grid(nabla_grid,pts) ::: PURE
    ! Work out nabla of the density, "nabla_grid" on the set of point "pts".
+      self :: IN
       nabla_grid :: MAT{REAL}, OUT
       pts :: MAT{REAL}, IN
 
-      if (.natural_orbitals.number_kind == "real") then
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
+
+      if (.natural_orbitals.number_kind=="real") then
          .make_nabla_density_grid_r(nabla_grid,pts)
-      else
-         DIE("complex case not yet implemented")
       end
 
    end
 
-   make_nabla_density_grid(nabla_grid,grid,pts)
+   make_nabla_density_grid(nabla_grid,grid,pts) ::: PURE
    ! Work nabla of the density, "nabla_grid", and the density, "grid", evaluated
    ! on the set of points "pts".
+      self :: IN
       nabla_grid :: MAT{REAL}, OUT
       grid :: VEC{REAL}, OUT
       pts :: MAT{REAL}, IN
 
-      if (.natural_orbitals.number_kind == "real") then
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
+
+      if (.natural_orbitals.number_kind=="real") then
          .make_nabla_density_grid_r(nabla_grid,grid,pts)
-      else
-         DIE("complex case not yet implemented")
       end
 
    end
 
-   make_nabla_density_grid_r(nabla_grid,pts)
+   make_nabla_density_grid_r(nabla_grid,pts) ::: private, PURE
    ! Work out nabla of the density, "nabla_grid", on the grid "pts" using
    ! ".natural_orbitals" and the ".occupation" number vector.
+      self :: IN
       nabla_grid :: MAT{REAL}, OUT
       pts :: MAT{REAL}, IN
 
@@ -5980,19 +5931,25 @@ contains
       occ :: REAL
       n_occ,n,n_pts :: INT
 
-      n_pts = size(pts,1)
-      nabla_grid = ZERO
+      n_pts = pts.dim1
+
       orb.create(n_pts)
       nabla_orb.create(n_pts,3)
 
       n_occ = .no_of_occupied_NOs
 
+      nabla_grid = ZERO
+
       do n = 1,n_occ
-       .make_nabla_orbital_grid_r(nabla_orb,orb,.natural_orbitals.restricted(:,n), pts)
-       occ = .occupation_numbers.restricted(n)
-       nabla_grid(:,1) = nabla_grid(:,1) + occ*orb(:)*nabla_orb(:,1)
-       nabla_grid(:,2) = nabla_grid(:,2) + occ*orb(:)*nabla_orb(:,2)
-       nabla_grid(:,3) = nabla_grid(:,3) + occ*orb(:)*nabla_orb(:,3)
+
+         .make_nabla_orbital_grid_r(nabla_orb,orb,.natural_orbitals.restricted(:,n), pts)
+
+         occ = .occupation_numbers.restricted(n)
+
+         nabla_grid(:,1) = nabla_grid(:,1) + occ*orb(:)*nabla_orb(:,1)
+         nabla_grid(:,2) = nabla_grid(:,2) + occ*orb(:)*nabla_orb(:,2)
+         nabla_grid(:,3) = nabla_grid(:,3) + occ*orb(:)*nabla_orb(:,3)
+
       end
 
       nabla_grid = TWO*nabla_grid
@@ -6002,10 +5959,11 @@ contains
 
    end
 
-   make_nabla_density_grid_r(nabla_grid,grid,pts)
+   make_nabla_density_grid_r(nabla_grid,grid,pts) ::: private, PURE
    ! Work out nabla of the density, "nabla_grid", and the density grid, "grid",
    ! using the grid "pts" and the ".natural_orbitals" and the ".occupation"
    ! number vector.
+      self :: IN
       nabla_grid :: MAT{REAL}, OUT
       grid :: VEC{REAL}, OUT
       pts :: MAT{REAL}, IN
@@ -6024,21 +5982,25 @@ contains
       occ :: REAL
       n_occ,n,n_pts :: INT
 
-      n_pts = size(pts,1)
-      nabla_grid = ZERO
-      grid = ZERO
+      n_pts = pts.dim1
       orb.create(n_pts)
       nabla_orb.create(n_pts,3)
 
       n_occ = .no_of_occupied_NOs
 
+      nabla_grid = ZERO
+      grid = ZERO
+
       do n = 1,n_occ
-       .make_nabla_orbital_grid_r(nabla_orb,orb,.natural_orbitals.restricted(:,n), pts)
-       occ = .occupation_numbers.restricted(n)
-       nabla_grid(:,1) = nabla_grid(:,1) + occ*orb(:)*nabla_orb(:,1)
-       nabla_grid(:,2) = nabla_grid(:,2) + occ*orb(:)*nabla_orb(:,2)
-       nabla_grid(:,3) = nabla_grid(:,3) + occ*orb(:)*nabla_orb(:,3)
-       grid(:) = grid(:) + occ*orb(:)*orb(:)
+
+         .make_nabla_orbital_grid_r(nabla_orb,orb,.natural_orbitals.restricted(:,n), pts)
+
+         occ = .occupation_numbers.restricted(n)
+
+         nabla_grid(:,1) = nabla_grid(:,1) + occ*orb(:)*nabla_orb(:,1)
+         nabla_grid(:,2) = nabla_grid(:,2) + occ*orb(:)*nabla_orb(:,2)
+         nabla_grid(:,3) = nabla_grid(:,3) + occ*orb(:)*nabla_orb(:,3)
+               grid(:)   = grid(:)         + occ*orb(:)*orb(:)
       end
 
       nabla_grid = TWO*nabla_grid
@@ -6048,12 +6010,13 @@ contains
 
    end
 
-   make_nabla_orbital_grid_r(g,h,orb,pt)
+   make_nabla_orbital_grid_r(g,h,orb,pt) ::: private, PURE
    ! Evaluate the nabla orbital density grid "g" as well as the orbital grid "h"
    ! for *one* AO-basis orbital vector "orb" on a set of grid points "pt"
-      g :: MAT{REAL}
-      h :: VEC{REAL}
-      orb :: VEC{REAL}, IN, target
+      self :: IN
+      g :: MAT{REAL}, OUT
+      h :: VEC{REAL}, OUT
+      orb :: VEC{REAL}, target, IN
       pt :: MAT{REAL}, IN
 
    ENSURE(.basis.created,"no basis set")
@@ -6082,16 +6045,17 @@ contains
          f = l + 1
 
          if (sh.is_spherical)then
-           sh_grid.create(n_pt,sh.n_sph,3)
-           sh_grid0.create(n_pt,sh.n_sph)
-           l = f + sh.n_sph - 1
+            sh_grid.create(n_pt,sh.n_sph,3)
+            sh_grid0.create(n_pt,sh.n_sph)
+            l = f + sh.n_sph - 1
          else
-           sh_grid.create(n_pt,sh.n_comp,3)
-           sh_grid0.create(n_pt,sh.n_comp)
-           l = f + sh.n_comp - 1
+            sh_grid.create(n_pt,sh.n_comp,3)
+            sh_grid0.create(n_pt,sh.n_comp)
+            l = f + sh.n_comp - 1
          end if
 
          sh.make_nabla_grid(sh_grid,sh_grid0,pt)
+
          orb_a => orb(f:l)
 
          g(:,1).plus_product_of(sh_grid(:,:,1),orb_a)
@@ -6111,28 +6075,29 @@ contains
 !  Laplacian density routines
 !  ==========================
 
-   make_laplacian_grid(laplacian_grid,pt)
+   make_laplacian_grid(laplacian_grid,pt) ::: PURE
    ! Work out the electron "laplacian_grid" on "pt" using ".natural orbitals"
    ! and  the ".occupation_numbers" vector.
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      laplacian_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
 
       if (.natural_orbitals.number_kind == "real") then
-        .make_laplacian_grid_r(laplacian_grid,pt)
-      else
-        DIE("code not written yet")
+         .make_laplacian_grid_r(laplacian_grid,pt)
       end
 
    end
 
-   make_laplacian_grid_r(laplacian_grid,pt)
+   make_laplacian_grid_r(laplacian_grid,pt) ::: PURE
    ! Make the "laplacian_grid" for the supplied points "pt" from restricted
    ! real natural orbitals
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      laplacian_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
@@ -6145,17 +6110,26 @@ contains
 
       n_pt = pt.dim1
 
-      laplacian_grid = ZERO
-
       NO.create(n_pt)
       P.create(n_pt,3)
       D.create(n_pt,3)
 
       n_occ = .no_of_occupied_NOs
+
+      laplacian_grid = ZERO
+
       do n = 1,n_occ
-       .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
-       occ = .occupation_numbers.restricted(n)
-       laplacian_grid = laplacian_grid +  occ * (NO*(D(:,1)+D(:,2)+D(:,3)) + (P(:,1)*P(:,1)+P(:,2)*P(:,2)+P(:,3)*P(:,3)))
+
+         .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
+
+         occ = .occupation_numbers.restricted(n)
+
+         laplacian_grid = laplacian_grid &
+                        + occ * ( &
+                          NO*(D(:,1)+D(:,2)+D(:,3)) &
+                        + P(:,1)*P(:,1) &
+                        + P(:,2)*P(:,2) &
+                        + P(:,3)*P(:,3) )
       end
 
       laplacian_grid = TWO*laplacian_grid
@@ -6166,98 +6140,101 @@ contains
 
    end
 
-   make_laplacian_orbital_grid_r(g,h,i,orb,pt)
-   ! Evaluate the laplacian orbital density grid "g", as well as the nabla
-   ! orbital grid "h" and the orbital grid "i" for *one* AO-basis orbital
+   make_laplacian_orbital_grid_r(G,H,F,orb,pt) ::: PURE
+   ! Evaluate the laplacian orbital density grid "G", as well as the nabla
+   ! orbital grid "H" and the orbital grid "F" for *one* AO-basis orbital
    ! vector "orb" on a set of grid points "pt"
-      g,h :: MAT{REAL}
-      i :: VEC{REAL}
-      orb :: VEC{REAL}, IN, target
+      self :: IN
+      G,H :: MAT{REAL}, OUT
+      F :: VEC{REAL}, OUT
+      orb :: VEC{REAL}, target, IN
       pt :: MAT{REAL}, IN
 
    ENSURE(.basis.created,"no basis set")
    ENSURE(.basis.no_of_basis_functions==orb.dim,"incorrect suize, orb")
-   ENSURE(g.dim1==pt.dim1, "grid array has wrong 1st dimension")
-   ENSURE(g.dim2==3,        "grid array has wrong 2nd dimension")
-   ENSURE(h.dim1==pt.dim1, "grid array has wrong 1st dimension")
-   ENSURE(h.dim2==3,        "grid array has wrong 2nd dimension")
-   ENSURE(i.dim==pt.dim1,  "grid array has wrong 1st dimension")
+   ENSURE(G.dim1==pt.dim1, "G has wrong 1st dimension")
+   ENSURE(G.dim2==3,       "G has wrong 2nd dimension")
+   ENSURE(H.dim1==pt.dim1, "H has wrong 1st dimension")
+   ENSURE(H.dim2==3,       "H has wrong 2nd dimension")
+   ENSURE(F.dim==pt.dim1,  "F has wrong 1st dimension")
 
       sh :: SHELL1
-      sh_grid,sh_grid1 :: MAT3{REAL}@
+      sh_grid2,sh_grid1 :: MAT3{REAL}@
       sh_grid0 :: MAT{REAL}@
-      orb_a :: VEC{REAL}@
-      n_pt,f,l,a,n_shell :: INT
+      orb_a :: VEC{REAL}* ! ptr ok
+      n_pt, fs,ls, a,n_shell :: INT
 
       n_pt = pt.dim1
       n_shell = .basis.shell.dim
 
-      g = ZERO
-      h = ZERO
-      i = ZERO
-      l = 0
+      G = ZERO
+      H = ZERO
+      I = ZERO
+
+      ls = 0
 
       do a = 1,n_shell
 
          sh.set(.basis.shell(a),.position)
 
-         f = l + 1
+         fs = ls + 1
 
          if (sh.is_spherical)then
-           sh_grid.create(n_pt,sh.n_sph,3)
-           sh_grid1.create(n_pt,sh.n_sph,3)
-           sh_grid0.create(n_pt,sh.n_sph)
-           l = f + sh.n_sph - 1
+            sh_grid2.create(n_pt,sh.n_sph,3)
+            sh_grid1.create(n_pt,sh.n_sph,3)
+            sh_grid0.create(n_pt,sh.n_sph)
+            ls = fs + sh.n_sph - 1
          else
-           sh_grid.create(n_pt,sh.n_comp,3)
-           sh_grid1.create(n_pt,sh.n_comp,3)
-           sh_grid0.create(n_pt,sh.n_comp)
-           l = f + sh.n_comp - 1
+            sh_grid2.create(n_pt,sh.n_comp,3)
+            sh_grid1.create(n_pt,sh.n_comp,3)
+            sh_grid0.create(n_pt,sh.n_comp)
+            ls = fs + sh.n_comp - 1
          end if
 
-         sh.make_laplacian_grid(sh_grid,sh_grid1,sh_grid0,pt)
+         sh.make_laplacian_grid(sh_grid2,sh_grid1,sh_grid0,pt)
 
-         orb_a => orb(f:l)
+         orb_a => orb(fs:ls)
 
-         g(:,1).plus_product_of(sh_grid(:,:,1),orb_a)
-         g(:,2).plus_product_of(sh_grid(:,:,2),orb_a)
-         g(:,3).plus_product_of(sh_grid(:,:,3),orb_a)
-         h(:,1).plus_product_of(sh_grid1(:,:,1),orb_a)
-         h(:,2).plus_product_of(sh_grid1(:,:,2),orb_a)
-         h(:,3).plus_product_of(sh_grid1(:,:,3),orb_a)
-
-         i.plus_product_of(sh_grid0,orb_a)
+         G(:,1).plus_product_of(sh_grid2(:,:,1),orb_a)
+         G(:,2).plus_product_of(sh_grid2(:,:,2),orb_a)
+         G(:,3).plus_product_of(sh_grid2(:,:,3),orb_a)
+         H(:,1).plus_product_of(sh_grid1(:,:,1),orb_a)
+         H(:,2).plus_product_of(sh_grid1(:,:,2),orb_a)
+         H(:,3).plus_product_of(sh_grid1(:,:,3),orb_a)
+              F.plus_product_of(sh_grid0       ,orb_a)
 
          sh_grid0.destroy
          sh_grid1.destroy
-         sh_grid.destroy
+         sh_grid2.destroy
 
       end
 
    end
 
-   make_rL_grid(laplacian_grid,pt)
+
+   make_rL_grid(laplacian_grid,pt) ::: PURE
    ! Work out the reduced "laplacian_grid" on "pt" using ".natural orbitals"
    ! and  the ".occupation_numbers" vector.
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      laplacian_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
 
-      if (.natural_orbitals.number_kind == "real") then
-        .make_rL_grid_r(laplacian_grid,pt)
-      else
-        DIE("code not written yet")
+      if (.natural_orbitals.number_kind=="real") then
+         .make_rL_grid_r(laplacian_grid,pt)
       end
 
    end
 
-   make_rL_grid_r(laplacian_grid,pt)
+   make_rL_grid_r(laplacian_grid,pt) ::: PURE
    ! Make the reduced "laplacian_grid" for the supplied points "pt" from
    ! restricted real natural orbitals
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      laplacian_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
@@ -6269,21 +6246,29 @@ contains
       occ :: REAL
 
       n_pt = pt.dim1
-      laplacian_grid = ZERO
 
-      rho.create(n_pt); rho = ZERO
+      rho.create(n_pt)
       NO.create(n_pt)
       P.create(n_pt,3)
       D.create(n_pt,3)
 
       n_occ = .no_of_occupied_NOs
 
+      laplacian_grid = ZERO
+      rho            = ZERO
+
       do n = 1,n_occ
-       .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
-       occ = .occupation_numbers.restricted(n)
-       laplacian_grid = laplacian_grid +  occ * ( &
-          NO * (D(:,1)+D(:,2)+D(:,3)) + (P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3)))
-       rho = rho + occ*NO*NO
+
+         .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
+
+         occ = .occupation_numbers.restricted(n)
+
+         laplacian_grid = laplacian_grid &
+                   + occ * ( NO *
+                     (D(:,1)        + D(:,2)        + D(:,3))       &
+                   +  P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3) )
+         rho = rho + occ *   NO * NO
+
       end
 
       laplacian_grid = TWO*laplacian_grid/rho
@@ -6299,12 +6284,14 @@ contains
 !  Energy density from rho grids
 !  =============================
 
-   make_E_hf_dens_from_rho_grid(E_grid,pt)
+   make_E_hf_dens_from_rho_grid(E_grid,pt) ::: PURE
    ! Work out the energy density as the scaled electron density.
-      E_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      E_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
       fac :: REAL
+
       if (.atomic_number<1) then
          E_grid = ZERO
       else
@@ -6319,98 +6306,122 @@ contains
 !  Virial type energy density routines
 !  ===================================
 
-   make_H_from_virial_grid(H_grid,pt)
+   make_H_from_virial_grid(H_grid,pt) ::: PURE
    ! Work out the energy density using the virial relationsip 2G + V = (1/4) L,
    ! or H = G + V = (1/4)L - G
-      H_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      H_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
       G_grid :: VEC{REAL}@
 
       G_grid.create(H_grid.dim)
+
       .make_G_kinetic_energy_grid(G_grid,pt)
       .make_laplacian_grid(H_grid,pt)
+
       H_grid = QUARTER*H_grid - G_grid
+
       G_grid.destroy
 
    end
 
-   make_rH_from_virial_grid(H_grid,pt)
+   make_rH_from_virial_grid(H_grid,pt) ::: PURE
    ! Work out the reduced energy density using the virial relationsip
    ! 2G + V = (1/4) L, or H = G + V = (1/4)L - G
-      H_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      H_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
       G_grid :: VEC{REAL}@
 
       G_grid.create(H_grid.dim)
+
       .make_rG_kinetic_energy_grid(G_grid,pt)
       .make_rL_grid(H_grid,pt)
+
       H_grid = QUARTER*H_grid - G_grid
+
       G_grid.destroy
 
    end
 
-   make_H_Kirzhnits_grid(H_grid,pt)
+   make_H_Kirzhnits_grid(H_grid,pt) ::: PURE
    ! Work out the energy density using the Kirzhnits relationsip 2G + V = (1/4) L,
    ! or H = G + V = (1/4)L - G
-      H_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      H_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
       G_grid :: VEC{REAL}@
 
       G_grid.create(H_grid.dim)
+
       .make_G_Kirzhnits_grid(G_grid,pt)
       .make_laplacian_grid(H_grid,pt)
+
       H_grid = QUARTER*H_grid - G_grid
+
       G_grid.destroy
 
    end
 
-   make_V_from_virial_grid(V,pt)
+   make_V_from_virial_grid(V,pt) ::: PURE
    ! Work out the potential energy density from using the
    ! virial theorem: V = (1/4) L - 2G
-      V :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      V :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
       G :: VEC{REAL}@
 
       G.create(V.dim)
+
       .make_G_kinetic_energy_grid(G,pt)
       .make_laplacian_grid(V,pt)
+
       V = QUARTER*V - TWO*G
+
       G.destroy
 
    end
 
-   make_rV_from_virial_grid(V,pt)
+   make_rV_from_virial_grid(V,pt) ::: PURE
    ! Work out the reduced potenbtial energy density from using the
    ! virial theorem: V = (1/4) L - 2G
-      V :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      V :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
       G :: VEC{REAL}@
 
       G.create(V.dim)
+
       .make_rG_kinetic_energy_grid(G,pt)
       .make_rL_grid(V,pt)
+
       V = QUARTER*V - TWO*G
+
       G.destroy
 
    end
 
-   make_V_Kirzhnits_grid(V,pt)
+   make_V_Kirzhnits_grid(V,pt) ::: PURE
    ! Work out the potential energy density from using the
    ! Kirzhnits theorem: V = (1/4) L - 2G
-      V :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      V :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
       G :: VEC{REAL}@
 
       G.create(V.dim)
+
       .make_G_Kirzhnits_grid(G,pt)
       .make_laplacian_grid(V,pt)
+
       V = QUARTER*V - TWO*G
+
       G.destroy
 
    end
@@ -6419,28 +6430,29 @@ contains
 !  G-type kinetic density routines
 !  ===============================
 
-   make_G_kinetic_energy_grid(G_grid,pt)
+   make_G_kinetic_energy_grid(G_grid,pt) ::: PURE
    ! Work out the G-type kinetic energy density (using nabla phi.nabla phi) on
    ! "pt" using ".natural orbitals" and  the ".occupation_numbers" vector.
-      G_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      G_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
 
       if (.natural_orbitals.number_kind=="real") then
-        .make_G_kinetic_energy_grid_r(G_grid,pt)
-      else
-        DIE("code not written yet")
+         .make_G_kinetic_energy_grid_r(G_grid,pt)
       end
 
    end
 
-   make_G_kinetic_energy_grid_r(G_grid,pt)
+   make_G_kinetic_energy_grid_r(G_grid,pt) ::: PURE
    ! Make the G-type kinetic energy density "G_grid" for the supplied points
    ! "pt" from restricted real natural orbitals
-      G_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      G_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
@@ -6451,18 +6463,22 @@ contains
       n_occ,n,n_pt :: INT
 
       n_pt = pt.dim1
-      G_grid = ZERO
 
       NO.create(n_pt)
       P.create(n_pt,3)
 
       n_occ = .no_of_occupied_NOs
 
+      G_grid = ZERO
+
       do n = 1,n_occ
-       .make_nabla_orbital_grid_r(P,NO,.natural_orbitals.restricted(:,n), pt)
-       G_grid(:) = G_grid(:) &
-                 + .occupation_numbers.restricted(n) &
-                 * (P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3))
+
+         .make_nabla_orbital_grid_r(P,NO,.natural_orbitals.restricted(:,n), pt)
+
+         G_grid(:) = G_grid(:) &
+                   + .occupation_numbers.restricted(n) &
+                   * (P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3))
+
       end
 
       G_grid(:) = HALF*G_grid(:)
@@ -6472,28 +6488,29 @@ contains
 
    end
 
-   make_rG_kinetic_energy_grid(G_grid,pt)
+   make_rG_kinetic_energy_grid(G_grid,pt) ::: PURE
    ! Work out the reduced G-type kinetic energy density (using nabla phi.nabla phi) on
    ! "pt" using ".natural orbitals" and  the ".occupation_numbers" vector.
-      G_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      G_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
 
       if (.natural_orbitals.number_kind=="real") then
-        .make_rG_kinetic_energy_grid_r(G_grid,pt)
-      else
-        DIE("code not written yet")
+         .make_rG_kinetic_energy_grid_r(G_grid,pt)
       end
 
    end
 
-   make_rG_kinetic_energy_grid_r(G_grid,pt)
+   make_rG_kinetic_energy_grid_r(G_grid,pt) ::: PURE
    ! Make the reduced G-type kinetic energy density "G_grid" for the supplied points
    ! "pt" from restricted real natural orbitals
-      G_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      G_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
@@ -6505,19 +6522,25 @@ contains
       occ :: REAL
 
       n_pt = pt.dim1
-      G_grid = ZERO
 
-      rho.create(n_pt); rho = ZERO
+      rho.create(n_pt)
       NO.create(n_pt)
       P.create(n_pt,3)
 
       n_occ = .no_of_occupied_NOs
 
+      G_grid = ZERO
+      rho    = ZERO
+
       do n = 1,n_occ
-       .make_nabla_orbital_grid_r(P,NO,.natural_orbitals.restricted(:,n), pt)
-       occ = .occupation_numbers.restricted(n)
-       G_grid = G_grid + occ * (P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3))
-       rho = rho + occ*NO*NO
+
+         .make_nabla_orbital_grid_r(P,NO,.natural_orbitals.restricted(:,n), pt)
+
+         occ = .occupation_numbers.restricted(n)
+
+         G_grid = G_grid + occ * (P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3))
+         rho    =    rho + occ *  NO * NO
+
       end
 
       G_grid = HALF*G_grid/rho
@@ -6528,28 +6551,29 @@ contains
 
    end
 
-   make_G_Kirzhnits_grid(G_grid,pt)
+   make_G_Kirzhnits_grid(G_grid,pt) ::: PURE
    ! Work out the G-type Kirzhnits kinetic energy density (using nabla phi.nabla phi) on
    ! "pt" using ".natural orbitals" and  the ".occupation_numbers" vector.
-      G_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      G_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
 
       if (.natural_orbitals.number_kind=="real") then
-        .make_G_Kirzhnits_grid_r(G_grid,pt)
-      else
-        DIE("code not written yet")
+         .make_G_Kirzhnits_grid_r(G_grid,pt)
       end
 
    end
 
-   make_G_Kirzhnits_grid_r(G_grid,pt)
+   make_G_Kirzhnits_grid_r(G_grid,pt) ::: PURE
    ! Make the G-type Kirzhnits kinetic energy density "G_grid" for the supplied points
    ! "pt" from restricted real natural orbitals
-      G_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      G_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
@@ -6562,28 +6586,38 @@ contains
 
       n_pt = pt.dim1
 
-      rho.create(n_pt);       rho = ZERO
-      lap_rho.create(n_pt);   lap_rho = ZERO
+      rho.create(n_pt)
+      lap_rho.create(n_pt)
       nab_ro2.create(n_pt)
-      nab_rho.create(n_pt,3); nab_rho = ZERO
+      nab_rho.create(n_pt,3)
       NO.create(n_pt)
       G.create(n_pt,3)
       L.create(n_pt,3)
 
       n_occ = .no_of_occupied_NOs
 
+      rho     = ZERO
+      lap_rho = ZERO
+      nab_rho = ZERO
+
       do n = 1,n_occ
-       .make_laplacian_orbital_grid_r(L,G,NO,.natural_orbitals.restricted(:,n), pt)
-       occ  = .occupation_numbers.restricted(n)
-       occ2 = TWO*occ
-       rho  = rho + occ *NO*NO
-       nab_rho(:,1) = nab_rho(:,1) + occ2*NO*G(:,1)
-       nab_rho(:,2) = nab_rho(:,2) + occ2*NO*G(:,1)
-       nab_rho(:,3) = nab_rho(:,3) + occ2*NO*G(:,1)
-       lap_rho = lap_rho + occ2*(NO*(L(:,1)+L(:,2)+L(:,3)) + (G(:,1)*G(:,1) + G(:,2)*G(:,2) + G(:,3)*G(:,3)))
+
+         .make_laplacian_orbital_grid_r(L,G,NO,.natural_orbitals.restricted(:,n), pt)
+
+         occ  = .occupation_numbers.restricted(n)
+         occ2 = TWO*occ
+
+         rho          = rho          + occ *NO*NO
+         nab_rho(:,1) = nab_rho(:,1) + occ2*NO*G(:,1)
+         nab_rho(:,2) = nab_rho(:,2) + occ2*NO*G(:,1)
+         nab_rho(:,3) = nab_rho(:,3) + occ2*NO*G(:,1)
+         lap_rho      = lap_rho      + occ2*(NO*(L(:,1)+L(:,2)+L(:,3)) + (G(:,1)*G(:,1) + G(:,2)*G(:,2) + G(:,3)*G(:,3)))
+
       end
 
-      L.destroy; G.destroy; NO.destroy
+      L.destroy
+      G.destroy
+      NO.destroy
 
       nab_ro2 = nab_rho(:,1)*nab_rho(:,1) + nab_rho(:,2)*nab_rho(:,2) + nab_rho(:,3)*nab_rho(:,3)
       nab_rho.destroy
@@ -6593,7 +6627,9 @@ contains
       fac = 0.3d0*(THREE*PI*PI)**(TWOTHIRD)
       G_grid = fac*rho**(FIVE/THREE) + lambda*nab_ro2/rho + k2*lap_rho
 
-      nab_ro2.destroy; lap_rho.destroy; rho.destroy
+      nab_ro2.destroy
+      lap_rho.destroy
+      rho.destroy
 
    end
 
@@ -6601,28 +6637,29 @@ contains
 !  K-type kinetic density routines
 !  ===============================
 
-   make_K_kinetic_energy_grid(K_grid,pt)
+   make_K_kinetic_energy_grid(K_grid,pt) ::: PURE
    ! Work out the K-type kinetic energy density (using the nabla^2) on "pt"
    ! using ".natural orbitals" and  the ".occupation_numbers" vector.
-      K_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      K_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
 
       if (.natural_orbitals.number_kind=="real") then
-        .make_K_kinetic_energy_grid_r(K_grid,pt)
-      else
-        DIE("code not written yet")
+         .make_K_kinetic_energy_grid_r(K_grid,pt)
       end
 
    end
 
-   make_K_kinetic_energy_grid_r(K_grid,pt)
+   make_K_kinetic_energy_grid_r(K_grid,pt) ::: PURE
    ! Make the K-type kinetic energy density "K_grid" for the supplied points
    ! "pt" from restricted real natural orbitals
-      K_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      K_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
@@ -6633,7 +6670,6 @@ contains
       n_occ,n,n_pt :: INT
 
       n_pt = pt.dim1
-      K_grid = ZERO
 
       NO.create(n_pt)
       P.create(n_pt,3)
@@ -6641,10 +6677,15 @@ contains
 
       n_occ = .no_of_occupied_NOs
 
+      K_grid = ZERO
+
       do n = 1,n_occ
-       .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
-       K_grid(:) = K_grid(:) &
-                 + .occupation_numbers.restricted(n) * NO * (D(:,1)+D(:,2)+D(:,3))
+
+         .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
+
+         K_grid(:) = K_grid(:) &
+                   + .occupation_numbers.restricted(n) * NO * (D(:,1)+D(:,2)+D(:,3))
+
       end
 
       K_grid(:) = -HALF*K_grid(:)
@@ -6655,25 +6696,29 @@ contains
 
    end
 
-   make_rK_kinetic_energy_grid(K_grid,pt)
+   make_rK_kinetic_energy_grid(K_grid,pt) ::: PURE
    ! Work out the reduced K-type kinetic energy density (using the nabla^2) on "pt"
    ! using ".natural orbitals" and  the ".occupation_numbers" vector.
-      K_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      K_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+
    ENSURE(.natural_orbitals.created, "no natural orbitals")
    ENSURE(.natural_orbitals.any_created, "no natural orbitals")
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not yet implemented")
+
       if (.natural_orbitals.number_kind=="real") then
-        .make_rK_kinetic_energy_grid_r(K_grid,pt)
-      else
-        DIE("code not written yet")
+         .make_rK_kinetic_energy_grid_r(K_grid,pt)
       end
+
    end
 
-   make_rK_kinetic_energy_grid_r(K_grid,pt)
+   make_rK_kinetic_energy_grid_r(K_grid,pt) ::: PURE
    ! Make the K-type kinetic energy density "K_grid" for the supplied points
    ! "pt" from restricted real natural orbitals
-      K_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      K_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.created("restricted"), "no restricted NO's")
@@ -6685,19 +6730,26 @@ contains
       occ :: REAL
 
       n_pt = pt.dim1
-      K_grid = ZERO
 
-      rho.create(n_pt); rho = ZERO
+      rho.create(n_pt);
       NO.create(n_pt)
       P.create(n_pt,3)
       D.create(n_pt,3)
 
       n_occ = .no_of_occupied_NOs
+
+      K_grid = ZERO
+      rho    = ZERO
+
       do n = 1,n_occ
-       .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
-       occ = .occupation_numbers.restricted(n)
-       K_grid = K_grid + occ * NO * (D(:,1)+D(:,2)+D(:,3))
-       rho = rho + occ*NO*NO
+
+         .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
+
+         occ = .occupation_numbers.restricted(n)
+
+         K_grid = K_grid + occ * NO * (D(:,1)+D(:,2)+D(:,3))
+         rho    = rho    + occ * NO * NO
+
       end
 
       K_grid = -HALF*K_grid/rho
@@ -6713,50 +6765,60 @@ contains
 !  DFT potential
 !  =============
 
-   make_dft_xc_pot_grid(V,pt,exchange,correlation)
+   make_dft_xc_pot_grid(V,pt,exchange,correlation) ::: PURE
    ! Work out the DFT exchange-correlation potential "V" at a series of points
    ! "pt".
-      V :: VEC{REAL}
-      pt :: MAT{REAL}
-      exchange,correlation :: STR
+      self :: IN
+      V :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      exchange,correlation :: STR, IN
 
       dft :: DFT_FUNCTIONAL
       rho :: VEC{REAL}@
 
       rho.create(V.dim)
+
       .make_density_grid(rho,pt)
+
       V = ZERO
+
       dft.new_r_potential(exchange,V,rho)
       dft.new_r_potential(correlation,V,rho)
+
       rho.destroy
 
    end
 
-   make_dft_eff_pot_grid(V,pt,exchange,correlation)
+   make_dft_eff_pot_grid(V,pt,exchange,correlation) ::: PURE
    ! Work out the DFT effective potential "V" (i.e. the DFT potential plus the
    ! classical electric potential) on a grid of points "pt".
-      V :: VEC{REAL}
-      pt :: MAT{REAL}
-      exchange,correlation :: STR
+      self :: IN
+      V :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      exchange,correlation :: STR, IN
 
       rho :: VEC{REAL}@
       dft :: DFT_FUNCTIONAL
 
       .make_electric_potential_grid(V,pt)
+
       rho.create(V.dim)
       .make_density_grid(rho,pt)
+
       dft.new_r_potential(exchange,V,rho)
       dft.new_r_potential(correlation,V,rho)
+
       rho.destroy
 
    end
 
-   make_dft_energy_grid(V,pt,exchange,correlation)
+   make_dft_energy_grid(V,pt,exchange,correlation) ::: PURE
    ! Work out the Slater DFT energy "V" (i.e. the Slater potential times the
    ! density plus the classical electric energy) on a grid of points "pt".
-      V :: VEC{REAL}
-      pt :: MAT{REAL}
-      exchange,correlation :: STR
+      self :: IN
+      V :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      exchange,correlation :: STR, IN
 
    ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.restricted.created, "no restricted density matrix")
@@ -6765,31 +6827,42 @@ contains
       dft :: DFT_FUNCTIONAL
 
       .nuclear_potential(V,pt)
+
       Ve.create(V.dim)
       .make_electronic_pot_grid_r(Ve,pt,.density_matrix.restricted)
+
       V = -V - HALF*Ve
+
       Ve.destroy
+
       rho.create(V.dim)
       .make_density_grid(rho,pt)
+
       dft.new_r_energy_density(exchange,V,rho)
       dft.new_r_energy_density(correlation,V,rho)
+
       V = V*rho
+
       rho.destroy
 
    end
 
-   make_H_dft_energy_grid(H_grid,pt,exchange,correlation)
+   make_H_dft_energy_grid(H_grid,pt,exchange,correlation) ::: PURE
    ! Work out the H DFT energy density "H_grid" on a set ofpoints "pt"
-      H_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-      exchange,correlation :: STR
+      self :: IN
+      H_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      exchange,correlation :: STR, IN
 
       G_grid :: VEC{REAL}@
 
       G_grid.create(H_grid.dim)
+
       .make_G_kinetic_energy_grid(G_grid,pt)
       .make_dft_energy_grid(H_grid,pt,exchange,correlation)
+
       H_grid = H_grid + G_grid
+
       G_grid.destroy
 
    end
@@ -6798,49 +6871,55 @@ contains
 !  Electric potential
 !  ==================
 
-   make_electric_potential_grid(pot_grid,pt)
+   make_electric_potential_grid(pot_grid,pt) ::: PURE
    ! Make the electric potential "pot_grid" on a series of points "pt"
-      pot_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      pot_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(.density_matrix.created, "no density matrix")
    ENSURE(.density_matrix.restricted.created, "no restricted density matrix")
+   ENSURE(.density_matrix.number_kind=="real","complex case not yet implemented")
 
-      if (.density_matrix.number_kind == "real") then
+      if (.density_matrix.number_kind=="real") then
          .make_electric_potential_grid_r(pot_grid,pt,.density_matrix.restricted)
-      else
-         DIE("complex case not yet implemented")
       end
 
    end
 
-   make_electric_potential_grid_r(pot_grid,pt,dens)
+   make_electric_potential_grid_r(pot_grid,pt,dens) ::: PURE
    ! Make the total electric potential "pot_grid" on a series of grid points
    ! "pt" using AO density matrix "dens"
-      pot_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-      dens :: MAT{REAL}
+      self :: IN
+      pot_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      dens :: MAT{REAL}, IN
 
       elec_grid :: VEC{REAL}@
 
-      .nuclear_potential(pot_grid,pt)
       elec_grid.create(size(pot_grid))
+
+      .nuclear_potential(pot_grid,pt)
       .make_electronic_pot_grid_r(elec_grid,pt,dens)
-      pot_grid.plus(elec_grid)
+
+      pot_grid = pot_grid + elec_grid
+
       elec_grid.destroy
 
    end
 
-   make_electronic_pot_grid_r(pot_grid,pt,dens)
+   make_electronic_pot_grid_r(pot_grid,pt,dens) ::: PURE
    ! Make the electronic potential "pot_grid" on a series of grid points "pt"
    ! using AO density matrix "dens"
-      pot_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-      dens :: MAT{REAL}, target
+      self :: IN
+      pot_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      dens :: MAT{REAL}, target, IN
 
    ENSURE(.basis.created,"no basis set")
 
-      Vab,Dba :: MAT{REAL}@
+      Dba :: MAT{REAL}* ! ptr ok
+      Vab :: MAT{REAL}@
       sh :: SHELL2
       n_pt,n_shell_pairs,q,fa,fb,la,lb,k :: INT
 
@@ -6857,23 +6936,23 @@ contains
          Dba => dens(fa:la,fb:lb)
 
          if (sh.is_spherical)then
-           Vab.create(sh.a.n_sph,sh.b.n_sph)
+            Vab.create(sh.a.n_sph,sh.b.n_sph)
          else
-           Vab.create(sh.a.n_comp,sh.b.n_comp)
+            Vab.create(sh.a.n_comp,sh.b.n_comp)
          end if
 
          if (fa/=fb) then
 
            do k = 1,n_pt
               sh.get_nuc(Vab,ONE,pt(k,:))
-              pot_grid(k) = pot_grid(k) - TWO*MAT{REAL}:sum_elements(Vab*Dba)
+              pot_grid(k) = pot_grid(k) - TWO*sum(Vab*Dba)
            end
 
          else
 
            do k = 1,n_pt
               sh.get_nuc(Vab,ONE,pt(k,:))
-              pot_grid(k) = pot_grid(k) -     MAT{REAL}:sum_elements(Vab*Dba)
+              pot_grid(k) = pot_grid(k) -     sum(Vab*Dba)
            end
 
          end
@@ -6885,18 +6964,20 @@ contains
 
    end
 
-   nuclear_potential(values,pts)
+   nuclear_potential(values,pts) ::: PURE
    ! Calculate the nuclear potential "values" of a given set of "pts".
+      self :: IN
       values :: VEC{REAL}, OUT
       pts :: MAT{REAL}, IN
 
       i :: INT
       r,x,y,z,xi,yi,zi :: REAL
 
-      values = ZERO
       x = .position(1)
       y = .position(2)
       z = .position(3)
+
+      values = ZERO
 
       do i = 1,values.dim
          xi = pts(i,1) - x
@@ -6914,7 +6995,7 @@ contains
 !  DFT grids for all basis functions
 !  =================================
 
-   make_bf_grid(grid,pt)
+   make_bf_grid(grid,pt) ::: PURE
    ! Make a "grid" on which all the atom basis functions are
    ! evaluated, for the supplied points "pt".
       self :: IN
@@ -6938,9 +7019,9 @@ contains
 
          f = l + 1
          if (sh.is_spherical)then
-           l = l + sh.n_sph
+            l = l + sh.n_sph
          else
-           l = l + sh.n_comp
+            l = l + sh.n_comp
          end if
 
          sh.make_grid(grid(:,f:l),pt)
@@ -6949,7 +7030,7 @@ contains
 
    end
 
-   make_nabla_bf_grid(nabla_grid,pt)
+   make_nabla_bf_grid(nabla_grid,pt) ::: PURE
    ! Make a "nabla_grid" on which the gradient of all the atom basis
    ! functions are evaluated, for the supplied points "pt".
       self :: IN
@@ -6974,7 +7055,7 @@ contains
 
    end
 
-   make_nabla_bf_grid(nabla_grid,grid,pt)
+   make_nabla_bf_grid(nabla_grid,grid,pt) ::: PURE
    ! Make a "nabla_grid" on which the gradient of all the atom basis
    ! functions are evaluated, for the supplied points "pt". Also
    ! return "grid", which tabluates the values of all the atom basis
@@ -6999,26 +7080,30 @@ contains
 
       l = 0
       do s = 1,n_shell
+
          sh.set(.basis.shell(s),.position)
+
          f = l + 1
          if (sh.is_spherical)then
-           l = l + sh.n_sph  ! LBXXX
+            l = l + sh.n_sph  ! LBXXX
          else
-           l = l + sh.n_comp
+            l = l + sh.n_comp
          end if
+
          sh.make_nabla_grid(nabla_grid(:,f:l,1),nabla_grid(:,f:l,2),nabla_grid(:,f:l,3),grid(:,f:l),pt)
+
       end
 
    end
 
 
-   make_bf_grid(grid0,pt,cutoff)
+   make_bf_grid(grid0,pt,cutoff) ::: PURE
    ! Make a "grid0" on which all the atom basis functions are evaluated, for the
    ! supplied points "pt".
       self :: IN
       grid0 :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.created,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -7041,15 +7126,20 @@ contains
       n_shell = .basis.shell.dim
 
       l = 0
+
       do s = 1,n_shell
+
          sh.set(.basis.shell(s),.position)
+
          f = l + 1
          if (sh.is_spherical)then
-           l = l + sh.n_sph
+            l = l + sh.n_sph
          else
-           l = l + sh.n_comp
+            l = l + sh.n_comp
          end if
+
          sh.make_grid(grid0(:,f:l),x,y,z,r2,cutoff)
+
       end
 
       r2.destroy
@@ -7059,13 +7149,13 @@ contains
 
    end
 
-   make_nabla_bf_grid(grid1,pt,cutoff)
+   make_nabla_bf_grid(grid1,pt,cutoff) ::: PURE
    ! Make a nabla grid, "grid1", on which the gradient of all the atom basis
    ! functions are evaluated, for the supplied points "pt".
       self :: IN
       grid1 :: MAT3{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.created,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -7100,7 +7190,7 @@ contains
 
    end
 
-   make_nabla_bf_grid(grid1,grid0,pt,cutoff)
+   make_nabla_bf_grid(grid1,grid0,pt,cutoff) ::: PURE
    ! Make a nabla grid "grid1" on which the gradient of all the atom basis functions
    ! are evaluated, for the supplied points "pt". Also return "grid0", which
    ! tabluates the values of all the atom basis functions on the grid points.
@@ -7108,7 +7198,7 @@ contains
       grid1 :: MAT3{REAL}, OUT
       grid0 :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.created,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -7134,15 +7224,20 @@ contains
       n_shell = .basis.shell.dim
 
       l = 0
+
       do s = 1,n_shell
+
          sh.set(.basis.shell(s),.position)
+
          f = l + 1
          if (sh.is_spherical)then
-           l = l + sh.n_sph
+            l = l + sh.n_sph
          else
-           l = l + sh.n_comp
+            l = l + sh.n_comp
          end if
+
          sh.make_nabla_grid(grid1(:,f:l,1),grid1(:,f:l,2),grid1(:,f:l,3),grid0(:,f:l),x,y,z,r2,cutoff)
+
       end
 
       r2.destroy
@@ -7156,10 +7251,11 @@ contains
 !  Make point lists
 !  ================
 
-   make_logval(logval,r2,n_pt) ::: public
+   make_logval(logval,r2,n_pt) ::: public, PURE
    ! For a list of points with distances "r2" from an atom center,
-   ! return the log of the mkaximuk value "logval" which can be used
-   ! to implement a cutoff.
+   ! return the log of the maximum value of the basis function,
+   ! "logval", which can be used to implement a cutoff.
+      self :: IN
       n_pt :: INT, IN
       logval :: VEC{INT}(n_pt), OUT
       r2 :: VEC{REAL}(n_pt), IN
@@ -7181,9 +7277,10 @@ contains
    end
 
 
-   make_displaced_pts(dx,dy,dz,r2,pt,n_pt) ::: public
+   make_displaced_pts(dx,dy,dz,r2,pt,n_pt) ::: public, PURE
    ! For a list of points "pt" of length "n_pt", return displacements
    ! "dx", "dy", "dz", and their square "r2".
+      self :: IN
       n_pt :: INT, IN
       dx,dy,dz,r2 :: VEC{REAL}(n_pt), OUT
       pt :: MAT{REAL}(n_pt,3), IN
@@ -7202,6 +7299,7 @@ contains
          xx = pt(n,1) - px
          yy = pt(n,2) - py
          zz = pt(n,3) - pz
+
          rr = xx*xx + yy*yy + zz*zz
 
          dx(n)   = xx
@@ -7213,10 +7311,11 @@ contains
 
    end
 
-   make_displaced_skip_pts(dx,dy,dz,r2,skip,pt,n_pt,cutoff) ::: public
+   make_displaced_skip_pts(dx,dy,dz,r2,skip,pt,n_pt,cutoff) ::: public, PURE
    ! For a list of points "pt" of length "n_pt", return displacements
    ! "dx", "dy", "dz", their square "r2" and "skip" which tells when
    ! the basis function is less than "cutoff".
+      self :: IN
       n_pt :: INT, IN
       dx,dy,dz,r2 :: VEC{REAL}(n_pt), OUT
       skip :: VEC{BIN}(n_pt), OUT
@@ -7239,6 +7338,7 @@ contains
          xx = pt(n,1) - px
          yy = pt(n,2) - py
          zz = pt(n,3) - pz
+
          rr = xx*xx + yy*yy + zz*zz
 
          dx(n)   = xx
@@ -7252,13 +7352,14 @@ contains
    end
 
 
-   make_significant_points(x,y,z,r2,skip,pt,cutoff) ::: leaky
+   make_significant_points(x,y,z,r2,skip,pt,cutoff) ::: leaky, PURE
    ! From a given list of points "pt" return the significant displacements "x",
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE.
-      x,y,z,r2 :: VEC{REAL}@
-      skip :: VEC{BIN}@
+      self :: IN
+      x,y,z,r2 :: VEC{REAL}@, OUT
+      skip :: VEC{BIN}@, OUT
       pt :: MAT{REAL}, IN
       cutoff :: REAL, IN
 
@@ -7282,18 +7383,25 @@ contains
       pz = .position(3)
 
       k = 0
+
       do n = 1,n_pt
+
          xx = pt(n,1) - px
          yy = pt(n,2) - py
          zz = pt(n,3) - pz
+
          rr = xx*xx + yy*yy + zz*zz
+
          skip(n) = rr>r2_max
+
          if (skip(n)) cycle
+
          k = k + 1
-         x(k) = xx
-         y(k) = yy
-         z(k) = zz
+         x(k)  = xx
+         y(k)  = yy
+         z(k)  = zz
          r2(k) = rr
+
       end
 
       if (k==0) then
@@ -7307,11 +7415,12 @@ contains
 
    end
 
-   make_significant_points(x,y,z,r2,d2,skip,pt,cutoff) ::: leaky
+   make_significant_points(x,y,z,r2,d2,skip,pt,cutoff) ::: leaky, PURE
    ! From a given list of points "pt" return the significant displacements "x",
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE.
+      self :: IN
       x,y,z,r2,d2 :: VEC{REAL}@
       skip :: VEC{BIN}@
       pt :: MAT{REAL}, IN
@@ -7359,18 +7468,21 @@ contains
 
    end
 
-   make_significant_points(x,y,z,r2,skip,pt,skip2,cutoff) ::: leaky
+   make_significant_points(x,y,z,r2,skip,pt,skip2,cutoff) ::: leaky, PURE
    ! From a given list of points "pt" return the significant displacements "x",
    ! "y", "z" and their square "r2". These are comprised of those points for
    ! which the basis functions of the atom have a significant value above
    ! "cutoff" i.e. those points for which "skip" is FALSE. "skip2" is an array
    ! which skips (in addition) some preselcted points.
-      x,y,z,r2 :: VEC{REAL}@
-      skip :: VEC{BIN}@
+      self :: IN
+      x,y,z,r2 :: VEC{REAL}@, OUT
+      skip :: VEC{BIN}@, OUT
       pt :: MAT{REAL}, IN
       skip2 :: VEC{BIN}, IN
       cutoff :: REAL, IN
+
    ENSURE(.basis.created,"no basis set")
+
       xx,yy,zz,rr, r2_max :: REAL
       n_pt,n,k :: INT
 
@@ -7386,17 +7498,23 @@ contains
       k = 0
 
       do n = 1,n_pt
+
          xx = pt(n,1) - .position(1)
          yy = pt(n,2) - .position(2)
          zz = pt(n,3) - .position(3)
+
          rr = xx*xx + yy*yy + zz*zz
+
          skip(n) = skip2(n) OR rr>r2_max
+
          if (skip(n)) cycle
+
          k = k + 1
-         x(k) = xx
-         y(k) = yy
-         z(k) = zz
+         x(k)  = xx
+         y(k)  = yy
+         z(k)  = zz
          r2(k) = rr
+
       end
 
       if (k==0) then
@@ -7436,11 +7554,12 @@ contains
    ! Set the indices of first and last basis functions in a particular shell
    ! "s", first(s) and last(s), respectively.
       self :: IN
-      first,last :: VEC{INT}@
+      first,last :: VEC{INT}@, OUT
 
       n_shell,f,l,s :: INT
 
       n_shell = .basis.shell.dim
+
       first.create(n_shell)
       last.create(n_shell)
 
@@ -7454,7 +7573,7 @@ contains
 
    end
 
-   make_precomputed_shellpairs ::: leaky
+   make_precomputed_shellpairs ::: leaky, PURE
    ! Make a SHELLPAIR vector "shellpair" which includes precomputed data for the
    ! basis set.
    ! NOTE for later: n_unique_shells should be a basisvec routine.
@@ -7472,15 +7591,15 @@ contains
 
       do a = 1,n
       do b = 1,n
-         .precomputed_basis_shellpair(a,b).copy_a(.basis.shell(a))
-         .precomputed_basis_shellpair(a,b).copy_b(.basis.shell(b))
+         .precomputed_basis_shellpair(a,b).set_a(.basis.shell(a))
+         .precomputed_basis_shellpair(a,b).set_b(.basis.shell(b))
          .precomputed_basis_shellpair(a,b).make_precalculated_data
       end
       end
 
    end
 
-   get_precomputed_shell_pair(shell,q,fa,la,fb,lb) ::: leaky
+   get_precomputed_shell_pair(shell,q,fa,la,fb,lb) ::: leaky, PURE
    ! Get the SHELL2 object "shell" correponding to the pair index "q"
    ! Also return the basis function start indices "fa", "la", etc ...
       self :: IN
@@ -7496,18 +7615,20 @@ contains
 
       a  = (1+int(sqrt(8.0d0*q-7.0d0)))/2
       b  = q - a*(a-1)/2
+
       fa = .first_basis_fn_for_shell(a)
       fb = .first_basis_fn_for_shell(b)
       la = .last_basis_fn_for_shell(a)
       lb = .last_basis_fn_for_shell(b)
+
       shell.set_and_precompute_from(.precomputed_basis_shellpair(a,b) &
          ,.position,.position,same_center=TRUE,skip=FALSE)
 
    end
 
-!  ====
-!  Dump
-!  ====
+!  ==============
+!  Output methods
+!  ==============
 
    do_dump ::: private
    ! Dump object data as text
@@ -7591,10 +7712,6 @@ contains
    dmpa(object_name) ::: get_from(OBJECT)
    ! Dump an allocatable object data as text
    end
-
-!  ==============
-!  Output methods
-!  ==============
 
    put
    ! Put out the atom information to file "stdout"

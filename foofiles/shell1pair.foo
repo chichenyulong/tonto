@@ -49,52 +49,44 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-
-!  ============
-!  Copy methods
-!  ============
+!  ===========
+!  Set methods
+!  ===========
  
-   copy(ab) ::: leaky
-   ! Copy the using shellpair "ab" and also set precalculated data.
-   ! NOTE : ensure the ptr parts have been destroyed beforehand.
-      ab :: SHELL1PAIR, IN
-
-      self = ab
-
-      .nullify_ptr_part
-
-      .a.copy(ab.a)
-      .b.copy(ab.b)
-
-      if (ab.exponent_sum.created)            .exponent_sum.create_copy(ab.exponent_sum)
-      if (ab.exponent_inv.created)            .exponent_inv.create_copy(ab.exponent_inv)
-      if (ab.contraction_prefactor.created)   .contraction_prefactor.create_copy(ab.contraction_prefactor)
-      if (ab.pair_center.created)             .pair_center.create_copy(ab.pair_center)
-
-   end
- 
-   copy_a(shell_a) ::: leaky
-   ! Copy the "a" shell1 of the shell2 objects from "shell_a"
+   set_a(shell_a) ::: leaky, pure
+   ! Set the ".a" part to "shell_a"
+      self :: INOUT
       shell_a :: SHELL1, IN
-      .a.copy(shell_a)
+
+      .a = shell_a
+
    end
  
-   copy_b(shell_b) ::: leaky
-   ! Copy the "b" shell1 of the shell2 objects from "shell_b"
-      shell_b :: SHELL1, IN
-      .b.copy(shell_b)
-   end
- 
-   copy_a(shell_a) ::: leaky
-   ! Copy the "a" shell of the shell2 objects from "shell_a"
+   set_a(shell_a) ::: leaky, pure
+   ! Set the ".a" part to SHELL "shell_a"
+      self :: INOUT
       shell_a :: SHELL, IN
-      .a.copy(shell_a)
+
+      .a.set(shell_a)
+
    end
  
-   copy_b(shell_b) ::: leaky
-   ! Copy the "b" shell of the shell2 objects from "shell_b"
+   set_b(shell_b) ::: leaky, pure
+   ! Set the ".b" part to "shell_b"
+      self :: INOUT
+      shell_b :: SHELL1, IN
+
+      .b = shell_b
+
+   end
+ 
+   set_b(shell_b) ::: leaky, pure
+   ! Set the ".b" part to SHELL "shell_b"
+      self :: INOUT
       shell_b :: SHELL, IN
-      .b.copy(shell_b)
+
+      .b.set(shell_b)
+
    end
 
 !  ============
@@ -162,9 +154,9 @@ contains
 
    end
 
-!  ====
-!  Dump
-!  ====
+!  ======
+!  Output
+!  ======
 
    do_dump ::: private
    ! Dump object data as text
@@ -196,10 +188,6 @@ contains
    dmpa(object_name) ::: get_from(OBJECT)
    ! Dump an allocatable object data as text
    end
-
-!  ======
-!  Output
-!  ======
 
    put
    ! Put the shell information to "stdout"

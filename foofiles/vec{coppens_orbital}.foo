@@ -145,7 +145,7 @@ contains
 !  Density and derivative density
 !  ==============================
 
-   density_at_radius(R) result (res)
+   density_at_radius(R) result (res) ::: PURE
    ! Return the total coppens density values at the radial value "R".
       R :: REAL, IN
       res :: REAL
@@ -156,19 +156,24 @@ contains
       end
    end
 
-   densities_at_radii(R) result (res)
+   densities_at_radii(R) result (res) ::: PURE
    ! Make the total coppens density values at the radial values "R".
+      self :: IN
       R :: VEC{REAL}, IN
       res :: VEC{REAL}(R.dim)
+
       n :: INT
-      res = ZERO ! Work out radial density here
+
+      ! Work out radial density here
+      res = ZERO 
       do n = 1,.dim
-        res = res + self(n).densities_at_radii(R)
+         res = res + self(n).densities_at_radii(R)
       end
+
    end
 
 
-   density_value_at_radius(R) result (res) ::: selfless, public
+   density_value_at_radius(R) result (res) ::: selfless, public, PURE
    ! Return the total coppens density values at the radial value "R".
       R :: REAL, IN
       res :: REAL
@@ -176,13 +181,13 @@ contains
 
       ! Work out radial density here
       res = ZERO 
-      do n = 1,.dim
+      do n = 1,saved_self.dim
          res = res + saved_self(n).density_at_radius(R)
       end
 
    end
 
-   density_at_sqrt_radius2(R2) result (res) ::: selfless, public
+   density_at_sqrt_radius2(R2) result (res) ::: selfless, public, PURE
    ! Return the total coppens density values at the square root of
    ! radial value "R2".
       R2 :: REAL, IN
@@ -194,14 +199,14 @@ contains
 
       ! Work out radial density here
       res = ZERO 
-      do n = 1,.dim
+      do n = 1,saved_self.dim
         res = res + saved_self(n).density_at_radius(R)
       end
 
    end
 
 
-   radial_density_value_at_radius(R) result (res) ::: selfless, public
+   radial_density_value_at_radius(R) result (res) ::: selfless, public, PURE
    ! Return the total *radial* coppens density values at the radial value "R".
      R :: REAL, IN
      res :: REAL
@@ -209,9 +214,10 @@ contains
 
      ! Work out radial density here
      res = ZERO 
-     do n = 1,.dim
+     do n = 1,saved_self.dim
         res = res + saved_self(n).radial_density_at_radius(R)
      end
+
    end
 
 !  =============

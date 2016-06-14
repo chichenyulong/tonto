@@ -68,11 +68,20 @@ contains
    ! Set sphericals to "val"
    end
 
-   set(shell,pos) ::: leaky, pure
-   ! Set a shell1 object. Pointer parts are assigned not copied.
+   set_positions(pos) ::: leaky, pure
+   ! Set the postiion.
       self :: INOUT
-      shell :: SHELL, optional
-      pos :: VEC{REAL}, optional
+      pos :: VEC{REAL}(3), IN
+
+      .position = pos
+
+   end
+
+   set(shell,pos) ::: leaky, pure
+   ! Set from SHELL "shell" and an optional position "pos"
+      self :: INOUT
+      shell :: SHELL, IN
+      pos :: VEC{REAL}(3), optional, IN
 
       if (present(shell)) then
          .l              = shell.l
@@ -1049,122 +1058,125 @@ contains
 
       select case (.l)
 
-         case (0) ! S function ....
-            i = 0
-            do n = 1,n_pt
-               if (skip(n)) cycle
-               i = i + 1
-               xx = x(n)
-               yy = y(n)
-               zz = z(n)
-               rr = r2(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               F0(i,1) = g0
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               Gx(i,1) = g1*xx
-               Gy(i,1) = g1*yy
-               Gz(i,1) = g1*zz
+      case (0) ! S function ....
+         i = 0
+         do n = 1,n_pt
+            if (skip(n)) cycle
+            i = i + 1
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            F0(i,1) = g0
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            Gx(i,1) = g1*xx
+            Gy(i,1) = g1*yy
+            Gz(i,1) = g1*zz
+         end
+
+      case (1) ! P function ....
+         i = 0
+         do n = 1,n_pt
+            if (skip(n)) cycle
+            i = i + 1
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1x = xx*g0
+            g1y = yy*g0
+            g1z = zz*g0
+            F0(i,1) = g1x
+            F0(i,2) = g1y
+            F0(i,3) = g1z
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            Gx(i,1) = g0+xx*g1x
+            Gy(i,1) = xx*g1y
+            Gz(i,1) = xx*g1z
+            Gx(i,2) = yy*g1x
+            Gy(i,2) = g0+yy*g1y
+            Gz(i,2) = yy*g1z
+            Gx(i,3) = zz*g1x
+            Gy(i,3) = zz*g1y
+            Gz(i,3) = g0+zz*g1z
+         end
+
+      case default ! General case
+
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+
+         i = 0
+
+         do n = 1,n_pt
+
+            if (skip(n)) cycle
+            i = i + 1
+
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+
+            ! Radial part, summed over primitives
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+
+            ! Cartesian orbital part
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            xx_g1x = xx*g1x
+            yy_g1y = yy*g1y
+            zz_g1z = zz*g1z
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            bxb = xx;            byb = yy;            bzb = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
+
+            do b=2,.l
+               gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
+               gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
+               gzb(b) = (b*g0+zz_g1z) * bzb
+               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
             end
 
-         case (1) ! P function ....
-            i = 0
-            do n = 1,n_pt
-               if (skip(n)) cycle
-               i = i + 1
-               xx = x(n)
-               yy = y(n)
-               zz = z(n)
-               rr = r2(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               g1x = xx*g0
-               g1y = yy*g0
-               g1z = zz*g0
-               F0(i,1) = g1x
-               F0(i,2) = g1y
-               F0(i,3) = g1z
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               g1x = g1*xx
-               g1y = g1*yy
-               g1z = g1*zz
-               Gx(i,1) = g0+xx*g1x
-               Gy(i,1) = xx*g1y
-               Gz(i,1) = xx*g1z
-               Gx(i,2) = yy*g1x
-               Gy(i,2) = g0+yy*g1y
-               Gz(i,2) = yy*g1z
-               Gx(i,3) = zz*g1x
-               Gy(i,3) = zz*g1y
-               Gz(i,3) = g0+zz*g1z
+            ! Combine cartesian orbital powers with the exponential part
+            do b = 1,.n_comp
+               nxb = lx(b)
+               nyb = ly(b)
+               nzb = lz(b)
+               bxb = bx(nxb)
+               byb = by(nyb)
+               bzb = bz(nzb)
+               by_bz = byb *  bzb
+               g1      = bxb * by_bz * g0
+               F0(i,b) = g1
+               Gx(i,b) =       gxb(nxb) * by_bz
+               Gy(i,b) = bxb * gyb(nyb) * bzb
+               Gz(i,b) = bxb * byb      * gzb(nzb)
             end
 
-         case default ! General case
+         end
 
-            ff = .first_gaussian
-            lf = .last_gaussian
-            lx = GAUSSIAN_DATA::px(ff:lf)
-            ly = GAUSSIAN_DATA::py(ff:lf)
-            lz = GAUSSIAN_DATA::pz(ff:lf)
-            bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-            gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-
-            i = 0
-
-            do n = 1,n_pt
-
-               if (skip(n)) cycle
-               i = i + 1
-
-               xx = x(n)
-               yy = y(n)
-               zz = z(n)
-
-               ! Radial part, summed over primitives
-               rr = r2(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-
-               ! Cartesian orbital part
-               ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-               g1x = g1*xx
-               g1y = g1*yy
-               g1z = g1*zz
-               xx_g1x = xx*g1x
-               yy_g1y = yy*g1y
-               zz_g1z = zz*g1z
-               bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-               bx(1) = xx;          by(1) = yy;          bz(1) = zz
-               bxb = xx;            byb = yy;            bzb = zz
-               gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-               gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
-               do b=2,.l
-                 gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
-                 gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
-                 gzb(b) = (b*g0+zz_g1z) * bzb
-                 bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-                 bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-               end
-
-               ! Combine cartesian orbital powers with the exponential part
-               do b = 1,.n_comp
-                 nxb = lx(b)
-                 nyb = ly(b)
-                 nzb = lz(b)
-                 bxb = bx(nxb)
-                 byb = by(nyb)
-                 bzb = bz(nzb)
-                 by_bz = byb *  bzb
-                 g1      = bxb * by_bz * g0
-                 F0(i,b) = g1
-                 Gx(i,b) =       gxb(nxb) * by_bz
-                 Gy(i,b) = bxb * gyb(nyb) * bzb
-                 Gz(i,b) = bxb * byb      * gzb(nzb)
-               end
-            end
-            gzb.destroy;  gyb.destroy;  gxb.destroy
-            bz.destroy;   by.destroy;   bx.destroy
+         gzb.destroy;  gyb.destroy;  gxb.destroy
+         bz.destroy;   by.destroy;   bx.destroy
 
       end
 
@@ -1173,14 +1185,15 @@ contains
    end
 
 
-   make_nabla_grid(G,pt)
+   make_nabla_grid(G,pt) ::: PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)".
+      self :: IN
       G :: MAT3{REAL}, OUT
       pt :: MAT{REAL}, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Gc :: MAT3{REAL}@
       n_pt :: INT
 
@@ -1189,22 +1202,23 @@ contains
       else if (.l<2) then
          .make_nabla_grid_c(G,pt)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = pt.dim1
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,pt)
-         G(:,:,1).to_product_of(Gc(:,:,1),UU(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),UU(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),UU(.l).element)
+         G(:,:,1).to_product_of(Gc(:,:,1),UU)
+         G(:,:,2).to_product_of(Gc(:,:,2),UU)
+         G(:,:,3).to_product_of(Gc(:,:,3),UU)
          Gc.destroy
       end
 
    end
 
-   make_nabla_grid_c(G,pt) ::: private
+   make_nabla_grid_c(G,pt) ::: private, PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)".
+      self :: IN
       G :: MAT3{REAL}, OUT
       pt :: MAT{REAL}, IN
 
@@ -1217,110 +1231,114 @@ contains
       g0,g1,g1x,g1y,g1z,x,y,z,bxb,byb,bzb :: REAL
 
       n_pt = pt.dim1
+
       x = .position(1)
       y = .position(2)
       z = .position(3)
 
       select case (.l)
 
-        case (0)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             rr = xx*xx + yy*yy + zz*zz
-             g1 = -TWO*sum(.exponent*.contraction*exp(-.exponent*rr))
-             G(n,1,1) = g1*xx
-             G(n,1,2) = g1*yy
-             G(n,1,3) = g1*zz
-          end
+      case (0)
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            rr = xx*xx + yy*yy + zz*zz
+            g1 = -TWO*sum(.exponent*.contraction*exp(-.exponent*rr))
+            G(n,1,1) = g1*xx
+            G(n,1,2) = g1*yy
+            G(n,1,3) = g1*zz
+         end
 
-        case (1)
-          cc_exp_rr.create(.n_cc)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             rr = xx*xx + yy*yy + zz*zz
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             G(n,1,1) = g0+xx*g1x
-             G(n,1,2) = xx*g1y
-             G(n,1,3) = xx*g1z
-             G(n,2,1) = yy*g1x
-             G(n,2,2) = g0+yy*g1y
-             G(n,2,3) = yy*g1z
-             G(n,3,1) = zz*g1x
-             G(n,3,2) = zz*g1y
-             G(n,3,3) = g0+zz*g1z
-          end
-          cc_exp_rr.destroy
+      case (1)
+         cc_exp_rr.create(.n_cc)
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            rr = xx*xx + yy*yy + zz*zz
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            G(n,1,1) = g0+xx*g1x
+            G(n,1,2) = xx*g1y
+            G(n,1,3) = xx*g1z
+            G(n,2,1) = yy*g1x
+            G(n,2,2) = g0+yy*g1y
+            G(n,2,3) = yy*g1z
+            G(n,3,1) = zz*g1x
+            G(n,3,2) = zz*g1y
+            G(n,3,3) = g0+zz*g1z
+         end
+         cc_exp_rr.destroy
 
-        case default
-          cc_exp_rr.create(.n_cc)
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             rr = xx*xx + yy*yy + zz*zz
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-             bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-             bx(1) = xx;          by(1) = yy;          bz(1) = zz
-             bxb = xx;            byb = yy;            bzb = zz
-             gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-             gxb(1) = g0+xx*g1x;  gyb(1) = g0+yy*g1y;  gzb(1) = g0+zz*g1z
-             do b=2,.l
-               gxb(b) = (b*g0+xx*g1x) * bxb           ! (n-1)th power
-               gyb(b) = (b*g0+yy*g1y) * byb           ! of the xyz part
-               gzb(b) = (b*g0+zz*g1z) * bzb
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Loop over basis functions
-             do b = 1,.n_comp
-                nxb = lx(b)
-                nyb = ly(b)
-                nzb = lz(b)
-                G(n,b,1) = gxb(nxb) *  by(nyb) *  bz(nzb)
-                G(n,b,2) = bx(nxb) * gyb(nyb) *  bz(nzb)
-                G(n,b,3) = bx(nxb) *  by(nyb) * gzb(nzb)
-             end
-          end
+      case default
+         cc_exp_rr.create(.n_cc)
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
 
-          gzb.destroy;  gyb.destroy;  gxb.destroy
-          bz.destroy;   by.destroy;   bx.destroy
-          cc_exp_rr.destroy
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            rr = xx*xx + yy*yy + zz*zz
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            bxb = xx;            byb = yy;            bzb = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx*g1x;  gyb(1) = g0+yy*g1y;  gzb(1) = g0+zz*g1z
+            do b=2,.l
+              gxb(b) = (b*g0+xx*g1x) * bxb           ! (n-1)th power
+              gyb(b) = (b*g0+yy*g1y) * byb           ! of the xyz part
+              gzb(b) = (b*g0+zz*g1z) * bzb
+              bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+              bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
+            end
+            ! Loop over basis functions
+            do b = 1,.n_comp
+               nxb = lx(b)
+               nyb = ly(b)
+               nzb = lz(b)
+               G(n,b,1) = gxb(nxb) *  by(nyb) *  bz(nzb)
+               G(n,b,2) = bx(nxb) * gyb(nyb) *  bz(nzb)
+               G(n,b,3) = bx(nxb) *  by(nyb) * gzb(nzb)
+            end
+         end
+         
+         gzb.destroy;  gyb.destroy;  gxb.destroy
+         bz.destroy;   by.destroy;   bx.destroy
+         cc_exp_rr.destroy
 
       end
 
    end
 
 
-   make_nabla_grid(G,x,y,z,r2,cutoff) 
+   make_nabla_grid(G,x,y,z,r2,cutoff) ::: PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell component "n"
    ! on grid point "i" given a set of grid points "pt(i,1:3)".
+      self :: IN
       G :: MAT3{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
       cutoff :: REAL
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Gc :: MAT3{REAL}@
       n_pt :: INT
 
@@ -1329,21 +1347,22 @@ contains
       else if (.l<2) then
          .make_nabla_grid_c(G,x,y,z,r2,cutoff)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = x.dim1
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,x,y,z,r2,cutoff)
-         G(:,:,1).to_product_of(Gc(:,:,1),UU(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),UU(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),UU(.l).element)
+         G(:,:,1).to_product_of(Gc(:,:,1),UU)
+         G(:,:,2).to_product_of(Gc(:,:,2),UU)
+         G(:,:,3).to_product_of(Gc(:,:,3),UU)
          Gc.destroy
       end
 
    end
 
-   make_nabla_grid_c(G,x,y,z,r2,cutoff) ::: private
+   make_nabla_grid_c(G,x,y,z,r2,cutoff) ::: private, PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell component "n"
    ! on grid point "i" given a set of grid points "pt(i,1:3)".
+      self :: IN
       G :: MAT3{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
       cutoff :: REAL
@@ -1361,110 +1380,111 @@ contains
 
       select case (.l)
 
-        case (0)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             g1 = -TWO*sum(.exponent*.contraction*exp(-.exponent*rr))
-             G(n,1,1) = g1*xx
-             G(n,1,2) = g1*yy
-             G(n,1,3) = g1*zz
-          end
+      case (0)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            g1 = -TWO*sum(.exponent*.contraction*exp(-.exponent*rr))
+            G(n,1,1) = g1*xx
+            G(n,1,2) = g1*yy
+            G(n,1,3) = g1*zz
+         end
 
-        case (1)
-          cc_exp_rr.create(.n_cc)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             G(n,1,1) = g0+xx*g1x
-             G(n,1,2) = xx*g1y
-             G(n,1,3) = xx*g1z
-             G(n,2,1) = yy*g1x
-             G(n,2,2) = g0+yy*g1y
-             G(n,2,3) = yy*g1z
-             G(n,3,1) = zz*g1x
-             G(n,3,2) = zz*g1y
-             G(n,3,3) = g0+zz*g1z
-          end
-          cc_exp_rr.destroy
+      case (1)
+         cc_exp_rr.create(.n_cc)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            G(n,1,1) = g0+xx*g1x
+            G(n,1,2) = xx*g1y
+            G(n,1,3) = xx*g1z
+            G(n,2,1) = yy*g1x
+            G(n,2,2) = g0+yy*g1y
+            G(n,2,3) = yy*g1z
+            G(n,3,1) = zz*g1x
+            G(n,3,2) = zz*g1y
+            G(n,3,3) = g0+zz*g1z
+         end
+         cc_exp_rr.destroy
 
-        case default
-          cc_exp_rr.create(.n_cc)
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-             bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-             bx(1) = xx;          by(1) = yy;          bz(1) = zz
-             bxb = xx;            byb = yy;            bzb = zz
-             gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-             gxb(1) = g0+xx*g1x;  gyb(1) = g0+yy*g1y;  gzb(1) = g0+zz*g1z
-             do b=2,.l
-               gxb(b) = (b*g0+xx*g1x) * bxb           ! (n-1)th power
-               gyb(b) = (b*g0+yy*g1y) * byb           ! of the xyz part
-               gzb(b) = (b*g0+zz*g1z) * bzb
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Loop over basis functions
-             do b = 1,.n_comp
-                nxb = lx(b)
-                nyb = ly(b)
-                nzb = lz(b)
-                G(n,b,1) = gxb(nxb) *  by(nyb) *  bz(nzb)
-                G(n,b,2) = bx(nxb) * gyb(nyb) *  bz(nzb)
-                G(n,b,3) = bx(nxb) *  by(nyb) * gzb(nzb)
-             end
-          end
+      case default
+        cc_exp_rr.create(.n_cc)
+        ff = .first_gaussian
+        lf = .last_gaussian
+        lx = GAUSSIAN_DATA::px(ff:lf)
+        ly = GAUSSIAN_DATA::py(ff:lf)
+        lz = GAUSSIAN_DATA::pz(ff:lf)
+        bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+        gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+        do n = 1,n_pt
+           xx = x(n)
+           yy = y(n)
+           zz = z(n)
+           rr = r2(n)
+           if (rr>r2_max) cycle
+           cc_exp_rr = .contraction*exp(-.exponent*rr)
+           g0 = sum(cc_exp_rr)
+           g1 = -TWO*sum(.exponent*cc_exp_rr)
+           g1x = g1*xx
+           g1y = g1*yy
+           g1z = g1*zz
+           ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+           bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+           bx(1) = xx;          by(1) = yy;          bz(1) = zz
+           bxb = xx;            byb = yy;            bzb = zz
+           gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+           gxb(1) = g0+xx*g1x;  gyb(1) = g0+yy*g1y;  gzb(1) = g0+zz*g1z
+           do b=2,.l
+             gxb(b) = (b*g0+xx*g1x) * bxb           ! (n-1)th power
+             gyb(b) = (b*g0+yy*g1y) * byb           ! of the xyz part
+             gzb(b) = (b*g0+zz*g1z) * bzb
+             bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+             bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
+           end
+           ! Loop over basis functions
+           do b = 1,.n_comp
+              nxb = lx(b)
+              nyb = ly(b)
+              nzb = lz(b)
+              G(n,b,1) = gxb(nxb) *  by(nyb) *  bz(nzb)
+              G(n,b,2) = bx(nxb) * gyb(nyb) *  bz(nzb)
+              G(n,b,3) = bx(nxb) *  by(nyb) * gzb(nzb)
+           end
+        end
 
-          gzb.destroy;  gyb.destroy;  gxb.destroy
-          bz.destroy;   by.destroy;   bx.destroy
-          cc_exp_rr.destroy
+        gzb.destroy;  gyb.destroy;  gxb.destroy
+        bz.destroy;   by.destroy;   bx.destroy
+        cc_exp_rr.destroy
 
       end
 
    end
 
 
-   make_nabla_grid(G,F,pt) 
+   make_nabla_grid(G,F,pt) ::: PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)". Also return the "F(i,n)" the value of the shell
    ! component "n" on grid point "i". It is more efficient to compute
    ! both at once.
+      self :: IN
       G :: MAT3{REAL}, OUT
       F :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Fc :: MAT{REAL}@
       Gc :: MAT3{REAL}@
       n_pt :: INT
@@ -1474,27 +1494,28 @@ contains
       else if (.l<2) then
          .make_nabla_grid_c(G,F,pt)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = pt.dim1
          Fc.create(n_pt,.n_comp)
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,Fc,pt)
-         F.to_product_of(       Fc,       UU(.l).element)
-         G(:,:,1).to_product_of(Gc(:,:,1),UU(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),UU(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),UU(.l).element)
+         F.to_product_of(       Fc,       UU)
+         G(:,:,1).to_product_of(Gc(:,:,1),UU)
+         G(:,:,2).to_product_of(Gc(:,:,2),UU)
+         G(:,:,3).to_product_of(Gc(:,:,3),UU)
          Gc.destroy
          Fc.destroy
       end
 
    end
 
-   make_nabla_grid_c(G,F,pt) ::: private
+   make_nabla_grid_c(G,F,pt) ::: private, PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)". Also return the "F(i,n)" the value of the shell
    ! component "n" on grid point "i". It is more efficient to compute
    ! both at once.
+      self :: IN
       G :: MAT3{REAL}, OUT
       F :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
@@ -1515,102 +1536,102 @@ contains
 
       select case (.l)
 
-        case (0)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             rr = xx*xx + yy*yy + zz*zz
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             F(n,1)   = sum(cc_exp_rr)
-             G(n,1,1) = g1*xx
-             G(n,1,2) = g1*yy
-             G(n,1,3) = g1*zz
-          end
+      case (0)
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            rr = xx*xx + yy*yy + zz*zz
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            F(n,1)   = sum(cc_exp_rr)
+            G(n,1,1) = g1*xx
+            G(n,1,2) = g1*yy
+            G(n,1,3) = g1*zz
+         end
 
-        case (1)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             rr = xx*xx + yy*yy + zz*zz
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             F(n,1) = xx*g0
-             F(n,2) = yy*g0
-             F(n,3) = zz*g0
-             G(n,1,1) = g0+xx*g1x
-             G(n,1,2) = xx*g1y
-             G(n,1,3) = xx*g1z
-             G(n,2,1) = yy*g1x
-             G(n,2,2) = g0+yy*g1y
-             G(n,2,3) = yy*g1z
-             G(n,3,1) = zz*g1x
-             G(n,3,2) = zz*g1y
-             G(n,3,3) = g0+zz*g1z
-          end
+      case (1)
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            rr = xx*xx + yy*yy + zz*zz
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            F(n,1) = xx*g0
+            F(n,2) = yy*g0
+            F(n,3) = zz*g0
+            G(n,1,1) = g0+xx*g1x
+            G(n,1,2) = xx*g1y
+            G(n,1,3) = xx*g1z
+            G(n,2,1) = yy*g1x
+            G(n,2,2) = g0+yy*g1y
+            G(n,2,3) = yy*g1z
+            G(n,3,1) = zz*g1x
+            G(n,3,2) = zz*g1y
+            G(n,3,3) = g0+zz*g1z
+         end
 
-        case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             ! Radial part, summed over primitives
-             rr = xx*xx + yy*yy + zz*zz
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             ! Cartesian orbital part
-             ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             xx_g1x = xx*g1x
-             yy_g1y = yy*g1y
-             zz_g1z = zz*g1z
-             bxb = xx;            byb = yy;            bzb = zz
-             bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-             bx(1) = xx;          by(1) = yy;          bz(1) = zz
-             gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-             gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
-             do b=2,.l
-               gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
-               gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
-               gzb(b) = (b*g0+zz_g1z) * bzb
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Combine cartesian orbital powers with the exponential part
-             do b = 1,.n_comp
-               nxb = lx(b)
-               nyb = ly(b)
-               nzb = lz(b)
-               bxb = bx(nxb)
-               byb = by(nyb)
-               bzb = bz(nzb)
-               by_bz = byb *  bzb
-               F(n,b)   = bxb * by_bz * g0
-               G(n,b,1) =       gxb(nxb) * by_bz
-               G(n,b,2) = bxb * gyb(nyb) * bzb
-               G(n,b,3) = bxb * byb      * gzb(nzb)
-             end
-
-          end
-
-          gzb.destroy;  gyb.destroy;  gxb.destroy
-          bz.destroy;   by.destroy;   bx.destroy
+      case default
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            ! Radial part, summed over primitives
+            rr = xx*xx + yy*yy + zz*zz
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            ! Cartesian orbital part
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            xx_g1x = xx*g1x
+            yy_g1y = yy*g1y
+            zz_g1z = zz*g1z
+            bxb = xx;            byb = yy;            bzb = zz
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
+            do b=2,.l
+              gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
+              gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
+              gzb(b) = (b*g0+zz_g1z) * bzb
+              bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+              bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
+            end
+            ! Combine cartesian orbital powers with the exponential part
+            do b = 1,.n_comp
+              nxb = lx(b)
+              nyb = ly(b)
+              nzb = lz(b)
+              bxb = bx(nxb)
+              byb = by(nyb)
+              bzb = bz(nzb)
+              by_bz = byb *  bzb
+              F(n,b)   = bxb * by_bz * g0
+              G(n,b,1) =       gxb(nxb) * by_bz
+              G(n,b,2) = bxb * gyb(nyb) * bzb
+              G(n,b,3) = bxb * byb      * gzb(nzb)
+            end
+         
+         end
+         
+         gzb.destroy;  gyb.destroy;  gxb.destroy
+         bz.destroy;   by.destroy;   bx.destroy
 
       end
 
@@ -1619,7 +1640,7 @@ contains
    end
 
 
-   make_nabla_grid(G,F,x,y,z,r2)
+   make_nabla_grid(G,F,x,y,z,r2) ::: PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)". Also return the "F(i,n)" the value of the shell
@@ -1629,11 +1650,12 @@ contains
    ! of the distance from the points "pt" to ".position". These arrays can
    ! be efficiently precalculated under some circumstances, when shell
    ! belonging to a whole atom are being calculated.
+   self :: IN
       G :: MAT3{REAL}, OUT
       F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Fc :: MAT{REAL}@
       Gc :: MAT3{REAL}@
       n_pt :: INT
@@ -1643,22 +1665,22 @@ contains
       else if (.l<2) then
          .make_nabla_grid_c(G,F,x,y,z,r2)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = x.dim1
          Fc.create(n_pt,.n_comp)
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,Fc,x,y,z,r2)
-         F.to_product_of(       Fc,       UU(.l).element)
-         G(:,:,1).to_product_of(Gc(:,:,1),UU(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),UU(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),UU(.l).element)
+         F.to_product_of(       Fc,       UU)
+         G(:,:,1).to_product_of(Gc(:,:,1),UU)
+         G(:,:,2).to_product_of(Gc(:,:,2),UU)
+         G(:,:,3).to_product_of(Gc(:,:,3),UU)
          Gc.destroy
          Fc.destroy
       end
 
    end
 
-   make_nabla_grid_c(G,F,x,y,z,r2) ::: private
+   make_nabla_grid_c(G,F,x,y,z,r2) ::: private, PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)". Also return the "F(i,n)" the value of the shell
@@ -1668,6 +1690,7 @@ contains
    ! of the distance from the points "pt" to ".position". These arrays can
    ! be efficiently precalculated under some circumstances, when shell
    ! belonging to a whole atom are being calculated.
+      self :: IN
       G :: MAT3{REAL}, OUT
       F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
@@ -1685,100 +1708,100 @@ contains
 
       select case (.l)
 
-        case (0)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             F(n,1)   = sum(cc_exp_rr)
-             G(n,1,1) = g1*xx
-             G(n,1,2) = g1*yy
-             G(n,1,3) = g1*zz
-          end
+      case (0)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            F(n,1)   = sum(cc_exp_rr)
+            G(n,1,1) = g1*xx
+            G(n,1,2) = g1*yy
+            G(n,1,3) = g1*zz
+         end
 
-        case (1)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             F(n,1) = xx*g0
-             F(n,2) = yy*g0
-             F(n,3) = zz*g0
-             G(n,1,1) = g0+xx*g1x
-             G(n,1,2) = xx*g1y
-             G(n,1,3) = xx*g1z
-             G(n,2,1) = yy*g1x
-             G(n,2,2) = g0+yy*g1y
-             G(n,2,3) = yy*g1z
-             G(n,3,1) = zz*g1x
-             G(n,3,2) = zz*g1y
-             G(n,3,3) = g0+zz*g1z
-          end
+      case (1)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            F(n,1) = xx*g0
+            F(n,2) = yy*g0
+            F(n,3) = zz*g0
+            G(n,1,1) = g0+xx*g1x
+            G(n,1,2) = xx*g1y
+            G(n,1,3) = xx*g1z
+            G(n,2,1) = yy*g1x
+            G(n,2,2) = g0+yy*g1y
+            G(n,2,3) = yy*g1z
+            G(n,3,1) = zz*g1x
+            G(n,3,2) = zz*g1y
+            G(n,3,3) = g0+zz*g1z
+         end
 
-        case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             ! Cartesian orbital part
-             ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             xx_g1x = xx*g1x
-             yy_g1y = yy*g1y
-             zz_g1z = zz*g1z
-             bxb = xx;            byb = yy;            bzb = zz
-             bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-             bx(1) = xx;          by(1) = yy;          bz(1) = zz
-             gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-             gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
-             do b=2,.l
-               gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
-               gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
-               gzb(b) = (b*g0+zz_g1z) * bzb
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Combine cartesian orbital powers with the exponential part
-             do b = 1,.n_comp
-               nxb = lx(b)
-               nyb = ly(b)
-               nzb = lz(b)
-               bxb = bx(nxb)
-               byb = by(nyb)
-               bzb = bz(nzb)
-               by_bz = byb *  bzb
-               F(n,b)   = bxb * by_bz * g0
-               G(n,b,1) =       gxb(nxb) * by_bz
-               G(n,b,2) = bxb * gyb(nyb) * bzb
-               G(n,b,3) = bxb * byb      * gzb(nzb)
-             end
-          end
-
-          gzb.destroy;  gyb.destroy;  gxb.destroy
-          bz.destroy;   by.destroy;   bx.destroy
+      case default
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            ! Cartesian orbital part
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            xx_g1x = xx*g1x
+            yy_g1y = yy*g1y
+            zz_g1z = zz*g1z
+            bxb = xx;            byb = yy;            bzb = zz
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
+            do b=2,.l
+              gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
+              gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
+              gzb(b) = (b*g0+zz_g1z) * bzb
+              bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+              bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
+            end
+            ! Combine cartesian orbital powers with the exponential part
+            do b = 1,.n_comp
+              nxb = lx(b)
+              nyb = ly(b)
+              nzb = lz(b)
+              bxb = bx(nxb)
+              byb = by(nyb)
+              bzb = bz(nzb)
+              by_bz = byb *  bzb
+              F(n,b)   = bxb * by_bz * g0
+              G(n,b,1) =       gxb(nxb) * by_bz
+              G(n,b,2) = bxb * gyb(nyb) * bzb
+              G(n,b,3) = bxb * byb      * gzb(nzb)
+            end
+         end
+         
+         gzb.destroy;  gyb.destroy;  gxb.destroy
+         bz.destroy;   by.destroy;   bx.destroy
 
       end
 
@@ -1787,7 +1810,7 @@ contains
    end
 
 
-   make_nabla_grid(G,F,x,y,z,r2,cutoff)
+   make_nabla_grid(G,F,x,y,z,r2,cutoff) ::: PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)". Also return the "F(i,n)" the value of the shell
@@ -1797,12 +1820,13 @@ contains
    ! of the distance from the points "pt" to ".position". These arrays can
    ! be efficiently precalculated under some circumstances, when shell
    ! belonging to a whole atom are being calculated.
+      self :: IN
       G :: MAT3{REAL}, OUT
       F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
       cutoff :: REAL, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Fc :: MAT{REAL}@
       Gc :: MAT3{REAL}@
       n_pt :: INT
@@ -1812,22 +1836,22 @@ contains
       else if (.l<2) then
          .make_nabla_grid_c(G,F,x,y,z,r2,cutoff)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = x.dim1
          Fc.create(n_pt,.n_comp)
          Gc.create(n_pt,.n_comp,3)
          .make_nabla_grid_c(Gc,Fc,x,y,z,r2,cutoff)
-         F.to_product_of(       Fc,       UU(.l).element)
-         G(:,:,1).to_product_of(Gc(:,:,1),UU(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),UU(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),UU(.l).element)
+         F.to_product_of(       Fc,       UU)
+         G(:,:,1).to_product_of(Gc(:,:,1),UU)
+         G(:,:,2).to_product_of(Gc(:,:,2),UU)
+         G(:,:,3).to_product_of(Gc(:,:,3),UU)
          Gc.destroy
          Fc.destroy
       end
 
    end
 
-   make_nabla_grid_c(G,F,x,y,z,r2,cutoff) ::: private
+   make_nabla_grid_c(G,F,x,y,z,r2,cutoff) ::: private, PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)". Also return the "F(i,n)" the value of the shell
@@ -1837,6 +1861,7 @@ contains
    ! of the distance from the points "pt" to ".position". These arrays can
    ! be efficiently precalculated under some circumstances, when shell
    ! belonging to a whole atom are being calculated.
+      self :: IN
       G :: MAT3{REAL}, OUT
       F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
@@ -1856,103 +1881,103 @@ contains
 
       select case (.l)
 
-        case (0)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             F(n,1)   = sum(cc_exp_rr)
-             G(n,1,1) = g1*xx
-             G(n,1,2) = g1*yy
-             G(n,1,3) = g1*zz
-          end
+      case (0)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            F(n,1)   = sum(cc_exp_rr)
+            G(n,1,1) = g1*xx
+            G(n,1,2) = g1*yy
+            G(n,1,3) = g1*zz
+         end
 
-        case (1)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             F(n,1) = xx*g0
-             F(n,2) = yy*g0
-             F(n,3) = zz*g0
-             G(n,1,1) = g0+xx*g1x
-             G(n,1,2) = xx*g1y
-             G(n,1,3) = xx*g1z
-             G(n,2,1) = yy*g1x
-             G(n,2,2) = g0+yy*g1y
-             G(n,2,3) = yy*g1z
-             G(n,3,1) = zz*g1x
-             G(n,3,2) = zz*g1y
-             G(n,3,3) = g0+zz*g1z
-          end
+      case (1)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            F(n,1) = xx*g0
+            F(n,2) = yy*g0
+            F(n,3) = zz*g0
+            G(n,1,1) = g0+xx*g1x
+            G(n,1,2) = xx*g1y
+            G(n,1,3) = xx*g1z
+            G(n,2,1) = yy*g1x
+            G(n,2,2) = g0+yy*g1y
+            G(n,2,3) = yy*g1z
+            G(n,3,1) = zz*g1x
+            G(n,3,2) = zz*g1y
+            G(n,3,3) = g0+zz*g1z
+         end
 
-        case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = x(n)
-             yy = y(n)
-             zz = z(n)
-             rr = r2(n)
-             if (rr>r2_max) cycle
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             ! Cartesian orbital part
-             ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             xx_g1x = xx*g1x
-             yy_g1y = yy*g1y
-             zz_g1z = zz*g1z
-             bxb = xx;            byb = yy;            bzb = zz
-             bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-             bx(1) = xx;          by(1) = yy;          bz(1) = zz
-             gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-             gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
-             do b=2,.l
-               gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
-               gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
-               gzb(b) = (b*g0+zz_g1z) * bzb
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Combine cartesian orbital powers with the exponential part
-             do b = 1,.n_comp
-               nxb = lx(b)
-               nyb = ly(b)
-               nzb = lz(b)
-               bxb = bx(nxb)
-               byb = by(nyb)
-               bzb = bz(nzb)
-               by_bz = byb *  bzb
-               F(n,b)   = bxb * by_bz * g0
-               G(n,b,1) =       gxb(nxb) * by_bz
-               G(n,b,2) = bxb * gyb(nyb) * bzb
-               G(n,b,3) = bxb * byb      * gzb(nzb)
-             end
-          end
+      case default
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx  => GAUSSIAN_DATA::px(ff:lf)
+         ly  => GAUSSIAN_DATA::py(ff:lf)
+         lz  => GAUSSIAN_DATA::pz(ff:lf)
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            ! Cartesian orbital part
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            xx_g1x = xx*g1x
+            yy_g1y = yy*g1y
+            zz_g1z = zz*g1z
+            bxb = xx;            byb = yy;            bzb = zz
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
+            do b=2,.l
+              gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
+              gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
+              gzb(b) = (b*g0+zz_g1z) * bzb
+              bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+              bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
+            end
+            ! Combine cartesian orbital powers with the exponential part
+            do b = 1,.n_comp
+              nxb = lx(b)
+              nyb = ly(b)
+              nzb = lz(b)
+              bxb = bx(nxb)
+              byb = by(nyb)
+              bzb = bz(nzb)
+              by_bz = byb *  bzb
+              F(n,b)   = bxb * by_bz * g0
+              G(n,b,1) =       gxb(nxb) * by_bz
+              G(n,b,2) = bxb * gyb(nyb) * bzb
+              G(n,b,3) = bxb * byb      * gzb(nzb)
+            end
+         end
 
-          gzb.destroy;  gyb.destroy;  gxb.destroy
-          bz.destroy;   by.destroy;   bx.destroy
+        gzb.destroy;  gyb.destroy;  gxb.destroy
+        bz.destroy;   by.destroy;   bx.destroy
 
       end
 
@@ -1961,7 +1986,7 @@ contains
    end
 
 
-   make_nabla_grid(Gx,Gy,Gz,F,pt) 
+   make_nabla_grid(Gx,Gy,Gz,F,pt) ::: PURE
    ! Return "G(i,n,1:3)", the value of the gradient of the shell
    ! component "n" on grid point "i" given a set of grid points
    ! "pt(i,1:3)". Also return the "F(i,n)" the value of the shell
@@ -1971,10 +1996,11 @@ contains
    ! of the distance from the points "pt" to ".position". These arrays can
    ! be efficiently precalculated under some circumstances, when shell
    ! belonging to a whole atom are being calculated.
+      self :: IN
       Gx,Gy,Gz,F :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Gxc,Gyc,Gzc,Fc :: MAT{REAL}@
       n_pt :: INT
 
@@ -1983,17 +2009,17 @@ contains
       else if (.l<2) then
          .make_nabla_grid_c(Gx,Gy,Gz,F,pt)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = pt.dim1
          Fc.create(n_pt,.n_comp)
          Gxc.create(n_pt,.n_comp)
          Gyc.create(n_pt,.n_comp)
          Gzc.create(n_pt,.n_comp)
          .make_nabla_grid_c(Gxc,Gyc,Gzc,Fc,pt)
-          F.to_product_of(Fc, UU(.l).element)
-         Gx.to_product_of(Gxc,UU(.l).element)
-         Gy.to_product_of(Gyc,UU(.l).element)
-         Gz.to_product_of(Gzc,UU(.l).element)
+          F.to_product_of(Fc, UU)
+         Gx.to_product_of(Gxc,UU)
+         Gy.to_product_of(Gyc,UU)
+         Gz.to_product_of(Gzc,UU)
          Gzc.destroy
          Gyc.destroy
          Gxc.destroy
@@ -2002,7 +2028,7 @@ contains
 
    end
 
-   make_nabla_grid_c(Gx,Gy,Gz,F,pt) ::: private
+   make_nabla_grid_c(Gx,Gy,Gz,F,pt) ::: private, PURE
    ! Return "Gj(i,n)", the value of the gradient with respect to
    ! coordinate "j" of the shell component "n", evaluated at grid
    ! point "i", given a set of grid points "pt(i,1:3)". Likewise,
@@ -2010,6 +2036,7 @@ contains
    ! grid point "i". It is more eficient to compute both "Gn" and "F"
    ! at once. The "Gn" are presented as separate components to allow
    ! contiguous memory access for the calling routine.  
+      self :: IN
       Gx,Gy,Gz,F :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
 
@@ -2032,101 +2059,101 @@ contains
 
       select case (.l)
 
-        case (0)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             rr = xx*xx + yy*yy + zz*zz
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             F(n,1)   = sum(cc_exp_rr)
-             Gx(n,1) = g1*xx
-             Gy(n,1) = g1*yy
-             Gz(n,1) = g1*zz
-          end
+      case (0)
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            rr = xx*xx + yy*yy + zz*zz
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            F(n,1)   = sum(cc_exp_rr)
+            Gx(n,1) = g1*xx
+            Gy(n,1) = g1*yy
+            Gz(n,1) = g1*zz
+         end
 
-        case (1)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             rr = xx*xx + yy*yy + zz*zz
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             F(n,1) = xx*g0
-             F(n,2) = yy*g0
-             F(n,3) = zz*g0
-             Gx(n,1) = g0+xx*g1x
-             Gy(n,1) = xx*g1y
-             Gz(n,1) = xx*g1z
-             Gx(n,2) = yy*g1x
-             Gy(n,2) = g0+yy*g1y
-             Gz(n,2) = yy*g1z
-             Gx(n,3) = zz*g1x
-             Gy(n,3) = zz*g1y
-             Gz(n,3) = g0+zz*g1z
-          end
+      case (1)
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            rr = xx*xx + yy*yy + zz*zz
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            F(n,1) = xx*g0
+            F(n,2) = yy*g0
+            F(n,3) = zz*g0
+            Gx(n,1) = g0+xx*g1x
+            Gy(n,1) = xx*g1y
+            Gz(n,1) = xx*g1z
+            Gx(n,2) = yy*g1x
+            Gy(n,2) = g0+yy*g1y
+            Gz(n,2) = yy*g1z
+            Gx(n,3) = zz*g1x
+            Gy(n,3) = zz*g1y
+            Gz(n,3) = g0+zz*g1z
+         end
 
-        case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-          gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-          do n = 1,n_pt              ! Do the exponential part of the gaussian
-             xx = pt(n,1) - x
-             yy = pt(n,2) - y
-             zz = pt(n,3) - z
-             ! Radial part, summed over primitives
-             rr = xx*xx + yy*yy + zz*zz
-             cc_exp_rr = .contraction*exp(-.exponent*rr)
-             g0 = sum(cc_exp_rr)
-             g1 = -TWO*sum(.exponent*cc_exp_rr)
-             ! Cartesian orbital part
-             ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-             g1x = g1*xx
-             g1y = g1*yy
-             g1z = g1*zz
-             xx_g1x = xx*g1x
-             yy_g1y = yy*g1y
-             zz_g1z = zz*g1z
-             bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-             bx(1) = xx;          by(1) = yy;          bz(1) = zz
-             bxb = xx;            byb = yy;            bzb = zz
-             gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-             gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
-             do b=2,.l
-               gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
-               gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
-               gzb(b) = (b*g0+zz_g1z) * bzb
-               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-             end
-             ! Combine cartesian orbital powers with the exponential part
-             do b = 1,.n_comp
-               nxb = lx(b)
-               nyb = ly(b)
-               nzb = lz(b)
-               bxb = bx(nxb)
-               byb = by(nyb)
-               bzb = bz(nzb)
-               by_bz = byb *  bzb
-               F(n,b)  = bxb * by_bz * g0
-               Gx(n,b) =       gxb(nxb) * by_bz
-               Gy(n,b) = bxb * gyb(nyb) * bzb
-               Gz(n,b) = bxb * byb      * gzb(nzb)
-             end
-          end
-
-          gzb.destroy;  gyb.destroy;  gxb.destroy
-          bz.destroy;   by.destroy;   bx.destroy
+      case default
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx  => GAUSSIAN_DATA::px(ff:lf)
+         ly  => GAUSSIAN_DATA::py(ff:lf)
+         lz  => GAUSSIAN_DATA::pz(ff:lf)
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+         do n = 1,n_pt
+            xx = pt(n,1) - x
+            yy = pt(n,2) - y
+            zz = pt(n,3) - z
+            ! Radial part, summed over primitives
+            rr = xx*xx + yy*yy + zz*zz
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            ! Cartesian orbital part
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            xx_g1x = xx*g1x
+            yy_g1y = yy*g1y
+            zz_g1z = zz*g1z
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            bxb = xx;            byb = yy;            bzb = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
+            do b=2,.l
+              gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
+              gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
+              gzb(b) = (b*g0+zz_g1z) * bzb
+              bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+              bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
+            end
+            ! Combine cartesian orbital powers with the exponential part
+            do b = 1,.n_comp
+              nxb = lx(b)
+              nyb = ly(b)
+              nzb = lz(b)
+              bxb = bx(nxb)
+              byb = by(nyb)
+              bzb = bz(nzb)
+              by_bz = byb *  bzb
+              F(n,b)  = bxb * by_bz * g0
+              Gx(n,b) =       gxb(nxb) * by_bz
+              Gy(n,b) = bxb * gyb(nyb) * bzb
+              Gz(n,b) = bxb * byb      * gzb(nzb)
+            end
+         end
+         
+         gzb.destroy;  gyb.destroy;  gxb.destroy
+         bz.destroy;   by.destroy;   bx.destroy
 
       end
 
@@ -2135,7 +2162,7 @@ contains
    end
 
 
-   make_nabla_grid(Gx,Gy,Gz,F,x,y,z,r2)
+   make_nabla_grid(Gx,Gy,Gz,F,x,y,z,r2) ::: PURE
    ! Return "Gj(i,n)", the value of the gradient with respect to
    ! coordinate "j" of the shell component "n", evaluated at grid
    ! point "i", given a set of grid points "pt(i,1:3)". Likewise,
@@ -2148,10 +2175,11 @@ contains
    ! "pt" to ".position". These arrays can be efficiently precalculated
    ! under some circumstances, when shell belonging to a whole atom
    ! are being calculated.
+      self :: IN
       Gx,Gy,Gz,F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Gxc,Gyc,Gzc,Fc :: MAT{REAL}@
       n_pt :: INT
 
@@ -2165,7 +2193,7 @@ contains
 
       else
 
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
 
          n_pt = x.dim1
 
@@ -2176,10 +2204,10 @@ contains
 
          .make_nabla_grid_c(Gxc,Gyc,Gzc,Fc,x,y,z,r2)
 
-         F.to_product_of(Fc  ,UU(.l).element)
-         Gx.to_product_of(Gxc,UU(.l).element)
-         Gy.to_product_of(Gyc,UU(.l).element)
-         Gz.to_product_of(Gzc,UU(.l).element)
+         F.to_product_of(Fc  ,UU)
+         Gx.to_product_of(Gxc,UU)
+         Gy.to_product_of(Gyc,UU)
+         Gz.to_product_of(Gzc,UU)
 
          Gzc.destroy
          Gyc.destroy
@@ -2190,7 +2218,7 @@ contains
 
    end
 
-   make_nabla_grid_c(Gx,Gy,Gz,F,x,y,z,r2) ::: private
+   make_nabla_grid_c(Gx,Gy,Gz,F,x,y,z,r2) ::: private, PURE
    ! Return "Gj(i,n)", the value of the gradient with respect to
    ! coordinate "j" of the shell component "n", evaluated at grid
    ! point "i", given a set of grid points "pt(i,1:3)". Likewise,
@@ -2203,6 +2231,7 @@ contains
    ! "pt" to ".position". These arrays can be efficiently precalculated
    ! under some circumstances, when shell belonging to a whole atom
    ! are being calculated.
+      self :: IN
       Gx,Gy,Gz,F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
 
@@ -2224,103 +2253,122 @@ contains
       cc_exp_rr.create(.n_cc)
 
       select case (.l)
-         case (0)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               xx = x(n); yy = y(n); zz = z(n)
-               rr = r2(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               F(n,1)  = sum(cc_exp_rr)
-               Gx(n,1) = g1*xx
-               Gy(n,1) = g1*yy
-               Gz(n,1) = g1*zz
+
+      case (0)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            F(n,1)  = sum(cc_exp_rr)
+            Gx(n,1) = g1*xx
+            Gy(n,1) = g1*yy
+            Gz(n,1) = g1*zz
+         end
+
+      case (1)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            F(n,1) = xx*g0
+            F(n,2) = yy*g0
+            F(n,3) = zz*g0
+            Gx(n,1) = g0+xx*g1x
+            Gy(n,1) = xx*g1y
+            Gz(n,1) = xx*g1z
+            Gx(n,2) = yy*g1x
+            Gy(n,2) = g0+yy*g1y
+            Gz(n,2) = yy*g1z
+            Gx(n,3) = zz*g1x
+            Gy(n,3) = zz*g1y
+            Gz(n,3) = g0+zz*g1z
+         end
+
+      case default
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx  => GAUSSIAN_DATA::px(ff:lf)
+         ly  => GAUSSIAN_DATA::py(ff:lf)
+         lz  => GAUSSIAN_DATA::pz(ff:lf)
+
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            ! Radial part, summed over primitives
+            rr = r2(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            ! Cartesian orbital part
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            xx_g1x = xx*g1x
+            yy_g1y = yy*g1y
+            zz_g1z = zz*g1z
+
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            bxb = xx;            byb = yy;            bzb = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
+
+            do b=2,.l
+               gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
+               gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
+               gzb(b) = (b*g0+zz_g1z) * bzb
+               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
             end
-         case (1)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               xx = x(n); yy = y(n); zz = z(n)
-               rr = r2(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               g1x = g1*xx
-               g1y = g1*yy
-               g1z = g1*zz
-               F(n,1) = xx*g0
-               F(n,2) = yy*g0
-               F(n,3) = zz*g0
-               Gx(n,1) = g0+xx*g1x
-               Gy(n,1) = xx*g1y
-               Gz(n,1) = xx*g1z
-               Gx(n,2) = yy*g1x
-               Gy(n,2) = g0+yy*g1y
-               Gz(n,2) = yy*g1z
-               Gx(n,3) = zz*g1x
-               Gy(n,3) = zz*g1y
-               Gz(n,3) = g0+zz*g1z
+
+            ! Combine cartesian orbital powers with the exponential part
+            do b = 1,.n_comp
+               nxb = lx(b)
+               nyb = ly(b)
+               nzb = lz(b)
+               bxb = bx(nxb)
+               byb = by(nyb)
+               bzb = bz(nzb)
+               by_bz = byb *  bzb
+               F(n,b)  = bxb * by_bz * g0
+               Gx(n,b) =       gxb(nxb) * by_bz
+               Gy(n,b) = bxb * gyb(nyb) * bzb
+               Gz(n,b) = bxb * byb      * gzb(nzb)
             end
-         case default
-            GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-            ff = .first_gaussian; lf = .last_gaussian
-            lx  => GAUSSIAN_DATA::px(ff:lf)
-            ly  => GAUSSIAN_DATA::py(ff:lf)
-            lz  => GAUSSIAN_DATA::pz(ff:lf)
-            bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-            gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               xx = x(n); yy = y(n); zz = z(n)
-               ! Radial part, summed over primitives
-               rr = r2(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               ! Cartesian orbital part
-               ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-               g1x = g1*xx
-               g1y = g1*yy
-               g1z = g1*zz
-               xx_g1x = xx*g1x
-               yy_g1y = yy*g1y
-               zz_g1z = zz*g1z
-               bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-               bx(1) = xx;          by(1) = yy;          bz(1) = zz
-               bxb = xx;            byb = yy;            bzb = zz
-               gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-               gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
-               do b=2,.l
-                 gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
-                 gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
-                 gzb(b) = (b*g0+zz_g1z) * bzb
-                 bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-                 bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-               end
-               ! Combine cartesian orbital powers with the exponential part
-               do b = 1,.n_comp
-                 nxb = lx(b)
-                 nyb = ly(b)
-                 nzb = lz(b)
-                 bxb = bx(nxb)
-                 byb = by(nyb)
-                 bzb = bz(nzb)
-                 by_bz = byb *  bzb
-                 F(n,b)  = bxb * by_bz * g0
-                 Gx(n,b) =       gxb(nxb) * by_bz
-                 Gy(n,b) = bxb * gyb(nyb) * bzb
-                 Gz(n,b) = bxb * byb      * gzb(nzb)
-               end
-            end
-            gzb.destroy;  gyb.destroy;  gxb.destroy
-            bz.destroy;   by.destroy;   bx.destroy
+
+         end
+
+         gzb.destroy;  gyb.destroy;  gxb.destroy
+         bz.destroy;   by.destroy;   bx.destroy
+
       end
+
       cc_exp_rr.destroy
+
    end
 
 
-   make_nabla_grid(Gx,Gy,Gz,F0,skip_all,x,y,z,r2,cutoff)
+   make_nabla_grid(Gx,Gy,Gz,F0,skip_all,x,y,z,r2,cutoff) ::: PURE
    ! Return "Gj(i,n)", the value of the gradient with respect to
    ! coordinate "j" of the shell component "n", evaluated at grid
    ! point "i", given a set of grid points "pt(i,1:3)". Likewise,
    ! "F0(i,n)" is the value of the shell component "n" evaluated at
-   ! grid point "i". It is more eficient to compute both "Gn" and "F"
+   ! grid point "i". It is more efficient to compute both "Gn" and "F"
    ! at once. The "Gn" are presented as separate components to allow
    ! contiguous memory access for the calling routine.  "x", "y", "z"
    ! are the differences between the points "pt" and the shell center,
@@ -2328,12 +2376,13 @@ contains
    ! "pt" to ".position". These arrays can be efficiently precalculated
    ! under some circumstances, when shell belonging to a whole atom
    ! are being calculated.
+      self :: IN
       Gx,Gy,Gz,F0 :: MAT{REAL}, OUT
       skip_all :: VEC{BIN}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
       cutoff :: REAL, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Gxc,Gyc,Gzc,Fc :: MAT{REAL}@
       n_pt :: INT
 
@@ -2342,17 +2391,17 @@ contains
       else if (.l<2) then
          .make_nabla_grid_c(Gx,Gy,Gz,F0,skip_all,x,y,z,r2,cutoff)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = x.dim
          Fc.create(n_pt,.n_comp)
          Gxc.create(n_pt,.n_comp)
          Gyc.create(n_pt,.n_comp)
          Gzc.create(n_pt,.n_comp)
          .make_nabla_grid_c(Gxc,Gyc,Gzc,Fc,skip_all,x,y,z,r2,cutoff)
-         F0.to_product_of(Fc, UU(.l).element)
-         Gx.to_product_of(Gxc,UU(.l).element)
-         Gy.to_product_of(Gyc,UU(.l).element)
-         Gz.to_product_of(Gzc,UU(.l).element)
+         F0.to_product_of(Fc, UU)
+         Gx.to_product_of(Gxc,UU)
+         Gy.to_product_of(Gyc,UU)
+         Gz.to_product_of(Gzc,UU)
          Gzc.destroy
          Gyc.destroy
          Gxc.destroy
@@ -2361,7 +2410,7 @@ contains
 
    end
 
-   make_nabla_grid_c(Gx,Gy,Gz,F0,skip_all,x,y,z,r2,cutoff) ::: private
+   make_nabla_grid_c(Gx,Gy,Gz,F0,skip_all,x,y,z,r2,cutoff) ::: private, PURE
    ! Return "Gj(i,n)", the value of the gradient with respect to
    ! coordinate "j" of the shell component "n", evaluated at grid
    ! point "i", given a set of grid points "pt(i,1:3)". Likewise,
@@ -2374,6 +2423,7 @@ contains
    ! "pt" to ".position". These arrays can be efficiently precalculated
    ! under some circumstances, when shell belonging to a whole atom
    ! are being calculated.
+      self :: IN
       Gx,Gy,Gz,F0 :: MAT{REAL}, OUT
       skip_all :: VEC{BIN}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
@@ -2399,109 +2449,125 @@ contains
       cc_exp_rr.create(.n_cc)
 
       select case (.l)
-         case (0)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               xx = x(n); yy = y(n); zz = z(n)
-               rr = r2(n)
-               if (rr>r2_max) cycle
-               skip_all(1) = FALSE
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               F0(n,1) = g0
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               Gx(n,1) = g1*xx
-               Gy(n,1) = g1*yy
-               Gz(n,1) = g1*zz
+
+      case (0)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            skip_all(1) = FALSE
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            F0(n,1) = g0
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            Gx(n,1) = g1*xx
+            Gy(n,1) = g1*yy
+            Gz(n,1) = g1*zz
+         end
+
+      case (1)
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            skip_all(1:3) = FALSE
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1x = xx*g0
+            g1y = yy*g0
+            g1z = zz*g0
+            F0(n,1) = g1x
+            F0(n,2) = g1y
+            F0(n,3) = g1z
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            Gx(n,1) = g0+xx*g1x
+            Gy(n,1) = xx*g1y
+            Gz(n,1) = xx*g1z
+            Gx(n,2) = yy*g1x
+            Gy(n,2) = g0+yy*g1y
+            Gz(n,2) = yy*g1z
+            Gx(n,3) = zz*g1x
+            Gy(n,3) = zz*g1y
+            Gz(n,3) = g0+zz*g1z
+         end
+
+      case default
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx = GAUSSIAN_DATA::px(ff:lf)
+         ly = GAUSSIAN_DATA::py(ff:lf)
+         lz = GAUSSIAN_DATA::pz(ff:lf)
+
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+
+         do n = 1,n_pt
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            ! Radial part, summed over primitives
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            skip_all(1:.n_comp) = FALSE
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            ! Cartesian orbital part
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            xx_g1x = xx*g1x
+            yy_g1y = yy*g1y
+            zz_g1z = zz*g1z
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            bxb = xx;            byb = yy;            bzb = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
+            do b=2,.l
+               gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
+               gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
+               gzb(b) = (b*g0+zz_g1z) * bzb
+               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
             end
-         case (1)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               xx = x(n); yy = y(n); zz = z(n)
-               rr = r2(n)
-               if (rr>r2_max) cycle
-               skip_all(1:3) = FALSE
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               g1x = xx*g0
-               g1y = yy*g0
-               g1z = zz*g0
-               F0(n,1) = g1x
-               F0(n,2) = g1y
-               F0(n,3) = g1z
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               g1x = g1*xx
-               g1y = g1*yy
-               g1z = g1*zz
-               Gx(n,1) = g0+xx*g1x
-               Gy(n,1) = xx*g1y
-               Gz(n,1) = xx*g1z
-               Gx(n,2) = yy*g1x
-               Gy(n,2) = g0+yy*g1y
-               Gz(n,2) = yy*g1z
-               Gx(n,3) = zz*g1x
-               Gy(n,3) = zz*g1y
-               Gz(n,3) = g0+zz*g1z
+            ! Combine cartesian orbital powers with the exponential part
+            do b = 1,.n_comp
+               nxb = lx(b)
+               nyb = ly(b)
+               nzb = lz(b)
+               bxb = bx(nxb)
+               byb = by(nyb)
+               bzb = bz(nzb)
+               by_bz = byb *  bzb
+               g1      = bxb * by_bz * g0
+               F0(n,b) = g1
+               Gx(n,b) =       gxb(nxb) * by_bz
+               Gy(n,b) = bxb * gyb(nyb) * bzb
+               Gz(n,b) = bxb * byb      * gzb(nzb)
             end
-         case default
-            GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-            ff = .first_gaussian; lf = .last_gaussian
-            lx  => GAUSSIAN_DATA::px(ff:lf)
-            ly  => GAUSSIAN_DATA::py(ff:lf)
-            lz  => GAUSSIAN_DATA::pz(ff:lf)
-            bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-            gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               xx = x(n); yy = y(n); zz = z(n)
-               ! Radial part, summed over primitives
-               rr = r2(n)
-               if (rr>r2_max) cycle
-               skip_all(1:.n_comp) = FALSE
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               ! Cartesian orbital part
-               ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-               g1x = g1*xx
-               g1y = g1*yy
-               g1z = g1*zz
-               xx_g1x = xx*g1x
-               yy_g1y = yy*g1y
-               zz_g1z = zz*g1z
-               bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-               bx(1) = xx;          by(1) = yy;          bz(1) = zz
-               bxb = xx;            byb = yy;            bzb = zz
-               gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-               gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
-               do b=2,.l
-                 gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
-                 gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
-                 gzb(b) = (b*g0+zz_g1z) * bzb
-                 bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-                 bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-               end
-               ! Combine cartesian orbital powers with the exponential part
-               do b = 1,.n_comp
-                 nxb = lx(b)
-                 nyb = ly(b)
-                 nzb = lz(b)
-                 bxb = bx(nxb)
-                 byb = by(nyb)
-                 bzb = bz(nzb)
-                 by_bz = byb *  bzb
-                 g1      = bxb * by_bz * g0
-                 F0(n,b) = g1
-                 Gx(n,b) =       gxb(nxb) * by_bz
-                 Gy(n,b) = bxb * gyb(nyb) * bzb
-                 Gz(n,b) = bxb * byb      * gzb(nzb)
-               end
-            end
-            gzb.destroy;  gyb.destroy;  gxb.destroy
-            bz.destroy;   by.destroy;   bx.destroy
+
+         end
+
+         gzb.destroy;  gyb.destroy;  gxb.destroy
+         bz.destroy;   by.destroy;   bx.destroy
+
       end
+
       cc_exp_rr.destroy
+
    end
 
 
-   make_nabla_grid(Gx,Gy,Gz,F,x,y,z,r2,cutoff)
+   make_nabla_grid(Gx,Gy,Gz,F,x,y,z,r2,cutoff) ::: PURE
    ! Return "Gj(i,n)", the value of the gradient with respect to
    ! coordinate "j" of the shell component "n", evaluated at grid
    ! point "i", given a set of grid points "pt(i,1:3)". Likewise,
@@ -2514,11 +2580,12 @@ contains
    ! "pt" to ".position". These arrays can be efficiently precalculated
    ! under some circumstances, when shell belonging to a whole atom
    ! are being calculated.
+      self :: IN
       Gx,Gy,Gz,F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
       cutoff :: REAL, IN
 
-      UU :: VEC{MAT_{REAL}}@
+      UU :: MAT{REAL}@
       Gxc,Gyc,Gzc,Fc :: MAT{REAL}@
       n_pt :: INT
 
@@ -2532,7 +2599,7 @@ contains
 
       else
 
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
 
          n_pt = x.dim
 
@@ -2543,10 +2610,10 @@ contains
 
          .make_nabla_grid_c(Gxc,Gyc,Gzc,Fc,x,y,z,r2,cutoff)
 
-         F.to_product_of(Fc  ,UU(.l).element)
-         Gx.to_product_of(Gxc,UU(.l).element)
-         Gy.to_product_of(Gyc,UU(.l).element)
-         Gz.to_product_of(Gzc,UU(.l).element)
+         F.to_product_of(Fc  ,UU)
+         Gx.to_product_of(Gxc,UU)
+         Gy.to_product_of(Gyc,UU)
+         Gz.to_product_of(Gzc,UU)
 
          Gzc.destroy
          Gyc.destroy
@@ -2557,7 +2624,7 @@ contains
 
    end
 
-   make_nabla_grid_c(Gx,Gy,Gz,F,x,y,z,r2,cutoff) ::: private
+   make_nabla_grid_c(Gx,Gy,Gz,F,x,y,z,r2,cutoff) ::: private, PURE
    ! Return "Gj(i,n)", the value of the gradient with respect to
    ! coordinate "j" of the shell component "n", evaluated at grid
    ! point "i", given a set of grid points "pt(i,1:3)". Likewise,
@@ -2570,6 +2637,7 @@ contains
    ! "pt" to ".position". These arrays can be efficiently precalculated
    ! under some circumstances, when shell belonging to a whole atom
    ! are being calculated.
+      self :: IN
       Gx,Gy,Gz,F :: MAT{REAL}, OUT
       x,y,z,r2 :: VEC{REAL}, IN
       cutoff :: REAL, IN
@@ -2585,362 +2653,189 @@ contains
       g0,g1,g1x,g1y,g1z,bxb,byb,bzb,by_bz :: REAL
 
       n_pt = x.dim
+
       r2_max = .r2_max(cutoff)
-      F = ZERO
+
+      F  = ZERO
       Gx = ZERO
       Gy = ZERO
       Gz = ZERO
+
       cc_exp_rr.create(.n_cc)
 
       select case (.l)
-         case (0)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               rr = r2(n)
-               if (rr>r2_max) cycle
-               xx = x(n); yy = y(n); zz = z(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               F(n,1)  = sum(cc_exp_rr)
-               Gx(n,1) = g1*xx
-               Gy(n,1) = g1*yy
-               Gz(n,1) = g1*zz
+
+      case (0)
+         do n = 1,n_pt
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            F(n,1)  = sum(cc_exp_rr)
+            Gx(n,1) = g1*xx
+            Gy(n,1) = g1*yy
+            Gz(n,1) = g1*zz
+         end
+
+      case (1)
+         do n = 1,n_pt
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            F(n,1) = xx*g0
+            F(n,2) = yy*g0
+            F(n,3) = zz*g0
+            Gx(n,1) = g0+xx*g1x
+            Gy(n,1) = xx*g1y
+            Gz(n,1) = xx*g1z
+            Gx(n,2) = yy*g1x
+            Gy(n,2) = g0+yy*g1y
+            Gz(n,2) = yy*g1z
+            Gx(n,3) = zz*g1x
+            Gy(n,3) = zz*g1y
+            Gz(n,3) = g0+zz*g1z
+         end
+
+      case default
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx  => GAUSSIAN_DATA::px(ff:lf)
+         ly  => GAUSSIAN_DATA::py(ff:lf)
+         lz  => GAUSSIAN_DATA::pz(ff:lf)
+
+         bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
+         gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
+
+         do n = 1,n_pt
+            rr = r2(n)
+            if (rr>r2_max) cycle
+            xx = x(n)
+            yy = y(n)
+            zz = z(n)
+            cc_exp_rr = .contraction*exp(-.exponent*rr)
+            g0 = sum(cc_exp_rr)
+            g1 = -TWO*sum(.exponent*cc_exp_rr)
+            ! Cartesian orbital part
+            ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
+            g1x = g1*xx
+            g1y = g1*yy
+            g1z = g1*zz
+            xx_g1x = xx*g1x
+            yy_g1y = yy*g1y
+            zz_g1z = zz*g1z
+            bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
+            bx(1) = xx;          by(1) = yy;          bz(1) = zz
+            bxb = xx;            byb = yy;            bzb = zz
+            gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
+            gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
+            do b=2,.l
+               gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
+               gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
+               gzb(b) = (b*g0+zz_g1z) * bzb
+               bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
+               bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
             end
-         case (1)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               rr = r2(n)
-               if (rr>r2_max) cycle
-               xx = x(n); yy = y(n); zz = z(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               g1x = g1*xx
-               g1y = g1*yy
-               g1z = g1*zz
-               F(n,1) = xx*g0
-               F(n,2) = yy*g0
-               F(n,3) = zz*g0
-               Gx(n,1) = g0+xx*g1x
-               Gy(n,1) = xx*g1y
-               Gz(n,1) = xx*g1z
-               Gx(n,2) = yy*g1x
-               Gy(n,2) = g0+yy*g1y
-               Gz(n,2) = yy*g1z
-               Gx(n,3) = zz*g1x
-               Gy(n,3) = zz*g1y
-               Gz(n,3) = g0+zz*g1z
+            ! Combine cartesian orbital powers with the exponential part
+            do b = 1,.n_comp
+               nxb = lx(b)
+               nyb = ly(b)
+               nzb = lz(b)
+               bxb = bx(nxb)
+               byb = by(nyb)
+               bzb = bz(nzb)
+               by_bz = byb *  bzb
+               F(n,b)  = bxb * by_bz * g0
+               Gx(n,b) =       gxb(nxb) * by_bz
+               Gy(n,b) = bxb * gyb(nyb) * bzb
+               Gz(n,b) = bxb * byb      * gzb(nzb)
             end
-         case default
-            GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-            ff = .first_gaussian; lf = .last_gaussian
-            lx  => GAUSSIAN_DATA::px(ff:lf)
-            ly  => GAUSSIAN_DATA::py(ff:lf)
-            lz  => GAUSSIAN_DATA::pz(ff:lf)
-            bx.create(0,.l);   by.create(0,.l);   bz.create(0,.l)
-            gxb.create(0,.l);  gyb.create(0,.l);  gzb.create(0,.l)
-            do n = 1,n_pt              ! Do the exponential part of the gaussian
-               rr = r2(n)
-               if (rr>r2_max) cycle
-               xx = x(n); yy = y(n); zz = z(n)
-               cc_exp_rr = .contraction*exp(-.exponent*rr)
-               g0 = sum(cc_exp_rr)
-               g1 = -TWO*sum(.exponent*cc_exp_rr)
-               ! Cartesian orbital part
-               ! gxb(b)=x**(b-1),  bx(b)=x**b for b=0,.l
-               g1x = g1*xx
-               g1y = g1*yy
-               g1z = g1*zz
-               xx_g1x = xx*g1x
-               yy_g1y = yy*g1y
-               zz_g1z = zz*g1z
-               bx(0) = ONE;         by(0) = ONE;         bz(0) = ONE
-               bx(1) = xx;          by(1) = yy;          bz(1) = zz
-               bxb = xx;            byb = yy;            bzb = zz
-               gxb(0) = g1x;        gyb(0) = g1y;        gzb(0) = g1z
-               gxb(1) = g0+xx_g1x;  gyb(1) = g0+yy_g1y;  gzb(1) = g0+zz_g1z
-               do b=2,.l
-                 gxb(b) = (b*g0+xx_g1x) * bxb          ! (n-1)th power
-                 gyb(b) = (b*g0+yy_g1y) * byb          ! of the xyz part
-                 gzb(b) = (b*g0+zz_g1z) * bzb
-                 bxb = bxb*xx;   byb = byb*yy;   bzb = bzb*zz
-                 bx(b) = bxb;    by(b) = byb;    bz(b) = bzb
-               end
-               ! Combine cartesian orbital powers with the exponential part
-               do b = 1,.n_comp
-                 nxb = lx(b)
-                 nyb = ly(b)
-                 nzb = lz(b)
-                 bxb = bx(nxb)
-                 byb = by(nyb)
-                 bzb = bz(nzb)
-                 by_bz = byb *  bzb
-                 F(n,b)  = bxb * by_bz * g0
-                 Gx(n,b) =       gxb(nxb) * by_bz
-                 Gy(n,b) = bxb * gyb(nyb) * bzb
-                 Gz(n,b) = bxb * byb      * gzb(nzb)
-               end
-            end
-            gzb.destroy;  gyb.destroy;  gxb.destroy
-            bz.destroy;   by.destroy;   bx.destroy
+         end
+
+         gzb.destroy;  gyb.destroy;  gxb.destroy
+         bz.destroy;   by.destroy;   bx.destroy
+
       end
+
       cc_exp_rr.destroy
+
    end
 
 
-   make_laplacian_grid(G,pt)
-   ! Return "G(i,n,1:3)", the value of the second derivatives
-   ! (d/dx2,d/dy2,d/dz2) of the shell component "n" on grid point "i"
-   ! given a set of grid points "pt(i,1:3)".
-      G :: MAT3{REAL}
-      pt :: MAT{REAL}
+   make_laplacian_grid(L,G,F,pt) ::: PURE
+   ! Return "L(j,n,1:3)", the value of the second derivatives
+   ! (d/dx2,d/dy2,d/dz2) of the shell component n on grid point j
+   ! given a set of grid points "pt(j,1:3)". Also return "G(j,n,1:3)",
+   ! the value of the first derivative, and return "F(n)", the value
+   ! of the gaussian
+      self :: IN
+      L,G :: MAT3{REAL}, OUT
+      F :: MAT{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
-      UU :: VEC{MAT_{REAL}}@
-      Gc :: MAT3{REAL}@
+      UU :: MAT{REAL}@
+      Lc,Gc :: MAT3{REAL}@
+      Fc :: MAT{REAL}@
       n_pt :: INT
 
       if (NOT .is_spherical) then
-         .make_nabla_grid_c(G,pt)
+         .make_laplacian_grid_c(L,G,F,pt)
       else if (.l<2) then
-         .make_nabla_grid_c(G,pt)
+         .make_laplacian_grid_c(L,G,F,pt)
       else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
+         UU = GAUSSIAN_DATA:spherical_harmonic_mx(.l)
          n_pt = pt.dim1
+         Lc.create(n_pt,.n_comp,3)
          Gc.create(n_pt,.n_comp,3)
-         .make_nabla_grid_c(Gc,pt)
-         G(:,:,1).to_product_of(Gc(:,:,1),UU(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),UU(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),UU(.l).element)
+         Fc.create(n_pt,.n_comp)
+         .make_laplacian_grid_c(Lc,Gc,Fc,pt)
+         L(:,:,1).to_product_of(Lc(:,:,1),UU)
+         L(:,:,2).to_product_of(Lc(:,:,2),UU)
+         L(:,:,3).to_product_of(Lc(:,:,3),UU)
+         G(:,:,1).to_product_of(Gc(:,:,1),UU)
+         G(:,:,2).to_product_of(Gc(:,:,2),UU)
+         G(:,:,3).to_product_of(Gc(:,:,3),UU)
+                F.to_product_of(Fc,       UU)
+         Fc.destroy
          Gc.destroy
+         Lc.destroy
       end
 
    end
 
-!   make_laplacian_grid_c(G,pt) ::: private
-!   ! Return "G(i,n,1:3)", the value of the second derivatives
-!   ! (d/dx2,d/dy2,d/dz2) of the shell component "n" on grid point "i"
-!   ! given a set of grid points "pt(i,1:3)".
-!      G :: MAT3{REAL}
-!      pt :: MAT{REAL}
-!
-!   ENSURE(size(pt,2)==3,"pt matrix incorrectly dimensioned")
-!
-!      lx,ly,lz :: VEC{INT}@
-!      n_pt,n,b,p,j,nxb,nyb,nzb, ff,lf :: INT
-!      aa,x0,y0,z0,x,y,z,rr,val :: REAL
-!      g0,g1,g2,g2x,g2y,g2z :: REAL
-!      gnbx,gnby,gnbz,x2,y2,z2 :: REAL
-!      gx0,gx1,gy0,gy1,gz0,gz1,tn,tn2 :: REAL
-!
-!      n_pt = size(pt,1)
-!
-!      ! Origin
-!      x0 = .position(1)
-!      y0 = .position(2)
-!      z0 = .position(3)
-!
-!      select case (.l)
-!
-!        case (0)
-!          do n = 1,n_pt             ! Do the exponential part of the gaussian
-!            x = pt(n,1) - x0
-!            y = pt(n,2) - y0
-!            z = pt(n,3) - z0
-!            x2 = x*x;   y2 = y*y;   z2 = z*z
-!            rr = x2 + y2 + z2
-!            g1 = ZERO
-!            g2 = ZERO
-!            do p = 1,.n_cc          ! Loop over primitives
-!              aa = .exponent(p)
-!              val = .contraction(p)*exp(-aa*rr)
-!              g1 = g1 - aa*val
-!              g2 = g2 + aa*aa*val
-!            end
-!            g1 = g1 * TWO
-!            g2 = g2 * FOUR
-!            G(n,1,1) = g1 + g2*x2
-!            G(n,1,2) = g1 + g2*y2
-!            G(n,1,3) = g1 + g2*z2
-!          end
-!        
-!        case (1)
-!          do n = 1,n_pt             ! Do the exponential part of the gaussian
-!            x = pt(n,1) - x0
-!            y = pt(n,2) - y0
-!            z = pt(n,3) - z0
-!            x2 = x*x;   y2 = y*y;   z2 = z*z
-!            rr = x2 + y2 + z2
-!            g1 = ZERO
-!            g2 = ZERO
-!            do p = 1,.n_cc          ! Loop over primitives
-!              aa = .exponent(p)
-!              val = .contraction(p)*exp(-aa*rr)
-!              g1 = g1 - aa*val
-!              g2 = g2 + aa*aa*val
-!            end
-!            g1 = g1 * TWO
-!            g2 = g2 * FOUR
-!            g2x = g2 * x2
-!            g2y = g2 * y2
-!            g2z = g2 * z2
-!            G(n,1,1) = x * (3 * g1 + g2x)
-!            G(n,1,2) = x * (g1 + g2y)
-!            G(n,1,3) = x * (g1 + g2z)
-!            G(n,2,1) = y * (g1 + g2x)
-!            G(n,2,2) = y * (3 * g1 + g2y)
-!            G(n,2,3) = y * (g1 + g2z)
-!            G(n,3,1) = z * (g1 + g2x)
-!            G(n,3,2) = z * (g1 + g2y)
-!            G(n,3,3) = z * (3 * g1 + g2z)
-!          end
-!
-!        case default
-!          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-!          ff = .first_gaussian; lf = .last_gaussian
-!          lx  => GAUSSIAN_DATA::px(ff:lf)
-!          ly  => GAUSSIAN_DATA::py(ff:lf)
-!          lz  => GAUSSIAN_DATA::pz(ff:lf)
-!          do n = 1,n_pt             ! Do the exponential part of the gaussian
-!            x = pt(n,1) - x0
-!            y = pt(n,2) - y0
-!            z = pt(n,3) - z0
-!            x2 = x*x;   y2 = y*y;   z2 = z*z
-!            rr = x2 + y2 + z2
-!            g0 = ZERO
-!            g1 = ZERO
-!            g2 = ZERO
-!            do p = 1,.n_cc          ! Loop over primitives
-!              aa = .exponent(p)
-!              val = .contraction(p)*exp(-aa*rr)
-!              g0 = g0 +    val
-!              g1 = g1 - aa*val
-!              g2 = g2 + aa*aa*val
-!            end
-!            g1 = g1 * TWO
-!            g2 = g2 * FOUR
-!            g2x = g2 * x2
-!            g2y = g2 * y2
-!            g2z = g2 * z2
-!            ! Some that are used multiple times.
-!            ! Taken out of loop over n_comp.
-!            gx0 = g1 + g2x
-!            gy0 = g1 + g2y
-!            gz0 = g1 + g2z
-!            gx1 = (THREE * g1 + g2x)*x  ! *x^1
-!            gy1 = (THREE * g1 + g2y)*y  ! *y^1
-!            gz1 = (THREE * g1 + g2z)*z  ! *z^1
-!            do b = 1,.n_comp        ! Loop over basis functions
-!                nxb = lx(b)
-!                nyb = ly(b)
-!                nzb = lz(b)
-!                select case (nxb)
-!                  case (0);     gnbx = gx0
-!                  case (1);     gnbx = gx1
-!                  case (2);     gnbx = g0+g0 + (5*g1 + g2x)*x*x
-!                  case default
-!                    tn2 = x**(nxb-2)
-!                    tn = tn2*x*x
-!                    gnbx = nxb*(nxb-1)*g0*tn2 + ((nxb+nxb+1)*g1 + g2x)*tn
-!                end
-!                select case (nyb)
-!                  case (0);     gnby = gy0
-!                  case (1);     gnby = gy1
-!                  case (2);     gnby = g0+g0 + (5*g1 + g2y)*y*y
-!                  case default
-!                    tn2 = y**(nyb-2)
-!                    tn = tn2*y*y
-!                    gnby = nyb*(nyb-1)*g0*tn2 + ((nyb+nyb+1)*g1 + g2y)*tn
-!                end
-!                select case (nzb)
-!                  case (0);     gnbz = gz0
-!                  case (1);     gnbz = gz1
-!                  case (2);     gnbz = g0+g0 + (5*g1 + g2z)*z*z
-!                  case default
-!                    tn2 = z**(nzb-2)
-!                    tn = tn2*z*z
-!                    gnbz = nzb*(nzb-1)*g0*tn2 + ((nzb+nzb+1)*g1 + g2z)*tn
-!                end
-!                do j = 1,nxb
-!                   gnby = x*gnby    ! Do the cartesian (x_i)^j, i/=k part of
-!                   gnbz = x*gnbz    ! gaussian power of the xyz part not equal
-!                end                 ! to deriv. component k
-!                do j = 1,nyb
-!                   gnbx = y*gnbx
-!                   gnbz = y*gnbz
-!                end
-!                do j = 1,nzb
-!                   gnbx = z*gnbx
-!                   gnby = z*gnby
-!                end
-!                G(n,b,1) = gnbx
-!                G(n,b,2) = gnby
-!                G(n,b,3) = gnbz
-!            end
-!          end
-!      end
-!   end
-
-
-   make_laplacian_grid(G,H,I,pt)
-   ! Return "G(j,n,1:3)", the value of the second derivatives
+   make_laplacian_grid_c(L,G,F,pt) ::: private, PURE
+   ! Return "L(j,n,1:3)", the value of the second derivatives
    ! (d/dx2,d/dy2,d/dz2) of the shell component n on grid point j
-   ! given a set of grid points "pt(j,1:3)". Also return "H(j,n,1:3)",
-   ! the value of the first derivative, and return "I(n)", the value
+   ! given a set of grid points "pt(j,1:3)". Also return "G(j,n,1:3)",
+   ! the value of the first derivative, and return "F(n)", the value
    ! of the gaussian
-      G,H :: MAT3{REAL}
-      I :: MAT{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      L,G :: MAT3{REAL}, OUT
+      F :: MAT{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
-      UU :: VEC{MAT_{REAL}}@
-      Gc,Hc :: MAT3{REAL}@
-      Ic :: MAT{REAL}@
-      n_pt :: INT
-
-      if (NOT .is_spherical) then
-         .make_laplacian_grid_c(G,H,I,pt)
-      else if (.l<2) then
-         .make_laplacian_grid_c(G,H,I,pt)
-      else
-         UU => GAUSSIAN_DATA::spherical_harmonics_for
-         n_pt = pt.dim1
-         Gc.create(n_pt,.n_comp,3)
-         Hc.create(n_pt,.n_comp,3)
-         Ic.create(n_pt,.n_comp)
-         .make_laplacian_grid_c(Gc,Hc,Ic,pt)
-         G(:,:,1).to_product_of(Gc(:,:,1),UU(.l).element)
-         G(:,:,2).to_product_of(Gc(:,:,2),UU(.l).element)
-         G(:,:,3).to_product_of(Gc(:,:,3),UU(.l).element)
-         H(:,:,1).to_product_of(Hc(:,:,1),UU(.l).element)
-         H(:,:,2).to_product_of(Hc(:,:,2),UU(.l).element)
-         H(:,:,3).to_product_of(Hc(:,:,3),UU(.l).element)
-                I.to_product_of(Ic,       UU(.l).element)
-         Ic.destroy
-         Hc.destroy
-         Gc.destroy
-      end
-
-   end
-
-   make_laplacian_grid_c(G,H,I,pt) ::: private
-   ! Return "G(j,n,1:3)", the value of the second derivatives
-   ! (d/dx2,d/dy2,d/dz2) of the shell component n on grid point j
-   ! given a set of grid points "pt(j,1:3)". Also return "H(j,n,1:3)",
-   ! the value of the first derivative, and return "I(n)", the value
-   ! of the gaussian
-      G,H :: MAT3{REAL}
-      I :: MAT{REAL}
-      pt :: MAT{REAL}
-
-   ENSURE(size(pt,2)==3,"pt matrix incorrectly dimensioned")
+   ENSURE(pt.dim2==3,"pt matrix incorrectly dimensioned")
 
       lx,ly,lz :: VEC{INT}@
       n_pt,n,b,p,j,nxb,nyb,nzb, ff,lf :: INT
       aa,x,y,z,x0,y0,z0,rr,val :: REAL
       g0,g1,g2,g2x,g2y,g2z :: REAL
-      gnbx,gnby,gnbz,x2,y2,z2 :: REAL
-      gx0,gx1,gy0,gy1,gz0,gz1,inb :: REAL
-      hnbx,hnby,hnbz,hx1,hy1,hz1,h1x,h1y,h1z :: REAL
+      lnbx,lnby,lnbz,x2,y2,z2 :: REAL
+      gx0,gx1,gy0,gy1,gz0,gz1,fnb :: REAL
+      gnbx,gnby,gnbz,gx2,gy2,gz2,g1x,g1y,g1z :: REAL
       tn,tn1,tn2,twog0 :: REAL
 
-      n_pt = size(pt,1)
+      n_pt = pt.dim1
 
       ! Origin
       x0 = .position(1)
@@ -2949,109 +2844,122 @@ contains
 
       select case (.l)
 
-        case (0)
-          do n = 1,n_pt             ! Do the exponential part of the gaussian
+      case (0)
+         do n = 1,n_pt
             x = pt(n,1) - x0
             y = pt(n,2) - y0
             z = pt(n,3) - z0
-            x2 = x*x;   y2 = y*y;   z2 = z*z
+            x2 = x*x
+            y2 = y*y
+            z2 = z*z
             rr = x2 + y2 + z2
             g0 = ZERO
             g1 = ZERO
             g2 = ZERO
-            do p = 1,.n_cc          ! Loop over primitives
-              aa = .exponent(p)
-              val = .contraction(p)*exp(-aa*rr)
-              g0 = g0 + val
-              g1 = g1 - aa*val
-              g2 = g2 + aa*aa*val
+            ! Loop over primitives
+            do p = 1,.n_cc          
+               aa = .exponent(p)
+               val = .contraction(p)*exp(-aa*rr)
+               g0 = g0 + val
+               g1 = g1 - aa*val
+               g2 = g2 + aa*aa*val
             end
             g1 = g1 * TWO
             g2 = g2 * FOUR
-            G(n,1,1) = g1 + g2*x2
-            G(n,1,2) = g1 + g2*y2
-            G(n,1,3) = g1 + g2*z2
-            H(n,1,1) = g1*x
-            H(n,1,2) = g1*y
-            H(n,1,3) = g1*z
-            I(n,1)   = g0
-          end
+            F(n,1)   = g0
+            G(n,1,1) = g1*x
+            G(n,1,2) = g1*y
+            G(n,1,3) = g1*z
+            L(n,1,1) = g1 + g2*x2
+            L(n,1,2) = g1 + g2*y2
+            L(n,1,3) = g1 + g2*z2
+         end
 
-        case (1)
-          do n = 1,n_pt             ! Do the exponential part of the gaussian
+      case (1)
+         do n = 1,n_pt
             x = pt(n,1) - x0
             y = pt(n,2) - y0
             z = pt(n,3) - z0
-            x2 = x*x;   y2 = y*y;   z2 = z*z
+            x2 = x*x
+            y2 = y*y
+            z2 = z*z
             rr = x2 + y2 + z2
             g0 = ZERO
             g1 = ZERO
             g2 = ZERO
-            do p = 1,.n_cc          ! Loop over primitives
-              aa = .exponent(p)
-              val = .contraction(p)*exp(-aa*rr)
-              g0 = g0 + val
-              g1 = g1 - aa*val
-              g2 = g2 + aa*aa*val
+            ! Loop over primitives
+            do p = 1,.n_cc
+               aa = .exponent(p)
+               val = .contraction(p)*exp(-aa*rr)
+               g0 = g0 + val
+               g1 = g1 - aa*val
+               g2 = g2 + aa*aa*val
             end
             g1 = g1 * TWO
             g2 = g2 * FOUR
+            g1x = g1*x
+            g1y = g1*y
+            g1z = g1*z
             g2x = g2 * x2
             g2y = g2 * y2
             g2z = g2 * z2
-            G(n,1,1) = x * (3 * g1 + g2x)
-            G(n,1,2) = x * (g1 + g2y)
-            G(n,1,3) = x * (g1 + g2z)
-            G(n,2,1) = y * (g1 + g2x)
-            G(n,2,2) = y * (3 * g1 + g2y)
-            G(n,2,3) = y * (g1 + g2z)
-            G(n,3,1) = z * (g1 + g2x)
-            G(n,3,2) = z * (g1 + g2y)
-            G(n,3,3) = z * (3 * g1 + g2z)
-            h1x = g1*x
-            h1y = g1*y
-            h1z = g1*z
-            H(n,1,1) = g0+x2*g1
-            H(n,1,2) = x*h1y
-            H(n,1,3) = x*h1z
-            H(n,2,1) = y*h1x
-            H(n,2,2) = g0+y2*g1
-            H(n,2,3) = y*h1z
-            H(n,3,1) = z*h1x
-            H(n,3,2) = z*h1y
-            H(n,3,3) = g0+z2*g1
-            I(n,1)   = g0*x
-            I(n,2)   = g0*y
-            I(n,3)   = g0*z
-          end
+            F(n,1)   = g0*x
+            F(n,2)   = g0*y
+            F(n,3)   = g0*z
+            G(n,1,1) = g0+x2*g1
+            G(n,1,2) = x*g1y
+            G(n,1,3) = x*g1z
+            G(n,2,1) = y*g1x
+            G(n,2,2) = g0+y2*g1
+            G(n,2,3) = y*g1z
+            G(n,3,1) = z*g1x
+            G(n,3,2) = z*g1y
+            G(n,3,3) = g0+z2*g1
+            L(n,1,1) = x * (3 * g1 + g2x)
+            L(n,1,2) = x * (g1 + g2y)
+            L(n,1,3) = x * (g1 + g2z)
+            L(n,2,1) = y * (g1 + g2x)
+            L(n,2,2) = y * (3 * g1 + g2y)
+            L(n,2,3) = y * (g1 + g2z)
+            L(n,3,1) = z * (g1 + g2x)
+            L(n,3,2) = z * (g1 + g2y)
+            L(n,3,3) = z * (3 * g1 + g2z)
+         end
 
-        case default
-          GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-          ff = .first_gaussian; lf = .last_gaussian
-          lx  => GAUSSIAN_DATA::px(ff:lf)
-          ly  => GAUSSIAN_DATA::py(ff:lf)
-          lz  => GAUSSIAN_DATA::pz(ff:lf)
-          do n = 1,n_pt             ! Do the exponential part of the gaussian
+      case default
+         ff = .first_gaussian
+         lf = .last_gaussian
+         lx  => GAUSSIAN_DATA::px(ff:lf)
+         ly  => GAUSSIAN_DATA::py(ff:lf)
+         lz  => GAUSSIAN_DATA::pz(ff:lf)
+
+         do n = 1,n_pt
             x = pt(n,1) - x0
             y = pt(n,2) - y0
             z = pt(n,3) - z0
-            x2 = x*x;   y2 = y*y;   z2 = z*z
+            x2 = x*x
+            y2 = y*y
+            z2 = z*z
             rr = x2 + y2 + z2
+
             g0 = ZERO
             g1 = ZERO
             g2 = ZERO
-            do p = 1,.n_cc          ! Loop over primitives
-              aa = .exponent(p)
-              val = .contraction(p)*exp(-aa*rr)
-              g0 = g0 + val
-              g1 = g1 - aa*val
-              g2 = g2 + aa*aa*val
+            ! Loop over primitives
+            do p = 1,.n_cc          
+               aa = .exponent(p)
+               val = .contraction(p)*exp(-aa*rr)
+               g0 = g0 + val
+               g1 = g1 - aa*val
+               g2 = g2 + aa*aa*val
             end
-            g1 = g1 * TWO
-            g2 = g2 * FOUR
+            g1  = g1 * TWO
+            g2  = g2 * FOUR
+
             g2x = g2 * x2
             g2y = g2 * y2
             g2z = g2 * z2
+
             ! Some that are used multiple times.
             ! Taken out of loop over n_comp.
             gx0 = g1 + g2x
@@ -3060,150 +2968,122 @@ contains
             gx1 = (THREE * g1 + g2x)*x  ! *x^1
             gy1 = (THREE * g1 + g2y)*y  ! *y^1
             gz1 = (THREE * g1 + g2z)*z  ! *z^1
-            h1x = g1*x
-            h1y = g1*y
-            h1z = g1*z
-            hx1 = g0 + x2*g1
-            hy1 = g0 + y2*g1
-            hz1 = g0 + z2*g1
-            do b = 1,.n_comp        ! Loop over basis functions
-                inb = g0
-                nxb = lx(b)
-                nyb = ly(b)
-                nzb = lz(b)
-                select case (nxb)
-                  case (0);     gnbx = gx0
-                                hnbx = h1x
-                  case (1);     gnbx = gx1
-                                hnbx = hx1
-                  case (2)
-                    tn = x*x
-                    twog0 = g0+g0
-                    gnbx = twog0 + (5*g1 + g2x)*tn
-                    hnbx = twog0*x + h1x*tn
-                  case default
-                    tn2 = x**(nxb-2)
-                    tn1 = tn2*x
-                    tn = tn2*x*x
-                    gnbx = nxb*(nxb-1)*g0*tn2 + ((2*nxb+1) * g1 + g2x)*tn
-                    hnbx = nxb*g0*tn1 + h1x*tn
-                end
-                select case (nyb)
-                  case (0);     gnby = gy0
-                                hnby = h1y
-                  case (1);     gnby = gy1
-                                hnby = hy1
-                  case (2)
-                    tn = y*y
-                    twog0 = g0+g0
-                    gnby = twog0 + (5*g1 + g2y)*tn
-                    hnby = twog0*y + h1y*tn
-                  case default
-                    tn2 = y**(nyb-2)
-                    tn1 = tn2*y
-                    tn = tn2*y*y
-                    gnby = nyb*(nyb-1)*g0*tn2 + ((2*nyb+1) * g1 + g2y)*tn
-                    hnby = nyb*g0*tn1 + h1y*tn
-                end
-                select case (nzb)
-                  case (0);     gnbz = gz0
-                                hnbz = h1z
-                  case (1);     gnbz = gz1
-                                hnbz = hz1
-                  case (2)
-                    tn = z*z
-                    twog0 = g0+g0
-                    gnbz = twog0 + (5*g1 + g2z)*tn
-                    hnbz = twog0*z + h1z*tn
-                  case default
-                    tn2 = z**(nzb-2)
-                    tn1 = tn2*z
-                    tn = tn2*z*z
-                    gnbz = nzb*(nzb-1)*g0*tn2 + ((2*nzb+1) * g1 + g2z)*tn
-                    hnbz = nzb*g0*tn1 + h1z*tn
-                end
-                do j = 1,nxb
-                   gnby = x*gnby    ! Do the cartesian (x_i)^j, i/=k part of
-                   gnbz = x*gnbz    ! gaussian power of the xyz part not equal
-                   hnby = x*hnby
-                   hnbz = x*hnbz
-                   inb  = x*inb
-                end                 ! to deriv. component k
-                do j = 1,nyb
-                   gnbx = y*gnbx
-                   gnbz = y*gnbz
-                   hnbx = y*hnbx
-                   hnbz = y*hnbz
-                   inb  = y*inb
-                end
-                do j = 1,nzb
-                   gnbx = z*gnbx
-                   gnby = z*gnby
-                   hnbx = z*hnbx
-                   hnby = z*hnby
-                   inb  = z*inb
-                end
-                G(n,b,1) = gnbx
-                G(n,b,2) = gnby
-                G(n,b,3) = gnbz
-                H(n,b,1) = hnbx
-                H(n,b,2) = hnby
-                H(n,b,3) = hnbz
-                I(n,b)   = inb 
-             end
-          end
+            g1x = g1*x
+            g1y = g1*y
+            g1z = g1*z
+            gx2 = g0 + x2*g1
+            gy2 = g0 + y2*g1
+            gz2 = g0 + z2*g1
+
+            ! Loop over basis functions
+            do b = 1,.n_comp        
+
+               fnb = g0
+               nxb = lx(b)
+               nyb = ly(b)
+               nzb = lz(b)
+
+               select case (nxb)
+               case (0)
+                  gnbx = g1x
+                  lnbx = gx0
+               case (1)
+                  gnbx = gx2
+                  lnbx = gx1
+               case (2)
+                  tn = x*x
+                  twog0 = g0+g0
+                  gnbx = twog0*x + g1x*tn
+                  lnbx = twog0   + (5*g1 + g2x)*tn
+               case default
+                  tn2 = x**(nxb-2)
+                  tn1 = tn2*x
+                  tn  = tn2*x*x
+                  gnbx = nxb*g0*tn1 + g1x*tn
+                  lnbx = nxb*(nxb-1)*g0*tn2 + ((2*nxb+1) * g1 + g2x)*tn
+               end
+
+               select case (nyb)
+               case (0)
+                  gnby = g1y
+                  lnby = gy0
+               case (1)
+                  gnby = gy2
+                  lnby = gy1
+               case (2)
+                  tn = y*y
+                  twog0 = g0+g0
+                  gnby = twog0*y + g1y*tn
+                  lnby = twog0   + (5*g1 + g2y)*tn
+               case default
+                  tn2 = y**(nyb-2)
+                  tn1 = tn2*y
+                  tn  = tn2*y*y
+                  gnby = nyb*g0*tn1 + g1y*tn
+                  lnby = nyb*(nyb-1)*g0*tn2 + ((2*nyb+1) * g1 + g2y)*tn
+               end
+
+               select case (nzb)
+               case (0)
+                  gnbz = g1z
+                  lnbz = gz0
+               case (1)
+                  gnbz = gz2
+                  lnbz = gz1
+               case (2)
+                  tn = z*z
+                  twog0 = g0+g0
+                  gnbz = twog0*z + g1z*tn
+                  lnbz = twog0   + (5*g1 + g2z)*tn
+               case default
+                  tn2 = z**(nzb-2)
+                  tn1 = tn2*z
+                  tn  = tn2*z*z
+                  gnbz = nzb*g0*tn1 + g1z*tn
+                  lnbz = nzb*(nzb-1)*g0*tn2 + ((2*nzb+1) * g1 + g2z)*tn
+               end
+
+               do j = 1,nxb
+                  fnb  = x*fnb
+                  gnby = x*gnby
+                  gnbz = x*gnbz
+                  lnby = x*lnby    ! Do the cartesian (x_i)^j, i/=k part of
+                  lnbz = x*lnbz    ! gaussian power of the xyz part not equal
+               end                 ! to deriv. component k
+               do j = 1,nyb
+                  fnb  = y*fnb
+                  gnbx = y*gnbx
+                  gnbz = y*gnbz
+                  lnbx = y*lnbx
+                  lnbz = y*lnbz
+               end
+               do j = 1,nzb
+                  fnb  = z*fnb
+                  gnbx = z*gnbx
+                  gnby = z*gnby
+                  lnbx = z*lnbx
+                  lnby = z*lnby
+               end
+
+               F(n,b)   = fnb 
+               G(n,b,1) = gnbx
+               G(n,b,2) = gnby
+               G(n,b,3) = gnbz
+               L(n,b,1) = lnbx
+               L(n,b,2) = lnby
+               L(n,b,3) = lnbz
+
+            end
+
+         end
+
       end
 
    end
 
-
-   make_oscillator_orbital_mask(f,c,l,n,pt)
-   ! Return "f(i)", the value of the cartesian part of an oscillator function
-   ! centered at "c", of angular momentum "l" and component "n", evaluated on
-   ! grid point "i", which is "pt(i,1:3)". 
-      f  :: VEC{REAL}
-      pt :: MAT{REAL}
-      c :: VEC{REAL}(3)
-      l,n :: INT
-   ENSURE(n.is_in_range([1,GAUSSIAN_DATA:n_comp(l)]),"inconsistent l, n value")
-      lx,ly,lz :: VEC{INT}@
-      nxn,nyn,nzn, ff,lf :: INT
-      select case (l)
-        case (0)
-           f = ONE
-        case (1)
-           f = pt(:,n)-c(n)
-      ! case (2)
-      !    if      (n<=3) then; f = pt(:,n)-c(n)*c(n)
-      !    else if (n==4) then; f = pt(:,n)-c(1)*c(2)
-      !    else if (n==5) then; f = pt(:,n)-c(1)*c(3)
-      !    else if (n==6) then; f = pt(:,n)-c(2)*c(3)
-      !    end
-      ! case (3)
-      !    if      (n<=3)  then; f = pt(:,n)-c(n)*c(n)*c(n)
-      !    else if (n==4)  then; f = pt(:,n)-c(1)*c(1)*c(2)
-      !    else if (n==5)  then; f = pt(:,n)-c(1)*c(1)*c(3)
-      !    else if (n==6)  then; f = pt(:,n)-c(2)*c(2)*c(1)
-      !    else if (n==7)  then; f = pt(:,n)-c(2)*c(2)*c(3)
-      !    else if (n==8)  then; f = pt(:,n)-c(3)*c(3)*c(1)
-      !    else if (n==9)  then; f = pt(:,n)-c(3)*c(3)*c(2)
-      !    else if (n==10) then; f = pt(:,n)-c(1)*c(2)*c(3)
-      !    end
-        case default
-           GAUSSIAN_DATA:set_indices(.l)     ! Make sure indices are there
-           ff  =  GAUSSIAN_DATA:n_comp_up_to(l-1) + 1
-           lf  =  GAUSSIAN_DATA:n_comp_up_to(l) 
-           lx  => GAUSSIAN_DATA::px(ff:lf)
-           ly  => GAUSSIAN_DATA::py(ff:lf)
-           lz  => GAUSSIAN_DATA::pz(ff:lf)
-           nxn = lx(n); nyn = ly(n); nzn = lz(n)
-           f = (pt(:,1)-c(1))**nxn * (pt(:,2)-c(2))**nyn * (pt(:,3)-c(3))**nzn
-      end
-   end
-
-!  ====
-!  Dump
-!  ====
+!  ======
+!  Output
+!  ======
 
    do_dump ::: private
    ! Dump object data as text
@@ -3231,10 +3111,6 @@ contains
    dmpa(object_name) ::: get_from(OBJECT)
    ! Dump an allocatable object data as text
    end
-
-!  ======
-!  Output
-!  ======
 
    put
    ! Put the shell information to "stdout" 

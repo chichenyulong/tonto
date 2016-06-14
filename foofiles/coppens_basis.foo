@@ -457,7 +457,7 @@ contains
    ! "interpolator" is used as a template to get the settings needed.
    ! Otherwise a default interpolator is used.
       self :: IN
-      interpolator :: INTERPOLATOR*, optional
+      interpolator :: INTERPOLATOR@, optional, IN
 
    ENSURE(.orbital.created,"no coppens orbitals defined!")
 
@@ -465,8 +465,7 @@ contains
       if (present(interpolator)) then
       if (interpolator.created) then
          ENSURE(interpolator.created,"no interpolator defined!")
-         .interpolator.destroy
-         .interpolator.create_copy(interpolator)
+         .interpolator = interpolator
       end
       end
 

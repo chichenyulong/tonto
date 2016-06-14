@@ -74,7 +74,7 @@ contains
 
    set_indices(l_max,rms_indices,nx,ny,nz) ::: leaky, PURE
    ! Set the rms indices. 
-      self :: INOUT
+      self :: OUT
       l_max :: INT, IN
       rms_indices :: MAT{RMS_INDICES}, INOUT
       nx,ny,nz :: VEC{INT}, IN
@@ -85,7 +85,7 @@ contains
    ENSURE(lbound(rms_indices,2)==0,"rms_indices, lower bound 2 wrong")
    ENSURE(ubound(rms_indices,1)==l_max,"rms_indices, upper bound 1 wrong")
    ENSURE(ubound(rms_indices,2)==l_max,"rms_indices, upper bound 2 wrong")
-   ENSURE(nx.dim==MAT{RMS2_INDICES}::n_comp_up_to(2*l_max),"wrong size, nx")
+   ENSURE(nx.dim==GAUSSIAN_DATA::n_comp_up_to(2*l_max),"wrong size, nx")
    ENSURE(ny.dim==nx.dim,"wrong size, ny")
    ENSURE(nz.dim==nx.dim,"wrong size, nz")
 
@@ -98,8 +98,8 @@ contains
       do ab_lmin = 0,ab_lmax ! l for the b shell
 
         ab_ltri = ab_ltri + 1
-        fe = MAT{RMS2_INDICES}::n_comp_up_to(ab_lmax-1)+1
-        le = MAT{RMS2_INDICES}::n_comp_up_to(ab_lmin+ab_lmax)
+        fe = GAUSSIAN_DATA::n_comp_up_to(ab_lmax-1)+1
+        le = GAUSSIAN_DATA::n_comp_up_to(ab_lmin+ab_lmax)
 
         cd_ltri = 0
 
@@ -107,8 +107,8 @@ contains
         do cd_lmin = 0,cd_lmax ! l for the d shell
 
            cd_ltri = cd_ltri + 1
-           ff = MAT{RMS2_INDICES}::n_comp_up_to(cd_lmax-1)+1
-           lf = MAT{RMS2_INDICES}::n_comp_up_to(cd_lmin+cd_lmax)
+           ff = GAUSSIAN_DATA::n_comp_up_to(cd_lmax-1)+1
+           lf = GAUSSIAN_DATA::n_comp_up_to(cd_lmin+cd_lmax)
 
            self(ab_ltri,cd_ltri).set_indices( &
               rms_indices(ab_lmax,ab_lmin),  & 
@@ -124,16 +124,6 @@ contains
 
       end
       end
-
-   end
-
-   n_comp_up_to(l) result (res) ::: selfless, pure, private
-   ! No. of gaussian cartesian component functions up to and including the shell
-   ! with momentum "l".
-      l :: INT, IN
-      res :: INT
-
-      res = (l+1)*(l+2)*(l+3)/6
 
    end
 

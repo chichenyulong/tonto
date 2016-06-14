@@ -93,109 +93,46 @@ contains
       .copy(shell_a,shell_b,pos_a,pos_b)
    end
 
-!  ====
-!  Copy
-!  ====
-
-   create_copy(shell) ::: leaky
-   ! Create a copy from "shell"
-      self :: allocatable, INOUT
-      shell :: SHELL2, IN
-      .create
-      .copy(shell)
-      .precalculate
-   end
-
-   copy(shell) ::: leaky
-   ! Make a copy from "shell"
-      shell :: SHELL2, IN
-
-      self = shell
-
-      .nullify_ptr_part
-
-      if (.destroy_all) then
-
-        .a.copy(shell.a)
-        .b.copy(shell.b)
-        if (shell.exponent_sum.created) &
-           .exponent_sum.create_copy(shell.exponent_sum)
-        if (shell.exponent_inv.created) &
-           .exponent_inv.create_copy(shell.exponent_inv)
-        if (shell.contraction_prefactor.created)   &
-           .contraction_prefactor.create_copy(shell.contraction_prefactor)
-        if (shell.contraction_s_prefactor.created) &
-           .contraction_s_prefactor.create_copy(shell.contraction_s_prefactor)
-        if (shell.contraction_p_prefactor.created) &
-           .contraction_p_prefactor.create_copy(shell.contraction_p_prefactor)
-
-      else
-
-        .a = shell.a
-        .b = shell.b
-        if (shell.exponent_sum.created) &
-           .exponent_sum => shell.exponent_sum
-        if (shell.exponent_inv.created) &
-           .exponent_inv => shell.exponent_inv
-        if (.same_center) then
-           if (shell.contraction_prefactor.created)   &
-              .contraction_prefactor => shell.contraction_prefactor
-           if (shell.contraction_s_prefactor.created) &
-              .contraction_s_prefactor => shell.contraction_s_prefactor
-           if (shell.contraction_p_prefactor.created) &
-              .contraction_p_prefactor => shell.contraction_p_prefactor
-        else
-           if (shell.contraction_prefactor.created)   &
-              .contraction_prefactor.create_copy(shell.contraction_prefactor)
-           if (shell.contraction_s_prefactor.created) &
-              .contraction_s_prefactor.create_copy(shell.contraction_s_prefactor)
-           if (shell.contraction_p_prefactor.created) &
-              .contraction_p_prefactor.create_copy(shell.contraction_p_prefactor)
-        end
-      end
-
-      if (shell.pair_center.created)  .pair_center.create_copy(shell.pair_center)
-      if (shell.center_diff.created)  .center_diff.create_copy(shell.center_diff)
-
-   end
-
-   copy(shell_a,shell_b) ::: leaky
-   ! Copy the shell2 using shell1 objects
-      shell_a,shell_b :: SHELL1, IN
-      .a.copy(shell_a)
-      .b.copy(shell_b)
-      .precalculate
-   end
-
-   copy(shell_a,shell_b,pos_a,pos_b) ::: leaky
-   ! Copy the shell2 using shell objects and positions
-      shell_a,shell_b :: SHELL1, IN
-      pos_a,pos_b :: VEC{REAL}, IN
-      .a.copy(shell_a,pos_a)
-      .b.copy(shell_b,pos_b)
-      .precalculate
-   end
-
-   copy(shell_a,shell_b,pos_a,pos_b) ::: leaky
-   ! Copy the shell2 using shell objects and positions
-      shell_a,shell_b :: SHELL, IN
-      pos_a,pos_b :: VEC{REAL}, IN
-      .a.copy(shell_a,pos_a)
-      .b.copy(shell_b,pos_b)
-      .precalculate
-   end
-
 !  ===========
 !  Set methods
 !  ===========
 
-   set_spherical(val)
-   ! Set sphericals to "val" defaults
-      val :: BIN
-      .is_spherical = val
+   set(shell_a,shell_b,pos_a,pos_b) ::: leaky, pure
+   ! Set the shells
+      self :: INOUT
+      shell_a,shell_b :: SHELL1, IN
+      pos_a,pos_b :: VEC{REAL}, optional, IN
+
+      .a.set(shell_a,pos_a)
+      .b.set(shell_b,pos_b)
+
+      .precalculate
+
    end
 
-   set_pair_cutoff(cutoff)
+   set(shell_a,shell_b,pos_a,pos_b) ::: leaky, pure
+   ! Set the shells
+      self :: INOUT
+      shell_a,shell_b :: SHELL, IN
+      pos_a,pos_b :: VEC{REAL}, optional, IN
+
+      .a.set(shell_a,pos_a)
+      .b.set(shell_b,pos_b)
+
+      .precalculate
+
+   end
+
+   set_spherical(val) ::: pure
+   ! Set sphericals to "val" defaults
+      self :: INOUT
+      val :: BIN, IN
+
+      .is_spherical = val
+
+   end
+
+   set_pair_cutoff(cutoff) ::: selfless, PURE
    ! Set the "cutoff" for the exponential prefactor for the product of two
    ! gaussian primitives, below which that primitive pair is isgnored in the
    ! calculation of the ERI's.
@@ -203,12 +140,11 @@ contains
 
    ENSURE(cutoff>ZERO,"cutoff must be pisitive")
 
-      if (FALSE) self = self
       pair_cutoff = cutoff
 
    end
 
-   set_and_precompute_from(shellpr,pos_a,pos_b,same_center,skip) ::: leaky
+   set_and_precompute_from(shellpr,pos_a,pos_b,same_center,skip) ::: leaky, pure
    ! Set the a and b parts from "shellpr" but override the positions.
    ! "same_center" should be set TRUE if pos_a==pos_b.
    ! "skip" can be set TRUE if NOT same_center; it skips gaussian product
@@ -253,8 +189,8 @@ contains
       ! Now make the gaussian-primitive-pair info ...
 
       ! Pointer assign
-      .exponent_sum => shellpr.exponent_sum
-      .exponent_inv => shellpr.exponent_inv
+      .exponent_sum = shellpr.exponent_sum
+      .exponent_inv = shellpr.exponent_inv
 
       .pair_center.create(3,.n_gaussian_pairs)
       .center_diff.create(3,.n_gaussian_pairs)
@@ -263,17 +199,15 @@ contains
 
         if (same_center) then
 
-           ! Pointer assign
-           .contraction_prefactor => shellpr.contraction_prefactor
+           .contraction_prefactor = shellpr.contraction_prefactor
 
            i = 0
            do bg = 1,.b.n_cc
-             do ag = 1,.a.n_cc
-               i = i + 1
-             ! .contraction_prefactor(i)  = shellpr.contraction_prefactor(i)
-               .pair_center(:,i) = pos_a
-               .center_diff(:,i) = ZERO
-             end
+           do ag = 1,.a.n_cc
+              i = i + 1
+              .pair_center(:,i) = pos_a
+              .center_diff(:,i) = ZERO
+           end
            end
 
            .av_pair_center = pos_a
@@ -385,8 +319,10 @@ contains
 
    end
 
-   precalculate ::: leaky
+   precalculate ::: leaky, pure
    ! Set up some commonly used intermediates
+      self :: INOUT
+
       anorm,bnorm :: VEC{REAL}@
       AB,At,P :: VEC{REAL}(3)
       b_cc,a,b,exp_sum,exp_inv,r2ab,b_r2ab,a_exp_inv :: REAL
@@ -402,8 +338,6 @@ contains
 
       .exponent_sum.create(.n_gaussian_pairs)
       .exponent_inv.create(.n_gaussian_pairs)
-   ! .a_exponent_inv.create(.n_gaussian_pairs)
-   ! .b_exponent_inv.create(.n_gaussian_pairs)
 
       .contraction_prefactor.create(.n_gaussian_pairs)
       .pair_center.create(3,.n_gaussian_pairs)
@@ -440,8 +374,6 @@ contains
             .exponent_sum(i)   = exp_sum
             .exponent_inv(i)   = exp_inv
             a_exp_inv          = a*exp_inv
-          ! .a_exponent_inv(i) = a_exp_inv
-          ! .b_exponent_inv(i) = b*exp_inv
             .contraction_prefactor(i) = b_cc*.a.contraction(ag) &
                                       * exp_inv*sqrt(exp_inv)   &
                                       * exp(-b_r2ab*a_exp_inv)
@@ -450,8 +382,6 @@ contains
 
          end
       end
-
-   ! .kappa_max = maxval(.contraction_prefactor/.exponent_inv**(THREE/TWO))
 
    end
 

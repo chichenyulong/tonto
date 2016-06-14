@@ -115,7 +115,7 @@ contains
 
    set_saved_self 
    ! Set saved_self
-      self :: allocatable, target, INOUT
+      self :: allocatable, target, IN
 
       saved_self => self
 

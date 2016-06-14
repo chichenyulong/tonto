@@ -61,7 +61,7 @@ contains
    ! Form the RMS pair indices, which tells when to multiply Ix and Iy,
    ! thus saving work. This version takes care of cases when Ix and Iy
    ! are equal to 1.
-      self :: INOUT
+      self :: OUT
       er,fr :: RMS_INDICES, target, IN
       ex,ey,ez,fx,fy,fz :: VEC{INT}, target, IN
       ab_l_sum :: INT, IN
@@ -358,7 +358,8 @@ contains
       end
       Ixy_is_p.destroy
 
-      DIE_IF(i/=n,"inconsistent final index")
+   ENSURE(i==n,"inconsistent final index")
+
    end
 
 !   set_indices_print(er,fr,ex,ey,ez,fx,fy,fz, a,b,c,d) ::: leaky

@@ -61,7 +61,7 @@ contains
    ! the product of the first two factors is repeated, and where they
    ! are not. These arrays are used to reduce work in the
    ! multiplication of the 2d integrals to form the full ERI's.
-      self :: INOUT
+      self :: OUT
       nx,ny,nz :: VEC{INT}, IN
       px,py,pz :: VEC{INT}, IN
 
@@ -160,33 +160,38 @@ contains
 
       .yz0px.create(iyz)
       do i = 1,iyz
-        .yz0px(i) = px(.yz0(i))
+         .yz0px(i) = px(.yz0(i))
       end
+
       .xz0py.create(ixz)
       do i = 1,ixz
-        .xz0py(i) = py(.xz0(i))
+         .xz0py(i) = py(.xz0(i))
       end
+
       .xy0pz.create(ixy)
       do i = 1,ixy
-        .xy0pz(i) = pz(.xy0(i))
+         .xy0pz(i) = pz(.xy0(i))
       end
+
       .z0px.create(iz)
       .z0py.create(iz)
       do i = 1,iz
-        .z0px(i) = px(.z0(i))
-        .z0py(i) = py(.z0(i))
+         .z0px(i) = px(.z0(i))
+         .z0py(i) = py(.z0(i))
       end
+
       .y0px.create(iy)
       .y0pz.create(iy)
       do i = 1,iy
-        .y0px(i) = px(.y0(i))
-        .y0pz(i) = pz(.y0(i))
+         .y0px(i) = px(.y0(i))
+         .y0pz(i) = pz(.y0(i))
       end
+
       .x0py.create(ix)
       .x0pz.create(ix)
       do i = 1,ix
-        .x0py(i) = py(.x0(i))
-        .x0pz(i) = pz(.x0(i))
+         .x0py(i) = py(.x0(i))
+         .x0pz(i) = pz(.x0(i))
       end
 
       ! Count number of rms's without any reduction
@@ -194,48 +199,60 @@ contains
       n1 = 0
       n2 = 0
       do i = 1,ir
-        if(.xy_rms_n(i).element.dim==1) n1 = n1 + 1
-        if(.xy_rms_n(i).element.dim> 1) n2 = n2 + 1
+         if(.xy_rms_n(i).element.dim==1) n1 = n1 + 1
+         if(.xy_rms_n(i).element.dim> 1) n2 = n2 + 1
       end
-      DIE_IF(ir/=n1+n2,"inconsistent n1 and n2")
+      ENSURE(ir==(n1+n2),"inconsistent n1 and n2")
 
       .n1.create(n1)
       .n1px.create(n1)
       .n1py.create(n1)
       .n1pz.create(n1)
+
       j = 0
+
       do i = 1,ir
-        if(.xy_rms_n(i).element.dim>1) cycle
-        DIE_IF(.xy_rms_n(i).element.dim<1,"xy_rms_n has zero element component") 
-        j = j + 1
-        m = .xy_rms_n(i)[1]
-        .n1(j)   = .n0(m)
-        .n1px(j) = px(.n1(j))
-        .n1py(j) = py(.n1(j))
-        .n1pz(j) = pz(.n1(j))
+
+         if (.xy_rms_n(i).element.dim>1) cycle
+         ENSURE(.xy_rms_n(i).element.dim>=1,"xy_rms_n has zero element component") 
+
+         j = j + 1
+         m = .xy_rms_n(i)[1]
+
+         .n1(j)   = .n0(m)
+         .n1px(j) = px(.n1(j))
+         .n1py(j) = py(.n1(j))
+         .n1pz(j) = pz(.n1(j))
+
       end
 
       .n2.create(n2)
       .n2px.create(n2)
       .n2py.create(n2)
       .n2pz.create(n2)
+
       j = 0
+
       do i = 1,ir
-        if(.xy_rms_n(i).element.dim==1) cycle
-        DIE_IF(.xy_rms_n(i).element.dim<1,"xy_rms_n has zero element component") 
-        j = j + 1
-        l = .xy_rms_n(i).element.dim
-        .n2(j).element.create(l)
-        .n2px(j).element.create(l)
-        .n2py(j).element.create(l)
-        .n2pz(j).element.create(l)
-        do k = 1,l
-           m = .xy_rms_n(i)[k]
-           .n2(j)[k]   = .n0(m)
-           .n2px(j)[k] = px(.n2(j)[k])
-           .n2py(j)[k] = py(.n2(j)[k])
-           .n2pz(j)[k] = pz(.n2(j)[k])
-        end    
+
+         if(.xy_rms_n(i).element.dim==1) cycle
+         ENSURE(.xy_rms_n(i).element.dim>=1,"xy_rms_n has zero element component") 
+
+         j = j + 1
+         l = .xy_rms_n(i).element.dim
+
+         .n2(j).element.create(l)
+         .n2px(j).element.create(l)
+         .n2py(j).element.create(l)
+         .n2pz(j).element.create(l)
+         do k = 1,l
+            m = .xy_rms_n(i)[k]
+            .n2(j)[k]   = .n0(m)
+            .n2px(j)[k] = px(.n2(j)[k])
+            .n2py(j)[k] = py(.n2(j)[k])
+            .n2pz(j)[k] = pz(.n2(j)[k])
+         end    
+
       end
 
    end
