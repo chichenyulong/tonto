@@ -28,67 +28,44 @@ virtual module VEC{MAT4_{INTRINSIC}}
 
 contains
 
-   create(dim) ::: leaky
-   ! Create the object
-      self :: allocatable, INOUT
-      dim :: INT
+!  =================
+!  Memory allocation
+!  =================
 
-      status :: INT
-
-      allocate(self(dim),STAT=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
    end
 
-   destroy ::: leaky
+   create(lb,ub) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower bound "lb", upper bound "ub"
+   end
+
+   create(bounds) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower and upper bounds in "bounds"
+   end
+
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
-      self :: allocatable, INOUT
-
-      status :: INT
-
-      if (.destroyed) return
-
-      .destroy_ptr_part
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts
-      i :: INT
-      do i = 1,size(self)
-         nullify(self(i)%element)
-      end
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts
-      i :: INT
-      do i = 1,size(self)
-         self(i)%element.destroy
-      end
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
-   destroyed result (res) ::: get_from(OBJECT), inlined_by_foo
-   ! Returns true if self has *not* been created
+!  ==================
+!  Size-of operations
+!  ==================
+
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
+   end
+
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 end

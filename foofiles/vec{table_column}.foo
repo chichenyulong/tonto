@@ -48,6 +48,7 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
+
    clear_columns ::: leaky, PURE
    ! Clear all the columns
       self :: INOUT
@@ -58,6 +59,18 @@ contains
          self(i).clear_column
       end
 
+   end
+
+!  ==================
+!  Size-of operations
+!  ==================
+
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
+   end
+
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 !  ===========

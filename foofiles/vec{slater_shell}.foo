@@ -49,6 +49,18 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
+!  ==================
+!  Size-of operations
+!  ==================
+
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
+   end
+
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
+   end
+
 !  =======================
 !  Shrinking and expansion 
 !  =======================
@@ -280,24 +292,8 @@ contains
    ! "self" allocatable here.
    end
 
-   process_keyword(keyword) ::: leaky
+   process_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
    ! Process a normal (non list-type) "keyword".
-      self :: allocatable, INOUT
-      keyword :: STR, IN
-
-      word :: STR
-
-      word = keyword
-      word.to_lower_case
-
-      select case (word)
-      case("}                 ")     ! do nothing.
-      case("put               "); .put
-      case("redirect          "); TEXTFILE:redirect
-      case("revert            "); TEXTFILE:revert
-      case default; UNKNOWN(word)
-      end
-
    end
 
 !  ================

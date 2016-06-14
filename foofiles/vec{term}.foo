@@ -48,124 +48,25 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
+!  ==================
+!  Size-of operations
+!  ==================
 
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Create space for object. This version does not nullify ptr parts.
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
    end
 
-   destroy ::: get_from(OBJECT), leaky
-   ! Deallocate "self". This version does not destroy ptr parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set_defaults ::: get_from(VEC{OBJECT})
-   ! Set default values
-   end
-
-! =======================
-! List-based I/O Routines
-! =======================
-
-   read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
-   ! Read in and process list-based keywords from "stdin". List-based keywords
-   ! are those that are intended to apply to each individual element of the list
-   ! through a list of "keys" stored in the associated list-element type module.
-   ! NOTE: this routine will create the list, if required.
-   end
-
-   process_list_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
-   ! Process a list-type "keyword", common to all list-type objects.
-   end
-
-   read_data ::: get_from(VEC{OBJECT}), leaky
-   ! Repeatedly process the "keys" to read in the data list. 
-   ! Opening and closing braces are needed.
-   end
-
-   read_data_sans_braces ::: get_from(VEC{OBJECT}), leaky
-   ! Repeatedly process the "keys" to read in the data list. 
-   ! Opening and closing braces are not needed.
-   end
-
-   data_length result (length) ::: get_from(VEC{OBJECT})
-   ! Read ahead in stdin to get the "length" of the data list, i.e. the number
-   ! of data items in the list. The data must begin with the first data item,
-   ! *not* a "{" symbol.  The order of data items comprising the list is given
-   ! by keys defined in the associated list-element type module. The data list
-   ! must be terminated by a "}" symbol.
-   end
-
-   read_altered_data ::: get_from(VEC{OBJECT}), leaky
-   ! Read in a sublist of the complete list, and alter the data for that
-   ! sublist.  The order of the data items in the sublist is given by the "keys"
-   ! defined in the associated list-element type module.
-   end
-
-   read_append_data ::: get_from(VEC{OBJECT}), leaky
-   ! Read in a set of data to append to an existing set.
-   end
-
-   process_keys ::: get_from(VEC{OBJECT}), leaky
-   ! Process the "keys" on each element of the list.
-   end
-
-   process_keys_once ::: get_from(VEC{OBJECT})
-   ! Process the "keys" just once on an anonymous object. This is useful if the
-   ! "keys" set global variables in the list module (e.g. the default order of
-   ! lists *within* the list data) as opposed to being keys pertaining to each
-   ! element of the list.
-   end
-
-   read_keys ::: get_from(VEC{OBJECT}), leaky
-   ! Read a new set of keys
-   end
-
-! ===========================
-! Non-list based I/O routines
-! ===========================
-
-   read_keywords ::: get_from(VEC{OBJECT}), leaky
-   ! Read in and process normal (non list-type) keywords from "stdin".
-   end
-
-   process_keyword(keyword) ::: leaky
-   ! Process a normal (non list-type) "keyword".
-      keyword :: STR, IN
-
-      word :: STR
-
-      word = keyword
-      word.to_lower_case
-
-      select case (word)
-         case("}") ! do nothing.
-         case("redirect                 "); TEXTFILE:redirect
-         case("revert                   "); TEXTFILE:revert
-         case default;     UNKNOWN(word)
-      end
-
-   end
-
+!  =======================
+!  Shrinking and expansion
+!  =======================
 
    shrink(dim) ::: get_from(VEC{OBJECT}, leaky, PURE
    ! Shrink "self" to dimension "dim" from the end. Contents are
@@ -183,24 +84,6 @@ contains
 
    append(value) ::: get_from(VEC{OBJECT}, leaky, PURE
    ! Appends the single scalar "value" onto the end of "self".
-   end
-
-! Old
-
-   shrink(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Shrink self to dimension dim.  Contents are retained.
-   end
-
-   expand(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Expand the vector "self" to "dim". New slots are left undefined.
-   end
-
-   append(v) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(value) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
    end
 
 !  =======
@@ -317,6 +200,76 @@ contains
          res(p).element.create_copy(self(p).parameters)
       end
 
+   end
+
+!  ===========================
+!  Non-list based I/O routines
+!  ===========================
+
+   read_keywords ::: get_from(VEC{OBJECT}), leaky
+   ! Read in and process normal (non list-type) keywords from "stdin".
+   end
+
+   process_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
+   ! Process a normal (non list-type) "keyword".
+   end
+
+!  =======================
+!  List-based I/O Routines
+!  =======================
+
+   read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
+   ! Read in and process list-based keywords from "stdin". List-based keywords
+   ! are those that are intended to apply to each individual element of the list
+   ! through a list of "keys" stored in the associated list-element type module.
+   ! NOTE: this routine will create the list, if required.
+   end
+
+   process_list_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
+   ! Process a list-type "keyword", common to all list-type objects.
+   end
+
+   read_data ::: get_from(VEC{OBJECT}), leaky
+   ! Repeatedly process the "keys" to read in the data list. 
+   ! Opening and closing braces are needed.
+   end
+
+   read_data_sans_braces ::: get_from(VEC{OBJECT}), leaky
+   ! Repeatedly process the "keys" to read in the data list. 
+   ! Opening and closing braces are not needed.
+   end
+
+   data_length result (length) ::: get_from(VEC{OBJECT})
+   ! Read ahead in stdin to get the "length" of the data list, i.e. the number
+   ! of data items in the list. The data must begin with the first data item,
+   ! *not* a "{" symbol.  The order of data items comprising the list is given
+   ! by keys defined in the associated list-element type module. The data list
+   ! must be terminated by a "}" symbol.
+   end
+
+   read_altered_data ::: get_from(VEC{OBJECT}), leaky
+   ! Read in a sublist of the complete list, and alter the data for that
+   ! sublist.  The order of the data items in the sublist is given by the "keys"
+   ! defined in the associated list-element type module.
+   end
+
+   read_append_data ::: get_from(VEC{OBJECT}), leaky
+   ! Read in a set of data to append to an existing set.
+   end
+
+   process_keys ::: get_from(VEC{OBJECT}), leaky
+   ! Process the "keys" on each element of the list.
+   end
+
+   process_keys_once ::: get_from(VEC{OBJECT})
+   ! Process the "keys" just once on an anonymous object. This is useful if the
+   ! "keys" set global variables in the list module (e.g. the default order of
+   ! lists *within* the list data) as opposed to being keys pertaining to each
+   ! element of the list.
+   end
+
+   read_keys ::: get_from(VEC{OBJECT}), leaky
+   ! Read a new set of keys
    end
 
 !  ===

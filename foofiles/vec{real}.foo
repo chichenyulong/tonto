@@ -66,14 +66,13 @@ contains
 !  Size-of operations
 !  ==================
 
-   size result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
    ! Return the size of the array
    end
 
-   dim result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
    ! Return the size of the 1st dimension
    end
-
 
 !  =======================
 !  Shrinking and expansion
@@ -2190,9 +2189,9 @@ contains
 
    end
 
-! =====================
-! 3D Hermite polynomial
-! =====================
+!  =====================
+!  3D Hermite polynomial
+!  =====================
 
    hermite_polynomial_prob(n) result (res) ::: PURE
    ! Return the probabilists hermite polynomial with powers n(1),
@@ -2211,9 +2210,9 @@ contains
 
    end
 
-! ========================
-! Multipoles and harmonics
-! ========================
+!  ========================
+!  Multipoles and harmonics
+!  ========================
 
    make_R_harmonics(Rc,Rs,point,l_max) ::: selfless, leaky, PURE
    ! Make the scaled regular solid harmonics "Rc" and "Rs" evaluated at a single

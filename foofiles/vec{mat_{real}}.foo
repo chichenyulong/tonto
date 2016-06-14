@@ -28,90 +28,153 @@ module VEC{MAT_{REAL}}
 
 contains
 
-   create(dim) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Create the object
+!  =================
+!  Memory allocation
+!  =================
+
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
    end
 
-   create(lb,ub) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Create the object with specified bounds
+   create(lb,ub) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower bound "lb", upper bound "ub"
    end
 
-   create(dim,dim1,dim2) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Create space for a vector of matrices
+   create(bounds) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower and upper bounds in "bounds"
    end
 
-   create_mat(dim1,dim2) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Allocate the pointer parts
-   end
-
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
    end
 
-   nullify_ptr_part ::: get_from(VEC{MAT_{INTRINSIC}})
-   ! Nullify the pointer parts of a matvec
-   end
-
-   destroy_ptr_part ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Destroy the pointer parts of a matvec
-   end
-
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
-   create_copy(m) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Create a copy of "m"
+!  ==================
+!  Size-of operations
+!  ==================
+
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
    end
 
-   copy(m) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Make a copy of "m"
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
-   lb result(res) ::: pure
-   ! Returns the lower bound of self
-      self :: IN
-      res :: INT
-      res = lbound(self,1)
+!  =======================
+!  Shrinking and expansion
+!  =======================
+
+   flatten(vec_vec)
+   ! flatten the matrices of a vector of matrices into vectors
+   ! meant for singlet contraction_wfs at present
+     vec_vec :: VEC{VEC_{REAL}}@
+     ENSURE(vec_vec.created,"vec_vec not created")
+     n,o,p,dim1 :: INT
+     counter :: INT
+     dim1= self(1).element.dim1
+     do n = .lb,.ub
+       counter=0
+       do o = 1, dim1
+         counter=counter+1
+         vec_vec(n).element(counter)=self(n).element(o,o)
+       end
+       do o = 1, dim1
+         do p = 1,o-1
+           counter=counter+1
+           vec_vec(n).element(counter)=self(n).element(o,p)
+           DIE_IF(self(n).element(o,p)/=self(n).element(p,o),"not singlet")
+         end
+       end
+     end
    end
 
-   ub result(res) ::: pure
-   ! Returns the upper bound of self
-      self :: IN
-      res :: INT
-      res = ubound(self,1)
+   flatten(mat)
+   ! flatten the matrices of a vector of matrices into vectors
+   ! meant for singlet contraction_wfs at present
+     mat :: MAT{REAL}@
+     ENSURE(mat.created,"mat not created")
+     n,o,p,dim1 :: INT
+     counter :: INT
+     dim1= self(1).element.dim1
+     DIE_IF(mat.dim1/=self.dim ,"mat.dim1/=self.dim")
+     DIE_IF(mat.dim2/=dim1*(dim1+1)/2,"mat.dim2/=dim")
+     do n = .lb,.ub
+       counter=0
+       do o = 1, dim1
+         counter=counter+1
+         mat(n,counter)=self(n).element(o,o)
+       end
+       do o = 2, dim1
+         do p = 1,o-1
+           counter=counter+1
+           mat(n,counter)=self(n).element(o,p)
+           DIE_IF(self(n).element(o,p)/=self(n).element(p,o),"not singlet")
+         end
+       end
+     end
    end
 
-   make_gaussian_xyz_matrices(ptr) ::: leaky
-   ! Return representation matrices for the s, p, d, f, and g (l = 0
-   ! ... 4) xyz cartesian gaussian shell components from a single p
-   ! xyz representation matrix "ptr".
-   ! NOTE: nothing in self in pointer assigned, it can be destroyed
-      self :: allocatable, INOUT
-      ptr :: MAT{REAL}
-   
-   ENSURE(ptr.is_square,"ptr matrix is not square")
-   ENSURE(ptr.dim2==3,"wrong 1st dimension, self")
-
-      self.create(0,4)
-      self(0).element.create(1,1)
-      self(1).element.create(3,3)
-      self(2).element.create(6,6)
-      self(3).element.create(10,10)
-      self(4).element.create(15,15)
-
-      ! Now assign the transformation matrices
-      self(0).element = ONE
-      self(1).element = ptr
-      self(2).element = ptr.gaussian_d_xyz_matrix
-      self(3).element = ptr.gaussian_f_xyz_matrix
-      self(4).element = ptr.gaussian_g_xyz_matrix
-
+   expand(dim) ::: leaky
+   ! Expands self to dimension dim.  Contents are retained.
+     self :: allocatable, INOUT
+     dim :: INT, IN
+     ENSURE(dim>=.dim, "dimension given is too small")
+     old :: VEC{MAT_{REAL}}@
+     old_size :: INT
+     mat_dim1,mat_dim2,i :: INT
+     old => self
+     old_size = old.dim
+     mat_dim1 = old(1).element.dim1
+     mat_dim2 = old(1).element.dim2
+     nullify(self)
+     self.create(dim)
+     do i=1,dim
+       self(i).element.create(mat_dim1,mat_dim2)
+     end
+     do i=1,old_size
+       self(i).element=old(i).element
+     end
+     old.destroy
    end
+
+!  =======
+!  Methods
+!  =======
+
+!   make_gaussian_xyz_matrices(ptr) ::: leaky
+!   ! Return representation matrices for the s, p, d, f, and g (l = 0
+!   ! ... 4) xyz cartesian gaussian shell components from a single p
+!   ! xyz representation matrix "ptr".
+!   ! NOTE: nothing in self in pointer assigned, it can be destroyed
+!      self :: allocatable, INOUT
+!      ptr :: MAT{REAL}
+!   
+!   ENSURE(ptr.is_square,"ptr matrix is not square")
+!   ENSURE(ptr.dim2==3,"wrong 1st dimension, self")
+!
+!      self.create(0,4)
+!      self(0).element.create(1,1)
+!      self(1).element.create(3,3)
+!      self(2).element.create(6,6)
+!      self(3).element.create(10,10)
+!      self(4).element.create(15,15)
+!
+!      ! Now assign the transformation matrices
+!      self(0).element = ONE
+!      self(1).element = ptr
+!      self(2).element = ptr.gaussian_d_xyz_matrix
+!      self(3).element = ptr.gaussian_f_xyz_matrix
+!      self(4).element = ptr.gaussian_g_xyz_matrix
+!
+!   end
 
    to_product_of(a,v,transpose_a)
    ! Set "self" to the product of the matrix "a" and vector "v". If present,
@@ -378,56 +441,6 @@ contains
      unorthovec.destroy
    end
 
-   flatten(vec_vec)
-   ! flatten the matrices of a vector of matrices into vectors
-   ! meant for singlet contraction_wfs at present
-     vec_vec :: VEC{VEC_{REAL}}@
-     ENSURE(vec_vec.created,"vec_vec not created")
-     n,o,p,dim1 :: INT
-     counter :: INT
-     dim1= self(1).element.dim1
-     do n = .lb,.ub
-       counter=0
-       do o = 1, dim1
-         counter=counter+1
-         vec_vec(n).element(counter)=self(n).element(o,o)
-       end
-       do o = 1, dim1
-         do p = 1,o-1
-           counter=counter+1
-           vec_vec(n).element(counter)=self(n).element(o,p)
-           DIE_IF(self(n).element(o,p)/=self(n).element(p,o),"not singlet")
-         end
-       end
-     end
-   end
-
-   flatten(mat)
-   ! flatten the matrices of a vector of matrices into vectors
-   ! meant for singlet contraction_wfs at present
-     mat :: MAT{REAL}@
-     ENSURE(mat.created,"mat not created")
-     n,o,p,dim1 :: INT
-     counter :: INT
-     dim1= self(1).element.dim1
-     DIE_IF(mat.dim1/=self.dim ,"mat.dim1/=self.dim")
-     DIE_IF(mat.dim2/=dim1*(dim1+1)/2,"mat.dim2/=dim")
-     do n = .lb,.ub
-       counter=0
-       do o = 1, dim1
-         counter=counter+1
-         mat(n,counter)=self(n).element(o,o)
-       end
-       do o = 2, dim1
-         do p = 1,o-1
-           counter=counter+1
-           mat(n,counter)=self(n).element(o,p)
-           DIE_IF(self(n).element(o,p)/=self(n).element(p,o),"not singlet")
-         end
-       end
-     end
-   end
-
    change_basis_using(mat,use_transpose)
    ! transform the vector of matrices self into 
    ! mat. self or transpose(mat). self if use_transpose is TRUE
@@ -446,29 +459,6 @@ contains
        self(j).element = new(j).element
      end
      new.destroy 
-   end
-
-   expand(dim) ::: leaky
-   ! Expands self to dimension dim.  Contents are retained.
-     self :: allocatable, INOUT
-     dim :: INT, IN
-     ENSURE(dim>=.dim, "dimension given is too small")
-     old :: VEC{MAT_{REAL}}@
-     old_size :: INT
-     mat_dim1,mat_dim2,i :: INT
-     old => self
-     old_size = old.dim
-     mat_dim1 = old(1).element.dim1
-     mat_dim2 = old(1).element.dim2
-     nullify(self)
-     self.create(dim)
-     do i=1,dim
-       self(i).element.create(mat_dim1,mat_dim2)
-     end
-     do i=1,old_size
-       self(i).element=old(i).element
-     end
-     old.destroy
    end
 
 end

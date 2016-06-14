@@ -67,6 +67,18 @@ contains
 
    end
 
+!  ==================
+!  Size-of operations
+!  ==================
+
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
+   end
+
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
+   end
+
 !  ======
 !  Sizing
 !  ======

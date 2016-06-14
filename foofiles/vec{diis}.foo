@@ -48,21 +48,16 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
+!  ==================
+!  Size-of operations
+!  ==================
 
-!  ============
-!  Copy methods
-!  ============
-
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
    end
 
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
-   end
-
-   copy(object) ::: get_from(VEC{OBJECT}) 
-   ! Copy "object" multiple times.
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 !  ===========
@@ -73,16 +68,16 @@ contains
    ! Set default values
    end
 
-   set_defaults(diis)
-   ! Set default values from a "diis" object
-   ! NOTE: pointer parts are assigned, so nullify
-   ! pointer parts of "diis" when destroying "self"
-      self :: INOUT
-      diis :: DIIS, IN
-
-      self(:) = diis
-
-   end
+!   set_defaults(diis)
+!   ! Set default values from a "diis" object
+!   ! NOTE: pointer parts are assigned, so nullify
+!   ! pointer parts of "diis" when destroying "self"
+!      self :: INOUT
+!      diis :: DIIS, IN
+!
+!      self = diis
+!
+!   end
 
    set_use_errors(val)
    ! Set whether to use error vectors

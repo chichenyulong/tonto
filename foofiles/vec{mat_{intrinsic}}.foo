@@ -28,137 +28,44 @@ virtual module VEC{MAT_{INTRINSIC}}
 
 contains
 
-   create(dim) ::: leaky
-   ! Create the object
-      self :: allocatable, INOUT
-      dim :: INT
+!  =================
+!  Memory allocation
+!  =================
 
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(dim),STAT=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
    end
 
-   create(lb,ub) ::: leaky
-   ! Create the object with specified bounds
-      self :: allocatable, INOUT
-      lb,ub :: INT
-
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(lb:ub),STAT=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      self(lb:ub).nullify_ptr_part
-
+   create(lb,ub) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower bound "lb", upper bound "ub"
    end
 
-   create(dim,dim1,dim2) ::: leaky
-   ! Create space for a vector of matrices
-      self :: allocatable, INOUT
-      dim,dim1,dim2 :: INT
-
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(dim),STAT=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-      .create_mat(dim1,dim2)
-
+   create(bounds) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower and upper bounds in "bounds"
    end
 
-   create_mat(dim1,dim2) ::: leaky
-   ! Allocate the pointer parts
-      dim1,dim2 :: INT
-      i :: INT
-      do i = 1,.dim
-         self(i).element.create(dim1,dim2)
-      end
-   end
-
-   destroy ::: leaky
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
-      self :: allocatable, INOUT
-
-      status :: INT
-
-      if (.destroyed) return
-
-      .destroy_ptr_part
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of a matvec
-      i,lb,ub :: INT
-      lb = lbound(self,dim=1)
-      ub = ubound(self,dim=1)
-      do i = lb,ub
-         nullify(self(i).element)
-      end
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of a matvec
-      self :: allocatable, INOUT
-      i,lb,ub :: INT
-      lb = lbound(self,dim=1)
-      ub = ubound(self,dim=1)
-      do i = lb,ub
-         self(i).element.destroy
-      end
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
-   create_copy(m) ::: leaky
-   ! Create a copy of "m"
-      self :: allocatable, INOUT
-      m :: VEC{MAT_{INTRINSIC}}
-      .create(m.dim)
-      .copy(m)
+!  ==================
+!  Size-of operations
+!  ==================
+
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
    end
 
-   copy(m) ::: leaky
-   ! Make a copy of "m"
-      m :: VEC{MAT_{INTRINSIC}}
-      i :: INT
-      .nullify_ptr_part
-      do i = 1,m.dim
-         if (m(i).element.destroyed) cycle
-         self(i).element.create_copy(m(i).element)
-      end
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 end

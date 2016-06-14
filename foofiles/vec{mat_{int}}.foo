@@ -28,40 +28,44 @@ module VEC{MAT_{INT}}
 
 contains
 
-   create(dim) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Create the object
+!  =================
+!  Memory allocation
+!  =================
+
+   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate vector
    end
 
-   create(lb,ub) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Create the object with specified bounds
+   create(lb,ub) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower bound "lb", upper bound "ub"
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   create(bounds) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower and upper bounds in "bounds"
+   end
+
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
    end
 
-   nullify_ptr_part ::: get_from(VEC{MAT_{INT}})
-   ! Nullify the pointer parts of a matvec
-   end
-
-   destroy_ptr_part ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Destroy the pointer parts of a matvec
-   end
-
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
-   create_copy(m) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Create a copy of "m"
+!  ==================
+!  Size-of operations
+!  ==================
+
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
    end
 
-   copy(m) ::: get_from(VEC{MAT_{INTRINSIC}}), leaky
-   ! Make a copy of "m"
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 end

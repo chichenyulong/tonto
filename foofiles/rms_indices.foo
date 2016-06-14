@@ -52,12 +52,16 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
+!  ===
+!  Set
+!  ===
 
-   set_indices(nx,ny,nz,px,py,pz) ::: leaky
-   ! Make the arrays which tell where the powers are zero, and where the product
-   ! of the first two factors is repeated, and where they are not. These arrays
-   ! are used to reduce work in the multiplication of the 2d integrals to form
-   ! the full ERI's.
+   set_indices(nx,ny,nz,px,py,pz) ::: leaky, PURE
+   ! Make the arrays which tell where the powers are zero, and where
+   ! the product of the first two factors is repeated, and where they
+   ! are not. These arrays are used to reduce work in the
+   ! multiplication of the 2d integrals to form the full ERI's.
+      self :: INOUT
       nx,ny,nz :: VEC{INT}, IN
       px,py,pz :: VEC{INT}, IN
 
@@ -68,7 +72,9 @@ contains
       listn,lista :: VEC{STR}@
 
       n = nx.dim
-      .xyz0.create(n)               ! Set where the arrays are 0 (actually 1)
+
+      ! Set where the arrays are 0 (actually 1)
+      .xyz0.create(n)               
       .xy0.create(n)  
       .xz0.create(n)
       .yz0.create(n)
@@ -93,19 +99,19 @@ contains
       ia   = 0
 
       do i = 1,n
-        if      (nx(i)==1 AND ny(i)==1 AND nz(i)==1) then; ixyz = ixyz + 1; .xyz0(ixyz) = i
-        else if (ny(i)==1 AND nz(i)==1) then;              iyz  = iyz  + 1; .yz0(iyz) = i
-        else if (nx(i)==1 AND nz(i)==1) then;              ixz  = ixz  + 1; .xz0(ixz) = i
-        else if (nx(i)==1 AND ny(i)==1) then;              ixy  = ixy  + 1; .xy0(ixy) = i
-        else if (nz(i)==1) then;                           iz   = iz   + 1;  .z0(iz)  = i
-        else if (ny(i)==1) then;                           iy   = iy   + 1;  .y0(iy)  = i
-        else if (nx(i)==1) then;                           ix   = ix   + 1;  .x0(ix)  = i
-        else;                                              in   = in   + 1;  .n0(in)  = i
-                listn(in) = trim(nx(i).to_str)//" "//trim(ny(i).to_str)
-        end
-        if      (nx(i)==1 OR  ny(i)==1 OR  nz(i)==1) then; ia   = ia   + 1;  .a0(ia) = i
-                lista(ia) = trim(nx(i).to_str)//" "//trim(ny(i).to_str)
-        end
+         if      (nx(i)==1 AND ny(i)==1 AND nz(i)==1) then; ixyz = ixyz + 1; .xyz0(ixyz) = i
+         else if (ny(i)==1 AND nz(i)==1) then;              iyz  = iyz  + 1; .yz0(iyz) = i
+         else if (nx(i)==1 AND nz(i)==1) then;              ixz  = ixz  + 1; .xz0(ixz) = i
+         else if (nx(i)==1 AND ny(i)==1) then;              ixy  = ixy  + 1; .xy0(ixy) = i
+         else if (nz(i)==1) then;                           iz   = iz   + 1;  .z0(iz)  = i
+         else if (ny(i)==1) then;                           iy   = iy   + 1;  .y0(iy)  = i
+         else if (nx(i)==1) then;                           ix   = ix   + 1;  .x0(ix)  = i
+         else;                                              in   = in   + 1;  .n0(in)  = i
+                 listn(in) = trim(nx(i).to_str)//" "//trim(ny(i).to_str)
+         end
+         if      (nx(i)==1 OR  ny(i)==1 OR  nz(i)==1) then; ia   = ia   + 1;  .a0(ia) = i
+                 lista(ia) = trim(nx(i).to_str)//" "//trim(ny(i).to_str)
+         end
       end
 
       .xyz0.shrink(ixyz)

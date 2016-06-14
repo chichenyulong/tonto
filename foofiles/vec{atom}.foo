@@ -125,54 +125,16 @@ contains
       end
    end
 
-!  ====
-!  Copy
-!  ====
+!  ==================
+!  Size-of operations
+!  ==================
 
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
    end
 
-   create_copy(vec,list) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a copy of "vec" for the elements in "list".
-   end
-
-   copy(vec) ::: leaky
-   ! Copy "vec".
-      vec :: VEC{ATOM}
-
-   ENSURE(.dim==vec.dim,"vec size does not match")
-
-      a :: INT
-
-      ! Copy
-      do a = 1,vec.dim
-         self(a).copy(vec(a))
-      end
-
-      ! Update unique atoms
-      .update
-
-   end
-
-   copy(vec,list) ::: leaky
-   ! Copy "vec" for the elements in "list".
-      vec  :: VEC{ATOM}, IN
-      list :: VEC{INT}, IN
-
-   ENSURE(.dim==list.dim,"wrong size, list")
-
-      a,b :: INT
-
-      ! Copy
-      do a = 1,list.dim
-         b = list(a)
-         self(a).copy(vec(b))
-      end
-
-      ! Update unique atoms
-      .update
-
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 !  ======================
@@ -200,50 +162,6 @@ contains
    prune_element(k) ::: get_from(VEC{OBJECT}, leaky, PURE
    ! Removes the single element at position "k" from "self".
    ! Elements after that position are moved downward.
-   end
-
-! Old
-
-   shrink(dim)
-   ! Shrink the atomvec to dimension "dim", retaining contents.
-      self :: allocatable, INOUT
-      dim :: INT, IN
-
-   ENSURE(.created,"no self array")
-   ENSURE(dim<=.dim,"dim too large")
-
-      old :: VEC{ATOM}@
-      n :: INT
-
-      if (dim==.dim) return
-
-      old => self
-
-      self.create(dim)
-      do n = 1,dim
-         self(n).copy(old(n))
-      end
-
-      old.nullify_basis_part
-      old.destroy
-
-   end
-
-   expand(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Expand the vector "self" to "dim". New slots are left undefined.
-   end
-
-   append(v) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(value) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
-   end
-
-   prune_element(k) ::: get_from(VEC{OBJECT}), leaky
-   ! Removes the single element at position "k" from the vector.
-   ! The order of the elements is unchanged.
    end
 
 !  ===
@@ -1415,103 +1333,65 @@ contains
 
    end
 
-!  =======================
-!  List-based I/O Routines
-!  =======================
-
-   read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
-   ! Read in and process list-based keywords from "stdin". List-based keywords
-   ! are those that are intended to apply to each individual element of the list
-   ! through a list of "keys" stored in the associated list-element type module.
-   ! NOTE: this routine will create the list, if required.
-   end
-
-   process_list_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
-   ! Process a list-type "keyword", common to all list-type objects.
-   end
-
-   read_data ::: get_from(VEC{OBJECT}), leaky
-   ! Repeatedly process the "keys" to read in the data list.
-   ! Opening and closing braces are needed.
-   end
-
-   read_data_sans_braces ::: get_from(VEC{OBJECT}), leaky
-   ! Repeatedly process the "keys" to read in the data list.
-   ! Opening and closing braces are not needed.
-   end
-
-   data_length result (length) ::: get_from(VEC{OBJECT})
-   ! Read ahead in stdin to get the "length" of the data list, i.e. the number
-   ! of data items in the list. The data must begin with the first data item,
-   ! *not* a "{" symbol.  The order of data items comprising the list is given
-   ! by keys defined in the associated list-element type module. The data list
-   ! must be terminated by a "}" symbol.
-   end
-
-   read_altered_data ::: get_from(VEC{OBJECT}), leaky
-   ! Read in a sublist of the complete list, and alter the data for that
-   ! sublist.  The order of the data items in the sublist is given by the "keys"
-   ! defined in the associated list-element type module.
-   end
-
-   read_append_data ::: get_from(VEC{OBJECT}), leaky
-   ! Read in a set of data to append to an existing set.
-   end
-
-   process_keys ::: get_from(VEC{OBJECT}), leaky
-   ! Process the "keys" on each element of the list.
-   end
-
-   process_keys_once ::: get_from(VEC{OBJECT})
-   ! Process the "keys" just once on an anonymous object. This is useful if the
-   ! "keys" set global variables in the list module (e.g. the default order of
-   ! lists *within* the list data) as opposed to being keys pertaining to each
-   ! element of the list.
-   end
-
-   read_keys ::: get_from(VEC{OBJECT}), leaky
-   ! Read a new set of keys
-   end
-
 !  ===========================
 !  Non-list based I/O routines
 !  ===========================
 
    read_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
-   ! Read in and process normal (non list-type) keywords from "stdin".
+   ! Read and process normal (non list-type) keywords from "stdin";
+   ! "self" allocatable here.
    end
 
    process_keyword(keyword) ::: leaky
    ! Process a normal (non list-type) "keyword".
-      self :: allocatable, INOUT
-      keyword :: STR
+      keyword :: STR, IN
 
       word :: STR
 
       word = keyword
       word.to_lower_case
+
       select case (word)
-       case("}") ! do nothing.
-       case("dump                          "); .dump("atoms")
-       case("find_n_terminal_atoms         "); .find_N_terminal_atoms
-       case("find_protein_backbone         "); .find_protein_backbone
-       case("put                           "); .put
-       case("put_bond_angle_table          "); .put_bond_angle_table
-       case("put_bond_length_table         "); .put_bond_length_table
-       case("put_coordinates               "); .put_coordinates
-       case("put_coordinates_and_charges   "); .put_coordinates_and_charges
-       case("put_invariom_labels           "); .put_invariom_labels
-       case("put_smiles_invariom_labels    "); .put_smiles_invariom_labels
-       case("put_mm_info                   "); .put_mm_info
-       case("put_torsion_angle_table       "); .put_torsion_angle_table
-       case("put_protein_sequence          "); .put_protein_sequence
-       case("put_restraint_atoms           "); .put_restraint_atoms
-       case("read_cif                      "); .read_CIF
-       case("redirect                      "); TEXTFILE:redirect
-       case("revert                        "); TEXTFILE:revert
-       case("set_covalent_radii_ccdc       "); ATOM:set_covalent_radii_ccdc
-       case("use_interpolators=            "); .read_use_interpolators
-       case default;               UNKNOWN(word)
+         case("}") ! do nothing.
+         case("redirect                 "); TEXTFILE:redirect
+         case("revert                   "); TEXTFILE:revert
+         case default;     UNKNOWN(word)
+      end
+
+   end
+
+   process_keyword(keyword) ::: leaky
+   ! Process a normal (non list-type) "keyword".
+      self :: allocatable, INOUT
+      keyword :: STR, IN
+
+      word :: STR
+
+      word = keyword
+      word.to_lower_case
+
+      select case (word)
+      case("}") ! do nothing.
+      case("dump                          "); .dump("atoms")
+      case("find_n_terminal_atoms         "); .find_N_terminal_atoms
+      case("find_protein_backbone         "); .find_protein_backbone
+      case("put                           "); .put
+      case("put_bond_angle_table          "); .put_bond_angle_table
+      case("put_bond_length_table         "); .put_bond_length_table
+      case("put_coordinates               "); .put_coordinates
+      case("put_coordinates_and_charges   "); .put_coordinates_and_charges
+      case("put_invariom_labels           "); .put_invariom_labels
+      case("put_smiles_invariom_labels    "); .put_smiles_invariom_labels
+      case("put_mm_info                   "); .put_mm_info
+      case("put_torsion_angle_table       "); .put_torsion_angle_table
+      case("put_protein_sequence          "); .put_protein_sequence
+      case("put_restraint_atoms           "); .put_restraint_atoms
+      case("read_cif                      "); .read_CIF
+      case("redirect                      "); TEXTFILE:redirect
+      case("revert                        "); TEXTFILE:revert
+      case("set_covalent_radii_ccdc       "); ATOM:set_covalent_radii_ccdc
+      case("use_interpolators=            "); .read_use_interpolators
+      case default;               UNKNOWN(word)
       end
 
    end
@@ -2113,6 +1993,242 @@ contains
       if (.destroyed) return
 
       .set_use_interpolators(use_interp)
+
+   end
+
+!  =======================
+!  List-based I/O Routines
+!  =======================
+
+   read_list_keywords ::: recursive, leaky
+   ! Read and process list-data keywords from "stdin". List-based
+   ! keywords are those that apply to each individual element of the
+   ! list through a list of "keys" stored in the host module.
+   ! NOTE: this routine will create the list, if required.
+   ! NOTE: "self" allocatable here.
+      self :: allocatable, INOUT
+
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
+
+      word :: STR
+
+      ! Read the open brace
+      stdin.read(word)
+
+      ! Echo the brace if requested
+      if (tonto.keyword_echo) then
+         stdout.flush
+         stdout.text("keyword found --> " // trim(word))
+      end
+
+      do ! Loop over input list-type keywords
+
+         ! Read a keyword
+         stdin.read(word)
+        
+         ! Unexpected end of file?
+         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+        
+         ! Lower case the word
+         word.to_lower_case
+        
+         ! Is there an equals next? Then join it on
+         if (NOT stdin.buffer_exhausted) then 
+         if (stdin.next_item=="=") then 
+            stdin.skip_next_item
+            word = trim(word) // "="
+         end
+         end
+        
+         ! Echo the keyword if requested
+         if (tonto.keyword_echo) then
+            stdout.flush
+            stdout.text("keyword found --> " // trim(word))
+         end
+        
+         ! Exit if it is a close brace
+         if (word=="}") exit
+        
+         ! Process the list keyword
+         .process_list_keyword(word)
+
+      end
+
+   end
+
+   process_list_keyword(keyword) ::: leaky
+   ! Process a list-data "keyword", common to all list-type objects.
+   ! "self" is allocatable here.
+      self :: allocatable, INOUT
+      keyword :: STR, IN
+
+      X :: OBJECT
+      word :: STR
+
+      word = keyword
+      word.to_lower_case
+
+      select case (word)
+      case("data=            ");  .read_data
+      case("destroy          ");  .destroy         ! Clean
+      case("do               ");  .read_keywords   ! Non-list keywords
+      case("keys=            ");  .read_keys       ! Define keys to apply to "self"
+      case("process_keys     ");  .process_keys    ! Process keys on list-data "self"
+      case("process_keys_once"); X.process_keys    ! Process keys once on default OBJECT
+      case("redirect         "); TEXTFILE:redirect ! New inout file
+      case("revert           "); TEXTFILE:revert   ! Back to old input
+      case default 
+         ! Backtrack & assume data= sans braces
+         stdin.move_to_previous_item
+         .read_data_sans_braces
+      end
+
+   end
+
+   process_keys ::: leaky
+   ! Process the keywords in the "keys" OBJECT module variable on each
+   ! element in the list "self".  "self" is allocatable here.
+      self :: allocatable, INOUT
+
+      tmp :: OBJECT
+      s :: INT
+
+      if (.created) then
+
+         ! Process keys on each element
+         do s = 1,.dim
+            self(s).process_keys
+         end
+
+      else 
+
+         ! Process keys once on an anonymous element
+         tmp.process_keys
+
+      end
+
+   end
+
+   read_keys ::: leaky
+   ! Read a new set of keys
+      self :: allocatable, IN
+
+      tmp :: OBJECT@
+
+      ! Bind routine
+      if (.created) then
+      end
+
+      nullify(tmp)
+      tmp.read_keys
+
+   end
+
+   set_keys(the_keys)
+   ! This is for setting the "keys" externally.
+      self :: allocatable, IN
+      the_keys :: VEC{STR}
+
+      tmp :: OBJECT@
+
+      ! Bind routine
+      if (.created) then
+      end
+
+      tmp.set_keys(the_keys)
+
+   end
+
+   read_data ::: leaky
+   ! Repeatedly process the keywords in the "keys" module variable
+   ! on each element of the lista-data "self". Opening and closing
+   ! braces are needed.
+      self :: allocatable, INOUT
+
+      word :: STR
+
+      ! Ppen brace
+      stdin.read(word)
+      ENSURE(word=="{","expecting open bracket symbol, {")
+
+      ! Read data (process keys)
+      .read_data_sans_braces
+
+      ! Close brace
+      stdin.read(word)
+      ENSURE(word=="}","expecting close bracket symbol, }")
+
+   end
+
+   read_data_sans_braces ::: leaky
+   ! Repeatedly process the items in the "keys" OBJECT module variable
+   ! to read in the list-data.  Opening and closing braces *not*
+   ! needed.  "self" is allocatable here.
+      self :: allocatable, INOUT
+
+      length :: INT
+
+      ! Get the vector length
+      length = ::data_length()
+
+      if (.created) then
+         ! If created, is dimension the same
+         ENSURE(length==.dim,"Mismatching new and old data lists")
+      else
+         ! If not created, create it
+         .create(length)
+      end
+
+      ! Process keys
+      .process_keys
+
+   end
+
+   data_length result (length) ::: selfless, private
+   ! Read ahead in "stdin" to get the "length" of the list-data.  The
+   ! data must begin with the first data item, *not* a "{" symbol but
+   ! must be terminated by a "}" symbol.  The order of data items
+   ! comprising the list-data is given by the "keys" OBJECT module
+   ! variable.  The data list must be terminated by a "}".
+      length :: INT
+
+   ENSURE(stdin.next_item/="}","empty data list!")
+
+      W :: OBJECT@
+      word :: STR
+      line,item :: INT
+
+      ! Initialize result
+      length = 0
+
+      ! Read first item, initialize line no & item no.
+      stdin.read(word)
+      line = stdin.line_number
+      item = stdin.previous_line_item
+
+      ! Get the length
+      do
+
+         ! Move just before
+         stdin.move_to_previous_item
+
+         ! Read a scalar & increment
+         W.create
+         W.process_keys
+         W.destroy
+         length = length + 1
+
+         ! Closing-brace there?
+         stdin.read(word)
+         word.to_lower_case
+         if (word=="}") exit
+         if (stdin.at_end_of_file) exit
+
+      end
+
+      ! Go back to start
+      stdin.move_to_line(line)
+      stdin.move_to_line_item(item)
 
    end
 

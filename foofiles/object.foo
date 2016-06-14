@@ -107,153 +107,6 @@ contains
 
    end
 
-! Old
-
-   create ::: leaky, PURE
-   ! Create an object
-      self :: allocatable, INOUT
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-#ifdef USE_PRECONDITIONS
-      allocate(self,stat=status)
-      ENSURE(status==0,"error in allocating memory")
-#else
-      allocate(self)
-#endif
-
-      .:nullify_ptr_part
-      .:set_defaults
-
-   end
-
-   create ::: leaky, PURE
-   ! Create an object. This version does not set defaults.
-      self :: allocatable, INOUT
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-#ifdef USE_PRECONDITIONS
-      allocate(self,stat=status)
-      ENSURE(status==0,"error in allocating memory")
-#else
-      allocate(self)
-#endif
-
-      .:nullify_ptr_part
-
-   end
-
-   create ::: leaky, PURE
-   ! Create an object. This version does not nullify point parts.
-      self :: allocatable, INOUT
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-#ifdef USE_PRECONDITIONS
-      allocate(self,stat=status)
-      ENSURE(status==0,"error in allocating memory")
-#else
-      allocate(self)
-#endif
-
-      .:set_defaults
-
-   end
-
-   create ::: leaky, PURE
-   ! Create an object. This does not nullify point parts or set
-   ! defaults.
-      self :: allocatable, INOUT
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-#ifdef USE_PRECONDITIONS
-      allocate(self,stat=status)
-      ENSURE(status==0,"error in allocating memory")
-#else
-      allocate(self)
-#endif
-
-   end
-
-   create_copy(object) ::: leaky
-   ! Create a copy of object
-      self :: allocatable, INOUT
-      object :: OBJECT, IN
-
-      .:create
-      .:copy(object)
-
-   end
-
-   destroy ::: leaky, PURE
-   ! Deallocate "self"
-      self :: allocatable, INOUT
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-      if (.:destroyed) return
-
-      .:destroy_ptr_part
-
-#ifdef USE_PRECONDITIONS
-      deallocate(self,stat=status)
-      ENSURE(status==0,"error in deallocating memory")
-#else
-      deallocate(self)
-#endif
-
-   end
-
-   destroy ::: leaky, PURE
-   ! Deallocate "self". This version does not destroy ptr parts.
-   ! Deallocate "self". This version does not destroy ptr parts.
-      self :: allocatable, INOUT
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-      if (.:destroyed) return
-
-#ifdef USE_PRECONDITIONS
-      deallocate(self,stat=status)
-      ENSURE(status==0,"error in deallocating memory")
-#else
-      deallocate(self)
-#endif
-
-   end
-
-   created result (res) ::: pure
-   ! Returns true if self has been created
-      self :: allocatable, INOUT
-      res :: BIN
-
-      res = associated(self)
-
-   end
-
-   destroyed result (res) ::: pure
-   ! Returns true if self has *not* been created
-      self :: allocatable, INOUT
-      res :: BIN
-
-      res = NOT associated(self)
-
-   end
-
 !  ==========
 !  Saved self
 !  ==========
@@ -449,8 +302,13 @@ contains
 !  Input key related routines
 !  ==========================
 
-   read_keys ::: selfless, leaky
+   read_keys ::: leaky
    ! Read the "keys" module variable.
+      self :: allocatable, IN
+
+      ! Bind routine
+      if (.created) then
+      end
 
       keys.destroy
       stdin.read_ptr(keys)
@@ -529,97 +387,6 @@ contains
       end
 
       keys = the_keys
-
-   end
-
-! Old
-
-   read_keys ::: leaky
-   ! Read the "keys".
-      self :: allocatable, INOUT
-
-      ! Bind the routine
-      if (.created) then
-      end
-
-      keys.destroy
-      stdin.read_ptr(keys)
-
-   end
-
-   process_keys ::: leaky
-   ! Process each of the words in the "keys" list.
-   ENSURE(keys.created,"no keys")
-
-      k,l,n_key :: INT
-      keyword :: STR
-      keyword_echo :: BIN
-      internal :: VEC{STR}@
-
-      ! The number of keys
-      n_key = keys.dim
-
-      ! Keyword counter
-      k = 0
-
-      do ! Loop over keywords in "keys"
-
-         ! Get the next keyword
-         k = k + 1
-         keyword = keys(k)
-
-         ! Exit if close brace
-         if (keyword=="}") exit
-
-         if (keyword=="{") then ! embedded keyword
-
-            ! Turn off keyword echo
-            keyword_echo = tonto.keyword_echo
-            tonto.keyword_echo = FALSE
-
-            ! Find closing brace of embedded section
-            l = keys(k:).index_of_matching_bracket("{")
-            DIE_IF(l==0,"no matching closing brace in embedded keyword")
-
-            ! Set internal array
-            internal => keys(k:k+l-1)
-
-            ! Process internalized keywords
-            stdin.redirect(internal)
-            .:read_keywords
-            stdin.revert
-
-            ! Reset key counter
-            k = k + l - 1
-
-            ! Reset keyword echo
-            tonto.keyword_echo = keyword_echo
-
-         else ! plain-old keyword
-
-            ! Process plain-old keyword
-            .:process_keyword(keyword)
-
-         end
-
-         ! Exit if no keys left
-         if (k==n_key) exit
-
-      end
-
-   end
-
-   set_keys(the_keys) ::: leaky
-   ! This is for setting the "keys" externally.
-      self :: allocatable, INOUT
-      the_keys :: VEC{STR}, IN
-
-      ! Bind the routine
-      if (.created) then
-      end
-
-      keys.destroy
-      keys.create_copy(the_keys)
 
    end
 

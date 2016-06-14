@@ -19,7 +19,6 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: vec{reflection}.foo 4381 2014-05-21 07:57:40Z dylan_ $
 !---------------------------------------------------------------------------
 
 module VEC{REFLECTION}
@@ -48,34 +47,16 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
+!  ==================
+!  Size-of operations
+!  ==================
 
-   create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Create space for object. This version does not nullify ptr parts.
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
    end
 
-   destroy ::: get_from(OBJECT), leaky, PURE
-   ! Deallocate "self". This version does not destroy ptr parts.
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-!  ====
-!  Copy
-!  ====
-
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT})
-   ! Copy "vec".
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 !  =======================
@@ -98,24 +79,6 @@ contains
 
    append(value) ::: get_from(VEC{OBJECT}, leaky, PURE
    ! Appends the single scalar "value" onto the end of "self".
-   end
-
-! Old
-
-   shrink(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Shrink self to dimension dim.  Contents are retained.
-   end
-
-   expand(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Expand the vector "self" to "dim". New slots are left undefined.
-   end
-
-   append(v) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(value) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
    end
 
 !  ============
@@ -336,7 +299,6 @@ contains
 
    end
 
-
 !  ================
 !  Scaling routines
 !  ================
@@ -393,10 +355,9 @@ contains
 
    end
 
-
-!  ================
-!  Enquiry Routines
-!  ================
+!  ===============
+!  Inquiry methods
+!  ===============
 
    n_refl result (res) ::: pure
    ! The number of reflections
@@ -598,7 +559,7 @@ contains
    end
 
 !  ==================
-!  Enquiry statistics
+!  Inquiry statistics
 !  ==================
 
    simulate_new_F_exp
@@ -1323,70 +1284,13 @@ contains
 
    end
 
-!  =======================
-!  List-based I/O Routines
-!  =======================
-
-   read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
-   ! Read in and process list-based keywords from "stdin". List-based keywords
-   ! are those that are intended to apply to each individual element of the list
-   ! through a list of "keys" stored in the associated list-element type module.
-   ! NOTE: this routine will create the list, if required.
-   end
-
-   process_list_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
-   ! Process a list-type "keyword", common to all list-type objects.
-   end
-
-   read_data ::: get_from(VEC{OBJECT}), leaky
-   ! Repeatedly process the "keys" to read in the data list.
-   ! Opening and closing braces are needed.
-   end
-
-   read_data_sans_braces ::: get_from(VEC{OBJECT}), leaky
-   ! Repeatedly process the "keys" to read in the data list.
-   ! Opening and closing braces are not needed.
-   end
-
-   data_length result (length) ::: get_from(VEC{OBJECT})
-   ! Read ahead in stdin to get the "length" of the data list, i.e. the number
-   ! of data items in the list. The data must begin with the first data item,
-   ! *not* a "{" symbol.  The order of data items comprising the list is given
-   ! by keys defined in the associated list-element type module. The data list
-   ! must be terminated by a "}" symbol.
-   end
-
-   read_altered_data ::: get_from(VEC{OBJECT}), leaky
-   ! Read in a sublist of the complete list, and alter the data for that
-   ! sublist.  The order of the data items in the sublist is given by the "keys"
-   ! defined in the associated list-element type module.
-   end
-
-   read_append_data ::: get_from(VEC{OBJECT}), leaky
-   ! Read in a set of data to append to an existing set.
-   end
-
-   process_keys ::: get_from(VEC{OBJECT}), leaky
-   ! Process the "keys" on each element of the list.
-   end
-
-   process_keys_once ::: get_from(VEC{OBJECT})
-   ! Process the "keys" just once on an anonymous object. This is useful if the
-   ! "keys" set global variables in the list module (e.g. the default order of
-   ! lists *within* the list data) as opposed to being keys pertaining to each
-   ! element of the list.
-   end
-
-   read_keys ::: get_from(VEC{OBJECT}), leaky
-   ! Read a new set of keys
-   end
-
-!  ===========================
-!  Non-list based I/O routines
-!  ===========================
+!  ====================
+!  Non-list based input
+!  ====================
 
    read_keywords ::: get_from(VEC{OBJECT}), leaky
-   ! Read in and process normal (non list-type) keywords from "stdin".
+   ! Read and process normal (non list-type) keywords from "stdin";
+   ! "self" allocatable here.
    end
 
    process_keyword(keyword) ::: leaky
@@ -1400,22 +1304,72 @@ contains
       word.to_lower_case
 
       select case (word)
-         case("}") ! do nothing.
-         case("add_random_error         "); .add_random_error
-         case("put                      "); .put
-         case("put_f_exp_data           "); .put_F_exp_data
-         case("put_f_pred_data          "); .put_F_pred_data
-         case("put_f_statistics         "); .put_F_statistics
-         case("put_i_exp_data           "); .put_I_exp_data
-         case("put_i_statistics         "); .put_I_statistics
-         case("put_intensity_data       "); .put_intensity_data
-         case("put_structure_factor_data"); .put_structure_factor_data
-         case("redirect                 "); TEXTFILE:redirect
-         case("revert                   "); TEXTFILE:revert
-         case("simulate_new_f_exp       "); .simulate_new_F_exp
-         case default;     UNKNOWN(word)
+      case("}") ! do nothing.
+      case("add_random_error         "); .add_random_error
+      case("put                      "); .put
+      case("put_f_exp_data           "); .put_F_exp_data
+      case("put_f_pred_data          "); .put_F_pred_data
+      case("put_f_statistics         "); .put_F_statistics
+      case("put_i_exp_data           "); .put_I_exp_data
+      case("put_i_statistics         "); .put_I_statistics
+      case("put_intensity_data       "); .put_intensity_data
+      case("put_structure_factor_data"); .put_structure_factor_data
+      case("redirect                 "); TEXTFILE:redirect
+      case("revert                   "); TEXTFILE:revert
+      case("simulate_new_f_exp       "); .simulate_new_F_exp
+      case default;     UNKNOWN(word)
       end
 
+   end
+
+!  ================
+!  List-based input
+!  ================
+
+   read_list_keywords ::: get_from(VEC{OBJECT}), recursive, leaky
+   ! Read and process list-data keywords from "stdin". List-based
+   ! keywords are those that apply to each individual element of the
+   ! list through a list of "keys" stored in the host module.
+   ! NOTE: this routine will create the list, if required.
+   ! NOTE: "self" allocatable here.
+   end
+
+   process_list_keyword(keyword) ::: get_from(VEC{OBJECT}), leaky
+   ! Process a list-data "keyword", common to all list-type objects.
+   ! "self" is allocatable here.
+   end
+
+   process_keys ::: get_from(VEC{OBJECT}), leaky
+   ! Process the keywords in the "keys" OBJECT module variable on each
+   ! element in the list "self".  "self" is allocatable here.
+   end
+
+   read_keys ::: get_from(VEC{OBJECT}), leaky
+   ! Read a new set of keys
+   end
+
+   set_keys(the_keys) ::: get_from(VEC{OBJECT}), leaky
+   ! This is for setting the "keys" externally.
+   end
+
+   read_data ::: get_from(VEC{OBJECT}), leaky
+   ! Repeatedly process the keywords in the "keys" module variable
+   ! on each element of the lista-data "self". Opening and closing
+   ! braces are needed.
+   end
+
+   read_data_sans_braces ::: get_from(VEC{OBJECT}), leaky
+   ! Repeatedly process the items in the "keys" OBJECT module variable
+   ! to read in the list-data.  Opening and closing braces *not*
+   ! needed.  "self" is allocatable here.
+   end
+
+   data_length result (length) ::: get_from(VEC{OBJECT}), selfless, private
+   ! Read ahead in "stdin" to get the "length" of the list-data.  The
+   ! data must begin with the first data item, *not* a "{" symbol but
+   ! must be terminated by a "}" symbol.  The order of data items
+   ! comprising the list-data is given by the "keys" OBJECT module
+   ! variable.  The data list must be terminated by a "}".
    end
 
 !  ========

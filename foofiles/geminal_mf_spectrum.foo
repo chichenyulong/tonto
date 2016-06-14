@@ -1126,11 +1126,11 @@ contains
 !  ====================
 
    read_keys ::: get_from(OBJECT), leaky
-   ! Read the "keys".
+   ! Read the "keys" module variable.
    end
 
    process_keys ::: get_from(OBJECT), leaky
-   ! Process each of the words in the "keys" list.
+   ! Process each keyword in the "keys" module variable.
    end
 
 !  ===============

@@ -32,37 +32,28 @@ module MAT{RMS_INDICES}
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
-   create(dim1,dim2) ::: get_from(MAT{OBJECT}), leaky
-   ! Create space for object. This version does not set defaults.
+   create(dim1,dim2) ::: get_from(MAT{OBJECT}), leaky, PURE
+   ! Allocate a matrix with the given dimensions
    end
 
-   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{OBJECT}), leaky
-   ! Create a matrix with the given dimensions
-   ! This version does not set defaults.
+   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{OBJECT}), leaky, PURE
+   ! Allocate a matrix with the given bounds
    end
 
-   destroy ::: get_from(MAT{OBJECT}), leaky
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part ::: get_from(MAT{OBJECT})
-   ! Nullify the pointer parts of self
-   end
-
-   destroy_ptr_part ::: get_from(MAT{OBJECT}), leaky
-   ! Destroy the pointer parts of self
+   ! Returns true if self has *not* been allocated
    end
 
 ! ============================

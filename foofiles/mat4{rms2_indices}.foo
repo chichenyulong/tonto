@@ -32,17 +32,16 @@ module MAT4{RMS2_INDICES}
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
    create(dim1,dim2,dim3,dim4) ::: get_from(MAT4{OBJECT}), leaky
-   ! Create the object. This version does not set defaults.
+   ! Allocate "self" with the given dimensions
    end
 
    create(lb1,ub1,lb2,ub2,lb3,ub3,lb4,ub4) ::: get_from(MAT4{OBJECT}), leaky
-   ! Create the object with the desired bounds. This version does not set
-   ! defaults.
+   ! Allocate "self" with the given bounds
    end
 
    destroy ::: get_from(MAT4{OBJECT}), leaky
@@ -50,24 +49,16 @@ contains
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
-   nullify_ptr_part ::: get_from(MAT4{OBJECT})
-   ! Nullify the pointer parts of self
-   end
-
-   destroy_ptr_part ::: get_from(MAT4{OBJECT}), leaky
-   ! Destroy the pointer parts of self
-   end
-
-! ============================
-! Size-of and shape operations 
-! ============================
+!  ============================
+!  Size-of and shape operations 
+!  ============================
 
    dim1 result (res) ::: get_from(MAT4{OBJECT}), inlined_by_foo
    ! Return the size of the 1st dimension
@@ -85,9 +76,9 @@ contains
    ! Return the size of the 4th dimension
    end
 
-! ===========
-! Set indices
-! ===========
+!  ===========
+!  Set indices
+!  ===========
 
    set_indices(l_max,rms_indices,nx,ny,nz) ::: leaky
    ! Set the rms indices. 

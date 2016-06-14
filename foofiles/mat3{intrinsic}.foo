@@ -34,40 +34,12 @@ contains
 !  Allocation
 !  ==========
 
-   create(dim1,dim2,dim3) ::: leaky, PURE
+   create(dim1,dim2,dim3) ::: get_from(MAT3{OBJECT}), leaky, PURE
    ! Allocate "self" with the given dimensions
-      self :: allocatable, OUT
-      dim1,dim2,dim3 :: INT, IN
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-#ifdef USE_PRECONDITIONS
-      allocate(self(dim1,dim2,dim3),stat=status)
-      ENSURE(status==0,"error in allocating memory")
-#else
-      allocate(self(dim1,dim2,dim3))
-#endif
-
    end
 
-   create(lb1,ub1,lb2,ub2,lb3,ub3) ::: leaky, PURE
+   create(lb1,ub1,lb2,ub2,lb3,ub3) ::: get_from(MAT3{OBJECT}), leaky, PURE
    ! Allocate "self" with the given bounds
-      self :: allocatable, OUT
-      lb1,lb2,lb3,ub1,ub2,ub3 :: INT, IN
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-#ifdef USE_PRECONDITIONS
-      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3),stat=status)
-      ENSURE(status==0,"error in deallocating memory")
-#else
-      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3))
-#endif
-
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
@@ -110,79 +82,34 @@ contains
       res = size(self,3)
    end
 
-   is_same_shape_as(b) result (res) ::: pure
+   is_same_shape_as(b) result (res) ::: get_from(MAT3{OBJECT}), pure
    ! Returns TRUE if the matrix "b" has the same shape as self
-      self :: IN
-      b :: MAT3{INTRINSIC}, IN
-      res :: BIN
-
-      res = .dim1==b.dim1 AND .dim2==b.dim2 AND .dim3==b.dim3
-
    end
 
-   is_cube result (res) ::: pure
+   is_cube result (res) ::: get_from(MAT3{OBJECT}), pure
    ! Returns TRUE if self is a cube
-      self :: IN
-      res :: BIN
-
-      res = .dim1==.dim2 AND .dim1==.dim3
-
    end
 
-   is_square_23 result (res) ::: pure
+   is_square_23 result (res) ::: get_from(MAT3{OBJECT}), pure
    ! Checks to see that the matrix formed by the 2nd and 3rd columns is square.
-      self :: IN
-      res :: BIN
-
-      res = .dim2==.dim3
-
    end
 
-   tri_size_23 result (ltr) ::: PURE
+   tri_size_23 result (ltr) ::: get_from(MAT3{OBJECT}), PURE
    ! Returns the size of the lower triangle needed to store the matrix self.
    ! Assumes the matrix formed by columns 2 and 3 is the symmetric one.
-      self :: IN
-      ltr :: INT
-
-   ENSURE(.is_square_23,"2nd and 3rd dimensions not equal")
-
-      ltr = .dim1*.dim2*(.dim2+1)/2
-
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set_to(b) ::: pure
+   set_to(b) ::: get_from(MAT3{OBJECT}), pure
    ! Set "self" to vector "b" in standard order
-      self :: INOUT
-      b :: VEC{INTRINSIC}, IN
-
-      self = reshape(b,[.dim1,.dim2,.dim3])
-
    end
 
-   set_to_reverse_of(b) ::: PURE
+   set_to_reverse_of(b) ::: get_from(MAT3{OBJECT}), PURE
    ! Set "self" to the reverse of vector "b" i.e. the standard order is
    ! reversed.
-      self :: INOUT
-      b :: MAT3{INTRINSIC}
-
-   ENSURE(.dim1==b.dim3,"incompatible sizes")
-   ENSURE(.dim2==b.dim2,"incompatible sizes")
-   ENSURE(.dim3==b.dim1,"incompatible sizes")
-
-      i,j,k :: INT
-
-      do k = 1,.dim3
-      do j = 1,.dim2
-      do i = 1,.dim1
-         self(i,j,k) = b(k,j,i)
-      end
-      end
-      end
-
    end
 
 

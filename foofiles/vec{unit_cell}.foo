@@ -48,34 +48,16 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
+!  ==================
+!  Size-of operations
+!  ==================
 
-   create(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Create space for object. This version does not nullify ptr parts.
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the array
    end
 
-   destroy ::: get_from(OBJECT), leaky
-   ! Deallocate "self". This version does not destroy ptr parts.
-   end
-
-   create_copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(vec) ::: get_from(VEC{OBJECT}), leaky
-   ! Copy "vec".
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   set_defaults ::: get_from(VEC{OBJECT})
-   ! Set default values
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
+   ! Return the size of the 1st dimension
    end
 
 end

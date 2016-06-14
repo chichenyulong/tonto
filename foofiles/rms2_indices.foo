@@ -53,11 +53,15 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
+!  ===
+!  Set
+!  ===
 
-   set_indices(er,fr,ex,ey,ez,fx,fy,fz,ab_l_sum) ::: leaky
+   set_indices(er,fr,ex,ey,ez,fx,fy,fz,ab_l_sum) ::: leaky, PURE
    ! Form the RMS pair indices, which tells when to multiply Ix and Iy,
    ! thus saving work. This version takes care of cases when Ix and Iy
    ! are equal to 1.
+      self :: INOUT
       er,fr :: RMS_INDICES, target, IN
       ex,ey,ez,fx,fy,fz :: VEC{INT}, target, IN
       ab_l_sum :: INT, IN

@@ -32,11 +32,11 @@ contains
 !  Allocation
 !  ==========
 
-   create(dim1,dim2,dim3) ::: get_from(MAT3{INTRINSIC}), leaky, PURE
+   create(dim1,dim2,dim3) ::: get_from(MAT3{OBJECT}), leaky, PURE
    ! Allocate "self" with the given dimensions
    end
 
-   create(lb1,ub1,lb2,ub2,lb3,ub3) ::: get_from(MAT3{INTRINSIC}), leaky, PURE
+   create(lb1,ub1,lb2,ub2,lb3,ub3) ::: get_from(MAT3{OBJECT}), leaky, PURE
    ! Allocate "self" with the given bounds
    end
 
@@ -56,27 +56,27 @@ contains
 !  Size-of and shape operations
 !  ============================
 
-   size result (res) ::: get_from(MAT3{INTRINSIC}), inlined_by_foo
+   size result (res) ::: get_from(MAT3{OBJECT}), inlined_by_foo
    ! Return the size of the array
    end
 
-   dim1 result (res) ::: get_from(MAT3{INTRINSIC}), inlined_by_foo
+   dim1 result (res) ::: get_from(MAT3{OBJECT}), inlined_by_foo
    ! Return the size of the 1st dimension
    end
 
-   dim2 result (res) ::: get_from(MAT3{INTRINSIC}), inlined_by_foo
+   dim2 result (res) ::: get_from(MAT3{OBJECT}), inlined_by_foo
    ! Return the size of the 2nd dimension
    end
 
-   dim3 result (res) ::: get_from(MAT3{INTRINSIC}), inlined_by_foo
+   dim3 result (res) ::: get_from(MAT3{OBJECT}), inlined_by_foo
    ! Return the size of the 2nd dimension
    end
 
-   is_same_shape_as(b) result (res)  ::: get_from(MAT3{INTRINSIC})
+   is_same_shape_as(b) result (res)  ::: get_from(MAT3{OBJECT})
    ! Returns TRUE if the matrix "b" has the same shape as self
    end
 
-   is_cube result (res) ::: get_from(MAT3{INTRINSIC}), pure
+   is_cube result (res) ::: get_from(MAT3{OBJECT}), pure
    ! Returns TRUE if self is a cube
    end
 
@@ -84,20 +84,20 @@ contains
 !  Set and change methods
 !  ======================
 
-   set_to(b) ::: get_from(MAT3{INTRINSIC}), pure
+   set_to(b) ::: get_from(MAT3{OBJECT}), pure
    ! Set "self" to vector "b" in standard order
    end
 
-   set_to_reverse_of(b) ::: get_from(MAT3{INTRINSIC}), PURE
+   set_to_reverse_of(b) ::: get_from(MAT3{OBJECT}), PURE
    ! Set "self" to the reverse of vector "b" i.e. the standard order is
    ! reversed.
    end
 
-   is_square_23 result (res) ::: get_from(MAT3{INTRINSIC}), pure
+   is_square_23 result (res) ::: get_from(MAT3{OBJECT}), pure
    ! Checks to see that the matrix formed by the 2nd and 3rd columns is square.
    end
 
-   tri_size_23 result (ltr) ::: get_from(MAT3{INTRINSIC}), PURE
+   tri_size_23 result (ltr) ::: get_from(MAT3{OBJECT}), PURE
    ! Returns the size of the lower triangle needed to store the matrix self.
    ! Assumes the matrix formed by columns 2 and 3 is the symmetric one.
    end

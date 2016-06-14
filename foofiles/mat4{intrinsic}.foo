@@ -34,40 +34,12 @@ contains
 !  Allocation
 !  ==========
 
-   create(dim1,dim2,dim3,dim4) ::: leaky, PURE
+   create(dim1,dim2,dim3,dim4) ::: get_from(MAT4{OBJECT}), leaky, PURE
    ! Allocate "self" with the given dimensions
-      self :: allocatable, OUT
-      dim1,dim2,dim3,dim4 :: INT, IN
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-#ifdef USE_PRECONDITIONS
-      allocate(self(dim1,dim2,dim3,dim4),stat=status)
-      ENSURE(status==0,"error in allocating memory")
-#else
-      allocate(self(dim1,dim2,dim3,dim4))
-#endif
-
    end
 
-   create(lb1,ub1,lb2,ub2,lb3,ub3,lb4,ub4) ::: leaky, PURE
+   create(lb1,ub1,lb2,ub2,lb3,ub3,lb4,ub4) ::: get_from(MAT4{OBJECT}), leaky, PURE
    ! Allocate "self" with the given bounds
-      self :: allocatable, OUT
-      lb1,lb2,lb3,ub1,ub2,ub3,lb4,ub4 :: INT, IN
-
-#ifdef USE_PRECONDITIONS
-      status :: INT
-#endif
-
-#ifdef USE_PRECONDITIONS
-      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3,lb4:ub4),stat=status)
-      ENSURE(status==0,"error in deallocating memory")
-#else
-      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3,lb4:ub4))
-#endif
-
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
@@ -116,38 +88,20 @@ contains
       res = size(self,4)
    end
 
-   is_same_shape_as(b) result (res) ::: pure
+   is_same_shape_as(b) result (res) ::: get_from(MAT4{OBJECT}), pure
    ! Returns TRUE if the matrix "b" has the same shape as self
-      self :: IN
-      b :: MAT4{INTRINSIC}, IN
-      res :: BIN
-
-      res = .dim1==b.dim1 AND .dim2==b.dim2 AND .dim3==b.dim3 AND .dim4==b.dim4
-
    end
 
-   is_hypercube result (res) ::: pure
+   is_hypercube result (res) ::: get_from(MAT4{OBJECT}), pure
    ! Returns TRUE if self is a hypercube
-      self :: IN
-      res :: BIN
-
-      res = .dim1==.dim2 AND .dim1==.dim3 AND .dim1==.dim4
-
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set_to(b) ::: PURE
+   set_to(b) ::: get_from(MAT4{OBJECT}), PURE
    ! Set "self" to vector "b" in standard order
-     self :: OUT
-     b :: VEC{INTRINSIC}, IN
-
-   ENSURE(size(self)==size(b),"different sizes")
-
-     self = reshape(b,[.dim1,.dim2,.dim3,.dim4])
-
    end
 
 !  ========================

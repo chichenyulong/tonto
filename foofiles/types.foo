@@ -2984,7 +2984,7 @@ module TYPES
      ! Indices of the unique symops not related by inversion or translation.
      ! This is used to save work in structure factor (SF) calculations.
 
-     analyzed :: BIN  DEFAULT(FALSE)
+     updated :: BIN  DEFAULT(FALSE)
      ! Set TRUE if the spacegroup symbol has been succesfully analyzed
 
    end

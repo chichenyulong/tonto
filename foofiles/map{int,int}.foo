@@ -53,9 +53,13 @@ contains
    end
 
 
-   create(n_size) ::: get_from(MAP{KEY,VAL}), leaky
+   create(n_size) ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Create the map with key and value arrays with length "n_size".
    end
+
+!  ============
+!  Set routines
+!  ============
 
    set_reverse_search(value) ::: get_from(MAP{KEY,VAL}), pure
    ! Set the .reverse_search switch to "value". This determines
@@ -64,47 +68,54 @@ contains
    ! added are more likely to contain the values you are looking for.
    end
 
+!  =======================
+!  Shrinking and expansion
+!  =======================
 
-   shrink ::: get_from(MAP{KEY,VAL}), leaky
+   shrink ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Shrinks the size of the keys and values arrays to dimension
    ! ".n_keys", *only* when ".n_size" is bigger than the number of
    ! keys stored.  Contents are retained. This is used to save memory.
    end
 
-   shrink(n_size) ::: get_from(MAP{KEY,VAL}), leaky
+   shrink(n_size) ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Shrinks the size of the keys and values arrays to dimension
    ! "n_size".  Contents are retained, where possible.
    end
 
-   expand(n_size) ::: get_from(MAP{KEY,VAL}), leaky
+   expand(n_size) ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Expands the size of the keys and values arrays to dimension
    ! "n_size".  Contents are retained.  
    end
 
-   resize(n_size) ::: get_from(MAP{KEY,VAL}), leaky
+   resize(n_size) ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Resize the size of the keys and values arrays to dimension
    ! "n_size".  Contents are retained.  
    end
 
-   append_pair(key,value) ::: get_from(MAP{KEY,VAL}), leaky
+!  ==========================
+!  Add/delete keys and values
+!  ==========================
+
+   append_pair(key,value) ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Append the "key" and the corresponding "value" to the map table.
    ! If the .keys or .values arrays are too small, the arrays are
    ! doubled in size.
    end
 
-   set(key,value) ::: get_from(MAP{KEY,VAL}), leaky
+   set(key,value) ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Append the "key" and the corresponding "value" to the map table.
    ! If the .keys or .values arrays are too small, the arrays are
    ! doubled in size.
    end
 
-   append_pairs(keys,values) ::: get_from(MAP{KEY,VAL}), leaky
+   append_pairs(keys,values) ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Append the "keys" and the corresponding "values" to the map
    ! table.  If the .keys or .values arrays are too small, they are
    ! doubled in size.
    end
 
-   set(keys,values) ::: get_from(MAP{KEY,VAL}), leaky
+   set(keys,values) ::: get_from(MAP{KEY,VAL}), leaky, PURE
    ! Append the "keys" and the corresponding "values" to the map table.
    ! If the .keys or .values arrays are too small, they are doubled in size.
    end
@@ -118,17 +129,21 @@ contains
    ! the size of the map table.
    end
 
-   delete_item(index) ::: get_from(MAP{KEY,VAL})
+   delete_item(index) ::: get_from(MAP{KEY,VAL}), PURE
    ! Delete element "index" from the map table.  No change is made to
    ! the size of the map table.
    end
 
-   delete_items(list) ::: get_from(MAP{KEY,VAL})
+   delete_items(list) ::: get_from(MAP{KEY,VAL}), PURE
    ! Delete elements "list" from the map table.  No change is made to
    ! the size of the map table.
    end
 
-   index_of_key(key) result (res) ::: get_from(MAP{KEY,VAL})
+!  =======
+!  Inquiry
+!  =======
+
+   index_of_key(key) result (res) ::: get_from(MAP{KEY,VAL}), pure
    ! Returns the index of any key which matches "key" in the map
    ! table. If there is no match, then the result is 0.
    end
@@ -146,7 +161,7 @@ contains
    ! index of "key" in the map table.
    end
 
-   value_for_item(index) result (res) ::: get_from(MAP{KEY,VAL})
+   value_for_item(index) result (res) ::: get_from(MAP{KEY,VAL}), PURE
    ! Returns the "index"-th element in the map table. 
    end
       

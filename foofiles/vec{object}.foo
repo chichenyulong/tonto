@@ -28,9 +28,9 @@ virtual module VEC{OBJECT}
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
    create(dim) ::: leaky, PURE
    ! Allocate vector
@@ -113,243 +113,25 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! Old
+!  ==================
+!  Size-of operations
+!  ==================
 
-   create(dim) ::: leaky, PURE
-   ! Create space for object
-      self :: allocatable, INOUT
-      dim :: INT, IN
+   size result (res) ::: inlined_by_foo, pure
+   ! Return the size of the array
+      self :: IN
+      res :: INT
 
-      status :: INT
-
-      allocate(self(dim),stat=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
-      .set_defaults
+      res = size(self)
 
    end
 
-   create(dim) ::: leaky, PURE
-   ! Create space for object. This version does not set defaults.
-      self :: allocatable, INOUT
-      dim :: INT, IN
-
-      status :: INT
-
-      allocate(self(dim),stat=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
-   end
-
-   create(dim) ::: leaky, PURE
-   ! Create space for object. This version does not nullify ptr parts.
-      self :: allocatable, INOUT
-      dim :: INT, IN
-
-      status :: INT
-
-      allocate(self(dim),stat=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-      .set_defaults
-
-   end
-
-   create(lb,ub) ::: leaky, PURE
-   ! Create the vector with lower bound "lb", upper bound "ub"
-      self :: allocatable, INOUT
-      lb,ub :: INT, IN
-
-      status :: INT
-
-      allocate(self(lb:ub),stat=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
-      .set_defaults
-
-   end
-
-   create(lb,ub) ::: leaky, PURE
-   ! Create the vector with lower bound "lb", upper bound "ub". This
-   ! version does not set defaults.
-      self :: allocatable, INOUT
-      lb,ub :: INT, IN
-
-      status :: INT
-
-      allocate(self(lb:ub),stat=status)
-
-      ENSURE(status==0,"error in allocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
-   end
-
-   create(bounds) ::: leaky, PURE
-   ! Create the vector with "bounds"
-      self :: allocatable, INOUT
-      bounds :: VEC{INT}(2), IN
-
-      .create(bounds(1),bounds(2))
-
-   end
-
-   destroy ::: leaky, PURE
-   ! Deallocate "self"
-      self :: allocatable, INOUT
-
-      status :: INT
-
-      if (.destroyed) return
-
-      .destroy_ptr_part
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-   end
-
-   destroy ::: leaky, PURE
-   ! Deallocate "self". This version does not destroy ptr parts.
-      self :: allocatable, INOUT
-
-      status :: INT
-
-      if (.destroyed) return
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-   end
-
-   nullify_ptr_part ::: pure
-   ! Nullify the pointer parts of self
-
-      a :: INT
-
-      do a = 1,.dim
-         self(a).nullify_ptr_part
-      end
-
-   end
-
-   destroy_ptr_part ::: leaky, PURE
-   ! Destroy the pointer parts of self
-
-      a :: INT
-
-      do a = 1,.dim
-         self(a).destroy_ptr_part
-      end
-
-   end
-
-   created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
-   end
-
-   destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-! ====
-! Copy
-! ====
-
-   create_copy(vec) ::: leaky
-   ! Create a replica copy of "vec".
-      self :: allocatable, INOUT
-      vec :: VEC{OBJECT}, IN
-
-      nullify(self)
-      .create(vec.dim)
-      .copy(vec)
-
-   end
-
-   create_copy(vec,list) ::: leaky
-   ! Create a copy of "vec" for the elements in "list".
-      self :: allocatable, INOUT
-      vec  :: VEC{OBJECT}, IN
-      list :: VEC{INT}, IN
-
-      nullify(self)
-      .create(list.dim)
-      .copy(vec,list)
-
-   end
-
-   copy(vec) ::: leaky
-   ! Copy "vec".
-      self :: OUT
-      vec :: VEC{OBJECT}, IN
-
-   ENSURE(.dim==vec.dim,"vec size does not match")
-
-      a :: INT
-
-      ! Copy element-by-element
-      do a = 1,.dim
-         self(a).copy(vec(a))
-      end
-
-   end
-
-   copy(vec,list) ::: leaky
-   ! Copy "vec" for the elements in "list".
-      self :: OUT
-      vec  :: VEC{OBJECT}, IN
-      list :: VEC{INT}, IN
-
-   ENSURE(.dim==list.dim,"wrong size, list")
-
-      a,b :: INT
-
-      ! Copy element-by-element
-      do a = 1,list.dim
-         b = list(a)
-         self(a).copy(vec(b))
-      end
-
-   end
-
-   copy(object) ::: leaky
-   ! Copy "object" multiple times.
-      self :: OUT
-      object :: OBJECT, IN
-
-      a :: INT
-
-      ! Copy element-by-element
-      do a = 1,.dim
-         self(a).copy(object)
-      end
+   dim result (res) ::: inlined_by_foo, pure
+   ! Return the size of the 1st dimension
+      self :: IN
+      res :: INT
+
+      res = size(self)
 
    end
 
@@ -384,9 +166,9 @@ contains
 
    end
 
-! =======================
-! Shrinking and expansion
-! =======================
+!  =======================
+!  Shrinking and expansion
+!  =======================
 
    shrink(dim) ::: leaky, PURE
    ! Shrink "self" to dimension "dim" from the end. Contents are
@@ -489,183 +271,9 @@ contains
 
    end
 
-! Old
-
-   shrink(dim) ::: leaky
-   ! Shrink self to dimension dim.  Contents are retained.
-      self :: allocatable, INOUT
-      dim :: INT, IN
-
-   ENSURE(.created,"no self array")
-   ENSURE(dim<=.dim,"dim too large")
-   ENSURE(dim>=0,"dim must be non-negative")
-
-      old :: VEC{OBJECT}@
-      n :: INT
-
-      if (dim==.dim) return
-
-      ! Save self
-      old => self
-
-      ! Shrink
-      nullify(self)
-      self.create(dim)
-
-      ! Copy old
-      do n=1,dim
-         self(n).copy(old(n))
-      end
-
-      ! Clean
-      old.destroy
-
-   end
-
-   expand(dim) ::: leaky
-   ! Expand the vector "self" to "dim". New slots are left undefined.
-      self :: allocatable, INOUT
-      dim :: INT, IN
-
-      old :: VEC{OBJECT}@
-      old_dim :: INT
-
-      if (.destroyed) then
-
-         .create(dim)
-
-      else
-
-         ENSURE(dim>=.dim, "dim not large enough")
-         ENSURE(dim>=0,"dim must be non-negative")
-
-         ! Save old
-         old => self
-         old_dim = old.dim
-
-         ! Expand
-         nullify(self)
-         self.create(dim)
-
-         ! Copy
-         self(1:old_dim).copy(old)
-
-         ! Clean
-         old.destroy
-
-      end
-
-   end
-
-   append(v) ::: leaky
-   ! Expands self and appends the contents of vector "v".
-      self :: allocatable, INOUT
-      v :: VEC{OBJECT}, IN
-
-      dim :: INT
-
-      ! Original size
-      if (.destroyed) then; dim = 0
-      else;                 dim = .dim
-      end
-
-      ! Expand
-      .expand(dim+v.dim)
-
-      ! Append
-      self(dim+1:).copy(v)
-
-   end
-
-   append(value) ::: leaky
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
-      self :: allocatable, INOUT
-      value :: OBJECT, IN
-
-      dim :: INT
-
-      ! Original size
-      if (.destroyed) then; dim = 0
-      else;                 dim = .dim
-      end
-
-      ! Expand by one
-      .expand(dim+1)
-
-      ! Append
-      self(dim+1).copy(value)
-
-   end
-
-   join(v) result (res) ::: leaky
-   ! Yield a vector which is the concatenation of "self" and "v"
-      v :: VEC{OBJECT}
-      res :: VEC{OBJECT}@
-
-      dim, dim_v :: INT
-
-      ! Sizes
-      dim   = self.dim
-      dim_v = v.dim
-
-      ! Create joined
-      res.create(dim+dim_v)
-
-      ! Copy
-      res(    1:dim      ).copy(self)
-      res(dim+1:dim+dim_v).copy(v)
-
-   end
-
-   join(v1,v2) result (res) ::: leaky
-   ! Yield a vector which is the concatenation of "self" and "v1" and "v2"
-      v1,v2 :: VEC{OBJECT}
-      res :: VEC{OBJECT}@
-
-      dim, dim_v1, dim_v2 :: INT
-
-      ! Sizes
-      dim    = self.dim
-      dim_v1 = v1.dim
-      dim_v2 = v2.dim
-
-      ! Create joined
-      res.create(dim+dim_v1+dim_v2)
-
-      ! Copy
-      res(           1:dim              ).copy(self)
-      res(dim+       1:dim+dim_v1       ).copy(v1)
-      res(dim+dim_v1+1:dim+dim_v1+dim_v2).copy(v2)
-
-   end
-
-   prune_element(k) ::: leaky
-   ! Removes the single element at position "k" from the vector.
-   ! The order of the elements is unchanged.
-      self :: allocatable, INOUT
-      k :: INT, IN
-
-      copy :: VEC{OBJECT}@
-
-      ! In range?
-      if (k<1 OR k>.dim) return
-
-      ! Shrink
-      copy.create(.dim-1)
-
-      ! Copy
-      copy(1:k-1) = self(  1:k-1)
-      copy(k:   ) = self(k+1:   )
-
-      ! Reassign self
-      self.destroy
-      self => copy
-
-   end
-
-! ================
-! Sorting routines
-! ================
+!  ================
+!  Sorting routines
+!  ================
 
    sort(decreasing_order) ::: PURE
    ! Sort array "self" from lowest to highest, using simple insertion sort.  If
@@ -919,9 +527,9 @@ contains
 
    end
 
-! =============================
-! Repetition related operations
-! =============================
+!  =============================
+!  Repetition related operations
+!  =============================
 
    remove_repetitions ::: leaky, PURE
    ! Remove repeated elements in "self". The list may shrink.
@@ -958,46 +566,6 @@ contains
 
       ! Shrink -- if needed
       if (n<.dim) self = unique(1:n)
-
-   end
-
-! Old
-
-   remove_repetitions ::: leaky
-   ! Sort through the vector and remove repeated elements which come
-   ! later in the list.  NOTE: the vector may shrink
-      self :: allocatable, INOUT
-
-   ENSURE(.created,"no vector")
-
-      unique :: VEC{OBJECT}@
-      i,j :: INT
-      found :: BIN
-
-      if (.dim==1) return
-
-      unique.create(1)
-
-      ! First is unique ...
-      unique.create_copy(self(1:1))
-
-      ! Loop over the rest ...
-      do i = 2,.dim
-
-         found = FALSE
-         do j = 1,unique.dim
-            if (NOT self(i).same_as(unique(j))) cycle
-            found = TRUE
-         end
-
-         if (found) cycle
-
-         unique.append(self(i))
-
-      end
-
-      .destroy
-      self => unique
 
    end
 
@@ -1073,9 +641,9 @@ contains
 
    end
 
-! =======================
-! List-based I/O Routines
-! =======================
+!  ===========================
+!  Non-list based I/O routines
+!  ===========================
 
    read_keywords ::: recursive, leaky
    ! Read and process normal (non list-type) keywords from "stdin";
@@ -1129,6 +697,28 @@ contains
       end
 
    end
+
+   process_keyword(keyword) ::: leaky
+   ! Process a normal (non list-type) "keyword".
+      keyword :: STR, IN
+
+      word :: STR
+
+      word = keyword
+      word.to_lower_case
+
+      select case (word)
+         case("}") ! do nothing.
+         case("redirect                 "); TEXTFILE:redirect
+         case("revert                   "); TEXTFILE:revert
+         case default;     UNKNOWN(word)
+      end
+
+   end
+
+!  =======================
+!  List-based I/O Routines
+!  =======================
 
    read_list_keywords ::: recursive, leaky
    ! Read and process list-data keywords from "stdin". List-based
@@ -1236,6 +826,21 @@ contains
          tmp.process_keys
 
       end
+
+   end
+
+   read_keys ::: leaky
+   ! Read a new set of keys
+      self :: allocatable, IN
+
+      tmp :: OBJECT@
+
+      ! Bind routine
+      if (.created) then
+      end
+
+      nullify(tmp)
+      tmp.read_keys
 
    end
 
@@ -1430,434 +1035,9 @@ contains
 
    end
 
-! Old
-
-   read_keywords ::: recursive, leaky
-   ! Read in and process normal (non list-type) keywords from "stdin".
-      self :: allocatable, INOUT
-
-   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
-
-      word :: STR
-
-      ! Read the opening brace
-      stdin.read(word)
-
-      ! Echo the brace if requested
-      if (tonto.keyword_echo) then
-         stdout.flush
-         stdout.text("keyword found --> " // trim(word))
-      end
-
-      do ! Loop over keywords within brace
-
-         ! Read a keyword
-         stdin.read(word)
-         
-         ! Unexpected end of file?
-         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
-         
-         ! Lower case word
-         word.to_lower_case
-         
-         ! Is there an equals next? Then join it on
-         if (NOT stdin.buffer_exhausted) then 
-         if (stdin.next_item=="=") then
-            stdin.skip_next_item
-            word = trim(word) // "="
-         end
-         end
-         
-         ! Echo the keyword if requested
-         if (tonto.keyword_echo) then
-            stdout.flush
-            stdout.text("keyword found --> " // trim(word))
-         end
-         
-         ! Exit if it is a close brace
-         if (word=="}") exit
-         
-         ! Process the keyword
-         .process_keyword(word)
-
-      end
-
-   end
-
-   read_list_keywords ::: recursive, leaky
-   ! Read in and process list-based keywords from "stdin". List-based keywords
-   ! are those that are intended to apply to each individual element of the list
-   ! through a list of "keys" stored in the associated list-element type module.
-   ! NOTE: this routine will create the list, if required.
-      self :: allocatable, INOUT
-
-   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
-
-      word :: STR
-
-      ! Read the open brace
-      stdin.read(word)
-
-      ! Echo the brace if requested
-      if (tonto.keyword_echo) then
-         stdout.flush
-         stdout.text("keyword found --> " // trim(word))
-      end
-
-      do ! Loop over input list-type keywords
-
-         ! Read a keyword
-         stdin.read(word)
-        
-         ! Unexpected end of file?
-         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
-        
-         ! Lower case the word
-         word.to_lower_case
-        
-         ! Is there an equals next? Then join it on
-         if (NOT stdin.buffer_exhausted) then 
-         if (stdin.next_item=="=") then 
-            stdin.skip_next_item
-            word = trim(word) // "="
-         end
-         end
-        
-         ! Echo the keyword if requested
-         if (tonto.keyword_echo) then
-            stdout.flush
-            stdout.text("keyword found --> " // trim(word))
-         end
-        
-         ! Exit if it is a close brace
-         if (word=="}") exit
-        
-         ! Process the list keyword
-         .process_list_keyword(word)
-
-      end
-
-   end
-
-   process_list_keyword(keyword) ::: leaky
-   ! Process a list-type "keyword", common to all list-type objects.
-      self :: allocatable, INOUT
-      keyword :: STR, IN
-
-      word :: STR
-
-      word = keyword
-      word.to_lower_case
-
-      select case (word)
-
-         ! Standard list-input keywords
-         case("altered_data=    "); .read_altered_data
-         case("append_data=     "); .read_append_data
-         case("data=            "); .read_data
-         case("do               "); .read_keywords
-         case("keys=            "); .read_keys
-         case("new_data=        "); .destroy; .read_data
-         case("process_keys     "); .process_keys
-         case("process_keys_once"); .process_keys_once
-         case("redirect         "); TEXTFILE:redirect
-         case("revert           "); TEXTFILE:revert
-
-         ! Backtrack & assume data= sans braces
-         case default 
-            stdin.move_to_previous_item
-            .read_data_sans_braces
-
-      end
-
-   end
-
-   read_data ::: leaky
-   ! Repeatedly process the "keys" to read in the data list. 
-   ! Opening and closing braces are needed.
-      self :: allocatable, INOUT
-
-      word :: STR
-
-      ! Read open braces
-      stdin.read(word) ! move past open brace
-      ENSURE(word=="{","expecting open bracket symbol, {")
-
-      ! Read data (process keys)
-      .read_data_sans_braces
-
-      ! Read close brace
-      stdin.read(word)
-      ENSURE(word=="}","expecting close bracket symbol, }")
-
-   end
-
-   read_data_sans_braces ::: leaky
-   ! Repeatedly process the "keys" to read in the data list. 
-   ! Opening and closing braces are not needed.
-      self :: allocatable, INOUT
-
-      length :: INT
-
-      ! Get the vector length
-      length = .data_length
-
-      if (.created) then
-         ! If created, is dimension the same
-         ENSURE(length==.dim,"Mismatching new and old data lists")
-      else
-         ! If not created, create it
-         .create(length)
-      end
-
-      ! Process keys
-      .process_keys
-
-   end
-
-   read_data_BL_terminated ::: leaky
-   ! Repeatedly process the "keys" to read in the data list. Opening
-   ! braces are not needed, but a blank line (BL) is used as an
-   ! end-of-list terminator.
-      self :: allocatable, INOUT
-
-      length :: INT
-
-      ! Get the vector length
-      length = .data_length_BL_terminated
-
-      if (.created) then
-         ! If created, is dimension the same
-         ENSURE(length==.dim,"Mismatching new and old data lists")
-      else
-         ! If not created, create it
-         .create(length)
-      end
-
-      ! Process keys
-      .process_keys
-
-      ! Empty line there? Read it.
-      stdin.read_line
-      ENSURE(stdin.buffer.string==" ","expecting blank line")
-
-   end
-
-   data_length result (length)
-   ! Read ahead in stdin to get the "length" of the data list, i.e. the number
-   ! of data items in the list. The data must begin with the first data item,
-   ! *not* a "{" symbol.  The order of data items comprising the list is given
-   ! by keys defined in the associated list-element type module. The data list
-   ! must be terminated by a "}" symbol.
-      self :: allocatable, INOUT
-      length :: INT
-
-   ENSURE(stdin.next_item/="}","empty data list!")
-
-      tmp :: OBJECT@
-      word :: STR
-      line,item :: INT
-
-      ! Remove warning
-      if (FALSE) self = self
-
-      ! Initialize result
-      length = 0
-
-      ! Read first item, initialize line no & item no.
-      stdin.read(word)
-      line = stdin.line_number
-      item = stdin.previous_line_item
-
-      ! Get the length
-      do
-
-         ! Move just before
-         stdin.move_to_previous_item
-
-         ! Read a scalar & increment
-         tmp.create
-         tmp.process_keys
-         tmp.destroy
-         length = length + 1
-
-         ! Closing-brace there?
-         stdin.read(word)
-         word.to_lower_case
-         if (word=="}") exit
-         if (stdin.at_end_of_file) exit
-
-      end
-
-      ! Go back to start
-      stdin.move_to_line(line)
-      stdin.move_to_line_item(item)
-
-   end
-
-   data_length_BL_terminated result (length)
-   ! Read ahead in stdin to get the "length" of the data list. The
-   ! data list begins with the first data item, *not* a "{" symbol.
-   ! The data list must be terminated by a blank line (BL).
-      self :: allocatable, INOUT
-      length :: INT
-
-   ENSURE(stdin.next_item/="}","empty data list!")
-
-      tmp :: OBJECT@
-      word :: STR
-      line,item :: INT
-
-      ! Remove warning
-      if (FALSE) self = self
-
-      ! Initialize result
-      length = 0
-
-      ! Read first item, initialize line no & item no.
-      stdin.read(word)
-      line = stdin.line_number
-      item = stdin.previous_line_item
-
-      ! Get the length
-      do
-
-         ! Move just before
-         stdin.move_to_previous_item
-
-         ! Read a scalar & increment
-         tmp.create
-         tmp.process_keys
-         tmp.destroy
-         length = length + 1
-
-         ! Blank-line terminated?
-         stdin.read_line
-         if (stdin.buffer.string==" ") exit
-         if (stdin.at_end_of_file) exit
-
-         ! No blank line ... read first item
-         stdin.read(word)
-         if (stdin.at_end_of_file) exit ! Oops
-
-      end
-
-      ! Go back to start
-      stdin.move_to_line(line)
-      stdin.move_to_line_item(item)
-
-   end
-
-   read_altered_data ::: leaky
-   ! Read in a sublist of the complete list, and alter the data for that
-   ! sublist.  The order of the data items in the sublist is given by the "keys"
-   ! defined in the associated list-element type module.
-      self :: allocatable, INOUT
-   
-   ENSURE(.created,"list does not exist yet")
-   ENSURE(stdin.next_item=="{","expecting open bracket symbol: {")
-
-      word :: STR
-      s :: INT
-
-      ! Read brace {
-      stdin.read(word)
-
-      do
-
-         ! Read index
-         stdin.read(word)
-
-         ! End of indices
-         if (word=="}") exit
-
-         ! Get index
-         ENSURE(word.is_int,"expecting integer list-element index")
-         s = word.to_int
-         ENSURE(s<=.dim,"list-element too large")
-         ENSURE(s>0,"list-element must be positive")
-
-         ! Altered data for this index
-         self(s).process_keys
-
-      end
-
-   end
-
-   read_append_data ::: leaky
-   ! Read in a set of data to append to an existing set.
-      self :: allocatable, INOUT
-
-   ENSURE(.created,"list does not exist yet")
-   ENSURE(stdin.next_item=="{","expecting open bracket symbol: {")
-
-      tmp :: VEC{OBJECT}@
-
-      ! Read data
-      nullify(tmp)
-      tmp.read_data
-
-      ! Append it
-      .append(tmp)
-
-      ! Clean
-      tmp.destroy
-
-   end
-
-   process_keys ::: leaky, selfless
-   ! Process the "keys" on each element of the list.
-      self :: allocatable, INOUT
-
-      s :: INT
-
-      ! Process keys on each element
-      if (.created) then
-         do s = 1,.dim
-            self(s).process_keys
-         end
-      ! Process keys once on anonymous element
-      else 
-         .process_keys_once
-      end
-
-   end
-
-   process_keys_once ::: leaky
-   ! Process the "keys" just once on an anonymous object. This is useful if the
-   ! "keys" set global variables in the list module (e.g. the default order of
-   ! lists *within* the list data) as opposed to being keys pertaining to each
-   ! element of the list.
-      self :: allocatable, INOUT
-
-      tmp :: OBJECT
-
-      ! Bind routine
-      if (.created) then
-      end
-
-      tmp.process_keys
-
-   end
-
-   read_keys ::: leaky
-   ! Read a new set of keys
-      self :: allocatable, INOUT
-
-      tmp :: OBJECT@
-
-      ! Bind routine
-      if (.created) then
-      end
-
-      nullify(tmp)
-      tmp.read_keys
-
-   end
-
-! ======
-! Output
-! ======
+!  ======
+!  Output
+!  ======
 
    dump(object_name)
    ! Dump a vector object

@@ -1,8 +1,8 @@
 !---------------------------------------------------------------------------
 !
-! MAT4{OBJECT}: 
+! MAT5{INTRINSIC}: 
 !
-! This is a virtual module, for 4 dimensional matrices of OBJECT type.
+! This is a virtual module, for 5 dimensional matrices of INTRINSIC type.
 !
 ! Copyright (C) Dylan Jayatilaka, 1998
 !
@@ -21,10 +21,9 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: mat4{object}.foo 3801 2012-09-09 00:29:30Z dylan_ $
 !---------------------------------------------------------------------------
 
-virtual module MAT4{OBJECT}
+virtual module MAT5{OBJECT}
 
    implicit none
 
@@ -34,38 +33,38 @@ contains
 !  Allocation
 !  ==========
 
-   create(dim1,dim2,dim3,dim4) ::: leaky, PURE
+   create(dim1,dim2,dim3,dim4,dim5) ::: leaky, PURE
    ! Allocate "self" with the given dimensions
       self :: allocatable, OUT
-      dim1,dim2,dim3,dim4 :: INT, IN
+      dim1,dim2,dim3,dim4,dim5 :: INT, IN
 
 #ifdef USE_PRECONDITIONS
       status :: INT
 #endif
 
 #ifdef USE_PRECONDITIONS
-      allocate(self(dim1,dim2,dim3,dim4),stat=status)
+      allocate(self(dim1,dim2,dim3,dim4,dim5),stat=status)
       ENSURE(status==0,"error in allocating memory")
 #else
-      allocate(self(dim1,dim2,dim3,dim4))
+      allocate(self(dim1,dim2,dim3,dim4,dim5))
 #endif
 
    end
 
-   create(lb1,ub1,lb2,ub2,lb3,ub3,lb4,ub4) ::: leaky, PURE
+   create(lb1,ub1,lb2,ub2,lb3,ub3,lb4,ub4,lb5,ub5) ::: leaky, PURE
    ! Allocate "self" with the given bounds
       self :: allocatable, OUT
-      lb1,lb2,lb3,ub1,ub2,ub3,lb4,ub4 :: INT, IN
+      lb1,lb2,lb3,ub1,ub2,ub3,lb4,ub4,lb5,ub5 :: INT, IN
 
 #ifdef USE_PRECONDITIONS
       status :: INT
 #endif
 
 #ifdef USE_PRECONDITIONS
-      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3,lb4:ub4),stat=status)
+      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3,lb4:ub4,lb5:ub5),stat=status)
       ENSURE(status==0,"error in deallocating memory")
 #else
-      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3,lb4:ub4))
+      allocate(self(lb1:ub1,lb2:ub2,lb3:ub3,lb4:ub4,lb5:ub5))
 #endif
 
    end
@@ -83,70 +82,74 @@ contains
    end
 
 !  ============================
-!  Size-of and shape operations 
+!  Size-of and shape operations
 !  ============================
 
-   size result (res) ::: inlined_by_foo
+   size result (res) ::: inlined_by_foo, pure
    ! Return the size of the array
+      self :: IN
       res :: INT
+
       res = size(self)
+
    end
 
-   dim1 result (res) ::: inlined_by_foo
+   dim1 result (res) ::: inlined_by_foo, pure
    ! Return the size of the 1st dimension
+      self :: IN
       res :: INT
+
       res = size(self,1)
+
    end
 
-   dim2 result (res) ::: inlined_by_foo
+   dim2 result (res) ::: inlined_by_foo, pure
    ! Return the size of the 2nd dimension
+      self :: IN
       res :: INT
+
       res = size(self,2)
+
    end
 
-   dim3 result (res) ::: inlined_by_foo
+   dim3 result (res) ::: inlined_by_foo, pure
    ! Return the size of the 3rd dimension
+      self :: IN
       res :: INT
+
       res = size(self,3)
+
    end
 
-   dim4 result (res) ::: inlined_by_foo
+   dim4 result (res) ::: inlined_by_foo, pure
    ! Return the size of the 4th dimension
+      self :: IN
       res :: INT
+
       res = size(self,4)
+
    end
 
-   is_same_shape_as(b) result (res) 
+   dim5 result (res) ::: inlined_by_foo, pure
+   ! Return the size of the 5th dimension
+      self :: IN
+      res :: INT
+
+      res = size(self,5)
+
+   end
+
+   is_same_shape_as(b) result (res) ::: pure
    ! Returns TRUE if the matrix "b" has the same shape as self
       self :: IN
-      b :: MAT4{OBJECT}, IN
+      b :: MAT5{OBJECT}, IN
       res :: BIN
 
-      res = .dim1==b.dim1 AND .dim2==b.dim2 AND .dim3==b.dim3 AND .dim4==b.dim4
-
-   end
-
-   is_hypercube result (res) ::: pure
-   ! Returns TRUE if self is a hypercube
-      self :: IN
-      res :: BIN
-
-      res = .dim1==.dim2 AND .dim1==.dim3 AND .dim1==.dim4
-
-   end
-
-!  ===========
-!  Set methods
-!  ===========
-
-   set_to(b) ::: PURE
-   ! Set "self" to vector "b" in standard order
-     self :: OUT
-     b :: VEC{OBJECT}, IN
-
-   ENSURE(size(self)==size(b),"different sizes")
-
-     self = reshape(b,[.dim1,.dim2,.dim3,.dim4])
+      res = .dim1==b.dim1 &
+        AND .dim2==b.dim2 &
+        AND .dim3==b.dim3 &
+        AND .dim4==b.dim4 &
+        AND .dim5==b.dim5
 
    end
 

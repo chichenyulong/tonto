@@ -32,101 +32,44 @@ contains
 !  Memory allocation
 !  =================
 
-   create(dim1,dim2) ::: leaky
-   ! Create space for object
-      self :: allocatable, INOUT
+   create(dim1,dim2) ::: leaky, PURE
+   ! Allocate a matrix with the given dimensions
+      self :: allocatable, OUT
       dim1,dim2 :: INT, IN
 
+#ifdef USE_PRECONDITIONS
       status :: INT
+#endif
 
-      nullify(self)
-
+#ifdef USE_PRECONDITIONS
       allocate(self(dim1,dim2),stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-      .set_defaults
+      ENSURE(status==0,"error in allocating memory")
+#else
+      allocate(self(dim1,dim2))
+#endif
 
    end
 
-   create(dim1,dim2) ::: leaky
-   ! Create space for object. This version does not set defaults.
-      self :: allocatable, INOUT
-      dim1,dim2 :: INT, IN
-
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(dim1,dim2),stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
-   end
-
-   create(lb1,ub1,lb2,ub2) ::: leaky
-   ! Create a matrix with the given dimensions
-      self :: allocatable, INOUT
+   create(lb1,ub1,lb2,ub2) ::: leaky, PURE
+   ! Allocate a matrix with the given bounds
+      self :: allocatable, OUT
       lb1,ub1,lb2,ub2 :: INT, IN
 
+#ifdef USE_PRECONDITIONS
       status :: INT
+#endif
 
-      nullify(self)
-
+#ifdef USE_PRECONDITIONS
       allocate(self(lb1:ub1,lb2:ub2),stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-      .set_defaults
+      ENSURE(status==0,"error in allocating memory")
+#else
+      allocate(self(lb1:ub1,lb2:ub2))
+#endif
 
    end
 
-   create(lb1,ub1,lb2,ub2) ::: leaky
-   ! Create a matrix with the given dimensions
-   ! This version does not set defaults.
-      self :: allocatable, INOUT
-      lb1,ub1,lb2,ub2 :: INT, IN
-
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(lb1:ub1,lb2:ub2),stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
-   end
-
-   destroy ::: leaky
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
-      self :: allocatable, INOUT
-
-      status :: INT
-
-      if (.destroyed) return
-
-      .destroy_ptr_part
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
    end
 
    created result (res) ::: get_from(OBJECT), pure
@@ -135,73 +78,6 @@ contains
 
    destroyed result (res) ::: get_from(OBJECT), pure
    ! Returns true if self has *not* been created
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of self
-      i,j :: INT
-      do i = 1,.dim1
-      do j = 1,.dim2
-         self(i,j).nullify_ptr_part
-      end
-      end
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of self
-
-      i,j :: INT
-
-      do i = 1,.dim1
-      do j = 1,.dim2
-         self(i,j).destroy_ptr_part
-      end
-      end
-
-   end
-
-! ====
-! Copy
-! ====
-
-   create_copy(matrix) ::: leaky
-   ! Create a copy of matrix
-      self :: allocatable, INOUT
-      matrix :: MAT{OBJECT}, IN
-
-      nullify(self)
-      .create(matrix.dim1,matrix.dim2)
-      .copy(matrix)
-
-   end
-
-   copy(matrix) ::: leaky
-   ! Copy the "matrix".
-      matrix :: MAT{OBJECT}, IN
-
-   ENSURE(.is_same_shape_as(matrix),"matrix shapes do not match")
-
-      i,j :: INT
-
-      do i = 1,matrix.dim1
-      do j = 1,matrix.dim2
-         self(i,j).copy(matrix(i,j))
-      end
-      end
-
-   end
-
-   set_defaults
-   ! Set default values
-
-      i,j :: INT
-
-      do i = 1,.dim1
-      do j = 1,.dim2
-         self(i,j).set_defaults
-      end
-      end
-
    end
 
 !  ============================

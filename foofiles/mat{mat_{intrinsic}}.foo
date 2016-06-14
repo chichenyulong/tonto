@@ -28,93 +28,28 @@ virtual module MAT{MAT_{INTRINSIC}}
 
 contains
 
-   create(dim1,dim2) ::: leaky
-   ! Create the object
-      self :: allocatable, INOUT
-      dim1,dim2 :: INT
+!  =================
+!  Memory allocation
+!  =================
 
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(dim1,dim2),STAT=status)
-
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
-
+   create(dim1,dim2) ::: get_from(MAT{OBJECT}), leaky, PURE
+   ! Allocate a matrix with the given dimensions
    end
 
-   destroy ::: leaky
+   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{OBJECT}), leaky, PURE
+   ! Allocate a matrix with the given bounds
+   end
+
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
-      self :: allocatable, INOUT
-
-      status :: INT
-
-      if (.destroyed) return
-
-      .destroy_ptr_part
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-   end
-
-   nullify_ptr_part
-   ! Nullify the pointer parts of the object
-      i,j :: INT
-      do i = 1,.dim1
-      do j = 1,.dim2
-         nullify(self(i,j).element)
-      end
-      end
-   end
-
-   destroy_ptr_part ::: leaky
-   ! Destroy the pointer parts of the object
-      i,j :: INT
-      do i = 1,.dim1
-      do j = 1,.dim2
-         self(i,j).element.destroy
-      end
-      end
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
-   end
-
-   create_copy(m) ::: leaky
-   ! Create a copy of "m"
-      self :: allocatable, INOUT
-      m :: MAT{MAT_{INTRINSIC}}
-      .create(m.dim1,m.dim2)
-      .copy(m)
-   end
-
-   copy(m) ::: leaky
-   ! Make a copy of "m"
-      m :: MAT{MAT_{REAL}}
-   ENSURE(.dim1==m.dim1,"different 1st dimension")
-   ENSURE(.dim2==m.dim2,"different 2nd dimension")
-      i,j :: INT
-      .nullify_ptr_part
-      do i = 1,m.dim1
-      do j = 1,m.dim2
-         if (m(i,j).element.destroyed) cycle
-         self(i,j).element.create_copy(m(i,j).element)
-      end
-      end
+   ! Returns true if self has *not* been allocated
    end
 
 end

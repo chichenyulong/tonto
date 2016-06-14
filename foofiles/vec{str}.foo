@@ -40,9 +40,9 @@ module VEC{STR}
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
    create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
    ! Allocate vector
@@ -68,21 +68,21 @@ contains
    ! Returns true if self has *not* been allocated
    end
 
-! ==================
-! Size-of operations
-! ==================
+!  ==================
+!  Size-of operations
+!  ==================
 
-   size result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   size result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
    ! Return the size of the array
    end
 
-   dim result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
+   dim result (res) ::: get_from(VEC{OBJECT}), inlined_by_foo, pure
    ! Return the size of the 1st dimension
    end
 
-! =======================
-! Shrinking and expansion
-! =======================
+!  =======================
+!  Shrinking and expansion
+!  =======================
 
    shrink(dim,chop_start) ::: get_from(VEC{INTRINSIC}), leaky, PURE
    ! Shrink "self" to dimension "dim" from the end. Contents are
@@ -137,9 +137,9 @@ contains
    ! Elements after that position are moved downward.
    end
 
-! ====================
-! Comparison functions
-! ====================
+!  ====================
+!  Comparison functions
+!  ====================
 
    equals(v) result (res) ::: get_from(VEC{INTRINSIC}), pure
    ! Return true if "self" is the same as "v".
@@ -186,9 +186,9 @@ contains
    ! NOTE: this routine returns a pointer!
    end
 
-! =============================
-! Repetition related operations
-! =============================
+!  =============================
+!  Repetition related operations
+!  =============================
 
    remove_repetitions ::: get_from(VEC{INTRINSIC}), leaky, PURE
    ! Remove repeated elements from "self".
@@ -208,9 +208,9 @@ contains
    ! Return the number of unique elements in the vector.
    end
 
-! ================
-! Sorting routines
-! ================
+!  ================
+!  Sorting routines
+!  ================
 
    sort(decreasing_order) ::: get_from(VEC{OBJECT}), PURE
    ! Sort array "self" from lowest to highest, using simple insertion sort.  If
@@ -255,9 +255,9 @@ contains
    ! Swap elements "e1" and "e2" in "self".
    end
 
-! =========================================
-! Inclusion and matching related operations
-! =========================================
+!  =========================================
+!  Inclusion and matching related operations
+!  =========================================
 
    has_any_included_in(string,at_start) result (res) ::: pure
    ! Return TRUE if self has any element included in "string" which starts at
@@ -404,9 +404,9 @@ contains
 
    end
 
-! =============
-! String widths
-! =============
+!  =============
+!  String widths
+!  =============
    
    str_lengths result (res) ::: pure
    ! Returns the minimal string lengths.
@@ -420,9 +420,9 @@ contains
    ! and with optional extra "spaces". 
    end
 
-! =====================
-! Conversion to strings
-! =====================
+!  =====================
+!  Conversion to strings
+!  =====================
 
    to_str_vec_str_0 result (res) ::: pure
    ! Change self to a string of minimal length
@@ -472,9 +472,9 @@ contains
 
    end
 
-! ==========
-! Misc stuff
-! ==========
+!  ==========
+!  Misc stuff
+!  ==========
 
    to_lower_case ::: pure
    ! Change upper case charaters to lower case in all elements

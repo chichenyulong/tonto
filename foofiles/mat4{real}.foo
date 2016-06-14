@@ -114,11 +114,11 @@ contains
       res = size(self,4)
    end
 
-   is_same_shape_as(b) result (res) ::: get_from(MAT4{INTRINSIC}), pure
+   is_same_shape_as(b) result (res) ::: get_from(MAT4{OBJECT}), pure
    ! Returns TRUE if the matrix "b" has the same shape as self
    end
 
-   is_hypercube result (res) ::: get_from(MAT4{INTRINSIC}), pure
+   is_hypercube result (res) ::: get_from(MAT4{OBJECT}), pure
    ! Returns TRUE if self is a hypercube
    end
 
@@ -126,7 +126,7 @@ contains
 !  Set methods
 !  ===========
 
-   set_to(b) ::: get_from(MAT4{INTRINSIC}), PURE
+   set_to(b) ::: get_from(MAT4{OBJECT}), PURE
    ! Set "self" to vector "b" in standard order
    end
 

@@ -32,42 +32,33 @@ module MAT{RMS2_INDICES}
 
 contains
 
-! =================
-! Memory allocation
-! =================
+!  =================
+!  Memory allocation
+!  =================
 
-   create(dim1,dim2) ::: get_from(MAT{OBJECT}), leaky
-   ! Create space for object. This version does not set defaults.
+   create(dim1,dim2) ::: get_from(MAT{OBJECT}), leaky, PURE
+   ! Allocate a matrix with the given dimensions
    end
 
-   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{OBJECT}), leaky
-   ! Create a matrix with the given dimensions
-   ! This version does not set defaults.
+   create(lb1,ub1,lb2,ub2) ::: get_from(MAT{OBJECT}), leaky, PURE
+   ! Allocate a matrix with the given bounds
    end
 
-   destroy ::: get_from(MAT{OBJECT}), leaky
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
    end
 
    created result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has been created
+   ! Returns true if self has been allocated
    end
 
    destroyed result (res) ::: get_from(OBJECT), pure
-   ! Returns true if self has *not* been created
+   ! Returns true if self has *not* been allocated
    end
 
-   nullify_ptr_part ::: get_from(MAT{OBJECT})
-   ! Nullify the pointer parts of self
-   end
-
-   destroy_ptr_part ::: get_from(MAT{OBJECT}), leaky
-   ! Destroy the pointer parts of self
-   end
-
-! ============================
-! Size-of and shape operations 
-! ============================
+!  ============================
+!  Size-of and shape operations 
+!  ============================
 
    dim1 result (res) ::: get_from(MAT{OBJECT}), inlined_by_foo
    ! Return the size of the 1st dimension
@@ -77,16 +68,17 @@ contains
    ! Return the size of the 2nd dimension
    end
 
-! ===========
-! Set indices
-! ===========
+!  ===========
+!  Set indices
+!  ===========
 
-   set_indices(l_max,rms_indices,nx,ny,nz) ::: leaky
+   set_indices(l_max,rms_indices,nx,ny,nz) ::: leaky, PURE
    ! Set the rms indices. 
-      self :: allocatable, INOUT
+      self :: INOUT
       l_max :: INT, IN
-      rms_indices :: MAT{RMS_INDICES}@
+      rms_indices :: MAT{RMS_INDICES}, INOUT
       nx,ny,nz :: VEC{INT}, IN
+
    ENSURE(.created,"no self object")
    ENSURE(.dim1==(l_max+1)*(l_max+2)/2,"upper bound 1 wrong")
    ENSURE(.dim2==(l_max+1)*(l_max+2)/2,"upper bound 2 wrong")
@@ -97,20 +89,28 @@ contains
    ENSURE(nx.dim==MAT{RMS2_INDICES}::n_comp_up_to(2*l_max),"wrong size, nx")
    ENSURE(ny.dim==nx.dim,"wrong size, ny")
    ENSURE(nz.dim==nx.dim,"wrong size, nz")
+
       ab_lmax,ab_lmin,ab_ltri,fe,le :: INT
       cd_lmax,cd_lmin,cd_ltri,ff,lf :: INT
+
       ab_ltri = 0
+
       do ab_lmax = 0,l_max   ! Maximum l for a shell
       do ab_lmin = 0,ab_lmax ! l for the b shell
+
         ab_ltri = ab_ltri + 1
         fe = MAT{RMS2_INDICES}::n_comp_up_to(ab_lmax-1)+1
         le = MAT{RMS2_INDICES}::n_comp_up_to(ab_lmin+ab_lmax)
+
         cd_ltri = 0
+
         do cd_lmax = 0,l_max   ! Maximum l for c shell
         do cd_lmin = 0,cd_lmax ! l for the d shell
+
            cd_ltri = cd_ltri + 1
            ff = MAT{RMS2_INDICES}::n_comp_up_to(cd_lmax-1)+1
            lf = MAT{RMS2_INDICES}::n_comp_up_to(cd_lmin+cd_lmax)
+
            self(ab_ltri,cd_ltri).set_indices( &
               rms_indices(ab_lmax,ab_lmin),  & 
               rms_indices(cd_lmax,cd_lmin),  &
@@ -119,10 +119,13 @@ contains
               ab_lmax+ab_lmin )
            !  ab_lmax+ab_lmin,cd_lmax+cd_lmin )
            !  ab_lmax,ab_lmin,cd_lmax,cd_lmin )
+
         end
         end
+
       end
       end
+
    end
 
    n_comp_up_to(l) result (res) ::: selfless, pure, private
