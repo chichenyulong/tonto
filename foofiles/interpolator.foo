@@ -60,7 +60,7 @@ contains
    end
 
 
-   create(spacing,first) ::: leaky
+   create(spacing,first) ::: leaky, PURE
    ! Create the object
      self :: allocatable, INOUT
      spacing :: REAL
@@ -73,33 +73,41 @@ contains
 
    end
 
-   set_interpolation_method(method)
+!  ============
+!  Set routines
+!  ============
+
+   set_interpolation_method(method)  ::: PURE
    ! Set the interpolator "method" to use. 
-      method :: STR
+      self :: INOUT
+      method :: STR, IN
+
+   ENSURE(method.is_one_of(["linear      ","cubic_spline"]),"unknown method : "//trim(method))
 
       .interpolation_method = method
       .interpolation_method.to_lower_case
 
       select case (.interpolation_method)
-         case ("linear");       .interpolation_is_spline = FALSE         
-         case ("cubic_spline"); .interpolation_is_spline = TRUE
-         case default;          UNKNOWN(.interpolation_method)
+      case ("linear");       .interpolation_is_spline = FALSE         
+      case ("cubic_spline"); .interpolation_is_spline = TRUE
       end
 
    end
 
-   set_range_mapping(method)
+   set_range_mapping(method) ::: PURE
    ! Set the range mapping "method" i.e how the function values are
    ! treated before being stored as table data_values 
-      method :: STR
+      self :: INOUT
+      method :: STR, IN
+
+   ENSURE(method.is_one_of(["none       ","logarithmic"]),"unknown method : "//trim(method))
 
       .range_mapping = method
       .range_mapping.to_lower_case
 
       select case (.range_mapping)
-         case ("none       "); .range_is_logarithmic = FALSE
-         case ("logarithmic"); .range_is_logarithmic = TRUE
-         case default;         UNKNOWN(.range_mapping)
+      case ("none       "); .range_is_logarithmic = FALSE
+      case ("logarithmic"); .range_is_logarithmic = TRUE
       end
 
    end
@@ -154,68 +162,101 @@ contains
       .domain_scale_factor = fac
    end
 
-   set_spacing(spacing) ::: leaky
+   set_spacing(spacing) ::: leaky, PURE
    ! Set the "spacing" of an even-spaced interpolator
-      spacing :: REAL
+      self :: INOUT
+      spacing :: REAL, IN
+
    ENSURE(spacing>ZERO,"spacing must be +ve")
+
       .table_spacing = spacing
+
    end
 
-   set_table_spacing(spacing) ::: leaky
+   set_table_spacing(spacing) ::: leaky, PURE
    ! Set the "spacing" of an even-spaced interpolator table
-      spacing :: REAL
+      self :: INOUT
+      spacing :: REAL, IN
+
    ENSURE(spacing>ZERO,"spacing must be +ve")
+
       .table_spacing = spacing
+
    end
 
-   set_table_length(length)
-   ! Set the length of the interpolation table to be "length". This is for
-   ! constant step size interpolation tables.
-      length :: REAL
+   set_table_length(length) ::: PURE
+   ! Set the length of the interpolation table to be "length". This is
+   ! for constant step size interpolation tables.
+      self :: INOUT
+      length :: REAL, IN
+
    ENSURE(length>ZERO,"the length must be positive")
+
       .table_length = length
+
    end
 
-   set_table_origin(origin)
-   ! Set the "origin" of the interpolation table to be "length" i.e. the first
-   ! point. This is for constant step size interpolation tables.
-      origin :: REAL
+   set_table_origin(origin) ::: PURE
+   ! Set the "origin" of the interpolation table to be "length" i.e.
+   ! the first point. This is for constant step size interpolation
+   ! tables.
+      self :: INOUT
+      origin :: REAL, IN
+
       .table_origin = origin
+
    end
 
-   set_table_eps(eps)
-   ! Set the tolernace on the table such that values smaller than "eps" are
-   ! regarded as zero. This may reduce the length of the interpolation table.
+   set_table_eps(eps) ::: PURE
+   ! Set the tolernace on the table such that values smaller than
+   ! "eps" are regarded as zero. This may reduce the length of the
+   ! interpolation table.
+      self :: INOUT
       eps :: REAL, IN
- ! ENSURE(eps>ZERO,"the eps must be positive")
+
+   ENSURE(eps>ZERO,"the eps must be positive")
+
       .table_eps = eps
+
    end
 
-   first_data_point result (res) 
+   first_data_point result (res)  ::: PURE
    ! Returns the first data point
+      self :: IN
       res :: REAL
+
    ENSURE(.updated,"Not updated")
    ENSURE(.n_data>0,"No data")
    ENSURE(.data_point.created,"No data")
+
       res = .data_point(1)
+
    end
 
-   last_data_point result (res) 
+   last_data_point result (res) ::: PURE
    ! Returns the last data point
+      self :: IN
       res :: REAL
+
    ENSURE(.updated,"Not updated")
    ENSURE(.n_data>0,"No data")
    ENSURE(.data_point.created,"No data")
+
       res = .data_point(.n_data)
+
    end
 
-   last_data_value result (res) 
+   last_data_value result (res) :::PURE
    ! Returns the last data value
+      self :: IN
       res :: REAL
+
    ENSURE(.updated,"Not updated")
    ENSURE(.n_data>0,"No data")
    ENSURE(.data_value.created,"No data")
+
       res = .data_value(.n_data)
+
    end
 
 !  =============
@@ -336,24 +377,30 @@ contains
 !  Set routines
 !  ============
 
-   set_data_points(points) ::: leaky
+   set_data_points(points) ::: leaky, pure
    ! Set the data "points". NOTE: Make sure that .update is called after all
    ! set routines.
-      points :: VEC{REAL}
-      .data_point.destroy
-      .data_point.create_copy(points)
+      self :: INOUT
+      points :: VEC{REAL}, IN
+
+      .data_point = points
+
    end
 
-   set_data_values(values) ::: leaky
+   set_data_values(values) ::: leaky, pure
    ! Set the data "values". NOTE: Make sure that .update is called after all
    ! set routines.
-      values :: VEC{REAL}
-      .data_value.destroy
-      .data_value.create_copy(values)
+      self :: INOUT
+      values :: VEC{REAL}, IN
+
+      .data_value = values
+
    end
 
-   update ::: leaky
+   update ::: leaky, PURE
    ! Check everything is OK after reading data. 
+      self :: INOUT
+
    ENSURE(.data_point.created," no data_point's")
    ENSURE(.data_value.created," no data_value's")
    ENSURE(.data_point.dim==.data_value.dim,"inconsistent data/value lengths")
@@ -443,18 +490,24 @@ contains
 
    end
 
-   y1_initial_set result (res)
+   y1_initial_set result (res) ::: pure
    ! Return TRUE if the first derivative at the start, .y1_initial, has been set
    ! by the user
+      self :: IN
       res :: BIN
+
       res = .y1_initial /= INTERPOLATOR_Y1_INITIAL
+
    end
 
-   y1_final_set result (res)
+   y1_final_set result (res) ::: pure
    ! Return TRUE if the first derivative at the endpoint, .y1_final, has been
    ! set by the user
+      self :: IN
       res :: BIN
+
       res = .y1_final /= INTERPOLATOR_Y1_FINAL
+
    end
 
 !  ===================
