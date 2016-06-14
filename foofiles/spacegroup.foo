@@ -3090,13 +3090,13 @@ contains
       stdout.dump("nG",.nG)
       stdout.dump("n_seitz",.n_seitz)
       stdout.dump("seitz",.seitz)
-      stdout.dmpp("product_of_symops",.product_of_symops)
-      stdout.dmpp("inverse_of_symops",.inverse_of_symops)
+      stdout.dmpa("product_of_symops",.product_of_symops)
+      stdout.dmpa("inverse_of_symops",.inverse_of_symops)
       stdout.dump("n_inverted_symops",.n_inverted_symops)
-      stdout.dmpp("inverted_symop",.inverted_symop)
-      stdout.dmpp("translated_symop",.translated_symop)
+      stdout.dmpa("inverted_symop",.inverted_symop)
+      stdout.dmpa("translated_symop",.translated_symop)
       stdout.dump("n_unique_SF_symops",.n_unique_SF_symops)
-      stdout.dmpp("unique_SF_symop",.unique_SF_symop)
+      stdout.dmpa("unique_SF_symop",.unique_SF_symop)
       stdout.dump("updated",.updated)
 
    end
@@ -3105,8 +3105,8 @@ contains
    ! Dump object data as text
    end
 
-   dmpp(object_name) ::: get_from(OBJECT)
-   ! Dump pointer object data as text
+   dmpa(object_name) ::: get_from(OBJECT)
+   ! Dump an allocatable object data as text
    end
 
 !  ==============

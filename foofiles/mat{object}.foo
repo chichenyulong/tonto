@@ -181,8 +181,8 @@ contains
 
    end
 
-   dmpp(object_name,lower_triangle)
-   ! Dump a matrix pointer object in text format
+   dmpa(object_name,lower_triangle)
+   ! Dump an allocatable matrix object in text format
       self :: allocatable, INOUT
       object_name :: STR, IN
       lower_triangle :: BIN, optional, IN
@@ -195,7 +195,7 @@ contains
 
       if (.destroyed) then
 
-         stdout.text(trim(object_name)//":MAT{TYPE}* = null")
+         stdout.text(trim(object_name)//":MAT{TYPE}@ = null")
 
       else
 

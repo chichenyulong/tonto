@@ -587,9 +587,9 @@ contains
       stdout.dump("label",.label)
       stdout.dump("n_orb",.n_orb)
       stdout.dump("n_prim",.n_prim)
-      .orbital.dmpp("orbital")
+      .orbital.dmpa("orbital")
       stdout.dump("use_interpolator",.use_interpolator)
-      .interpolator.dmpp("interpolator")
+      .interpolator.dmpa("interpolator")
 
    end
 
@@ -597,8 +597,8 @@ contains
    ! Dump object data as text
    end
 
-   dmpp(object_name) ::: get_from(OBJECT)
-   ! Dump pointer object data as text
+   dmpa(object_name) ::: get_from(OBJECT)
+   ! Dump an allocatable object data as text
    end
 
    put

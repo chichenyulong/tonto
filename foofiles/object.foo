@@ -429,25 +429,7 @@ contains
 
    end
 
-   dmpp(object_name)
-   ! Dump pointer object data as text
-      self :: allocatable, INOUT
-      object_name :: STR, IN
-
-      if (.destroyed) then
-
-         stdout.flush
-         stdout.text(trim(object_name)//":TYPE* = null")
-
-      else
-
-         .dump(trim(object_name),ptr=TRUE)
-
-      end
-
-   end
-
-   dmpp(object_name)
+   dmpa(object_name)
    ! Dump an allocatable object data as text
       self :: allocatable, IN
       object_name :: STR, IN
@@ -455,7 +437,7 @@ contains
       if (.destroyed) then
 
          stdout.flush
-         stdout.text(trim(object_name)//":TYPE* = null")
+         stdout.text(trim(object_name)//":TYPE@ = null")
 
       else
 

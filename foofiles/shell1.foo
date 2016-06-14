@@ -3219,8 +3219,8 @@ contains
       stdout.dump("n_cc",.n_cc)
       stdout.dump("position",.position)
 
-      stdout.dmpp("exponent",.exponent)
-      stdout.dmpp("contraction",.contraction)
+      stdout.dmpa("exponent",.exponent)
+      stdout.dmpa("contraction",.contraction)
 
    end
 
@@ -3228,8 +3228,8 @@ contains
    ! Dump object data as text
    end
 
-   dmpp(object_name) ::: get_from(OBJECT)
-   ! Dump pointer object data as text
+   dmpa(object_name) ::: get_from(OBJECT)
+   ! Dump an allocatable object data as text
    end
 
 !  ======

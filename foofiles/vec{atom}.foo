@@ -8925,21 +8925,17 @@ contains
 !                self(atom_a).position, self(atom_b).position )
 !   end
 
-!  ====
-!  Dump
-!  ====
+!  ==============
+!  Output methods
+!  ==============
 
    dump(object_name) ::: get_from(VEC{OBJECT})
    ! Dump a vector object
    end
 
-   dmpp(object_name) ::: get_from(VEC{OBJECT})
-   ! Dump a vector pointer object
+   dmpa(object_name) ::: get_from(VEC{OBJECT})
+   ! Dump an allocatable vector object
    end
-
-!  ==============
-!  Output methods
-!  ==============
 
    put
    ! Output atom information, without full basis set info

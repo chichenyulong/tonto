@@ -4831,27 +4831,27 @@ contains
       stdout.dump("generation_method",.generation_method)
       stdout.dump("defragment",.defragment)
       stdout.dump("n_atoms",.n_atoms)
-      stdout.dmpp("geometry",.geometry)
-      .crystal.dmpp("crystal")
-      .asymmetric_unit_atom.dmpp("asymmetric_unit_atom")
+      stdout.dmpa("geometry",.geometry)
+      .crystal.dmpa("crystal")
+      .asymmetric_unit_atom.dmpa("asymmetric_unit_atom")
       stdout.dump("n_fragment_atoms",.n_fragment_atoms)
-      stdout.dmpp("fragment_geometry",.fragment_geometry)
+      stdout.dmpa("fragment_geometry",.fragment_geometry)
       stdout.dump("fragment_width",.fragment_width)
       stdout.dump("fragment_offset",.fragment_offset)
       stdout.dump("unit_cell_offset",.unit_cell_offset)
       stdout.dump("h_min",.h_min)
       stdout.dump("h_max",.h_max)
       stdout.dump("n_shift",.n_shift)
-      stdout.dmpp("shift",.shift)
-      stdout.dmpp("shift_for_atom",.shift_for_atom)
-      stdout.dmpp("is_fragment_atom",.is_fragment_atom)
-      stdout.dmpp("occupation_list",.occupation_list)
-    ! stdout.dmpp("molecule_for_atom",.molecule_for_atom)
-    ! stdout.dmpp("molecule",.molecule)
-      stdout.dmpp("molecule_centroid",.molecule_centroid)
-      stdout.dmpp("unique_molecule_for",.unique_molecule_for)
-      stdout.dmpp("unique_sycode_for",.unique_symcode_for)
-    ! stdout.dmpp("atom_connection",.atom_connection)
+      stdout.dmpa("shift",.shift)
+      stdout.dmpa("shift_for_atom",.shift_for_atom)
+      stdout.dmpa("is_fragment_atom",.is_fragment_atom)
+      stdout.dmpa("occupation_list",.occupation_list)
+    ! stdout.dmpa("molecule_for_atom",.molecule_for_atom)
+    ! stdout.dmpa("molecule",.molecule)
+      stdout.dmpa("molecule_centroid",.molecule_centroid)
+      stdout.dmpa("unique_molecule_for",.unique_molecule_for)
+      stdout.dmpa("unique_sycode_for",.unique_symcode_for)
+    ! stdout.dmpa("atom_connection",.atom_connection)
       stdout.dump("n_molecules",.n_molecules)
       stdout.dump("info_made",.info_made)
 
@@ -4861,8 +4861,8 @@ contains
    ! Dump object data as text
    end
 
-   dmpp(object_name) ::: get_from(OBJECT)
-   ! Dump pointer object data as text
+   dmpa(object_name) ::: get_from(OBJECT)
+   ! Dump an allocatable object data as text
    end
 
 !  ==============

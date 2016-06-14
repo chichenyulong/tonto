@@ -372,7 +372,7 @@ contains
    ! the endpoints are normally zero. The values of the first derivative are
    ! normally taken to be the finite difference of the first two or last two
    ! points.
-      self :: INOUT
+      self :: target, INOUT
 
    ENSURE(.data_point.created,"no data points")
    ENSURE(.data_value.created,"no data values")
@@ -380,7 +380,8 @@ contains
 
       dx,dxp,dxm,dy,dyp,dym,sig,p :: REAL
       n,i,ip1,im1 :: INT
-      x,y,u :: VEC{REAL}@
+      x,y :: VEC{REAL}* ! ptr ok
+      u :: VEC{REAL}@
 
       ! No of data
       n = .n_data
@@ -953,7 +954,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}@
+      pt :: VEC{REAL}* ! ptr ok for now
       first,last,del1,p,frac,res,s :: REAL
       i,f,f1 :: INT
       do_fac :: BIN
@@ -1234,7 +1235,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}@
+      pt :: VEC{REAL}* ! ptr ok for now
       first,last,del1,p,frac,res,s :: REAL
       i,f,f1 :: INT
       do_fac :: BIN
@@ -1340,7 +1341,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}@
+      pt :: VEC{REAL}* ! ptr ok for now
       first,last,p,frac,del1,del6,v1,v2,a,b,s :: REAL
       i,f,f1,f2 :: INT
       do_fac :: BIN
@@ -1540,9 +1541,9 @@ contains
 
    end
 
-!  ====
-!  Dump
-!  ====
+!  ==============
+!  Output methods
+!  ==============
 
    do_dump ::: private
    ! Dump for debugging or reading back in
@@ -1558,10 +1559,10 @@ contains
       stdout.dump("table_origin",.table_origin)
       stdout.dump("table_eps",.table_eps)
       stdout.dump("n_data",.n_data)
-      stdout.dmpp("data_point",.data_point)
-      stdout.dmpp("data_value",.data_value)
+      stdout.dmpa("data_point",.data_point)
+      stdout.dmpa("data_value",.data_value)
       stdout.dump("updated",.updated)
-      stdout.dmpp("y2",.y2)
+      stdout.dmpa("y2",.y2)
       stdout.dump("y1_initial",.y1_initial)
       stdout.dump("y1_final",.y1_final)
 
@@ -1571,13 +1572,9 @@ contains
    ! Dump object data as text
    end
 
-   dmpp(object_name) ::: get_from(OBJECT)
-   ! Dump pointer object data as text
+   dmpa(object_name) ::: get_from(OBJECT)
+   ! Dump an allocatable object data as text
    end
-
-!  ==============
-!  Output methods
-!  ==============
 
    put
    ! Put the list of interpolating data
