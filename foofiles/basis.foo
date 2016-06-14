@@ -171,7 +171,7 @@ contains
    ENSURE(cc.dim==lc.dim,"wrong size, cc")
 
       s,c,i,b :: INT
-      sh :: SHELL@
+      sh :: SHELL* ! ptr ok
 
       i = 1
       b = 1
@@ -179,6 +179,7 @@ contains
       do s = 1,.n_shell 
 
          sh => .shell(s)
+
          lc(i) = sh.l_chr
          bf(i) = b.to_str
 
@@ -270,15 +271,16 @@ contains
    ENSURE(ccm.dim2==.n_bf,  "wrong 2nd dimension, ccm")
 
       b,p,n_p,n_b,i :: INT
-      sh :: SHELL@
+      sh :: SHELL* ! ptr ok
 
       ccm = ZERO
 
-      p = 0                       ! no of primitives in all previous shells
-      b = 0                       ! basis number
+      p = 0  ! no of primitives in all previous shells
+      b = 0  ! basis number
 
 
-      do i = 1,.n_shell           ! For segmented basis sets !
+      ! Only for segmented basis sets
+      do i = 1,.n_shell           
 
          sh => .shell(i)
 
@@ -413,7 +415,7 @@ contains
 !  Key related routines
 !  ====================
 
-   read_keys ::: get_from(OBJECT), selfless, leaky
+   read_keys ::: get_from(OBJECT), leaky
    ! Read the "keys" module variable.
    end
 

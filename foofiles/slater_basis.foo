@@ -779,7 +779,7 @@ contains
 !  Key related routines
 !  ====================
 
-   read_keys ::: get_from(OBJECT), selfless, leaky
+   read_keys ::: get_from(OBJECT), leaky
    ! Read the "keys" module variable.
    end
 
