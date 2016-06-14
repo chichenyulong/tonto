@@ -996,7 +996,7 @@ contains
 
    end
 
-   values_for_linear(points,values,fac) ::: PURE
+   values_for_linear(points,values,fac) ::: private, PURE
    ! Get interpolated "values" for a series of squared "points" 
    ! Optional "fac" may be app[lied to the "values"
    ! WARNING: To used with sqrt type domain mapping.
@@ -1007,7 +1007,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}* ! ptr ok for now
+      pt :: VEC{REAL}@
       first,last,del1,p,frac,res,s :: REAL
       i,f,f1 :: INT
       do_fac :: BIN
@@ -1021,13 +1021,11 @@ contains
       end
 
       ! Rescale points if required
+      pt = points
       if (.domain_is_sqrt_x1x) then
-         pt.create(points.dim)
          s  = .domain_scale_factor
          s  = s*s
-         pt = points/(s+points)
-      else
-         pt => points
+         pt = pt/(s+points)
       end
 
       first = .data_point(1)
@@ -1109,11 +1107,11 @@ contains
       end
 
       ! Clean up
-      if (.domain_is_sqrt_x1x) pt.destroy
+      pt.destroy
 
    end
 
-   values_for_spline(points,values,fac) ::: PURE
+   values_for_spline(points,values,fac) ::: private, PURE
    ! Return the spline interpolated "values" for squared "points".
    ! Optional "fac" may be app[lied to the "values"
    ! WARNING: To used with sqrt type domain mapping.
@@ -1140,13 +1138,11 @@ contains
       end
 
       ! Rescale data if required
+      pt = points
       if (.domain_is_sqrt_x1x) then
-         pt.create(points.dim)
          s  = .domain_scale_factor
          s  = s*s
-         pt = points/(s+points)
-      else
-         pt => points
+         pt = pt/(s+points)
       end
 
       first = .data_point(1)
@@ -1254,7 +1250,7 @@ contains
       end
 
       ! Clean up
-      if (.domain_is_sqrt_x1x) pt.destroy
+      pt.destroy
 
    end
 
@@ -1288,7 +1284,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}* ! ptr ok for now
+      pt :: VEC{REAL}@
       first,last,del1,p,frac,res,s :: REAL
       i,f,f1 :: INT
       do_fac :: BIN
@@ -1302,13 +1298,11 @@ contains
       end
 
       ! Rescale data if required
+      pt = points
       if (.domain_is_sqrt_x1x) then
-         pt.create(points.dim)
          s  = .domain_scale_factor
          s  = s*s
-         pt = points/(s+points)
-      else
-         pt => points
+         pt = pt/(s+points)
       end
 
       first = .data_point(1)
@@ -1378,7 +1372,7 @@ contains
       end
 
       ! Clean up
-      if (.domain_is_sqrt_x1x) pt.destroy
+      pt.destroy
 
    end
 
@@ -1394,7 +1388,7 @@ contains
 
    ENSURE(.updated,"not updated")
 
-      pt :: VEC{REAL}* ! ptr ok for now
+      pt :: VEC{REAL}@
       first,last,p,frac,del1,del6,v1,v2,a,b,s :: REAL
       i,f,f1,f2 :: INT
       do_fac :: BIN
@@ -1408,13 +1402,11 @@ contains
       end
 
       ! Rescale data if required
+      pt = points
       if (.domain_is_sqrt_x1x) then
-        pt.create(points.dim)
          s  = .domain_scale_factor
          s  = s*s
          pt = points/(s+points)
-      else
-         pt => points
       end
 
       first = .data_point(1)
@@ -1510,66 +1502,9 @@ contains
       end
 
       ! Clean up
-      if (.domain_is_sqrt_x1x) pt.destroy
+      pt.destroy
 
    end
-
-!   fast_d_values_for(points) result(values)
-!   ! Return the interpolated "values" for a series of "points" in the special
-!   ! case where the table_origin is ZERO and where the data is known to be even
-!   ! spaced. The finalisation tests and other preconditions are skipped in the
-!   ! interests of speed. This version is for radial DERIVATIVES, and has a minus
-!   ! sign when the log interpolation is used.
-!      self :: IN
-!      points :: VEC{REAL}, IN
-!      values :: VEC{REAL}(points.dim)
-!   ! ENSURE(.updated,"not updated")
-!   ! ENSURE(.table_origin.is_zero,"table_origin is not zero")
-!   ! ENSURE(all(points)>ZERO,"the points are not all +ve")
-!      del,frac,res,last :: REAL
-!      i,n,f,i1,i2 :: INT
-!      is_log :: BIN
-!      n = 0
-!      last =.data_point(.n_data)
-!      do i = 1,points.dim       ! set points off the end of the table
-!        if (points(i)<last) cycle
-!        values(i) = ZERO
-!        n = n + 1
-!      end
-!      if (n==points.dim) return ! all points too far away
-!      is_log = .is_logarithmic
-!      if (is_log) then
-!        do i = 1,points.dim
-!          if (points(i)>=last) cycle
-!          frac = points(i)/.table_spacing
-!          f  = floor(frac)
-!          i1 = f + 1
-!          i2 = i1 + 1
-!          if (frac>f) then ! point lies between spacing
-!            del = .data_value(i2) - .data_value(i1)
-!            res = .data_value(i1) + (frac-f)*del
-!          else             ! point is exactly equal to a data_point
-!            res  = .data_value(i1)
-!          end
-!          values(i) = -exp(res)
-!        end
-!      else
-!        do i = 1,points.dim
-!          if (points(i)>=last) cycle
-!          frac = points(i)/.table_spacing
-!          f  = floor(frac)
-!          i1 = f + 1
-!          i2 = i1 + 1
-!          if (frac>f) then ! point lies between spacing
-!            del = .data_value(i2) - .data_value(i1)
-!            res = .data_value(i1) + (frac-f)*del
-!          else             ! point is exactly equal to a data_point
-!            res  = .data_value(i1)
-!          end
-!          values(i) = res
-!       end
-!     end
-!   end
 
 !  ===============
 !  Inquiry methods
