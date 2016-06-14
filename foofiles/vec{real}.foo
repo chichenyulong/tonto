@@ -74,6 +74,14 @@ contains
    ! Return the size of the 1st dimension
    end
 
+   lb result (res) ::: get_from(VEC{OBJECT}), pure
+   ! Return the lower bound of self
+   end
+
+   ub result (res) ::: get_from(VEC{OBJECT}), pure
+   ! Return the upper bound of self
+   end
+
 !  =======================
 !  Shrinking and expansion
 !  =======================

@@ -68,6 +68,14 @@ contains
    ! Return the size of the 1st dimension
    end
 
+   lb result (res) ::: get_from(VEC{OBJECT}), pure
+   ! Return the lower bound of self
+   end
+
+   ub result (res) ::: get_from(VEC{OBJECT}), pure
+   ! Return the upper bound of self
+   end
+
 !  =======================
 !  Shrinking and expansion
 !  =======================
@@ -126,23 +134,26 @@ contains
    ! Expands self to dimension dim.  Contents are retained.
      self :: allocatable, INOUT
      dim :: INT, IN
-     ENSURE(dim>=.dim, "dimension given is too small")
-     old :: VEC{MAT_{REAL}}@
-     old_size :: INT
-     mat_dim1,mat_dim2,i :: INT
-     old => self
-     old_size = old.dim
-     mat_dim1 = old(1).element.dim1
-     mat_dim2 = old(1).element.dim2
-     nullify(self)
-     self.create(dim)
+
+   ENSURE(dim>=.dim, "dimension given is too small")
+
+     new :: VEC{MAT_{REAL}}@
+     mat_dim1,mat_dim2, i :: INT
+
+     mat_dim1 = self(1).element.dim1
+     mat_dim2 = self(1).element.dim2
+
+     new.create(dim)
      do i=1,dim
-       self(i).element.create(mat_dim1,mat_dim2)
+        new(i).element.create(mat_dim1,mat_dim2)
      end
-     do i=1,old_size
-       self(i).element=old(i).element
+
+     do i = 1,.dim
+        new(i).element = self(i).element
      end
-     old.destroy
+
+     call move_alloc(new,self)
+
    end
 
 !  =======
@@ -225,7 +236,8 @@ contains
    DIE_IF(self(1).element.dim1/=vec(1).element.dim1,"vec.element: wrong dim1")
    DIE_IF(self(1).element.dim2/=vec(1).element.dim2,"vec.element: wrong dim2")
 
-     old,new :: MAT{REAL}@
+     old :: MAT{REAL}@
+     new :: MAT{REAL}* ! ptr ok
      fac,norm :: REAL
      n,p,dim1,dim2 :: INT
 
@@ -236,7 +248,7 @@ contains
      ! Orthogonalisation to spectator bra's
      do p = 1,vec.dim
 
-       old = vec(p)[:,:]
+       old  = vec(p)[:,:]
        norm = MAT{REAL}:sum_elements(old*old)
        old  = old/sqrt(norm)
 
@@ -262,7 +274,7 @@ contains
      self :: target
      eigenvectors :: MAT{REAL}, IN
 
-     new :: MAT{REAL}@
+     new :: MAT{REAL}* ! ptr ok
      resz,vec :: VEC{REAL}@
      fac :: REAL
      n,o,dim1,dim2,k,j,i :: INT
@@ -322,7 +334,7 @@ contains
      self :: target
      eigenvectors :: MAT{REAL}, IN
 
-     new :: MAT{REAL}@
+     new :: MAT{REAL}* ! ptr ok
      resz :: VEC{REAL}@
      vec :: VEC{REAL}@
      fac :: REAL

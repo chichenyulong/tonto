@@ -74,12 +74,12 @@ contains
    ! Return the size of the 1st dimension
    end
 
-   size result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
-   ! Return the size of the array
+   lb result (res) ::: get_from(VEC{OBJECT}), pure
+   ! Return the lower bound of self
    end
 
-   dim result (res) ::: get_from(VEC{INTRINSIC}), inlined_by_foo, PURE
-   ! Return the size of the 1st dimension
+   ub result (res) ::: get_from(VEC{OBJECT}), pure
+   ! Return the upper bound of self
    end
 
 !  =======================

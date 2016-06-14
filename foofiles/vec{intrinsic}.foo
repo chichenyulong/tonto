@@ -67,6 +67,14 @@ contains
    ! Return the size of the 1st dimension
    end
 
+   lb result (res) ::: get_from(VEC{OBJECT}), pure
+   ! Return the lower bound of self
+   end
+
+   ub result (res) ::: get_from(VEC{OBJECT}), pure
+   ! Return the upper bound of self
+   end
+
 !  =======================
 !  Shrinking and expansion
 !  =======================
@@ -80,8 +88,8 @@ contains
       chop_start :: BIN, optional, IN
 
    ENSURE(.created,"self is unallocated")
-   ENSURE(lbound(self,1)==1,"self must have lbound 1")
-   ENSURE(ubound(self,1)>dim,"dim is too small")
+   ENSURE(.lb==1,"self must have lbound 1")
+   ENSURE(.ub>dim,"dim is too small")
 
       ub :: INT
       chop_end :: BIN
@@ -96,7 +104,7 @@ contains
 
       else 
 
-         ub = ubound(self,dim=1)
+         ub = .ub
          self = [ self(ub-dim+1:ub) ]
 
       end
@@ -132,8 +140,8 @@ contains
 
       else
 
-         ENSURE(ubound(self,1)<dim,"dim is too small")
-         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+         ENSURE(.ub<dim,"dim is too small")
+         ENSURE(.lb==1,"self must have lbound 1")
 
          ! No. of extra copies
          nc = dim - .dim
@@ -160,7 +168,7 @@ contains
 
       else
 
-         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+         ENSURE(.lb==1,"self must have lbound 1")
 
          self = [ self, v ]
 
@@ -179,7 +187,7 @@ contains
 
       else
 
-         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+         ENSURE(.lb==1,"self must have lbound 1")
 
          self = [ self, v1, v2 ]
 
@@ -198,7 +206,7 @@ contains
 
       else
 
-         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+         ENSURE(.lb==1,"self must have lbound 1")
 
          self = [ self, value ]
 
@@ -218,7 +226,7 @@ contains
 
       else if (all(self/=value)) then
 
-         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+         ENSURE(.lb==1,"self must have lbound 1")
 
          self = [ self, value ]
 
@@ -237,7 +245,7 @@ contains
 
       else
 
-         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+         ENSURE(.lb==1,"self must have lbound 1")
 
          self = [ v, self ]
 
@@ -256,7 +264,7 @@ contains
 
       else
 
-         ENSURE(lbound(self,1)==1,"self must have lbound 1")
+         ENSURE(.lb==1,"self must have lbound 1")
 
          self = [ value, self ]
 
@@ -271,7 +279,7 @@ contains
       values :: VEC{INTRINSIC}, IN
 
    ENSURE(.created,"self is unallocated")
-   ENSURE(lbound(self,1)==1,"self must have lbound 1")
+   ENSURE(.lb==1,"self must have lbound 1")
 
       self = pack(self,mask=any(spread(self,2,values.dim)==spread(values,1,.dim),dim=1))
 
@@ -284,7 +292,7 @@ contains
       value :: INTRINSIC, IN
 
    ENSURE(.created,"self is unallocated")
-   ENSURE(lbound(self,1)==1,"self must have lbound 1")
+   ENSURE(.lb==1,"self must have lbound 1")
 
       self = pack(self,mask = self/=value)
 
@@ -297,9 +305,9 @@ contains
       k :: INT, IN
 
    ENSURE(.created,"self is unallocated")
-   ENSURE(lbound(self,1)==1,"self must have lbound 1")
-   ENSURE(ubound(self,1)>=k,"k is too big")
-   ENSURE(             k>=1,"k is too small")
+   ENSURE(.lb==1,"self must have lbound 1")
+   ENSURE(.ub>=k,"k is too big")
+   ENSURE(  k>=1,"k is too small")
 
       self = [ self(1:k-1),self(k+1:.dim) ]
 
@@ -724,7 +732,7 @@ contains
 
    ENSURE(.created,"no self")
    ENSURE(.dim>=1, "self too small")
-   ENSURE(lbound(self,1)==1,"must have lower bound 1")
+   ENSURE(.lb==1,"must have lower bound 1")
 
       unique :: VEC{INTRINSIC}(len=len(self(1)))@
       i,n :: INT

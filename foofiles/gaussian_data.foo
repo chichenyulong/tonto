@@ -36,27 +36,27 @@ module GAUSSIAN_DATA
 
    ! List of cartesian powers for gaussian functions in increasing angular
    ! momentum. This defines the lexical order. 
-   px :: VEC{INT}*, public  DEFAULT_NULL
-   py :: VEC{INT}*, public  DEFAULT_NULL
-   pz :: VEC{INT}*, public  DEFAULT_NULL
-   pp :: MAT{INT}*, public  DEFAULT_NULL
+   px :: VEC{INT}@, target, public
+   py :: VEC{INT}@, target, public
+   pz :: VEC{INT}@, target, public
+   pp :: MAT{INT}@, target, public
+
+   ! List of cartesian indices for gaussian functions in increasing angular
+   ! momentum. The indices are the powers (see above) plus 1.
+   nx :: VEC{INT}@, target, public
+   ny :: VEC{INT}@, target, public
+   nz :: VEC{INT}@, target, public
+   nn :: MAT{INT}@, target, public
 
    ! String representations of the gaussian powers
-   pxyz_rep :: VEC{STR}*, public  DEFAULT_NULL ! e.g. xxyy
-   pxyz_pow :: VEC{STR}*, public  DEFAULT_NULL ! e.g. x2y2
-   p123_rep :: VEC{STR}*, public  DEFAULT_NULL ! e.g. 1122
- ! pLM_real :: VEC{STR}*, public  DEFAULT_NULL ! e.g. 21+
+   pxyz_rep :: VEC{STR}@, target, public ! e.g. xxyy
+   pxyz_pow :: VEC{STR}@, target, public ! e.g. x2y2
+   p123_rep :: VEC{STR}@, target, public ! e.g. 1122
+ ! pLM_real :: VEC{STR}@, target, public ! e.g. 21+
 
    ! The normalising factors apply to gaussians with angular part different
    ! from x^l, y^l or z^l
-   normalising_factors :: VEC{REAL}*, public  DEFAULT_NULL
-
-   ! List of cartesian indices for gaussian functions in increasing angular
-   ! momentum. The indices are the powers plus 1.
-   nx :: VEC{INT}*, public  DEFAULT_NULL
-   ny :: VEC{INT}*, public  DEFAULT_NULL
-   nz :: VEC{INT}*, public  DEFAULT_NULL
-   nn :: MAT{INT}*, public  DEFAULT_NULL
+   normalising_factors :: VEC{REAL}@, target, public
 
    ! Set TRUE if Ishida's ordering is to be used
    ! This turns of special code in SHELL1QUARTET
@@ -64,23 +64,23 @@ module GAUSSIAN_DATA
 
    ! These are indexing arrays used for the horizontal recursion relation.
    ! They are set using the set_gaussian_indices routine.
-   first_nonzero :: VEC{INT}*, public  DEFAULT_NULL
-   index_of :: MAT3{INT}*, public  DEFAULT_NULL
-   index_m1 :: VEC{INT}*, public  DEFAULT_NULL
-   index_p1 :: MAT{INT}*, public  DEFAULT_NULL
+   first_nonzero :: VEC{INT}@, target, public
+   index_of :: MAT3{INT}@, target, public
+   index_m1 :: VEC{INT}@, target, public
+   index_p1 :: MAT{INT}@, target, public
 
    ! The binomial coefficients, plus 1, for reverse HRR
-   binomial_p1 :: VEC{VEC_{INT}}@, public
+   binomial_p1 :: VEC{VEC_{INT}}@, target, public
 
    ! List of arrays used for the reduced multiplication scheme (RMS)
-   rms_indices :: MAT{RMS_INDICES}*, public  DEFAULT_NULL
+   rms_indices :: MAT{RMS_INDICES}@, target, public
 
    ! List of arrays used for the reduced multiplication scheme (RMS)
- ! rms2_indices :: MAT4{RMS2_INDICES}*, public  DEFAULT_NULL
-   rms2_indices :: MAT{RMS2_INDICES}*, public  DEFAULT_NULL
+ ! rms2_indices :: MAT4{RMS2_INDICES}@, target, public
+   rms2_indices :: MAT{RMS2_INDICES}@, target, public
 
    ! Array of spherical harmonic coefficients
-   spherical_harmonics_for :: VEC{MAT_{REAL}}*, public   DEFAULT_NULL
+   spherical_harmonics_for :: VEC{MAT_{REAL}}@, target, public
 
 contains
 
@@ -866,7 +866,6 @@ contains
       n,order :: INT
       dtr :: MAT{REAL}@
 
-      res => null()
       if (l_max_saved<2) return
 
       order = R.dim3
@@ -906,7 +905,6 @@ contains
       n,order :: INT
       ftr :: MAT{REAL}@
 
-      res => null()
       if (l_max_saved<3) return
 
       order = R.dim3
@@ -948,7 +946,6 @@ contains
 
       order = R.dim3
 
-      res => null()
       if (l_max_saved<4) return
 
       if (NOT is_spherical) then
