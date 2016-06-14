@@ -298,9 +298,9 @@ contains
 
    end
 
-!  ==========================
-!  Input key related routines
-!  ==========================
+!  ====================
+!  Key related routines
+!  ====================
 
    read_keys ::: leaky
    ! Read the "keys" module variable.

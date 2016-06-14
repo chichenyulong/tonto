@@ -857,7 +857,6 @@ contains
       if (.created) then
       end
 
-      nullify(tmp)
       tmp.read_keys
 
    end

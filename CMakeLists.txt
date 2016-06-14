@@ -126,7 +126,6 @@ set(FOO_SRC
     ${FOO_DIR}/mat3{vec_{real}}.foo
     ${FOO_DIR}/mat4{cpx}.foo
     ${FOO_DIR}/mat4{int}.foo
-    ${FOO_DIR}/mat4{object}.foo
     ${FOO_DIR}/mat4{real}.foo
     ${FOO_DIR}/mat4{rms2_indices}.foo
     ${FOO_DIR}/mat5{cpx}.foo
@@ -136,7 +135,6 @@ set(FOO_SRC
     ${FOO_DIR}/mat{cpx}.foo
     ${FOO_DIR}/mat{int}.foo
     ${FOO_DIR}/mat{mat_{real}}.foo
-    ${FOO_DIR}/mat{object}.foo
     ${FOO_DIR}/mat{real}.foo
     ${FOO_DIR}/mat{rms2_indices}.foo
     ${FOO_DIR}/mat{rms_indices}.foo
@@ -158,7 +156,6 @@ set(FOO_SRC
     ${FOO_DIR}/molecule.scf.foo
     ${FOO_DIR}/molecule.tad.foo
     ${FOO_DIR}/molecule.xtal.foo
-    ${FOO_DIR}/object.foo
     ${FOO_DIR}/opmatrix.foo
     ${FOO_DIR}/opvector.foo
     ${FOO_DIR}/parallel.foo
@@ -204,7 +201,6 @@ set(FOO_SRC
     ${FOO_DIR}/vec{mat3_{real}}.foo
     ${FOO_DIR}/vec{mat4_{real}}.foo
     ${FOO_DIR}/vec{mat_{real}}.foo
-    ${FOO_DIR}/vec{object}.foo
     ${FOO_DIR}/vec{quadrature}.foo
     ${FOO_DIR}/vec{real}.foo
     ${FOO_DIR}/vec{reflection}.foo
@@ -271,7 +267,6 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/mat3\{vec_\{real\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{cpx\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{int\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat4\{object\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{real\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat4\{rms2_indices\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat5\{cpx\}.F90
@@ -281,7 +276,6 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{cpx\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{int\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{mat_\{real\}\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/mat\{object\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{real\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{rms2_indices\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/mat\{rms_indices\}.F90
@@ -303,7 +297,6 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.scf.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.tad.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.xtal.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/object.F90
     ${CMAKE_CURRENT_BINARY_DIR}/opmatrix.F90
     ${CMAKE_CURRENT_BINARY_DIR}/opvector.F90
     ${CMAKE_CURRENT_BINARY_DIR}/parallel.F90
@@ -349,7 +342,6 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat3_\{real\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat4_\{real\}\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{mat_\{real\}\}.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/vec\{object\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{quadrature\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{real\}.F90
     ${CMAKE_CURRENT_BINARY_DIR}/vec\{reflection\}.F90
