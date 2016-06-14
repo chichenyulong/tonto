@@ -161,7 +161,7 @@ contains
             if (.action == "read") .get_cpx_buffer
          
          case default
-            DIE("unknown buffer type, "//trim(type))
+            DIE("unknown buffer type, "//trim(buffer_type))
          
          end
 
@@ -173,9 +173,9 @@ contains
    ! Close the file
       self :: INOUT
 
-      opened :: BIN
-
    ENSURE(.is_open,"file is not open")
+
+      opened :: BIN
 
       if (.action=="write") then
          if ( .int_buffer_pos > 1) .flush_int_buffer
