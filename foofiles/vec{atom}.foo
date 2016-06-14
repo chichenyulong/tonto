@@ -1353,7 +1353,7 @@ contains
 
       select case (word)
          case("}") ! do nothing.
-         case("redirect                 "); TEXTFILE:redirect
+         case("redirect                 "); TEXTFILE:redirect_stdin
          case("revert                   "); TEXTFILE:revert
          case default;     UNKNOWN(word)
       end
@@ -1387,7 +1387,7 @@ contains
       case("put_protein_sequence          "); .put_protein_sequence
       case("put_restraint_atoms           "); .put_restraint_atoms
       case("read_cif                      "); .read_CIF
-      case("redirect                      "); TEXTFILE:redirect
+      case("redirect                      "); TEXTFILE:redirect_stdin
       case("revert                        "); TEXTFILE:revert
       case("set_covalent_radii_ccdc       "); ATOM:set_covalent_radii_ccdc
       case("use_interpolators=            "); .read_use_interpolators

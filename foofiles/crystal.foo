@@ -432,7 +432,7 @@ contains
          case ("put_reflection_data           "); .put_reflection_data
          case ("r_free_percentage=            "); .read_r_free_percentage
          case ("read_cif                      "); .read_CIF
-         case ("redirect                      "); TEXTFILE:redirect
+         case ("redirect                      "); TEXTFILE:redirect_stdin
          case ("repetition_factors=           "); .read_repetition_factors
          case ("revert                        "); TEXTFILE:revert
          case ("spacegroup=                   "); .read_spacegroup

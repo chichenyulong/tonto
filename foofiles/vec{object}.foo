@@ -169,10 +169,8 @@ contains
 
    end
 
-   set_saved_self 
+   set_saved_self ::: get_from(OBJECT)
    ! Set saved_self
-      self :: allocatable, INOUT
-      saved_self => self
    end
 
    set(val) ::: pure
@@ -718,18 +716,24 @@ contains
 
    process_keyword(keyword) ::: leaky
    ! Process a normal (non list-type) "keyword".
+      self :: allocatable, INOUT
       keyword :: STR, IN
 
       word :: STR
 
+      ! Bind routine
+      if (.created) then
+      end
+
       word = keyword
       word.to_lower_case
 
+      ! This is a minimal ketword set
       select case (word)
-         case("}") ! do nothing.
-         case("redirect                 "); TEXTFILE:redirect
-         case("revert                   "); TEXTFILE:revert
-         case default;     UNKNOWN(word)
+      case("}") ! do nothing.
+      case("redirect"); TEXTFILE:redirect_stdin
+      case("revert  "); TEXTFILE:revert_stdin
+      case default;     UNKNOWN(word)
       end
 
    end
@@ -813,8 +817,8 @@ contains
       case("keys=            ");  .read_keys       ! Define keys to apply to "self"
       case("process_keys     ");  .process_keys    ! Process keys on list-data "self"
       case("process_keys_once"); X.process_keys    ! Process keys once on default OBJECT
-      case("redirect         "); TEXTFILE:redirect ! New inout file
-      case("revert           "); TEXTFILE:revert   ! Back to old input
+      case("redirect         "); TEXTFILE:redirect_stdin ! New input file
+      case("revert           "); TEXTFILE:revert_stdin   ! Back to old input
       case default 
          ! Backtrack & assume data= sans braces
          stdin.move_to_previous_item

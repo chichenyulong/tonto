@@ -102,7 +102,7 @@ contains
         case ("}                 "); ! exit case
         case ("descriptor=       "); .read_descriptor
         case ("analyze_descriptor"); .analyze_descriptor
-        case ("redirect          "); TEXTFILE:redirect
+        case ("redirect          "); TEXTFILE:redirect_stdin
         case ("revert            "); TEXTFILE:revert
         case  default ;              UNKNOWN(keyword)
 

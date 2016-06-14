@@ -28,6 +28,8 @@ virtual module OBJECT
 
    keys :: VEC{STR}*, private DEFAULT_NULL
 
+   saved_self :: OBJECT*, private DEFAULT_NULL
+
 contains
 
 !  =================
@@ -113,20 +115,26 @@ contains
 
    set_saved_self 
    ! Set saved_self
-      self :: allocatable, INOUT
+      self :: allocatable, target, INOUT
+
       saved_self => self
+
    end
 
    set_saved_self 
    ! Set saved_self. This version has self a target.
       self :: target
+
       saved_self => self
+
    end
 
    set_from_saved_self
    ! Set from saved_self
-      self :: allocatable, INOUT
+      self :: PTR
+
       self => saved_self
+
    end
 
 !  ============
@@ -306,7 +314,7 @@ contains
    ! Read the "keys" module variable.
       self :: allocatable, IN
 
-      ! Bind routine
+      ! Bind routine to type
       if (.created) then
       end
 
@@ -382,7 +390,7 @@ contains
       self :: allocatable, IN
       the_keys :: VEC{STR}, IN
 
-      ! Bind the routine
+      ! Bind the routine to type
       if (.created) then
       end
 

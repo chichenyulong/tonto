@@ -230,10 +230,12 @@ contains
 
    is_created_and_has_label result (res) ::: pure
    ! Return TRUE if self has a non-blank label
-      self :: allocatable, INOUT
+      self :: allocatable, IN
       res :: BIN
+
       res = .created
       if (res) res = .label /=  " "
+
    end
 
 !  =========================

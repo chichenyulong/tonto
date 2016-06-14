@@ -283,7 +283,7 @@ contains
         case ("debug_on                      "); .read_debug_on
         case ("debug_off                     "); .read_debug_off
         case ("descriptor=                   "); .read_descriptor
-        case ("redirect                      "); TEXTFILE:redirect
+        case ("redirect                      "); TEXTFILE:redirect_stdin
         case ("revert                        "); TEXTFILE:revert
 
         case  default ;               UNKNOWN(keyword)

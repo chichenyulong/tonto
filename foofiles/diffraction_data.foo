@@ -594,7 +594,7 @@ contains
          case ("put_wavelength                "); .put_wavelength
 
          case ("read_cif                      "); .read_CIF
-         case ("redirect                      "); TEXTFILE:redirect
+         case ("redirect                      "); TEXTFILE:redirect_stdin
          case ("refine_3rd_order_for_atoms=   "); .read_refine_3rd_order
          case ("refine_4th_order_for_atoms=   "); .read_refine_4th_order
          case ("refine_adps_only=             "); .read_refine_ADPs_only

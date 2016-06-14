@@ -128,7 +128,7 @@ contains
         case ("name=                "); .read_name
         case ("output_style_options="); .read_output_style_options
         case ("put                  "); .put
-        case ("redirect             "); TEXTFILE:redirect
+        case ("redirect             "); TEXTFILE:redirect_stdin
         case ("revert               "); TEXTFILE:revert
         case ("series_expansion=    "); .read_series_expansion
         case  default ;               UNKNOWN(keyword)

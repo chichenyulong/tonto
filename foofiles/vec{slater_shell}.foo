@@ -87,7 +87,7 @@ contains
 !  Set methods
 !  ===========
 
-   set_saved_self ::: get_from(VEC{OBJECT})
+   set_saved_self ::: get_from(OBJECT)
    ! Set saved_self
    end
 
@@ -218,11 +218,11 @@ contains
       R :: REAL, IN
       res :: REAL
       n :: INT
-      self :: VEC{SLATER_SHELL}@
-      self => saved_self
-      res = ZERO ! Work out radial density here
+
+      ! Work out radial density here
+      res = ZERO 
       do n = 1,.dim
-        res = res + self(n).density_at_radius(R)
+         res = res + saved_self(n).density_at_radius(R)
       end
    end
 
@@ -231,15 +231,18 @@ contains
    ! radial value "R2".
       R2 :: REAL, IN
       res :: REAL
+
       R :: REAL
       n :: INT
-      self :: VEC{SLATER_SHELL}@
-      self => saved_self
+
       R = sqrt(R2)
-      res = ZERO ! Work out radial density here
+
+      ! Work out radial density here
+      res = ZERO 
       do n = 1,.dim
-        res = res + self(n).density_at_radius(R)
+        res = res + saved_self(n).density_at_radius(R)
       end
+
    end
 
 
@@ -248,12 +251,12 @@ contains
       R :: REAL, IN
       res :: REAL
       n :: INT
-      self :: VEC{SLATER_SHELL}@
-      self => saved_self
+
       res = ZERO 
       do n = 1,.dim
-        res = res + self(n).density_d1_at_radius(R)
+         res = res + saved_self(n).density_d1_at_radius(R)
       end
+
    end
 
    density_d2_value_at_radius(R) result (res) ::: selfless, public
@@ -261,12 +264,12 @@ contains
       R :: REAL, IN
       res :: REAL
       n :: INT
-      self :: VEC{SLATER_SHELL}@
-      self => saved_self
+
       res = ZERO 
       do n = 1,.dim
-        res = res + self(n).density_d2_at_radius(R)
+        res = res + saved_self(n).density_d2_at_radius(R)
       end
+
    end
 
 !  =============

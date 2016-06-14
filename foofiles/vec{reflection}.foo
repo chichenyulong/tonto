@@ -1314,7 +1314,7 @@ contains
       case("put_i_statistics         "); .put_I_statistics
       case("put_intensity_data       "); .put_intensity_data
       case("put_structure_factor_data"); .put_structure_factor_data
-      case("redirect                 "); TEXTFILE:redirect
+      case("redirect                 "); TEXTFILE:redirect_stdin
       case("revert                   "); TEXTFILE:revert
       case("simulate_new_f_exp       "); .simulate_new_F_exp
       case default;     UNKNOWN(word)
