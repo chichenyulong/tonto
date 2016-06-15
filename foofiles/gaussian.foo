@@ -108,116 +108,9 @@ contains
 
    end
 
-!  ==============
-!  Output methods
-!  ==============
-
-   put
-   ! Put the gaussian information to file "stdout"
-      stdout.show("l        =",.l)
-      stdout.show("l symbol =",.l_chr)
-      stdout.show("pos      =",.position)
-      stdout.show("exponent =",.exponent)
-      stdout.show("n_sph    =",.n_sph)
-      stdout.show("n_comp   =",.n_comp)
-   end
-
-!  =============
-!  Input methods
-!  =============
-
-   read_keywords ::: get_from(OBJECT), recursive, leaky
-   ! Read data from "stdin" using keyword style input.
-   end
-
-   process_keyword(keyword) ::: leaky
-   ! Process command "keyword". Any required data needed by the "keyword" is
-   ! inputted from "stdin".
-      keyword :: STR
-      word :: STR
-      word = keyword
-      word.to_lower_case
-      select case (word)
-         case ("}        ");   ! exit case
-         case ("exponent=");   .read_exponent
-         case ("l=       ");   .read_l
-         case ("l_chr=   ");   .read_l_chr
-         case ("l_int=   ");   .read_l_int
-         case ("position=");   .read_position
-         case ("put      ");   .put
-         case default;      UNKNOWN(word)
-      end
-   end
-
-   read_l
-   ! Read in the l symbol
-      word :: STR
-      stdin.read(word)
-      stdin.move_to_previous_item
-      if (word.is_int) then; .read_l_int
-      else;                  .read_l_chr
-      end
-   end
-
-   read_l_int
-   ! Read in the l integer
-      word :: STR
-      stdin.read(word)
-      ENSURE(word.is_int,"expecting an integer for L")
-      .set_l(word.to_int)
-   end
-
-   read_l_chr
-   ! Read in the l symbol
-      word :: STR
-      l_c :: STR(len=1)
-      l :: INT
-
-      stdin.read(word)
-      DIE_IF(len_trim(word)/=1,"unknown L symbol")
-
-      l_c = word(1:1)
-      l_c.to_lower_case
-
-      l = 0
-      select case (l_c)
-         case ("s"); l = 0
-         case ("p"); l = 1
-         case ("d"); l = 2
-         case ("f"); l = 3
-         case ("g"); l = 4
-         case default;
-            DIE_IF(l_c<"g","unknown angular momentum character: "//l_c)
-            l = 4 + iachar(l_c)-iachar("g")
-      end
-
-      .set_l(l)
-
-   end
-
-   read_exponent
-   ! Read in the exponents
-      stdin.read(.exponent)
-   end
-
-   read_position
-   ! Read in the position
-      stdin.read_quantity(.position)
-   end
-
-!  =====================
-!  Miscellaneous methods
-!  =====================
-
-   normalisation_factor result (res) ::: pure
-   ! Return the normaliston factor assuming it is x^l
-      self :: IN
-      res :: REAL
-
-      res = PI**(-HALF-QUARTER) * TWO**(real(.l,kind=REAL_KIND)+HALF+QUARTER) * &
-            .exponent**(HALF*.l+HALF+QUARTER) * (ONE/(sqrt(.l.double_factorial)))
-
-   end
+!  =======
+!  Inquiry
+!  =======
 
    same_as(G) result (same) ::: pure
    ! Return TRUE if the gaussian "self" is the same as "G".
@@ -233,6 +126,24 @@ contains
          AND .position(3) == G.position(3) 
 
    end
+
+!  =============
+!  Normalisation
+!  =============
+
+   normalisation_factor result (res) ::: pure
+   ! Return the normaliston factor assuming it is x^l
+      self :: IN
+      res :: REAL
+
+      res = PI**(-HALF-QUARTER) * TWO**(real(.l,kind=REAL_KIND)+HALF+QUARTER) * &
+            .exponent**(HALF*.l+HALF+QUARTER) * (ONE/(sqrt(.l.double_factorial)))
+
+   end
+
+!  ===============
+!  Value on a grid
+!  ===============
 
    make_grid(g,pt) ::: PURE
    ! Return "g(i,n)", the value of the gaussian component "n" on grid point "i"
@@ -335,6 +246,103 @@ contains
 
       end
 
+   end
+
+!  =============
+!  Input methods
+!  =============
+
+   read_keywords ::: get_from(OBJECT), recursive, leaky
+   ! Read data from "stdin" using keyword style input.
+   end
+
+   process_keyword(keyword) ::: leaky
+   ! Process command "keyword". Any required data needed by the "keyword" is
+   ! inputted from "stdin".
+      keyword :: STR
+      word :: STR
+      word = keyword
+      word.to_lower_case
+      select case (word)
+         case ("}        ");   ! exit case
+         case ("exponent=");   .read_exponent
+         case ("l=       ");   .read_l
+         case ("l_chr=   ");   .read_l_chr
+         case ("l_int=   ");   .read_l_int
+         case ("position=");   .read_position
+         case ("put      ");   .put
+         case default;      UNKNOWN(word)
+      end
+   end
+
+   read_l
+   ! Read in the l symbol
+      word :: STR
+      stdin.read(word)
+      stdin.move_to_previous_item
+      if (word.is_int) then; .read_l_int
+      else;                  .read_l_chr
+      end
+   end
+
+   read_l_int
+   ! Read in the l integer
+      word :: STR
+      stdin.read(word)
+      ENSURE(word.is_int,"expecting an integer for L")
+      .set_l(word.to_int)
+   end
+
+   read_l_chr
+   ! Read in the l symbol
+      word :: STR
+      l_c :: STR(len=1)
+      l :: INT
+
+      stdin.read(word)
+      DIE_IF(len_trim(word)/=1,"unknown L symbol")
+
+      l_c = word(1:1)
+      l_c.to_lower_case
+
+      l = 0
+      select case (l_c)
+         case ("s"); l = 0
+         case ("p"); l = 1
+         case ("d"); l = 2
+         case ("f"); l = 3
+         case ("g"); l = 4
+         case default;
+            DIE_IF(l_c<"g","unknown angular momentum character: "//l_c)
+            l = 4 + iachar(l_c)-iachar("g")
+      end
+
+      .set_l(l)
+
+   end
+
+   read_exponent
+   ! Read in the exponents
+      stdin.read(.exponent)
+   end
+
+   read_position
+   ! Read in the position
+      stdin.read_quantity(.position)
+   end
+
+!  ==============
+!  Output methods
+!  ==============
+
+   put
+   ! Put the gaussian information to file "stdout"
+      stdout.show("l        =",.l)
+      stdout.show("l symbol =",.l_chr)
+      stdout.show("pos      =",.position)
+      stdout.show("exponent =",.exponent)
+      stdout.show("n_sph    =",.n_sph)
+      stdout.show("n_comp   =",.n_comp)
    end
 
 end

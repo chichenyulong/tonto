@@ -126,61 +126,81 @@ contains
    end
 
 
-   create(Ga,Gb) ::: leaky
+   create(Ga,Gb) ::: leaky, PURE
    ! Create a gaussian pair, and optionally set it to "Ga" and "Gb"
       self :: allocatable, INOUT
-      Ga,Gb :: GAUSSIAN
+      Ga,Gb :: GAUSSIAN, IN
+
       .create
       .set(Ga,Gb)
+
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set(Ga,Gb)
-   ! Set the gaussian pair object to "Ga" and "Gb"
-      Ga,Gb :: GAUSSIAN
-      .a.set(Ga)
-      .b.set(Gb)
+!   set(Ga,Gb) ::: leaky, pure
+!   ! Set the gaussian pair object to "Ga" and "Gb"
+!      self :: INOUT
+!      Ga,Gb :: GAUSSIAN, IN
+!
+!      .a = Ga
+!      .b = Gb
+!
+!   end
+
+!   set(l_a,pos_a,ex_a,l_b,pos_b,ex_b)
+!   ! Set a gaussian object
+!      self :: INOUT
+!      l_a,l_b :: INT
+!      pos_a,pos_b :: VEC{REAL}(3)
+!      ex_a,ex_b :: REAL
+!
+!      .a.set_l(l_a)
+!      .a.set_position(pos_a)
+!      .a.set_exponent(ex_a)
+!
+!      .b.set_l(l_b)
+!      .b.set_position(pos_b)
+!      .b.set_exponent(ex_b)
+!
+!   end
+
+!   set(ex_a,ex_b)
+!   ! Set the exponents of the pair
+!      ex_a,ex_b :: REAL, optional
+!      if (present(ex_a)) .a.set_exponent(ex_a)
+!      if (present(ex_b)) .b.set_exponent(ex_b)
+!   end
+
+!  =============
+!  Normalisation
+!  =============
+
+   normalisation_factor result (res) ::: pure
+   ! Return the normaliston factor assuming it is x^l
+      self :: IN
+      res :: REAL
+
+      res = .a.normalisation_factor * .b.normalisation_factor
+
    end
 
-   set(l_a,pos_a,ex_a,l_b,pos_b,ex_b)
-   ! Set a gaussian object
-      l_a,l_b :: INT
-      pos_a,pos_b :: VEC{REAL}(3)
-      ex_a,ex_b :: REAL
+!  =================================
+!  McMurchie-Davidson E-coefficients
+!  =================================
 
-      .a.set_l(l_a)
-      .a.set_position(pos_a)
-      .a.set_exponent(ex_a)
-
-      .b.set_l(l_b)
-      .b.set_position(pos_b)
-      .b.set_exponent(ex_b)
-
-   end
-
-   set(ex_a,ex_b)
-   ! Set the exponents of the pair
-      ex_a,ex_b :: REAL, optional
-      if (present(ex_a)) .a.set_exponent(ex_a)
-      if (present(ex_b)) .b.set_exponent(ex_b)
-   end
-
-!  ==================
-!  Fourier transforms
-!  ==================
-
-   make_e_coeff(e,comp)
+   make_e_coeff(e,comp) ::: PURE
    ! Return the McMurchie-Davidson "e" coefficients for component "comp"
    ! (c) dylan jayatilaka, april 1995
    ! Checked using mathematica, may 1995
-      e :: MAT3{REAL}(0:,0:,0:)
+      self :: IN
+      e :: MAT3{REAL}(0:,0:,0:), OUT
       comp :: INT, IN
 
-      t,a,b,ap,am,bp,bm,abp,ab,abm,max,l_a,l_b :: INT
-      R,gamma,g1,g2,a1,b1,e000 :: REAL
+      t,tp,a,b,ap,am,bp,bm,abp,ab,abm,max,l_a,l_b :: INT
+      R,gamma,g1R,g1,g2,a1,b1,e000,e11 :: REAL
 
       l_a = .a.l
       l_b = .b.l
@@ -189,23 +209,26 @@ contains
       R = .a.position(comp) - .b.position(comp)
 
       gamma = .a.exponent + .b.exponent
-      g1 = ONE/gamma
-      b1 = .b.exponent*g1*R
+      g1    = ONE/gamma
+      g1R   = g1*R
+      a1    = .a.exponent*g1R
+      b1    = .b.exponent*g1R
+    ! e000  = exp(-.a.exponent*b1*R)
+      e000  = exp(-a1*b1*gamma)
 
-      e000 = exp(-.a.exponent*b1*R)
       e(0,0,0) = e000
 
       ! Return for e000
       if (max==0) return
 
-      g2 = HALF*g1
-      a1 = .a.exponent*g1*R
+      g2    = HALF*g1
+      e11   = g2*e000
       if (l_a>=1) then
-         e(1,1,0) =  g2*e000
+         e(1,1,0) =  e11
          e(0,1,0) = -b1*e000
       end
       if (l_b>=1) then
-         e(1,0,1) =  g2*e000
+         e(1,0,1) =  e11
          e(0,0,1) =  a1*e000
       end
 
@@ -220,7 +243,8 @@ contains
          e( a,ap,0) =  g2*e(am,a,0) - b1*e(a,a,0)
          e( 0,ap,0) = -b1*e( 0,a,0) +    e(1,a,0)
          do t = 1,am
-            e(t,ap,0) = g2*e(t-1,a,0) - b1*e(t,a,0) + (t+1)*e(t+1,a,0)
+            tp = t + 1
+            e(t,ap,0) = g2*e(t-1,a,0) - b1*e(t,a,0) + tp*e(tp,a,0)
          end
       end
 
@@ -232,7 +256,8 @@ contains
          e( b,0,bp) =  g2*e(bm,0,b) + a1*e(b,0,b)
          e( 0,0,bp) =  a1*e( 0,0,b) +    e(1,0,b)
          do t = 1,bm
-            e(t,0,bp) = g2*e(t-1,0,b) + a1*e(t,0,b) + (t+1)*e(t+1,0,b)
+            tp = t + 1
+            e(t,0,bp) = g2*e(t-1,0,b) + a1*e(t,0,b) + tp*e(tp,0,b)
          end
       end
 
@@ -247,14 +272,15 @@ contains
             e( ab,ap,b) =  g2*e(abm,a,b) - b1*e(ab,a,b)
             e(  0,ap,b) = -b1*e(  0,a,b) +    e( 1,a,b)
             do t = 1,abm
-               e(t,ap,b) = g2*e(t-1,a,b) - b1*e(t,a,b) + (t+1)*e(t+1,a,b)
+               tp = t + 1
+               e(t,ap,b) = g2*e(t-1,a,b) - b1*e(t,a,b) + tp*e(tp,a,b)
             end
          end
       end
 
    end
 
-   make_e_coeff_derivative(e1,comp,e0) ::: pure, private
+   make_e_coeff_derivative(e1,comp,e0) ::: private, pure
    ! Return the derivative McMurchie-Davidson "e1" coefficients for
    ! component "comp" with repect to R = .a.position - .b.position. The zero order
    ! derivative E coefficients "e0" for the same component must be supplied.
@@ -328,150 +354,14 @@ contains
       end
    end
 
-!   make_ft_component_old(res,comp,k_pts)
-!   ! Do the Fourier transform of component "comp" of the guassian pair
-!   ! evaluated at the points "k_pts"
-!      self :: IN
-!      res :: MAT3{CPX}(1:,0:,0:), OUT
-!      comp :: INT, IN
-!      k_pts :: VEC{REAL}, IN
-!
-!      kn,kn_t :: REAL
-!      a,b,t,t_max,k_max,n :: INT
-!      e :: MAT3{REAL}@
-!      val1,val2,k2 :: VEC{REAL}@
-!      k1 :: MAT{REAL}@
-!
-!      k_max = k_pts.dim
-!      t_max = .a.l+.b.l
-!
-!      ! Make the E coefficients
-!      e.create([0,t_max],[0,.a.l],[0,.b.l])
-!      .make_e_coeff(e,comp)
-!
-!      select case (t_max)
-!        case (0)
-!          res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!        case (1)
-!          if (.a.l==1) then ! ps
-!            res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!            res(:,1,0) = COMPLEXIFY(e(0,1,0),e(1,1,0)*k_pts(:))
-!          else !              sp
-!            res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!            res(:,0,1) = COMPLEXIFY(e(0,0,1),e(1,0,1)*k_pts(:))
-!          end
-!        case (2)
-!          select case (.a.l)
-!            case (0) ! sd
-!              res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!              res(:,0,1) = COMPLEXIFY(e(0,0,1),e(1,0,1)*k_pts(:))
-!              res(:,0,2) = COMPLEXIFY(e(0,0,2)-e(2,0,2)*k_pts(:)*k_pts(:),e(1,0,2)*k_pts(:))
-!            case (1) ! pp
-!              res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!              res(:,0,1) = COMPLEXIFY(e(0,0,1),e(1,0,1)*k_pts(:))
-!              res(:,1,0) = COMPLEXIFY(e(0,1,0),e(1,1,0)*k_pts(:))
-!              res(:,1,1) = COMPLEXIFY(e(0,1,1)-e(2,1,1)*k_pts(:)*k_pts(:),e(1,1,1)*k_pts(:))
-!            case (2) ! ds
-!              res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!              res(:,1,0) = COMPLEXIFY(e(0,1,0),e(1,1,0)*k_pts(:))
-!              res(:,2,0) = COMPLEXIFY(e(0,2,0)-e(2,2,0)*k_pts(:)*k_pts(:),e(1,2,0)*k_pts(:))
-!          end
-!        case (3)
-!          select case (.a.l)
-!            case (0) ! sf
-!              k2.create(k_max)
-!              k2(:) = k_pts(:)*k_pts(:)
-!              res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!              res(:,0,1) = COMPLEXIFY(e(0,0,1),e(1,0,1)*k_pts(:))
-!              res(:,0,2) = COMPLEXIFY(e(0,0,2)-e(2,0,2)*k2(:),e(1,0,2)*k_pts(:))
-!              res(:,0,3) = COMPLEXIFY(e(0,0,3)-e(2,0,3)*k2(:),(e(1,0,3)-e(3,0,3)*k2(:))*k_pts(:))
-!              k2.destroy
-!            case (1) ! pd
-!              k2.create(k_max)
-!              k2(:) = k_pts(:)*k_pts(:)
-!              res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!              res(:,0,1) = COMPLEXIFY(e(0,0,1),e(1,0,1)*k_pts(:))
-!              res(:,1,0) = COMPLEXIFY(e(0,1,0),e(1,1,0)*k_pts(:))
-!              res(:,0,2) = COMPLEXIFY(e(0,0,2)-e(2,0,2)*k2(:),e(1,0,2)*k_pts(:))
-!              res(:,1,1) = COMPLEXIFY(e(0,1,1)-e(2,1,1)*k2(:),e(1,1,1)*k_pts(:))
-!              res(:,1,2) = COMPLEXIFY(e(0,1,2)-e(2,1,2)*k2(:),(e(1,1,2)-e(3,1,2)*k2(:))*k_pts(:))
-!              k2.destroy
-!            case (2) ! dp
-!              k2.create(k_max)
-!              k2(:) = k_pts(:)*k_pts(:)
-!              res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!              res(:,0,1) = COMPLEXIFY(e(0,0,1),e(1,0,1)*k_pts(:))
-!              res(:,1,0) = COMPLEXIFY(e(0,1,0),e(1,1,0)*k_pts(:))
-!              res(:,1,1) = COMPLEXIFY(e(0,1,1)-e(2,1,1)*k2(:),e(1,1,1)*k_pts(:))
-!              res(:,2,0) = COMPLEXIFY(e(0,2,0)-e(2,2,0)*k2(:),e(1,2,0)*k_pts(:))
-!              res(:,2,1) = COMPLEXIFY(e(0,2,1)-e(2,2,1)*k2(:),(e(1,2,1)-e(3,2,1)*k2(:))*k_pts(:))
-!              k2.destroy
-!            case (3) ! fs
-!              k2.create(k_max)
-!              k2(:) = k_pts(:)*k_pts(:)
-!              res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!              res(:,1,0) = COMPLEXIFY(e(0,1,0),e(1,1,0)*k_pts(:))
-!              res(:,2,0) = COMPLEXIFY(e(0,2,0)-e(2,2,0)*k2(:),e(1,2,0)*k_pts(:))
-!              res(:,3,0) = COMPLEXIFY(e(0,3,0)-e(2,3,0)*k2(:),(e(1,3,0)-e(3,3,0)*k2(:))*k_pts(:))
-!              k2.destroy
-!          end
-!        case default                            ! general routine
-!          k1.create([1,k_max],[0,t_max])    ! Define k1 array containing
-!          do n = 1,k_max                        ! powers k^n of k_pts
-!            kn = k_pts(n)
-!            kn_t = kn          ! t=0 is 1, has been optimised out below.
-!            do t = 2,t_max     ! t=1 is k_pts(n), explicity written below.
-!              kn_t = kn_t * kn
-!              k1(n,t) = kn_t
-!            end
-!          end
-!          val1.create(k_max)   ! val1 is real part
-!          val2.create(k_max)   ! val2 is imaginary part
-!          do a = 0,.a.l
-!            do b = 0,.b.l
-!              t_max = a+b
-!              select case (t_max)
-!                case (0)
-!                  res(:,0,0) = COMPLEXIFY(e(0,0,0),ZERO)
-!                case (1)
-!                  res(:,a,b) = COMPLEXIFY(e(0,a,b),e(1,a,b)*k_pts(:))
-!                case (2)
-!                  val1(:) = e(0,a,b) - e(2,a,b)*k1(:,2)
-!                  val2(:) = e(1,a,b)*k_pts(:)
-!                  res(:,a,b) = COMPLEXIFY(val1(:),val2(:))
-!                case default
-!                  val1(:) = e(0,a,b)          - e(2,a,b)*k1(:,2)
-!                  val2(:) = e(1,a,b)*k_pts(:) - e(3,a,b)*k1(:,3)
-!                  do t = 3,t_max-3,4
-!                    val1(:) = val1(:) + e(t,a,b)  *k1(:,t)  - e(t+2,a,b)*k1(:,t+2)
-!                    val2(:) = val2(:) + e(t+1,a,b)*k1(:,t+1)- e(t+3,a,b)*k1(:,t+3)
-!                  end
-!                  select case (mod(t_max+1,4))
-!                    case (0)
-!                    case (1)
-!                      val1(:) = val1(:) + e(t_max,a,b)*k1(:,t_max)
-!                    case (2)
-!                      val1(:) = val1(:) + e(t_max-1,a,b)*k1(:,t_max-1)
-!                      val2(:) = val2(:) + e(t_max,a,b)  *k1(:,t_max)
-!                    case (3)
-!                      val1(:) = val1(:) + e(t_max-2,a,b)*k1(:,t_max-2) - &
-!                                          e(t_max,a,b)  *k1(:,t_max)
-!                      val2(:) = val2(:) + e(t_max-1,a,b)*k1(:,t_max-1)
-!                  end
-!                  res(:,a,b) = COMPLEXIFY(val1(:),val2(:))
-!              end
-!            end
-!          end
-!          val2.destroy
-!          val1.destroy
-!          k1.destroy
-!      end
-!      e.destroy
-!   end
+!  ==================
+!  Fourier transforms
+!  ==================
 
-   make_ft_component(res,comp,k_pts)
+   make_ft_component(res,comp,k_pts) ::: PURE
    ! Do the Fourier transform of component "comp" of the gaussian pair
    ! evaluated at the points "k_pts", without the prefactors.
+      self :: IN
       res :: MAT3{CPX}(1:,0:,0:), OUT
       comp  :: INT, IN
       k_pts :: VEC{REAL}, IN
@@ -485,13 +375,12 @@ contains
       t_max = .a.l+.b.l
 
       ! Make the E coefficients
-      e.create([0,t_max],[0,.a.l],[0,.b.l])
+      e.create(0,t_max,0,.a.l,0,.b.l)
       .make_e_coeff(e,comp)
 
       ! Define kp array containing powers k_pts(n)^t
-      nullify(kp)
       if (t_max>0) then
-         kp.create([1,k_max],[1,t_max])
+         kp.create(k_max,t_max)
          kp(:,1) = k_pts
          do t = 2,t_max
             kp(:,t) = kp(:,t-1)*k_pts
@@ -530,27 +419,132 @@ contains
 
       vi.destroy; vr.destroy
       kp.destroy; e.destroy
+
    end
 
-   make_ft_dab_component(res,comp,k_pts,k_max) ::: private
+   make_ft_dab_component(res,comp,k_pts,k_max) ::: private, PURE
    ! Do the Fourier transform of the derivative of component a minus b
    ! of a a pair of gaussians, for component "comp" of the guassian
    ! product pair, evaliated for the points "k_pts".
    ! Dimensions of res are [[1,size(k_pts)],[0,.a.l],[0,.b.l]].
       self :: IN
       comp,k_max :: INT, IN
-
       k_pts :: VEC{REAL}, IN
       res :: MAT3{CPX}(1:,0:,0:)
+
       kn,fac :: REAL
       a,b,t,t_max,n :: INT
       e0,e1 :: MAT3{REAL}@
-      val :: VEC{REAL}*                      ! Local variables
+      valr,vali :: VEC{REAL}@
       k1 :: MAT{REAL}@
 
       ! Define k1 array containing
+      ! powers k^n of k_pts
+      t_max = .a.l + .b.l
+      k1.create(1,k_max, 0,t_max+1)
+      do n = 1,k_max                       
+         k1(n,0) = ONE
+         kn = k_pts(n)
+         do t = 1,t_max+1
+            k1(n,t) = k1(n,t-1)*kn
+         end
+      end
+
+      ! Now evaluate; use real arithmetic where possible
+      valr.create(k_max)
+      vali.create(k_max)
+
+      e0.create(0,.a.l+.b.l, 0,.a.l, 0,.b.l)
+      .make_e_coeff(e0,comp)
+
+      e1.create(0,.a.l+.b.l, 0,.a.l, 0,.b.l)
+      .make_e_coeff_derivative(e1,comp,e0)
+
+      do a = 0,.a.l
+      do b = 0,.b.l
+
+          t_max = a+b
+
+          ! Do the real part first ...
+          valr = ZERO                         
+          do t = 0,t_max,4
+             valr = valr + e1(t,a,b)*k1(:,t)
+          end
+          do t = 2,t_max,4
+             valr = valr - e1(t,a,b)*k1(:,t)
+          end
+
+          ! Now do imaginary part ...
+          vali = ZERO                         
+          do t = 1,t_max,4
+             vali = vali + e1(t,a,b)*k1(:,t)
+          end
+          do t = 3,t_max,4
+             vali = vali - e1(t,a,b)*k1(:,t)
+          end
+
+          res(:,a,b) = TWO*COMPLEXIFY(valr,vali)
+
+      end
+      end
+
+      fac = (.a.exponent-.b.exponent)/(.a.exponent+.b.exponent)
+      do a = 0,.a.l
+      do b = 0,.b.l
+
+         t_max = a+b
+
+         ! Do the imaginary part first ...
+         vali = ZERO                         
+         do t = 0,t_max,4
+            vali = vali + e0(t,a,b)*k1(:,t+1)
+         end
+         do t = 2,t_max,4
+            vali = vali - e0(t,a,b)*k1(:,t+1)
+         end
+
+         ! Now do real part ...
+         valr = ZERO                         
+         do t = 1,t_max,4
+            valr = valr - e0(t,a,b)*k1(:,t+1)
+         end
+         do t = 3,t_max,4
+            valr = valr + e0(t,a,b)*k1(:,t+1)
+         end
+
+         res(:,a,b) = res(:,a,b) + fac*COMPLEXIFY(valr,vali)
+
+      end
+      end
+
+      ! Clean
+      e1.destroy
+      e0.destroy
+      vali.destroy
+      valr.destroy
+      k1.destroy
+
+   end
+
+   make_ft_da_db_component(da,db,comp,k_pts) ::: private, PURE
+   ! Do the Fourier transform of the derivative w.r.t. the position of component
+   ! a, "da", and the derivative w.r.t. the position of component b, "db", of
+   ! the gaussian pair, for component "comp" (either x, y, z), evaluated for the
+   ! points "k_pts".  Dimensions of "da", "db" are ([1,size(k_pts)],[0,.a.l],[0,.b.l]).
+      self :: IN
+      da,db :: MAT3{CPX}(1:,0:,0:), OUT
+      comp :: INT, IN
+      k_pts :: VEC{REAL}, IN
+
+      kn,fac_a,fac_b,g1 :: REAL
+      a,b,t,t_max,k_max,n :: INT
+      e0,e1 :: MAT3{REAL}@
+      valr,vali :: VEC{REAL}@
+      k1 :: MAT{REAL}@
+
       t_max = .a.l+.b.l
-      k1.create([1,k_max],[0,t_max+1])
+      k_max = da.dim1
+      k1.create(1,k_max, 0,t_max+1) ! Define k1 array containing
       do n = 1,k_max                       ! powers k^n of k_pts
          k1(n,0) = ONE
          kn = k_pts(n)
@@ -560,152 +554,87 @@ contains
       end
 
       ! Now evaluate; use real arithmetic where possible
-      val.create(k_max)
-      e0.create([0,.a.l+.b.l],[0,.a.l],[0,.b.l])
+      valr.create(k_max)       
+      vali.create(k_max)       
+
+      e0.create(0,.a.l+.b.l, 0,.a.l, 0,.b.l)
       .make_e_coeff(e0,comp)
-      e1.create([0, .a.l+.b.l ],[0, .a.l ],[0, .b.l ])
+
+      e1.create(0,.a.l+.b.l, 0,.a.l, 0,.b.l)
       .make_e_coeff_derivative(e1,comp,e0)
+
       do a = 0,.a.l
-         do b = 0,.b.l
-            t_max = a+b
-            val = ZERO                         ! Do the real part first ...
-            do t = 0,t_max,4
-               val(:) = val(:) + e1(t,a,b)*k1(:,t)
-            end
-            do t = 2,t_max,4
-               val(:) = val(:) - e1(t,a,b)*k1(:,t)
-            end
-            val = TWO*val
-            res(:,a,b) = cmplx(val(:),ZERO,kind=CPX_KIND)
-            val = ZERO                         ! Now do imaginary part ...
-            do t = 1,t_max,4
-               val(:) = val(:) + e1(t,a,b)*k1(:,t)
-            end
-            do t = 3,t_max,4
-               val(:) = val(:) - e1(t,a,b)*k1(:,t)
-            end
-            val = TWO*val
-            res(:,a,b) = res(:,a,b) + cmplx(ZERO,val(:),kind=CPX_KIND)
+      do b = 0,.b.l
+
+         t_max = a+b
+
+         ! Do the real part first ...
+         valr = ZERO 
+         do t = 0,t_max,4
+            valr = valr + e1(t,a,b)*k1(:,t)
          end
+         do t = 2,t_max,4
+            valr = valr - e1(t,a,b)*k1(:,t)
+         end
+         da(:,a,b) =  COMPLEXIFY(val(:),ZERO)
+
+         ! Now do imaginary part ...
+         vali = ZERO
+         do t = 1,t_max,4
+            vali = vali + e1(t,a,b)*k1(:,t)
+         end
+         do t = 3,t_max,4
+            vali = vali - e1(t,a,b)*k1(:,t)
+         end
+
+         da(:,a,b) =  COMPLEXIFY(valr,vali)
+         db(:,a,b) = -da(:,a,b)
+
+      end
       end
 
-      fac = (.a.exponent-.b.exponent)/(.a.exponent+.b.exponent)
+      g1    = ONE/(.a.exponent+.b.exponent)
+      fac_a = .a.exponent * g1
+      fac_b = .b.exponent * g1
+
       do a = 0,.a.l
-         do b = 0,.b.l
-            t_max = a+b
-            val = ZERO                         ! Do the imaginary part first ...
-            do t = 0,t_max,4
-               val(:) = val(:) + e0(t,a,b)*k1(:,t+1)
-            end
-            do t = 2,t_max,4
-               val(:) = val(:) - e0(t,a,b)*k1(:,t+1)
-            end
-            val = fac*val
-            res(:,a,b) = res(:,a,b) + cmplx(ZERO,val(:),kind=CPX_KIND)
-            val = ZERO                         ! Now do real part ...
-            do t = 1,t_max,4
-               val(:) = val(:) - e0(t,a,b)*k1(:,t+1)
-            end
-            do t = 3,t_max,4
-               val(:) = val(:) + e0(t,a,b)*k1(:,t+1)
-            end
-            val = fac*val
-            res(:,a,b) = res(:,a,b) + cmplx(val(:),ZERO,kind=CPX_KIND)
+      do b = 0,.b.l
+
+         t_max = a+b
+
+         ! Do the imaginary part first ...
+         vali = ZERO
+         do t = 0,t_max,4
+            vali = vali + e0(t,a,b)*k1(:,t+1)
          end
+         do t = 2,t_max,4
+            vali = vali - e0(t,a,b)*k1(:,t+1)
+         end
+
+         ! Now do real part ...
+         valr = ZERO
+         do t = 1,t_max,4
+            valr = valr - e0(t,a,b)*k1(:,t+1)
+         end
+         do t = 3,t_max,4
+            valr = valr + e0(t,a,b)*k1(:,t+1)
+         end
+
+         da(:,a,b) = da(:,a,b) + fac_a*COMPLEXIFY(valr,vali)
+         db(:,a,b) = db(:,a,b) + fac_b*COMPLEXIFY(valr,vali)
+
+      end
       end
 
-      ! Clean
       e1.destroy
       e0.destroy
-      val.destroy
+      vali.destroy
+      valr.destroy
       k1.destroy
 
    end
 
-   make_ft_da_db_component(da,db,comp,k_pts) ::: private
-   ! Do the Fourier transform of the derivative w.r.t. the position of component
-   ! a, "da", and the derivative w.r.t. the position of component b, "db", of
-   ! the gaussian pair, for component "comp" (either x, y, z), evaluated for the
-   ! points "k_pts".  Dimensions of "da", "db" are ([1,size(k_pts)],[0,.a.l],[0,.b.l]).
-      self :: IN
-      da,db :: MAT3{CPX}(1:,0:,0:)
-      comp :: INT, IN
-      k_pts :: VEC{REAL}, IN
-      kn,fac_a,fac_b :: REAL
-      a,b,t,t_max,k_max,n :: INT
-      e0,e1 :: MAT3{REAL}@
-      val :: VEC{REAL}*                      ! Local variables
-      k1 :: MAT{REAL}@
-      t_max = .a.l+.b.l
-      k_max = da.dim1
-      k1.create([1,k_max],[0,t_max+1]) ! Define k1 array containing
-      do n = 1,k_max                       ! powers k^n of k_pts
-         k1(n,0) = ONE
-         kn = k_pts(n)
-         do t = 1,t_max+1
-            k1(n,t) = k1(n,t-1)*kn
-         end
-      end
-      val.create(k_max)       ! Now evaluate; use real arithmetic where possible
-      e0.create([0,.a.l+.b.l],[0,.a.l],[0,.b.l])
-      .make_e_coeff(e0,comp)
-      e1.create([0, .a.l+.b.l ],[0, .a.l ],[0, .b.l ])
-      .make_e_coeff_derivative(e1,comp,e0)
-      do a = 0,.a.l
-         do b = 0,.b.l
-            t_max = a+b
-            val = ZERO                         ! Do the real part first ...
-            do t = 0,t_max,4
-               val(:) = val(:) + e1(t,a,b)*k1(:,t)
-            end
-            do t = 2,t_max,4
-               val(:) = val(:) - e1(t,a,b)*k1(:,t)
-            end
-            da(:,a,b) =  COMPLEXIFY(val(:),ZERO)
-            val = ZERO                         ! Now do imaginary part ...
-            do t = 1,t_max,4
-               val(:) = val(:) + e1(t,a,b)*k1(:,t)
-            end
-            do t = 3,t_max,4
-               val(:) = val(:) - e1(t,a,b)*k1(:,t)
-            end
-            da(:,a,b) =  da(:,a,b) + COMPLEXIFY(ZERO,val(:))
-            db(:,a,b) = -da(:,a,b)
-         end
-      end
-
-      fac_a = .a.exponent/(.a.exponent+.b.exponent)
-      fac_b = .b.exponent/(.a.exponent+.b.exponent)
-      do a = 0,.a.l
-         do b = 0,.b.l
-            t_max = a+b
-            val = ZERO                         ! Do the imaginary part first ...
-            do t = 0,t_max,4
-               val(:) = val(:) + e0(t,a,b)*k1(:,t+1)
-            end
-            do t = 2,t_max,4
-               val(:) = val(:) - e0(t,a,b)*k1(:,t+1)
-            end
-            da(:,a,b) = da(:,a,b) + fac_a*COMPLEXIFY(ZERO,val(:))
-            db(:,a,b) = db(:,a,b) + fac_b*COMPLEXIFY(ZERO,val(:))
-            val = ZERO                         ! Now do real part ...
-            do t = 1,t_max,4
-               val(:) = val(:) - e0(t,a,b)*k1(:,t+1)
-            end
-            do t = 3,t_max,4
-               val(:) = val(:) + e0(t,a,b)*k1(:,t+1)
-            end
-            da(:,a,b) = da(:,a,b) + fac_a*COMPLEXIFY(val(:),ZERO)
-            db(:,a,b) = db(:,a,b) + fac_b*COMPLEXIFY(val(:),ZERO)
-         end
-      end
-      e1.destroy
-      e0.destroy
-      val.destroy
-      k1.destroy
-   end
-
-   make_ft_dab(res,ft)
+   make_ft_dab(res,ft) ::: pure
    ! Form the Fourier transform of the derivative of the product
    ! of two gaussians w.r.t. coordinates in shell b, from the zeroth
    ! derivative Fourier transform.  Dimensions of res are
@@ -713,41 +642,54 @@ contains
       self :: IN
       ft :: MAT3{CPX}(1:,0:,0:), IN
       res :: MAT3{CPX}(1:,0:,0:)
+
       a,b,l_a,l_b :: INT
+
       l_a = ubound(ft,2)-1
       l_b = ubound(ft,3)-1
+
       res = ZERO
+
       do a = 0,l_a
-         do b = 0,l_b
-            res(:,a,b) = res(:,a,b) - TWO*.b.exponent*ft(:,a,b+1)
-            res(:,a,b) = res(:,a,b) + TWO*.a.exponent*ft(:,a+1,b)
-            if (b>0) res(:,a,b) = res(:,a,b) + b*ft(:,a,b-1)
-            if (a>0) res(:,a,b) = res(:,a,b) - a*ft(:,a-1,b)
-         end
+      do b = 0,l_b
+
+         res(:,a,b) = res(:,a,b) - TWO*.b.exponent*ft(:,a,b+1)
+         res(:,a,b) = res(:,a,b) + TWO*.a.exponent*ft(:,a+1,b)
+
+         if (b>0) res(:,a,b) = res(:,a,b) + b*ft(:,a,b-1)
+         if (a>0) res(:,a,b) = res(:,a,b) - a*ft(:,a-1,b)
+
       end
+      end
+
    end
 
-   make_ft(ft,k_pts)
+   make_ft(ft,k_pts) ::: PURE
    ! Calculates the Fourier transform for a product of two primitive
    ! gaussian functions, evaluated at a series of k points "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
+      self :: IN
       ft :: MAT3{CPX}, OUT
       k_pts :: MAT{REAL}, IN
+
    ENSURE(ft.dim1==k_pts.dim1,"inconsistent first dimension")
    ENSURE(k_pts.dim2==3,"second dimension of k_pts must be 3")
+
       select case (.a.l+.b.l)
-       case (0);      .make_ft_00(ft(:,1,1),k_pts)
-       case default;  .make_ft_XX(ft,k_pts)
+      case (0);      .make_ft_00(ft(:,1,1),k_pts)
+      case default;  .make_ft_XX(ft,k_pts)
       end
+
    end
 
-   make_ft_00(ft,k_pts)
+   make_ft_00(ft,k_pts) ::: private, pure
    ! Calculates the Fourier transform for a product of two primitive
    ! gaussian functions, evaluated at a series of k points "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
    ! Specialised routine for .a.l=0 and .b.l=0.
+      self :: IN
       ft :: VEC{CPX}, OUT
-      k_pts :: MAT{REAL}, target
+      k_pts :: MAT{REAL}, target, IN
 
       pos :: VEC{REAL}(3)
       k_x,k_y,k_z :: VEC{REAL}@
@@ -759,8 +701,8 @@ contains
       ! Constants
       I = COMPLEXIFY(ZERO,ONE)
       gamma = .a.exponent+.b.exponent
-      g1 = ONE/gamma
-      g4 = QUARTER*g1
+      g1    = ONE/gamma
+      g4    = QUARTER*g1
       PI_on_gamma = PI*g1
       pifac = sqrt(PI_on_gamma) * PI_on_gamma
 
@@ -772,9 +714,9 @@ contains
       P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
 
       ! Reciprocal lattice K points
-      k_x => k_pts(:,1)
-      k_y => k_pts(:,2)
-      k_z => k_pts(:,3)
+      k_x = k_pts(:,1)
+      k_y = k_pts(:,2)
+      k_z = k_pts(:,3)
 
       ! E coefficient
       pos = .a.position - .b.position
@@ -783,7 +725,9 @@ contains
 
       ! Do the Fourier transform
       do k = 1,k_x.dim
-         k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
+         k1 = k_x(k)
+         k2 = k_y(k)
+         k3 = k_z(k)
          th = k1*P1 + k2*P2 + k3*P3
          kk = k1*k1 + k2*k2 + k3*k3
          ft(k) = pifac*(cos(th)+I*sin(th))*exp(-kk*g4)
@@ -791,26 +735,28 @@ contains
 
    end
 
-   make_ft_XX(ft,k_pts)
+   make_ft_XX(ft,k_pts) ::: private, PURE
    ! Calculates the Fourier transform for a product of two primitive
    ! gaussian functions, evaluated at a series of k points "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
       self :: IN
-      ft :: MAT3{CPX}
-      k_pts :: MAT{REAL}, target
-      ft_x,ft_y,ft_z :: MAT3{CPX}@
+      ft :: MAT3{CPX}, OUT
+      k_pts :: MAT{REAL}, IN
+
+      ft_x,ft_y,ft_z :: MAT3{CPX}@, target
+      ft_xbx,ft_yby,ft_zbz :: MAT{CPX}* ! ptr ok
+      ft_xb, ft_yb, ft_zb  :: VEC{CPX}* ! ptr ok
+      prefac :: VEC{CPX}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
-      prefac,ft_xb,ft_yb,ft_zb :: VEC{CPX}@
-      ft_xbx,ft_yby,ft_zbz :: MAT{CPX}@
       k_x,k_y,k_z :: VEC{REAL}@
       g1_exa,g1_exb :: REAL
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       k_max,a,b,k,xa,ya,za,xb,yb,zb,bxlast,bylast,bzlast,fa,la,fb,lb :: INT
 
       k_max = k_pts.dim1
-      ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-      ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-      ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+      ft_x.create(1,k_max, 0,.a.l, 0,.b.l)
+      ft_y.create(1,k_max, 0,.a.l, 0,.b.l)
+      ft_z.create(1,k_max, 0,.a.l, 0,.b.l)
       prefac.create(k_max)
 
       gamma = .a.exponent+.b.exponent
@@ -825,185 +771,239 @@ contains
       P2 = g1_exa*.a.position(2) + g1_exb*.b.position(2)
       P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
 
-      k_x => k_pts(:,1)
-      k_y => k_pts(:,2)
-      k_z => k_pts(:,3)
+      k_x = k_pts(:,1)
+      k_y = k_pts(:,2)
+      k_z = k_pts(:,3)
 
       ! Get the Fourier transforms of each component.
       .make_ft_component(ft_x,1,k_x)
       .make_ft_component(ft_y,2,k_y)
       .make_ft_component(ft_z,3,k_z)
       do k = 1,k_max
-        k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-        dot1 = k1*P1+k2*P2+k3*P3
-        dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-        prefac(k) = pifac*exp(COMPLEXIFY(dot2,dot1))
+         k1 = k_x(k)
+         k2 = k_y(k)
+         k3 = k_z(k)
+         dot1 =    k1*P1+k2*P2+k3*P3
+         dot2 = - (k1*k1+k2*k2+k3*k3) * g4
+         prefac(k) = pifac*exp(COMPLEXIFY(dot2,dot1))
       end
 
       select case (.a.l)
-        case (0)
-          select case(.b.l)
-            case (0)
-              ft(:,1,1) = ft_x(:,0,0)*ft_y(:,0,0)*ft_z(:,0,0)*prefac(:)
-            case (1)
-              ft(:,1,1) = ft_x(:,0,1)*ft_y(:,0,0)*ft_z(:,0,0)*prefac(:)
-              ft(:,1,2) = ft_x(:,0,0)*ft_y(:,0,1)*ft_z(:,0,0)*prefac(:)
-              ft(:,1,3) = ft_x(:,0,0)*ft_y(:,0,0)*ft_z(:,0,1)*prefac(:)
-            case default
-              do b = 0,.b.l ! incorporate prefac into ft_z
-                ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
-              end
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-              bxlast = bx(1)
-              bylast = by(1)
-              bzlast = bz(1)
-              ft_xb => ft_x(:,0,bxlast)
-              ft_yb => ft_y(:,0,bylast)
-              ft_zb => ft_z(:,0,bzlast)
-              do b = 1,.b.n_comp    ! Loop over all elements and multiply prefactor
-                xb = bx(b)
-                yb = by(b)
-                zb = bz(b)
-                if (bxlast/=xb) then
-                  ft_xb => ft_x(:,0,xb)
-                  bxlast = xb
-                end
-                if (bylast/=yb) then
-                  ft_yb=> ft_y(:,0,yb)
-                  bylast = yb
-                end
-                if (bzlast/=zb) then
-                  ft_zb=> ft_z(:,0,zb)
-                  bzlast = zb
-                end
-                ft(:,1,b) = ft_xb(:)*ft_yb(:)*ft_zb(:)
-              end
-          end
-        case (1)
-          select case (.b.l)
-            case (0)
-              ft(:,1,1) = ft_x(:,1,0)*ft_y(:,0,0)*ft_z(:,0,0)*prefac(:)
-              ft(:,2,1) = ft_x(:,0,0)*ft_y(:,1,0)*ft_z(:,0,0)*prefac(:)
-              ft(:,3,1) = ft_x(:,0,0)*ft_y(:,0,0)*ft_z(:,1,0)*prefac(:)
-            case (1)
-              ft_z(:,0,0) = ft_z(:,0,0) * prefac(:)
-              ft(:,1,1) = ft_x(:,1,1)*ft_y(:,0,0)*ft_z(:,0,0)
-              ft(:,2,1) = ft_x(:,0,1)*ft_y(:,1,0)*ft_z(:,0,0)
-              ft(:,3,1) = ft_x(:,0,1)*ft_y(:,0,0)*ft_z(:,1,0)*prefac(:)
-              ft(:,1,2) = ft_x(:,1,0)*ft_y(:,0,1)*ft_z(:,0,0)
-              ft(:,2,2) = ft_x(:,0,0)*ft_y(:,1,1)*ft_z(:,0,0)
-              ! don't change the order.
-              ft_x(:,0,0) = ft_x(:,0,0) * prefac(:)
-              ft(:,3,2) = ft_x(:,0,0)*ft_y(:,0,1)*ft_z(:,1,0)
-              ft(:,1,3) = ft_x(:,1,0)*ft_y(:,0,0)*ft_z(:,0,1)*prefac(:)
-              ft(:,2,3) = ft_x(:,0,0)*ft_y(:,1,0)*ft_z(:,0,1)
-              ft(:,3,3) = ft_x(:,0,0)*ft_y(:,0,0)*ft_z(:,1,1)
-            case default
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-              do b = 0,.b.l
-                ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
-              end
-              do b = 1,.b.n_comp    ! Loop over all elements and multiply prefactor
-                xb = bx(b)
-                yb = by(b)
-                zb = bz(b)
-                ft_xb => ft_x(:,0,xb)
-                ft_yb => ft_y(:,0,yb)
-                ft_zb => ft_z(:,0,zb)
-                ft(:,1,b) = ft_x(:,1,xb)*ft_yb        *ft_zb
-                ft(:,2,b) = ft_xb        *ft_y(:,1,yb)*ft_zb
-                ft(:,3,b) = ft_xb        *ft_yb        *ft_z(:,1,zb) * prefac(:)
-              end
-          end
-        case default
-          select case (.b.l)
-            case (0)
-              do a = 0,.a.l
-                ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
-              end
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              do a = 1,.a.n_comp
-                xa = ax(a)
-                ya = ay(a)
-                za = az(a)
-                ft(:,a,1) = ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,0)
-              end
-            case (1)
-              do a = 0,.a.l ! incorporate prefac into ft_z
-                ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
-                ft_z(:,a,1) = ft_z(:,a,1) * prefac(:)
-              end
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              do a = 1,.a.n_comp
-                xa = ax(a)
-                ya = ay(a)
-                za = az(a)
-                ft(:,a,1) = ft_x(:,xa,1)*ft_y(:,ya,0)*ft_z(:,za,0)
-                ft(:,a,2) = ft_x(:,xa,0)*ft_y(:,ya,1)*ft_z(:,za,0)
-                ft(:,a,3) = ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,1)
-              end
-            case default
-    ! This is the general routine.  It includes reduced multiplication, and use
-    ! of pointers to minimise array finding.
-              do b = 0,.b.l ! incorporate prefac into ft_z
-              do a = 0,.a.l
-                 ft_z(:,a,b) = ft_z(:,a,b) * prefac(:)
-              end
-              end
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-              bxlast = bx(1)
-              bylast = by(1)
-              bzlast = bz(1)
-              ft_xbx => ft_x(:,:,bxlast)
-              ft_yby => ft_y(:,:,bylast)
-              ft_zbz => ft_z(:,:,bzlast)
-              do b = 1,.b.n_comp    ! Loop over all elements and multiply prefactor
-                xb = bx(b)
-                yb = by(b)
-                zb = bz(b)
-                if (bxlast/=xb) then
+
+      case (0)
+
+         select case(.b.l)
+
+         case (0)
+
+            ft(:,1,1) = ft_x(:,0,0)*ft_y(:,0,0)*ft_z(:,0,0)*prefac(:)
+
+         case (1)
+
+            ft(:,1,1) = ft_x(:,0,1)*ft_y(:,0,0)*ft_z(:,0,0)*prefac(:)
+            ft(:,1,2) = ft_x(:,0,0)*ft_y(:,0,1)*ft_z(:,0,0)*prefac(:)
+            ft(:,1,3) = ft_x(:,0,0)*ft_y(:,0,0)*ft_z(:,0,1)*prefac(:)
+
+         case default
+
+            do b = 0,.b.l ! incorporate prefac into ft_z
+              ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
+            end
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
+            bxlast = bx(1)
+            bylast = by(1)
+            bzlast = bz(1)
+            ft_xb => ft_x(:,0,bxlast)
+            ft_yb => ft_y(:,0,bylast)
+            ft_zb => ft_z(:,0,bzlast)
+            ! Loop over all elements and multiply prefactor
+            do b = 1,.b.n_comp    
+               xb = bx(b)
+               yb = by(b)
+               zb = bz(b)
+               if (bxlast/=xb) then
+                 ft_xb => ft_x(:,0,xb)
+                 bxlast = xb
+               end
+               if (bylast/=yb) then
+                 ft_yb=> ft_y(:,0,yb)
+                 bylast = yb
+               end
+               if (bzlast/=zb) then
+                 ft_zb=> ft_z(:,0,zb)
+                 bzlast = zb
+               end
+               ft(:,1,b) = ft_xb(:)*ft_yb(:)*ft_zb(:)
+            end
+         end
+
+      case (1)
+
+         select case (.b.l)
+
+         case (0)
+
+            ft(:,1,1) = ft_x(:,1,0)*ft_y(:,0,0)*ft_z(:,0,0)*prefac(:)
+            ft(:,2,1) = ft_x(:,0,0)*ft_y(:,1,0)*ft_z(:,0,0)*prefac(:)
+            ft(:,3,1) = ft_x(:,0,0)*ft_y(:,0,0)*ft_z(:,1,0)*prefac(:)
+
+         case (1)
+
+            ft_z(:,0,0) = ft_z(:,0,0) * prefac(:)
+            ft(:,1,1) = ft_x(:,1,1)*ft_y(:,0,0)*ft_z(:,0,0)
+            ft(:,2,1) = ft_x(:,0,1)*ft_y(:,1,0)*ft_z(:,0,0)
+            ft(:,3,1) = ft_x(:,0,1)*ft_y(:,0,0)*ft_z(:,1,0)*prefac(:)
+            ft(:,1,2) = ft_x(:,1,0)*ft_y(:,0,1)*ft_z(:,0,0)
+            ft(:,2,2) = ft_x(:,0,0)*ft_y(:,1,1)*ft_z(:,0,0)
+            ! don't change the order.
+            ft_x(:,0,0) = ft_x(:,0,0) * prefac(:)
+            ft(:,3,2) = ft_x(:,0,0)*ft_y(:,0,1)*ft_z(:,1,0)
+            ft(:,1,3) = ft_x(:,1,0)*ft_y(:,0,0)*ft_z(:,0,1)*prefac(:)
+            ft(:,2,3) = ft_x(:,0,0)*ft_y(:,1,0)*ft_z(:,0,1)
+            ft(:,3,3) = ft_x(:,0,0)*ft_y(:,0,0)*ft_z(:,1,1)
+
+         case default
+
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
+            do b = 0,.b.l
+               ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
+            end
+            ! Loop over all elements and multiply prefactor
+            do b = 1,.b.n_comp    
+               xb = bx(b)
+               yb = by(b)
+               zb = bz(b)
+               ft_xb => ft_x(:,0,xb)
+               ft_yb => ft_y(:,0,yb)
+               ft_zb => ft_z(:,0,zb)
+               ft(:,1,b) = ft_x(:,1,xb)*ft_yb        *ft_zb
+               ft(:,2,b) = ft_xb        *ft_y(:,1,yb)*ft_zb
+               ft(:,3,b) = ft_xb        *ft_yb        *ft_z(:,1,zb) * prefac(:)
+            end
+         end
+
+      case default
+
+         select case (.b.l)
+
+         case (0)
+
+            do a = 0,.a.l
+               ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
+            end
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
+            do a = 1,.a.n_comp
+               xa = ax(a)
+               ya = ay(a)
+               za = az(a)
+               ft(:,a,1) = ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,0)
+            end
+
+         case (1)
+
+            do a = 0,.a.l ! incorporate prefac into ft_z
+               ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
+               ft_z(:,a,1) = ft_z(:,a,1) * prefac(:)
+            end
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
+            do a = 1,.a.n_comp
+               xa = ax(a)
+               ya = ay(a)
+               za = az(a)
+               ft(:,a,1) = ft_x(:,xa,1)*ft_y(:,ya,0)*ft_z(:,za,0)
+               ft(:,a,2) = ft_x(:,xa,0)*ft_y(:,ya,1)*ft_z(:,za,0)
+               ft(:,a,3) = ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,1)
+            end
+        
+         case default
+            ! This is the general routine.  It includes reduced multiplication, and use
+            ! of pointers to minimise array finding.
+        
+            ! incorporate prefac into ft_z
+            do b = 0,.b.l 
+            do a = 0,.a.l
+               ft_z(:,a,b) = ft_z(:,a,b) * prefac(:)
+            end
+            end
+
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
+
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
+        
+            bxlast = bx(1)
+            bylast = by(1)
+            bzlast = bz(1)
+            ft_xbx => ft_x(:,:,bxlast)
+            ft_yby => ft_y(:,:,bylast)
+            ft_zbz => ft_z(:,:,bzlast)
+            ! Loop over all elements and multiply prefactor
+            do b = 1,.b.n_comp    
+               xb = bx(b)
+               yb = by(b)
+               zb = bz(b)
+               if (bxlast/=xb) then
                   ft_xbx => ft_x(:,:,xb)
                   bxlast = xb
-                end
-                if (bylast/=yb) then
+               end
+               if (bylast/=yb) then
                   ft_yby=> ft_y(:,:,yb)
                   bylast = yb
-                end
-                if (bzlast/=zb) then
+               end
+               if (bzlast/=zb) then
                   ft_zbz=> ft_z(:,:,zb)
                   bzlast = zb
-                end
-                do a = 1,.a.n_comp
+               end
+               do a = 1,.a.n_comp
                   xa = ax(a)
                   ya = ay(a)
                   za = az(a)
                   ft(:,a,b) = ft_xbx(:,xa+1)*ft_yby(:,ya+1)*ft_zbz(:,za+1)
-                end
-              end
-          end
+               end
+            end
+         end
       end
+
       prefac.destroy
       ft_z.destroy; ft_y.destroy; ft_x.destroy
+
    end
 
-   make_ft_v2(ft,k_pts)
+   make_ft_v2(ft,k_pts) ::: PURE
    ! Calculates the Fourier transform for a product of two primitive
    ! gaussian functions, evaluated at a series of k points "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
-      ft :: MAT3{CPX}
-      k_pts :: MAT{REAL}, target
+      self :: IN
+      ft :: MAT3{CPX}, OUT
+      k_pts :: MAT{REAL}, target, IN
 
       ft_x,ft_y,ft_z :: MAT3{CPX}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
       prefac :: VEC{CPX}@
-      k_x,k_y,k_z :: VEC{REAL}@
+      k_x,k_y,k_z :: VEC{REAL}* ! ptr ok
       g1_exa,g1_exb :: REAL
       pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       k_max,a,b,k,fa,la,fb,lb :: INT
@@ -1019,9 +1019,9 @@ contains
 
       ! Space for fourier transform of each component
       k_max = k_pts.dim1
-      ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-      ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-      ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+      ft_x.create(1,k_max, 0,.a.l, 0,.b.l)
+      ft_y.create(1,k_max, 0,.a.l, 0,.b.l)
+      ft_z.create(1,k_max, 0,.a.l, 0,.b.l)
 
       ! Reciprocal lattice K points
       k_x => k_pts(:,1)
@@ -1060,26 +1060,29 @@ contains
       ! Gaussian function power arrays
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-      bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
+      ax = GAUSSIAN_DATA::px(fa:la); ay = GAUSSIAN_DATA::py(fa:la); az = GAUSSIAN_DATA::pz(fa:la)
+      bx = GAUSSIAN_DATA::px(fb:lb); by = GAUSSIAN_DATA::py(fb:lb); bz = GAUSSIAN_DATA::pz(fb:lb)
 
       ! Do the Fourier transform
       ft = ft_x(:,ax,bx)*ft_y(:,ay,by)*ft_z(:,az,bz)
 
       ! Clean up
-      ft_z.destroy; ft_y.destroy; ft_x.destroy
+      ft_z.destroy
+      ft_y.destroy
+      ft_x.destroy
 
    end
 
-   make_ft_nabla(ft,k_pts)
+   make_ft_nabla(ft,k_pts) ::: PURE
    ! Calculates the Fourier transform of the current integrals for the product
    ! of two primitive gaussian functions, evaluated at a series of points
    ! "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
    ! size of "ft" is [k_max],[.a.l.n_comp],[.b.l.n_comp],[3
       self :: IN
+      ft :: MAT4{CPX}, OUT
       k_pts :: MAT{REAL}, IN
-      ft :: MAT4{CPX}
+
       ci,prefac :: CPX
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3 :: REAL
       k_max,a,b,k,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
@@ -1093,26 +1096,32 @@ contains
       g1 = 1/gamma
       g4 = QUARTER*g1
       pifac = (PI/gamma)**(THREE/TWO)
+
       P1 = g1*(.a.exponent*.a.position(1)+.b.exponent*.b.position(1))
       P2 = g1*(.a.exponent*.a.position(2)+.b.exponent*.b.position(2))
       P3 = g1*(.a.exponent*.a.position(3)+.b.exponent*.b.position(3))
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-      bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-      ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-      ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-      ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+      ax = GAUSSIAN_DATA::px(fa:la); ay = GAUSSIAN_DATA::py(fa:la); az = GAUSSIAN_DATA::pz(fa:la)
+      bx = GAUSSIAN_DATA::px(fb:lb); by = GAUSSIAN_DATA::py(fb:lb); bz = GAUSSIAN_DATA::pz(fb:lb)
+
+      ft_x.create(1,k_max, 0,.a.l, 0,.b.l)
+      ft_y.create(1,k_max, 0,.a.l, 0,.b.l)
+      ft_z.create(1,k_max, 0,.a.l, 0,.b.l)
+
       .make_ft_component(ft_x,1,k_pts(:,1))       ! Get the Fourier transforms
       .make_ft_component(ft_y,2,k_pts(:,2))       ! of each component.
       .make_ft_component(ft_z,3,k_pts(:,3))
-      fd_x.create([1,k_max],[0,.a.l],[0,.b.l])
-      fd_y.create([1,k_max],[0,.a.l],[0,.b.l])
-      fd_z.create([1,k_max],[0,.a.l],[0,.b.l])
+
+      fd_x.create(1,k_max, 0,.a.l, 0,.b.l)
+      fd_y.create(1,k_max, 0,.a.l, 0,.b.l)
+      fd_z.create(1,k_max, 0,.a.l, 0,.b.l)
+
       .make_ft_dab_component(fd_x,1,k_pts(:,1),k_max)   ! Get the Fourier transforms
       .make_ft_dab_component(fd_y,2,k_pts(:,2),k_max)   ! of the derivative of each
       .make_ft_dab_component(fd_z,3,k_pts(:,3),k_max)   ! component.
+
       do b = 1,.b.n_comp         ! Loop over all elements and multiply prefactor
          xb = bx(b)
          yb = by(b)
@@ -1135,19 +1144,22 @@ contains
             end
          end
       end
+
       fd_z.destroy; fd_y.destroy; fd_x.destroy
       ft_z.destroy; ft_y.destroy; ft_x.destroy
+
    end
 
-   make_ft_da_db(ft_da,ft_db,k_pts)
+   make_ft_da_db(ft_da,ft_db,k_pts) ::: PURE
    ! Calculates the Fourier transform of the derivatives of the product
    ! of two primitive gaussian functions, w.r.t. positions of center a and b,
    ! "ft_ad", and "ft_db" respectively, evaluated at a series of points "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
    ! size of "ft_da" and "ft_db" is ([k_max],[.a.l.n_comp],[.b.l.n_comp],3)
       self :: IN
+      ft_da,ft_db :: MAT4{CPX}, OUT
       k_pts :: MAT{REAL}, IN
-      ft_da,ft_db :: MAT4{CPX}
+
       ci,prefac :: CPX
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3 :: REAL
       k_max,a,b,k,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
@@ -1161,29 +1173,35 @@ contains
       g1 = 1/gamma
       g4 = QUARTER*g1
       pifac = (PI/gamma)**(THREE/TWO)
+
       P1 = g1*(.a.exponent*.a.position(1)+.b.exponent*.b.position(1))
       P2 = g1*(.a.exponent*.a.position(2)+.b.exponent*.b.position(2))
       P3 = g1*(.a.exponent*.a.position(3)+.b.exponent*.b.position(3))
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-      bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
+      ax = GAUSSIAN_DATA::px(fa:la); ay = GAUSSIAN_DATA::py(fa:la); az = GAUSSIAN_DATA::pz(fa:la)
+      bx = GAUSSIAN_DATA::px(fb:lb); by = GAUSSIAN_DATA::py(fb:lb); bz = GAUSSIAN_DATA::pz(fb:lb)
+
       ft_x.create(1,k_max,0,.a.l,0,.b.l)
       ft_y.create(1,k_max,0,.a.l,0,.b.l)
       ft_z.create(1,k_max,0,.a.l,0,.b.l)
+
       .make_ft_component(ft_x,1,k_pts(:,1))        ! Get the Fourier transforms
       .make_ft_component(ft_y,2,k_pts(:,2))        ! of each component.
       .make_ft_component(ft_z,3,k_pts(:,3))
+
       fa_x.create(1,k_max,0,.a.l,0,.b.l)
       fa_y.create(1,k_max,0,.a.l,0,.b.l)
       fa_z.create(1,k_max,0,.a.l,0,.b.l)
       fb_x.create(1,k_max,0,.a.l,0,.b.l)
       fb_y.create(1,k_max,0,.a.l,0,.b.l)
       fb_z.create(1,k_max,0,.a.l,0,.b.l)
+
       .make_ft_da_db_component(fa_x,fb_x,1,k_pts(:,1)) ! Get the Fourier transforms
       .make_ft_da_db_component(fa_y,fb_y,2,k_pts(:,2)) ! of the derivative of each
       .make_ft_da_db_component(fa_z,fb_z,3,k_pts(:,3)) ! component.
+
       do a = 1,.a.n_comp         ! Loop over all elements and multiply prefactor
          xa = ax(a)
          ya = ay(a)
@@ -1209,19 +1227,23 @@ contains
             end
          end
       end
+
       fb_z.destroy; fb_y.destroy; fb_x.destroy
       fa_z.destroy; fa_y.destroy; fa_x.destroy
       ft_z.destroy; ft_y.destroy; ft_x.destroy
+
    end
 
-   make_ft_r(ft,k_pts)
+   make_ft_r(ft,k_pts) ::: PURE
    ! Calculates the Fourier transform of the derivative of a product of two
    ! primitive gaussian functions, times vector r, evaluated at a series of
    ! points "k_pts".
    ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
    ! size of "ft" is [k_max,.a.n_comp,.b.n_comp,3]
-      k_pts :: MAT{REAL}
-      ft :: MAT4{CPX}
+      self :: IN
+      ft :: MAT4{CPX}, OUT
+      k_pts :: MAT{REAL}, IN
+
       ci,prefac :: CPX
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3 :: REAL
       k_max,a,b,k,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
@@ -1235,23 +1257,27 @@ contains
       g1 = 1/gamma
       g4 = QUARTER*g1
       pifac = (PI/gamma)**(THREE/TWO)
+
       P1 = g1*(.a.exponent*.a.position(1)+.b.exponent*.b.position(1))
       P2 = g1*(.a.exponent*.a.position(2)+.b.exponent*.b.position(2))
       P3 = g1*(.a.exponent*.a.position(3)+.b.exponent*.b.position(3))
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-      bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-      ft_x.create([1,k_max],[0,.a.l],[0,.b.l+1])
-      ft_y.create([1,k_max],[0,.a.l],[0,.b.l+1])
-      ft_z.create([1,k_max],[0,.a.l],[0,.b.l+1])
+      ax = GAUSSIAN_DATA::px(fa:la); ay = GAUSSIAN_DATA::py(fa:la); az = GAUSSIAN_DATA::pz(fa:la)
+      bx = GAUSSIAN_DATA::px(fb:lb); by = GAUSSIAN_DATA::py(fb:lb); bz = GAUSSIAN_DATA::pz(fb:lb)
+
+      ft_x.create(1,k_max, 0,.a.l, 0,.b.l+1)
+      ft_y.create(1,k_max, 0,.a.l, 0,.b.l+1)
+      ft_z.create(1,k_max, 0,.a.l, 0,.b.l+1)
 
       ! Get the Fourier transforms of each component.
       .make_ft_component(ft_x,1,k_pts(:,1))
       .make_ft_component(ft_y,2,k_pts(:,2))
       .make_ft_component(ft_z,3,k_pts(:,3))
-      do a = 1,.a.n_comp         ! Loop over all elements and multiply prefactor
+
+      ! Loop over all elements and multiply prefactor
+      do a = 1,.a.n_comp         
          xa = ax(a)
          ya = ay(a)
          za = az(a)
@@ -1273,79 +1299,16 @@ contains
             end
          end
       end
+
       ft_z.destroy
       ft_y.destroy
       ft_x.destroy
-   end
-
-   put_e_coeff(out)
-   ! Put the McMurchie Davidson E coefficients to file "out"
-      out :: TEXTFILE
-      a,b,t :: INT
-      Ex :: MAT3{REAL}@
-      Ey :: MAT3{REAL}@
-      Ez :: MAT3{REAL}@
-
-      out.flush
-      out.text("GAUSSIAN2 output:")
-      out.flush
-      out.text("Dylan Jayatilaka, University of Western Australia, March 1998")
-
-      out.flush
-      out.show("l_a   =",.a.l)
-      out.show("l_b   =",.a.l)
-      out.show("Ra    =",.a.position)
-      out.show("Rb    =",.b.position)
-      out.show("R     =",.a.position-.b.position)
-      out.show("alpha =",.a.exponent)
-      out.show("beta  =",.b.exponent)
-
-      out.flush
-      out.dash(int_fields=3,real_fields=3)
-      out.put("a",int_width=TRUE)
-      out.put("b",int_width=TRUE)
-      out.put("t",int_width=TRUE)
-      out.put("Ex(t,a,b)")
-      out.put("Ey(t,a,b)")
-      out.put("Ez(t,a,b)")
-
-      out.flush
-      Ex.create([0,.a.l+.b.l],[0,.a.l],[0,.b.l])
-      .make_e_coeff(Ex,1)
-      Ey.create([0,.a.l+.b.l],[0,.a.l],[0,.b.l])
-      .make_e_coeff(Ey,2)
-      Ez.create([0,.a.l+.b.l],[0,.a.l],[0,.b.l])
-      .make_e_coeff(Ez,3)
-      out.dash(int_fields=3,real_fields=3)
-      do a = 0,.a.l
-      do b = 0,.b.l
-      do t = 0,a+b
-         out.put(a)
-         out.put(b)
-         out.put(t)
-         out.put(Ex(t,a,b))
-         out.put(Ey(t,a,b))
-         out.put(Ez(t,a,b))
-         out.flush
-      end
-      end
-      end
-
-      Ez.destroy
-      Ey.destroy
-      Ex.destroy
 
    end
 
-!  ======================
-!  CADPAC-style integrals
-!  ======================
-
-   normalisation_factor result (res)
-   ! Return the normaliston factor assuming it is x^l
-      res :: REAL
-      res = .a.normalisation_factor * .b.normalisation_factor
-   end
+!  ===========================
+!  Sperical harmonic transform
+!  ===========================
 
    change_to_spherical(C,S)
    ! Transform a cartesian integral block "C" to a spherical integral
@@ -1354,26 +1317,32 @@ contains
       C :: MAT{REAL}, IN
       S :: MAT{REAL}, OUT
 
-      UU  :: VEC{MAT_{REAL}}@
       W,U :: MAT{REAL}@
 
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
-
       if ( .a.l<2 AND .b.l<2 ) then
-         S = C             ! don't use this case
+
+         ! don't use this case
+         S = C             
+
       else if ( .a.l>=2 AND .b.l>=2 ) then
+
          W.create(.a.n_comp,.b.n_sph)
-         U => UU(.b.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          W.to_product_of(C,U)
-         U => UU(.a.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S.to_product_of(U,W,transpose_a=TRUE)
          W.destroy
+
       else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
+
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          S.to_product_of(C,U)
+
       else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
+
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S.to_product_of(U,C,transpose_a=TRUE)
+
       end
 
    end
@@ -1385,31 +1354,41 @@ contains
       C :: MAT{CPX}, IN
       S :: MAT{CPX}, OUT
 
-      UU  :: VEC{MAT_{REAL}}@
       U :: MAT{REAL}@
       W :: MAT{CPX}@
 
 
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
-
       if ( .a.l<2 AND .b.l<2 ) then
-         S = C             ! don't use this case
+
+         ! don't use this case
+         S = C             
+
       else if ( .a.l>=2 AND .b.l>=2 ) then
+
          W.create(.a.n_comp,.b.n_sph)
-         U => UU(.b.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          W.to_product_of(C,U)
-         U => UU(.a.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S.to_product_of(U,W,transpose_a=TRUE)
          W.destroy
+
       else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
+
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          S.to_product_of(C,U)
+
       else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
+
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S.to_product_of(U,C,transpose_a=TRUE)
+
       end
 
    end
+
+!  ======================
+!  CADPAC-style integrals
+!  ======================
 
    make_normalised_overlap_ints(S,spherical)
    ! Calculate S, a cartesian or spherical block of integrals.
@@ -1437,39 +1416,35 @@ contains
 
    end
 
-   make_overlap_ints(S)
+   make_overlap_ints(S) ::: PURE
    ! Make the overlap integral matrix "S". Uses Gauss-Hermite quadrature.
-      S :: MAT{REAL}
+      self :: IN
+      S :: MAT{REAL}, OUT
+
       Sx,Sy,Sz :: MAT{REAL}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
-      a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
+      fa,la,fb,lb :: INT
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
+      ax = GAUSSIAN_DATA::nx(fa:la); ay = GAUSSIAN_DATA::ny(fa:la); az = GAUSSIAN_DATA::nz(fa:la)
+      bx = GAUSSIAN_DATA::nx(fb:lb); by = GAUSSIAN_DATA::ny(fb:lb); bz = GAUSSIAN_DATA::nz(fb:lb)
 
-      Sx.create(.a.l+1,.b.l+1); Sy.create(.a.l+1,.b.l+1); Sz.create(.a.l+1,.b.l+1)
+      Sx.create(.a.l+1,.b.l+1)
+      Sy.create(.a.l+1,.b.l+1)
+      Sz.create(.a.l+1,.b.l+1)
+
       .make_overlap_ints(Sx,1)
       .make_overlap_ints(Sy,2)
       .make_overlap_ints(Sz,3)
 
-!     The following loops can be simplified by the one line statement:
-!     S = Sx(ax,bx)*Sy(ay,by)*Sz(az,bz)
-      do b = 1,.b.n_comp
-        bix = bx(b)
-        biy = by(b)
-        biz = bz(b)
-        do a = 1,.a.n_comp
-          aix = ax(a)
-          aiy = ay(a)
-          aiz = az(a)
-          S(a,b) = Sx(aix,bix)*Sy(aiy,biy)*Sz(aiz,biz)
-        end
-      end
-      Sz.destroy; Sy.destroy; Sx.destroy
+      S = Sx(ax,bx)*Sy(ay,by)*Sz(az,bz)
+
+      Sz.destroy
+      Sy.destroy
+      Sx.destroy
 
       p = .a.exponent + .b.exponent
       rab = .a.position - .b.position
@@ -1478,14 +1453,15 @@ contains
 
    end
 
-   make_overlap_ints(Sx,x,max_a,max_b)
+   make_overlap_ints(Sx,x,max_a,max_b) ::: pure
    ! Make the 1-D overlap xyz integral matrix "Sx" for component "x".
    ! If present, "max_a" and "max_b" are used for the maximum angular momenta
    ! of centers (a) and (b) respectively -- for derivative integrals.
    ! Uses Gauss-Hermite quadrature.
-      Sx :: MAT{REAL}
-      x :: INT
-      max_a,max_b :: INT, optional
+      self :: IN
+      Sx :: MAT{REAL}, OUT
+      x :: INT, IN
+      max_a,max_b :: INT, optional, IN
 
       p,t,rp,ax,bx,wt,pt,ra,rb :: REAL
       l_a,l_b, a,b,i,k :: INT
@@ -1518,25 +1494,28 @@ contains
 
    end
 
-   make_S_1st_deriv_ints(AAx,AAy,AAz)
+   make_S_1st_deriv_ints(AAx,AAy,AAz) ::: PURE
    ! Make the first derivative overlap integrals "AAx", "AAy" and "AAz" which are
    ! the derivatives of the overlap matrix elements with respect to position A.
    ! The derivatives with respect to position B are not evaluated. By translational
    ! invariance, they are just the negative of the derivatives w.r.t. A.
-      AAx,AAy,AAz :: MAT{REAL}
+      self :: IN
+      AAx,AAy,AAz :: MAT{REAL}, OUT
+
       Sx,Sy,Sz, Dx,Dy,Dz :: MAT{REAL}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
-      a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
+      fa,la,fb,lb :: INT
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
+      ax = GAUSSIAN_DATA::nx(fa:la); ay = GAUSSIAN_DATA::ny(fa:la); az = GAUSSIAN_DATA::nz(fa:la)
+      bx = GAUSSIAN_DATA::nx(fb:lb); by = GAUSSIAN_DATA::ny(fb:lb); bz = GAUSSIAN_DATA::nz(fb:lb)
 
       Sx.create(.a.l+2,.b.l+1); Sy.create(.a.l+2,.b.l+1); Sz.create(.a.l+2,.b.l+1)
       Dx.create(.a.l+1,.b.l+1); Dy.create(.a.l+1,.b.l+1); Dz.create(.a.l+1,.b.l+1)
+
       .make_overlap_ints(Sx,1,.a.l+1)
       .make_overlap_ints(Sy,2,.a.l+1)
       .make_overlap_ints(Sz,3,.a.l+1)
@@ -1546,24 +1525,9 @@ contains
       .differentiate(Sy,"left",Dy)
       .differentiate(Sz,"left",Dz)
 
-!     The following loops can be simplified by the statements:
-!     AAx = -Dx(ax,bx)*Sy(ay,by)*Sz(az,bz)
-!     AAy = -Sx(ax,bx)*Dy(ay,by)*Sz(az,bz)
-!     AAz = -Sx(ax,bx)*Sy(ay,by)*Dz(az,bz)
-      do b = 1,.b.n_comp
-        bix = bx(b)
-        biy = by(b)
-        biz = bz(b)
-        do a = 1,.a.n_comp
-          aix = ax(a)
-          aiy = ay(a)
-          aiz = az(a)
-          ! Minus sign for nuclear derivative
-          AAx(a,b) = -Dx(aix,bix)*Sy(aiy,biy)*Sz(aiz,biz)
-          AAy(a,b) = -Sx(aix,bix)*Dy(aiy,biy)*Sz(aiz,biz)
-          AAz(a,b) = -Sx(aix,bix)*Sy(aiy,biy)*Dz(aiz,biz)
-        end
-      end
+      AAx = -Dx(ax,bx)*Sy(ay,by)*Sz(az,bz)
+      AAy = -Sx(ax,bx)*Dy(ay,by)*Sz(az,bz)
+      AAz = -Sx(ax,bx)*Sy(ay,by)*Dz(az,bz)
 
       Dz.destroy; Dy.destroy; Dx.destroy
       Sz.destroy; Sy.destroy; Sx.destroy
@@ -1577,101 +1541,12 @@ contains
 
    end
 
-   make_oscillator_overlap_ints(S,c,d,lc_min,lc_max,ld_min,ld_max)
-   ! Make the oscillator overlap integral matrix "S". "c" and "d" are the centroid
-   ! positions of the bra and ket. "lc_min", "lc_max", "ld_min" and "ld_max" are
-   ! the corresponding minimum and maximum angular momenta for the centroid
-   ! polynomials on "c" and "d".
-      S :: MAT4{REAL}
-      c,d :: VEC{REAL}(3)
-      lc_min,lc_max,ld_min,ld_max :: INT
-   ENSURE(S.dim3==(GAUSSIAN_DATA:n_comp_up_to(lc_max)-GAUSSIAN_DATA:n_comp_up_to(lc_min-1)),"S: bad dim3")
-   ENSURE(S.dim4==(GAUSSIAN_DATA:n_comp_up_to(ld_max)-GAUSSIAN_DATA:n_comp_up_to(ld_min-1)),"S: bad dim4")
-      Sx,Sy,Sz :: MAT4{REAL}@
-      ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}@
-      rab :: VEC{REAL}(3)
-      p,prefac :: REAL
-      fa,la,fb,lb,fc,lc,fd,ld :: INT
 
-      fa = .a.first_gaussian; la = .a.last_gaussian
-      fb = .b.first_gaussian; lb = .b.last_gaussian
-      fc = GAUSSIAN_DATA:n_comp_up_to(lc_min-1)+1; lc = GAUSSIAN_DATA:n_comp_up_to(lc_max)
-      fd = GAUSSIAN_DATA:n_comp_up_to(ld_min-1)+1; ld = GAUSSIAN_DATA:n_comp_up_to(ld_max)
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
-      cx => GAUSSIAN_DATA::nx(fc:lc); cy => GAUSSIAN_DATA::ny(fc:lc); cz => GAUSSIAN_DATA::nz(fc:lc)
-      dx => GAUSSIAN_DATA::nx(fd:ld); dy => GAUSSIAN_DATA::ny(fd:ld); dz => GAUSSIAN_DATA::nz(fd:ld)
-
-      Sx.create(.a.l+1,.b.l+1,lc_max+1,ld_max+1)
-      Sy.create(.a.l+1,.b.l+1,lc_max+1,ld_max+1)
-      Sz.create(.a.l+1,.b.l+1,lc_max+1,ld_max+1)
-      .make_oscillator_overlap_ints(Sx,1,c(1),lc_max,d(1),ld_max)
-      .make_oscillator_overlap_ints(Sy,2,c(2),lc_max,d(2),ld_max)
-      .make_oscillator_overlap_ints(Sz,3,c(3),lc_max,d(3),ld_max)
-
-      S = Sx(ax,bx,cx,dx)*Sy(ay,by,cy,dy)*Sz(az,bz,cz,dz)
-
-      Sz.destroy; Sy.destroy; Sx.destroy
-
-      p = .a.exponent + .b.exponent
-      rab = .a.position - .b.position
-      prefac = exp(-.a.exponent*.b.exponent*rab.dot(rab)/p)/(p*sqrt(p))
-      S = prefac*S
-
-   end
-
-   make_oscillator_overlap_ints(Sx,x,cx,l_c,dx,l_d,max_a,max_b)
-   ! Make the 1-D overlap xyz integral matrix "Sx" for component "x".
-   ! The oscillator polynomials are centered at "cx" and "dx". "l_c" and "l_d"
-   ! are the corresponding maximum angular momenta of each oscillator. If
-   ! present, "max_a" and "max_b" specify the maximum angular momenta on centers
-   ! a and b respectively. Uses Gauss-Hermite quadrature.
-      Sx :: MAT4{REAL}
-      x,l_c,l_d :: INT
-      cx,dx :: REAL
-      max_a,max_b :: REAL, optional
-      p,t,rp,ax,bx,wt,pt,ra,rb,rc,rd :: REAL
-      l_a,l_b, a,b,c,d, i,k :: INT
-
-      l_a = .a.l; if (present(max_a)) l_a = int(max_a)
-      l_b = .b.l; if (present(max_b)) l_b = int(max_b)
-
-      p = .a.exponent + .b.exponent
-      t = sqrt(p)
-      ax = .a.position(x)
-      bx = .b.position(x)
-      rp = (.a.exponent*ax + .b.exponent*bx)/p
-
-      Sx = ZERO
-      do a = 1,l_a+1
-      do b = 1,l_b+1
-      do c = 1,l_c+1
-      do d = 1,l_d+1
-         i = (a+b+c+d)/2
-         do k = first_pt(i),last_pt(i)
-            wt = gauss_hermite_wt(k)
-            pt = gauss_hermite_pt(k)/t + rp
-            ra = pt - ax
-            rb = pt - bx
-            rc = pt - cx
-            rd = pt - dx
-            if (a>1) wt = wt*ra**(a-1)
-            if (b>1) wt = wt*rb**(b-1)
-            if (c>1) wt = wt*rc**(c-1)
-            if (d>1) wt = wt*rd**(d-1)
-            Sx(a,b,c,d) = Sx(a,b,c,d) + wt
-         end
-      end
-      end
-      end
-      end
-
-   end
-
-   make_normalised_kinetic_ints(T,spherical)
+   make_normalised_kinetic_ints(T,spherical) ::: PURE
    ! Calculate T, a cartesian or spherical block of integrals.
-      T :: MAT{REAL}
-      spherical :: BIN, optional
+      self :: IN
+      T :: MAT{REAL}, OUT
+      spherical :: BIN, optional, IN
 
       W :: MAT{REAL}@
       is_spherical :: BIN
@@ -1694,20 +1569,22 @@ contains
 
    end
 
-   make_kinetic_ints(T)
+   make_kinetic_ints(T) ::: PURE
    ! Make the kinetic integrals "T". Uses Gauss-Hermite quadrature. This routine is
    ! very inefficient. This includes the factor of -1/2 in T = -1/2 \nabla^2.
-      T :: MAT{REAL}
+      self :: IN
+      T :: MAT{REAL}, OUT
+
       Sx,Sy,Sz, Dx,Dy,Dz, Tx,Ty,Tz :: MAT{REAL}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
-      a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
+      fa,la,fb,lb :: INT
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
+      ax = GAUSSIAN_DATA::nx(fa:la); ay = GAUSSIAN_DATA::ny(fa:la); az = GAUSSIAN_DATA::nz(fa:la)
+      bx = GAUSSIAN_DATA::nx(fb:lb); by = GAUSSIAN_DATA::ny(fb:lb); bz = GAUSSIAN_DATA::nz(fb:lb)
 
       Sx.create(.a.l+1,.b.l+3); Sy.create(.a.l+1,.b.l+3); Sz.create(.a.l+1,.b.l+3)
       Tx.create(.a.l+1,.b.l+1); Ty.create(.a.l+1,.b.l+1); Tz.create(.a.l+1,.b.l+1)
@@ -1723,25 +1600,12 @@ contains
       .differentiate(Dx,"right",Tx) ! with respect to electron coordinates !
       .differentiate(Dy,"right",Ty)
       .differentiate(Dz,"right",Tz)
+
       Dz.destroy; Dy.destroy; Dx.destroy
 
-!     The following loops can be simplified by the statement:
-!     T = Tx(ax,bx)*Sy(ay,by)*Sz(az,bz) &
-!       + Sx(ax,bx)*Ty(ay,by)*Sz(az,bz) &
-!       + Sx(ax,bx)*Sy(ay,by)*Tz(az,bz)
-      do b = 1,.b.n_comp
-        bix = bx(b)
-        biy = by(b)
-        biz = bz(b)
-        do a = 1,.a.n_comp
-          aix = ax(a)
-          aiy = ay(a)
-          aiz = az(a)
-          T(a,b) = Tx(aix,bix)*Sy(aiy,biy)*Sz(aiz,biz) + &
-                   Sx(aix,bix)*Ty(aiy,biy)*Sz(aiz,biz) + &
-                   Sx(aix,bix)*Sy(aiy,biy)*Tz(aiz,biz)
-        end
-      end
+      T = Tx(ax,bx)*Sy(ay,by)*Sz(az,bz) &
+        + Sx(ax,bx)*Ty(ay,by)*Sz(az,bz) &
+        + Sx(ax,bx)*Sy(ay,by)*Tz(az,bz)
 
       Tz.destroy; Ty.destroy; Tx.destroy
       Sz.destroy; Sy.destroy; Sx.destroy
@@ -1753,23 +1617,25 @@ contains
 
    end
 
-   make_T_1st_deriv_ints(AAx,AAy,AAz)
+   make_T_1st_deriv_ints(AAx,AAy,AAz) ::: PURE
    ! Make the first derivative kinetic integrals "AAx", "AAy" and "AAz" which are
    ! the derivatives of the kinetic matrix elements with respect to position A.
    ! The derivatives with respect to position B are not evaluated. By translational
    ! invariance, they are just the negative of the derivatives w.r.t. A.
    ! This includes the factor of -1/2 in T = -1/2 \nabla^2.
-      AAx,AAy,AAz :: MAT{REAL}
+      self :: IN
+      AAx,AAy,AAz :: MAT{REAL}, OUT
+
       SSx,SSy,SSz, SAx,SAy,SAz, TTx,TTy,TTz, TAx,TAy,TAz :: MAT{REAL}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac :: REAL
-      a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
+      fa,la,fb,lb :: INT
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
+      ax = GAUSSIAN_DATA::nx(fa:la); ay = GAUSSIAN_DATA::ny(fa:la); az = GAUSSIAN_DATA::nz(fa:la)
+      bx = GAUSSIAN_DATA::nx(fb:lb); by = GAUSSIAN_DATA::ny(fb:lb); bz = GAUSSIAN_DATA::nz(fb:lb)
 
       SSx.create(.a.l+4,.b.l+1); SSy.create(.a.l+4,.b.l+1); SSz.create(.a.l+4,.b.l+1)
       SAx.create(.a.l+3,.b.l+1); SAy.create(.a.l+3,.b.l+1); SAz.create(.a.l+3,.b.l+1)
@@ -1790,36 +1656,15 @@ contains
       .differentiate(TTy,"left",TAy)
       .differentiate(TTz,"left",TAz)
 
-!     The following loops can be simplified by the statements:
-!     AAx = TAx(ax,bx)*SSy(ay,by)*SSz(az,bz) &
-!         + SAx(ax,bx)*TTy(ay,by)*SSz(az,bz) &
-!         + SAx(ax,bx)*SSy(ay,by)*TTz(az,bz)
-!     AAy = TTx(ax,bx)*SAy(ay,by)*SSz(az,bz) &
-!         + SSx(ax,bx)*TAy(ay,by)*SSz(az,bz) &
-!         + SSx(ax,bx)*SAy(ay,by)*TTz(az,bz)
-!     AAz = TTx(ax,bx)*SSy(ay,by)*SAz(az,bz) &
-!         + SSx(ax,bx)*TTy(ay,by)*SAz(az,bz) &
-!         + SSx(ax,bx)*SSy(ay,by)*TAz(az,bz)
-      do b = 1,.b.n_comp
-        bix = bx(b)
-        biy = by(b)
-        biz = bz(b)
-        do a = 1,.a.n_comp
-          aix = ax(a)
-          aiy = ay(a)
-          aiz = az(a)
-          ! No minus sign for nuclear derivative ... see below for reason
-          AAx(a,b) = TAx(aix,bix)*SSy(aiy,biy)*SSz(aiz,biz) + &
-                     SAx(aix,bix)*TTy(aiy,biy)*SSz(aiz,biz) + &
-                     SAx(aix,bix)*SSy(aiy,biy)*TTz(aiz,biz)
-          AAy(a,b) = TTx(aix,bix)*SAy(aiy,biy)*SSz(aiz,biz) + &
-                     SSx(aix,bix)*TAy(aiy,biy)*SSz(aiz,biz) + &
-                     SSx(aix,bix)*SAy(aiy,biy)*TTz(aiz,biz)
-          AAz(a,b) = TTx(aix,bix)*SSy(aiy,biy)*SAz(aiz,biz) + &
-                     SSx(aix,bix)*TTy(aiy,biy)*SAz(aiz,biz) + &
-                     SSx(aix,bix)*SSy(aiy,biy)*TAz(aiz,biz)
-        end
-      end
+      AAx = TAx(ax,bx)*SSy(ay,by)*SSz(az,bz) &
+          + SAx(ax,bx)*TTy(ay,by)*SSz(az,bz) &
+          + SAx(ax,bx)*SSy(ay,by)*TTz(az,bz)
+      AAy = TTx(ax,bx)*SAy(ay,by)*SSz(az,bz) &
+          + SSx(ax,bx)*TAy(ay,by)*SSz(az,bz) &
+          + SSx(ax,bx)*SAy(ay,by)*TTz(az,bz)
+      AAz = TTx(ax,bx)*SSy(ay,by)*SAz(az,bz) &
+          + SSx(ax,bx)*TTy(ay,by)*SAz(az,bz) &
+          + SSx(ax,bx)*SSy(ay,by)*TAz(az,bz)
 
       TAz.destroy; TAy.destroy; TAx.destroy
       TTz.destroy; TTy.destroy; TTx.destroy
@@ -1835,115 +1680,25 @@ contains
 
    end
 
-!   make_oscillator_kinetic_ints(T,c,l_c,d,l_d)
-!   ! Make the oscillator kinetic integral matrix "T". "c" and "d" are the
-!   ! centroid positions of the bra and ket. "l_c" and "l_d" are the
-!   ! corresponding maximum angular momenta for the centroid polynomials on "c"
-!   ! and "d". This includes the factor of -1/2 in T = -1/2 \nabla^2.
-!      T :: MAT4{REAL}
-!      c,d :: VEC{REAL}(3)
-!      l_c,l_d :: INT
-!   ENSURE(T.dim3==l_c*(l_c+1)/2,"wrong size for S")
-!   ENSURE(T.dim4==l_d*(l_d+1)/2,"wrong size for S")
-!      Sx,Sy,Sz, Dx,Dy,Dz, Tx,Ty,Tz :: MAT4{REAL}@
-!      ax,ay,az,bx,by,bz,cx,cy,cz,dx,dy,dz :: VEC{INT}@
-!      rab :: VEC{REAL}(3)
-!      p,prefac :: REAL
-!      n_a,n_b,n_c,n_d,a,b :: INT
-!      n_a = (.a.l+1)*(.a.l+2)/2
-!      n_b = (.b.l+1)*(.b.l+2)/2
-!      n_c = (l_c+1)*(l_c+2)/2
-!      n_d = (l_d+1)*(l_d+2)/2
-!      ax.create(n_a); ay.create(n_a); az.create(n_a); .a.l.make_gaussian_xyz_indices(ax,ay,az)
-!      bx.create(n_b); by.create(n_b); bz.create(n_b); .b.l.make_gaussian_xyz_indices(bx,by,bz)
-!      cx.create(n_c); cy.create(n_c); cz.create(n_c);  l_c.make_gaussian_xyz_indices(cx,cy,cz)
-!      dx.create(n_c); dy.create(n_c); dz.create(n_c);  l_d.make_gaussian_xyz_indices(dx,dy,dz)
-!      Sx.create(.a.l+1,.b.l+3,l_c+1,l_d+3)
-!      Sy.create(.a.l+1,.b.l+3,l_c+1,l_d+3)
-!      Sz.create(.a.l+1,.b.l+3,l_c+1,l_d+3)
-!      Tx.create(.a.l+1,.b.l+1,l_c+1,l_d+1)
-!      Ty.create(.a.l+1,.b.l+1,l_c+1,l_d+1)
-!      Tz.create(.a.l+1,.b.l+1,l_c+1,l_d+1)
-!      Dx.create(.a.l+1,.b.l+2,l_c+1,l_d+2)
-!      Dy.create(.a.l+1,.b.l+2,l_c+1,l_d+2)
-!      Dz.create(.a.l+1,.b.l+2,l_c+1,l_d+2)
-!      .make_oscillator_overlap_ints(Sx,1,c(1),l_c,d(1),l_d+2,max_b=.b.l+2)
-!      .make_oscillator_overlap_ints(Sy,2,c(2),l_c,d(2),l_d+2,max_b=.b.l+2)
-!      .make_oscillator_overlap_ints(Sz,3,c(3),l_c,d(3),l_d+2,max_b=.b.l+2)
-!      .differentiate(Sx,"right",Dx) ! with respect to electron coordinates !
-!      .differentiate(Sy,"right",Dy)
-!      .differentiate(Sz,"right",Dz)
-!      .differentiate(Dx,"right",Tx) ! with respect to electron coordinates !
-!      .differentiate(Dy,"right",Ty)
-!      .differentiate(Dz,"right",Tz)
-!      Dz.destroy; Dy.destroy; Dx.destroy
-!      The following loops can be simplified by the statement:
-!      T = Tx(ax,bx,cx,dx)*Sy(ay,by,cx,dx)*Sz(az,bz,cx,dx) & ! del_x^2
-!        + Sx(ax,bx,cx,dx)*Ty(ay,by,cx,dx)*Sz(az,bz,cx,dx) & ! del_y^2
-!        + Sx(ax,bx,cx,dx)*Sy(ay,by,cx,dx)*Tz(az,bz,cx,dx)   ! del_z^2
-!      Tz.destroy; Ty.destroy; Tx.destroy
-!      Sz.destroy; Sy.destroy; Sx.destroy
-!      bz.destroy; by.destroy; bx.destroy
-!      az.destroy; ay.destroy; ax.destroy
-!      p = .a.ex + .b.ex
-!      rab = .a.position - .b.position
-!      prefac = exp(-.a.ex*.b.ex*rab.dot(rab)/p)/(p*sqrt(p))
-!      T = -HALF*prefac*T
-!   end
 
-!   differentiate_oscillator(I,index,D)
-!   ! Differentiate a gaussian oscillator integral matrix "I" with respect to the
-!   ! *electron* coordinate on basis function "index", which can be "left" or
-!   ! "right". Place the result in "D".
-!      I,D :: MAT4{REAL}
-!      index :: STR
-!      i_a,i_b,i_c,i_d,d_a,d_b,d_c,d_d,a,b :: INT
-!      a2,b2 :: REAL
-!      i_a = I.dim1; i_b = I.dim2; i_c = I.dim3; i_d = I.dim4
-!      d_a = D.dim1; d_b = D.dim2; d_c = D.dim3; d_d = D.dim4
-!      D = ZERO
-!      select case (index)
-!         case("l","left")
-!            ENSURE(i_a>1,   "I array too small to differentiate")
-!            ENSURE(i_c>1,   "I array too small to differentiate")
-!            ENSURE(i_a>d_a, "I and D arrays are incompatible")
-!            ENSURE(i_c>d_c, "I and D arrays are incompatible")
-!            ENSURE(i_b>=d_b,"I and D arrays are incompatible")
-!            ENSURE(i_d>=d_d,"I and D arrays are incompatible")
-!            a2 = TWO*.a.ex
-!            D(1,:,) = -a2*I(2  ,1:d_b)
-!            do a = 2,d_a
-!            D(a,:) = -a2*I(a+1,1:d_b) + (a-1)*I(a-1,1:d_b)
-!            end
-!         case("r","right")
-!            ENSURE(i_b>1,   "I array too small to differentiate")
-!            ENSURE(i_b>d_b, "I and D arrays are incompatible")
-!            ENSURE(i_a>=d_a,"I and D arrays are incompatible")
-!            b2 = TWO*.b.ex
-!            D(:,1) = -b2*I(1:d_a,2  )
-!            do b = 2,d_b
-!            D(:,b) = -b2*I(1:d_a,b+1) + (b-1)*I(1:d_a,b-1)
-!            end
-!      end
-!   end
-
-   make_dipole_ints(Dx,Dy,Dz,origin)
+   make_dipole_ints(Dx,Dy,Dz,origin) ::: PURE
    ! Make the dipole integral matrices "Dx", "Dy", and "Dz".
    ! "origin" is the gauge origin for the integrals.
    ! Uses Gauss-Hermite quadrature.
-      Dx,Dy,Dz :: MAT{REAL}
-      origin :: VEC{REAL}(3)
+      self :: IN
+      Dx,Dy,Dz :: MAT{REAL}, OUT
+      origin :: VEC{REAL}(3), IN
 
       Sx,Sy,Sz,Rx,Ry,Rz :: MAT{REAL}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
       rab :: VEC{REAL}(3)
       p,prefac,Sx_ab,Sy_ab,Sz_ab :: REAL
-      a,b,aix,aiy,aiz,bix,biy,biz,fa,la,fb,lb :: INT
+      fa,la,fb,lb :: INT
 
       fa = .a.first_gaussian; la = .a.last_gaussian
       fb = .b.first_gaussian; lb = .b.last_gaussian
-      ax => GAUSSIAN_DATA::nx(fa:la); ay => GAUSSIAN_DATA::ny(fa:la); az => GAUSSIAN_DATA::nz(fa:la)
-      bx => GAUSSIAN_DATA::nx(fb:lb); by => GAUSSIAN_DATA::ny(fb:lb); bz => GAUSSIAN_DATA::nz(fb:lb)
+      ax = GAUSSIAN_DATA::nx(fa:la); ay = GAUSSIAN_DATA::ny(fa:la); az = GAUSSIAN_DATA::nz(fa:la)
+      bx = GAUSSIAN_DATA::nx(fb:lb); by = GAUSSIAN_DATA::ny(fb:lb); bz = GAUSSIAN_DATA::nz(fb:lb)
 
       Sx.create(.a.l+1,.b.l+1); Sy.create(.a.l+1,.b.l+1); Sz.create(.a.l+1,.b.l+1)
       Rx.create(.a.l+1,.b.l+1); Ry.create(.a.l+1,.b.l+1); Rz.create(.a.l+1,.b.l+1)
@@ -1952,26 +1707,9 @@ contains
       .make_dipole_ints(Sy,Ry,2,origin(2))
       .make_dipole_ints(Sz,Rz,3,origin(3))
 
-!     The following loops can be simplified by the statements:
-!     Dx = Rx(ax,bx)*Sy(ay,by)*Sz(az,bz)
-!     Dy = Sx(ax,bx)*Ry(ay,by)*Sz(az,bz)
-!     Dz = Sx(ax,bx)*Sy(ay,by)*Rz(az,bz)
-      do b = 1,.b.n_comp
-        bix = bx(b)
-        biy = by(b)
-        biz = bz(b)
-        do a = 1,.a.n_comp
-          aix = ax(a)
-          aiy = ay(a)
-          aiz = az(a)
-          Sx_ab = Sx(aix,bix)
-          Sy_ab = Sy(aiy,biy)
-          Sz_ab = Sz(aiz,biz)
-          Dx(a,b) = Rx(aix,bix)*Sy_ab*Sz_ab
-          Dy(a,b) = Sx_ab*Ry(aiy,biy)*Sz_ab
-          Dz(a,b) = Sx_ab*Sy_ab*Rz(aiz,biz)
-        end
-      end
+      Dx = Rx(ax,bx)*Sy(ay,by)*Sz(az,bz)
+      Dy = Sx(ax,bx)*Ry(ay,by)*Sz(az,bz)
+      Dz = Sx(ax,bx)*Sy(ay,by)*Rz(az,bz)
 
       Rz.destroy; Ry.destroy; Rx.destroy
       Sz.destroy; Sy.destroy; Sx.destroy
@@ -2027,6 +1765,7 @@ contains
       end
 
    end
+
 
    make_quadrupole_ints(Qxx,Qyy,Qzz,Qxy,Qxz,Qyz,origin)
    ! Make the qudrupole integral matrices "Qxx", ..., "Qyz".
@@ -2146,6 +1885,7 @@ contains
       end
 
    end
+
 
    make_octupole_ints(Oxxx,Oyyy,Ozzz,Oxxy,Oxxz,Oyyx,Oyyz,Ozzx,Ozzy,Oxyz,origin)
    ! Make the octupole integral matrices "Oxxx", ..., "Oxyz".
@@ -2279,6 +2019,7 @@ contains
       end
 
    end
+
 
    make_normalised_NA_ints(NA,c,spherical)
    ! Calculate T, a cartesian or spherical block of integrals.
@@ -2485,6 +2226,7 @@ contains
 
    end
 
+
    make_normalised_DKH_ints(T,SOx,SOy,SOz,c,spherical)
    ! Calculate T, a cartesian or spherical block of integrals.
       T,SOx,SOy,SOz :: MAT{REAL}
@@ -2618,6 +2360,7 @@ contains
       SOx = prefac*SOx; SOy = prefac*SOy; SOz = prefac*SOz
 
    end
+
 
    make_normalised_DK3_ppZpp_ints(ppZpp,c,spherical)
    ! Calculate T, a cartesian or spherical block of integrals.
@@ -2875,6 +2618,7 @@ contains
 
    end
 
+
    make_spin_orbit_ints(Lx,Ly,Lz,c)
    ! Make the spin orbit integral matrices "Lx", "Ly", and "Lz" around nucleus
    ! "c".
@@ -2960,6 +2704,7 @@ contains
       Lz = prefac*Lz
 
    end
+
 
    make_E_field_ints(Ex,Ey,Ez,c)
    ! Make the electric field integral matrices "Ei" at position "c". If present,
@@ -3075,6 +2820,7 @@ contains
       end
 
    end
+
 
    make_E_gradient_ints(Exx,Eyy,Ezz,Exy,Exz,Eyz,c)
    ! Make the electric field gradient integral matrices "Ei" at position "c".
@@ -3198,6 +2944,7 @@ contains
       end
 
    end
+
 
    make_spin_orbit_B_ints(Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz,c,origin)
    ! Make gauge modified (B field) spin orbit integral matrices "Qij" around
@@ -3398,6 +3145,7 @@ contains
 
    end
 
+
    differentiate(I,index,D)
    ! Differentiate a gaussian-integral matrix "I" with respect to the
    ! *electron* coordinate on basis function "index", which can be "left"
@@ -3433,6 +3181,7 @@ contains
       end
 
    end
+
 
    make_magnetic_jp_ints(Jx,Jy,Jz,c)
    ! Make the magnetic Jp integrals "Ji", evaluated at point "c",
@@ -4417,22 +4166,9 @@ contains
 
    end
 
-   put
-   ! Put the object to file "stdout"
-      stdout.flush
-      stdout.text("GAUSSIAN2:")
-      stdout.flush
-      stdout.show("l_a   =",.a.l)
-      stdout.show("l_b   =",.b.l)
-      stdout.show("pos_a =",.a.position)
-      stdout.show("pos_b =",.b.position)
-      stdout.show("ex_a  =",.a.exponent)
-      stdout.show("ex_b  =",.b.exponent)
-   end
-
-  ! --------------------------------
-  ! Finite gaussian nucleus routines
-  ! --------------------------------
+!  =====================================
+!  Finite-size gaussian nucleus routines
+!  =====================================
 
    nucleus_eta(c) result (eta) ::: selfless
    ! get the nucleus exponent
@@ -6261,577 +5997,6 @@ contains
 
    end
 
-!!!! new stuff on ft
-!
-!   make_normalised_ft_00_c(ft_ab,h,k,l)
-!   ! Make the normalised kinetic integrals "T".
-!     ft_ab :: MAT{CPX}
-!      h,k,l :: REAL
-!      .make_dkh_ft_00(ft_ab,h,k,l)
-!   end
-!
-!   make_dkh_ft_00(ft,h,k,l)
-!   ! Calculates the Fourier transform for a product of two primitive
-!   ! gaussian functions, evaluated at a series of k points "k_pts".
-!   ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
-!   ! Specialised routine for .a.l=0 and .b.l=0.
-!      ft :: MAT{CPX}
-!      h,k,l :: REAL, target
-!
-!      pos :: VEC{REAL}(3)
-!      k_x,k_y,k_z :: REAL@
-!      g1_exa,g1_exb,e00,fac :: REAL
-!      pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
-!      I :: CPX
-!
-!      ! Constants
-!!      I = COMPLEXIFY(ZERO,ONE)
-!      I = (ZERO,ONE)
-!      gamma = .a.ex+.b.ex
-!      g1 = ONE/gamma
-!      g4 = QUARTER*g1
-!      PI_on_gamma = PI*g1
-!      pifac = sqrt(PI_on_gamma) * PI_on_gamma
-!
-!      ! Gaussian pair center
-!      g1_exa = g1*.a.ex
-!      g1_exb = g1*.b.ex
-!      P1 = g1_exa*.a.position(1) + g1_exb*.b.position(1)
-!      P2 = g1_exa*.a.position(2) + g1_exb*.b.position(2)
-!      P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
-!
-!      ! Reciprocal lattice K points
-!      !k_x => k_pts(:,1)
-!      !k_y => k_pts(:,2)
-!      !k_z => k_pts(:,3)
-!      k_x => h
-!      k_y => k
-!      k_z => l
-!
-!      ! E coefficient
-!      pos = .a.position - .b.position
-!      e00 = exp(-.a.ex*.b.ex*dot_product(pos,pos)/gamma)
-!      pifac = pifac*e00
-!
-!      ! Do the Fourier transform
-!    !  do k = 1,k_x.dim
-!    !     k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-!         k1 = k_x; k2 = k_y; k3 = k_z
-!         th = k1*P1 + k2*P2 + k3*P3
-!         kk = k1*k1 + k2*k2 + k3*k3
-!         ft(1,1) = pifac*(cos(th)+I*sin(th))*exp(-kk*g4)
-!    !     ft(k) = pifac*(cos(th)+I*sin(th))*exp(-kk*g4)
-!    !  end
-!
-!   end
-!
-!   make_normalised_ft_v2(ft_ab,h,k,l,spherical)
-!   ! Calculate S, a cartesian or spherical block of integrals.
-!      ft_ab :: MAT{CPX}
-!      h,k,l :: REAL
-!      spherical :: BIN, optional
-!
-!      W :: MAT{CPX}@
-!      is_spherical :: BIN
-!
-!      is_spherical = FALSE
-!      if (present(spherical)) is_spherical = spherical
-!
-!      if (NOT is_spherical) then
-!         .make_normalised_ft_v2_c(ft_ab,h,k,l)
-!      elseif  ( .a.l<2 AND .b.l<2 )  then
-!         .make_dkh_ft_v2(ft_ab,h,k,l)
-!         .normalise(ft_ab,is_spherical)
-!      else
-!         W.create(.a.n_comp,.b.n_comp)
-!  !       .make_normalised_ft_v2_c(W,h,k,l)
-!         .make_dkh_ft_v2(W,h,k,l)
-!         .normalise(W,is_spherical)
-!         .change_to_spherical(W,ft_ab)
-!         W.destroy
-!      end
-!
-!   end
-!
-!   make_normalised_ft_v2_c(ft_ab,h,k,l)
-!   ! Make the normalised kinetic integrals "T".
-!      ft_ab :: MAT{CPX}
-!      h,k,l :: REAL
-!      .make_dkh_ft_v2(ft_ab,h,k,l)
-!      .normalise(ft_ab)
-!   end
-!
-!   make_dkh_ft_v2(ft,h1,h2,h3)
-!   ! Calculates the Fourier transform for a product of two primitive
-!   ! gaussian functions, evaluated at a series of k points "k_pts".
-!   ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
-!      ft :: MAT{CPX}
-!      h1,h2,h3 :: REAL, target
-!
-!      ft_x,ft_y,ft_z :: MAT{CPX}@
-!      ax,ay,az,bx,by,bz :: VEC{INT}@
-!      ft_xb,ft_yb,ft_zb :: VEC{CPX}@
-!      k_x,k_y,k_z :: REAL@
-!      g1_exa,g1_exb :: REAL
-!      pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
-!      k_max,a,b,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
-!      I,prefac :: CPX
-!
-!      ! Constants
-!!      I = COMPLEXIFY(ZERO,ONE)
-!      I = (ZERO,ONE)
-!      gamma = .a.ex+.b.ex
-!      g1 = ONE/gamma
-!      g4 = QUARTER*g1
-!      PI_on_gamma = PI*g1
-!      pifac = sqrt(PI_on_gamma) * PI_on_gamma
-!
-!      ! Space for fourier transform of each component
-!!      k_max = k_pts.dim1
-!!      ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-!!      ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-!!      ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
-!      ft_x.create([0,.a.l],[0,.b.l])
-!      ft_y.create([0,.a.l],[0,.b.l])
-!      ft_z.create([0,.a.l],[0,.b.l])
-!
-!      ! Reciprocal lattice K points
-!!      k_x => k_pts(:,1)
-!!      k_y => k_pts(:,2)
-!!      k_z => k_pts(:,3)
-!      k_x => h1
-!      k_y => h2
-!      k_z => h3
-!
-!      ! Gaussian pair center
-!      g1_exa = g1*.a.ex
-!      g1_exb = g1*.b.ex
-!      P1 = g1_exa*.a.position(1) + g1_exb*.b.position(1)
-!      P2 = g1_exa*.a.position(2) + g1_exb*.b.position(2)
-!      P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
-!
-!      ! Make prefactor
-!!      prefac.create(k_max)
-!!     do k = 1,k_max
-!!        k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-!        k1 = k_x; k2 = k_y; k3 = k_z
-!         th = k1*P1 + k2*P2 + k3*P3
-!         kk = k1*k1 + k2*k2 + k3*k3
-!!        prefac(k) = pifac*(cos(th)+I*sin(th))*exp(-kk*g4)
-!        prefac = pifac*(cos(th)+I*sin(th))*exp(-kk*g4)
-!!     end
-!
-!      ! Fourier transforms of each component.
-!      .make_ft_component(ft_x,1,k_x)
-!      .make_ft_component(ft_y,2,k_y)
-!      .make_ft_component(ft_z,3,k_z)
-!
-!      ! Incorporate prefactor into ft_z
-!      do b = 0,.b.l
-!      do a = 0,.a.l
-!         ft_z(a,b) = ft_z(a,b) * prefac
-!      end
-!      end
-!!      prefac.destroy
-!
-!      ! Gaussian function power arrays
-!      fa = .a.first_gaussian; la = .a.last_gaussian
-!      fb = .b.first_gaussian; lb = .b.last_gaussian
-!      ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-!      bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-!
-!      ! Do the Fourier transform
-!      ft = ft_x(ax,bx)*ft_y(ay,by)*ft_z(az,bz)
-!
-!      ! Clean up
-!      ft_z.destroy; ft_y.destroy; ft_x.destroy
-!
-!   end
-!
-!   make_normalised_pftp_v2(ft_ab,h,k,l,spherical)
-!   ! Calculate S, a cartesian or spherical block of integrals.
-!      ft_ab :: MAT{CPX}
-!      h,k,l :: REAL
-!      spherical :: BIN, optional
-!
-!      W :: MAT{CPX}@
-!      is_spherical :: BIN
-!
-!      is_spherical = FALSE
-!      if (present(spherical)) is_spherical = spherical
-!
-!      if (NOT is_spherical)then
-!         .make_normalised_pftp_v2_c(ft_ab,h,k,l)
-!      elseif ( .a.l<2 AND .b.l<2 ) then
-!         .make_dkh_ft_dadb_v2(ft_ab,h,k,l)
-!         .normalise(ft_ab,is_spherical)
-!      else
-!         W.create(.a.n_comp,.b.n_comp)
-!         .make_dkh_ft_dadb_v2(W,h,k,l)
-!         .normalise(W,is_spherical)
-!         .change_to_spherical(W,ft_ab)
-!         W.destroy
-!      end
-!
-!   end
-!
-!   make_normalised_pftp_v2_c(ft_ab,h,k,l)
-!   ! Make the normalised kinetic integrals "T".
-!      ft_ab :: MAT{CPX}
-!      h,k,l :: REAL
-!      .make_dkh_ft_dadb_v2(ft_ab,h,k,l)
-!      ft_ab = ft_ab * .normalisation_factor
-!   end
-!
-!   make_dkh_ft_dadb_v2(ft,h1,h2,h3)
-!   ! Calculates the Fourier transform for a product of two primitive
-!   ! gaussian functions, evaluated at a series of k points "k_pts".
-!   ! This routine is based on formula (9) in Jayatilaka, CPL 230, p. 228 (1995)
-!      ft :: MAT{CPX}
-!      h1,h2,h3 :: REAL, target
-!
-!      ft_x,ft_y,ft_z :: MAT{CPX}@
-!      pftp_x,pftp_y,pftp_z :: MAT{CPX}@
-!      ax,ay,az,bx,by,bz :: VEC{INT}@
-!      k_x,k_y,k_z :: REAL@
-!      g1_exa,g1_exb :: REAL
-!      pifac,gamma,g1,g4,th,kk,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
-!      k_max,a,b,xa,ya,za,xb,yb,zb,fa,la,fb,lb :: INT
-!      I,prefac :: CPX
-!
-!      ! Constants
-!!      I = COMPLEXIFY(ZERO,ONE)
-!      I = (ZERO,ONE)
-!      gamma = .a.ex+.b.ex
-!      g1 = ONE/gamma
-!      g4 = QUARTER*g1
-!      PI_on_gamma = PI*g1
-!      pifac = sqrt(PI_on_gamma) * PI_on_gamma
-!
-!      ! Space for fourier transform of each component
-!!      k_max = k_pts.dim1
-!!      ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-!!      ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-!!      ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
-!      ft_x.create([0,.a.l],[0,.b.l])
-!      ft_y.create([0,.a.l],[0,.b.l])
-!      ft_z.create([0,.a.l],[0,.b.l])
-!      pftp_x.create([0,.a.l],[0,.b.l])
-!      pftp_y.create([0,.a.l],[0,.b.l])
-!      pftp_z.create([0,.a.l],[0,.b.l])
-!
-!      ! Reciprocal lattice K points
-!!      k_x => k_pts(:,1)
-!!      k_y => k_pts(:,2)
-!!      k_z => k_pts(:,3)
-!      k_x => h1
-!      k_y => h2
-!      k_z => h3
-!
-!      ! Gaussian pair center
-!      g1_exa = g1*.a.ex
-!      g1_exb = g1*.b.ex
-!      P1 = g1_exa*.a.position(1) + g1_exb*.b.position(1)
-!      P2 = g1_exa*.a.position(2) + g1_exb*.b.position(2)
-!      P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
-!
-!      ! Make prefactor
-!!      prefac.create(k_max)
-!!     do k = 1,k_max
-!!        k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-!        k1 = k_x; k2 = k_y; k3 = k_z
-!         th = k1*P1 + k2*P2 + k3*P3
-!         kk = k1*k1 + k2*k2 + k3*k3
-!!        prefac(k) = pifac*(cos(th)+I*sin(th))*exp(-kk*g4)
-!        prefac = pifac*(cos(th)+I*sin(th))*exp(-kk*g4)
-!!     end
-!
-!      ! Fourier transforms of each component.
-!      .make_ft_component(ft_x,1,k_x)
-!      .make_ft_component(ft_y,2,k_y)
-!      .make_ft_component(ft_z,3,k_z)
-!      .make_ft_dadb_component(pftp_x,1,k_x)
-!      .make_ft_dadb_component(pftp_y,2,k_y)
-!      .make_ft_dadb_component(pftp_z,3,k_z)
-!
-!      ! Incorporate prefactor into ft_z
-!      do b = 0,.b.l
-!      do a = 0,.a.l
-!         ft_z(a,b) = ft_z(a,b) * prefac
-!         pftp_z(a,b) = pftp_z(a,b) * prefac
-!      end
-!      end
-!!      prefac.destroy
-!
-!      ! Gaussian function power arrays
-!      fa = .a.first_gaussian; la = .a.last_gaussian
-!      fb = .b.first_gaussian; lb = .b.last_gaussian
-!      ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-!      bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-!
-!      ! Do the Fourier transform
-!      ft = pftp_x(ax,bx)*ft_y(ay,by)*ft_z(az,bz)     &
-!         + ft_x(ax,bx)*pftp_y(ay,by)*ft_z(az,bz)     &
-!         + ft_x(ax,bx)*ft_y(ay,by)*pftp_z(az,bz)
-!
-!      ! Clean up
-!      ft_z.destroy; ft_y.destroy; ft_x.destroy
-!      pftp_z.destroy; pftp_y.destroy; pftp_x.destroy
-!
-!   end
-!
-!   make_ft_component(res,comp,k_pts)
-!   ! Do the Fourier transform of component "comp" of the gaussian pair
-!   ! evaluated at the points "k_pts", without the prefactors.
-!      res :: MAT{CPX}(0:,0:), OUT
-!      comp  :: INT, IN
-!      k_pts :: REAL, IN
-!
-!      e  :: MAT3{REAL}@
-!      kp :: VEC{REAL}@
-!      vr,vi :: REAL
-!      a,b,t,k_max,t_max :: INT
-!
-!      k_max = 1
-!      t_max = .a.l+.b.l
-!
-!      ! Make the E coefficients
-!      e.create([0,t_max],[0,.a.l],[0,.b.l])
-!      .make_e_coeff(e,comp)
-!
-!      ! Define kp array containing powers k_pts(n)^t
-!      nullify(kp)
-!      kp.create([1,t_max])
-!      if (t_max>0) then
-!         kp(1) = k_pts
-!         do t = 2,t_max
-!            kp(t) = kp(t-1)*k_pts
-!         end
-!         do t = 2,t_max
-!            if (mod(t,4)<=1) cycle
-!            kp(t) = -kp(t)
-!         end
-!      end
-!
-!      ! Real, imaginary parts of answer: (vr,vi)
-!     !  vr.create(k_max)
-!     !  vi.create(k_max)
-!
-!      do a = 0,.a.l
-!      do b = 0,.b.l
-!
-!         t_max = a + b
-!
-!         ! Real part
-!         vr = e(0,a,b)
-!         do t = 2,t_max,2
-!            vr = vr + e(t,a,b)*kp(t)
-!         end
-!
-!         ! Imaginary part
-!         vi = ZERO
-!         do t = 1,t_max,2
-!            vi = vi + e(t,a,b)*kp(t)
-!         end
-!
-!         res(a,b) = COMPLEXIFY(vr,vi)
-!
-!      end
-!      end
-!
-!!      vi.destroy; vr.destroy
-!      kp.destroy; e.destroy
-!   end
-!
-!   make_ft_dadb_component(res,comp,k_pts)
-!   ! Do the Fourier transform of component "comp" of the gaussian pair
-!   ! evaluated at the points "k_pts", without the prefactors.
-!      res :: MAT{CPX}(0:,0:), OUT
-!      comp  :: INT, IN
-!      k_pts :: REAL, IN
-!
-!      e  :: MAT3{REAL}@
-!      kp :: VEC{REAL}@
-!      vr,vi :: REAL
-!      a,b,t,k_max,t_max :: INT
-!
-!      k_max = 1
-!      t_max = .a.l+.b.l+2
-!
-!      ! Make the E coefficients
-!      e.create([0,t_max],[0,.a.l+1],[0,.b.l+1])
-!      .make_e_coeff_dadb(e,comp)
-!
-!      ! Define kp array containing powers k_pts(n)^t
-!      nullify(kp)
-!      kp.create([1,t_max])
-!      if (t_max>0) then
-!         kp(1) = k_pts
-!         do t = 2,t_max
-!            kp(t) = kp(t-1)*k_pts
-!         end
-!         do t = 2,t_max
-!            if (mod(t,4)<=1) cycle
-!            kp(t) = -kp(t)
-!         end
-!      end
-!
-!      ! Real, imaginary parts of answer: (vr,vi)
-!     !  vr.create(k_max)
-!     !  vi.create(k_max)
-!
-!      ! case build seems fine Lukas c u tommorrow kokot
-!
-!      do a = 0,.a.l
-!      do b = 0,.b.l
-!
-!         ! this part do not needs the if because it holds for all
-!         ! angular momentum functions
-!         t_max = a + b + 2
-!
-!         ! Real part
-!         vr = e(0,a+1,b+1)*FOUR*.a.ex*.b.ex
-!         do t = 2,t_max,2
-!            vr = vr + e(t,a+1,b+1)*kp(t)*FOUR*.a.ex*.b.ex
-!         end
-!         ! Imaginary part
-!         vi = ZERO
-!         do t = 1,t_max,2
-!            vi = vi + e(t,a+1,b+1)*kp(t)*FOUR*.a.ex*.b.ex
-!         end
-!
-!         if (b>0) then
-!            vr = vr - e(0,a+1,b-1)*TWO*.a.ex*b
-!            t_max = a + b
-!            ! Real part
-!            do t = 2,t_max,2
-!               vr = vr - e(t,a+1,b-1)*kp(t)*TWO*.a.ex*b
-!            end
-!            ! Imaginary part
-!            do t = 1,t_max,2
-!               vi = vi - e(t,a+1,b-1)*kp(t)*TWO*.a.ex*b
-!            end
-!         end if
-!
-!         if (a>0) then
-!            t_max = a + b
-!            vr = vr - e(0,a-1,b+1)*TWO*.b.ex*a
-!            ! Real part
-!            do t = 2,t_max,2
-!               vr = vr - e(t,a-1,b+1)*kp(t)*TWO*.b.ex*a
-!            end
-!            ! Imaginary part
-!            do t = 1,t_max,2
-!               vi = vi - e(t,a-1,b+1)*kp(t)*TWO*.b.ex*a
-!            end
-!         end if
-!
-!         if (a>0 AND b>0) then
-!            vr = vr + e(0,a-1,b-1)*b*a
-!            t_max = a + b - 2
-!            ! Real part
-!            do t = 2,t_max,2
-!               vr = vr + e(t,a-1,b-1)*kp(t)*a*b
-!            end
-!            ! Imaginary part
-!            do t = 1,t_max,2
-!               vi = vi + e(t,a-1,b-1)*kp(t)*a*b
-!            end
-!         end if
-!
-!         res(a,b) = COMPLEXIFY(vr,vi)
-!
-!      end
-!      end
-!
-!!      vi.destroy; vr.destroy
-!      kp.destroy; e.destroy
-!   end
-!
-!   make_e_coeff_dadb(e,comp)
-!   ! Return the McMurchie-Davidson "e" coefficients for component "comp"
-!   ! (c) dylan jayatilaka, april 1995
-!   ! Checked using mathematica, may 1995
-!   ! 2008 bucinsky added +1 to l_a and l_b and +2 to max
-!      e :: MAT3{REAL}(0:,0:,0:), OUT
-!      comp :: INT, IN
-!
-!      t,a,b,ap,am,bp,bm,abp,ab,abm,max,l_a,l_b :: INT
-!      R,gamma,g1,g2,a1,b1,e000 :: REAL
-!
-!      l_a = .a.l+1
-!      l_b = .b.l+1
-!      max = l_a+l_b+2
-!
-!      R = .a.position(comp) - .b.position(comp)
-!
-!      gamma = .a.ex + .b.ex
-!      g1 = ONE/gamma
-!      b1 = .b.ex*g1*R
-!
-!      e000 = exp(-.a.ex*b1*R)
-!      e(0,0,0) = e000
-!
-!      ! Return for e000
-!      if (max==0) return
-!
-!      g2 = HALF*g1
-!      a1 = .a.ex*g1*R
-!      if (l_a>=1) then
-!         e(1,1,0) =  g2*e000
-!         e(0,1,0) = -b1*e000
-!      end
-!      if (l_b>=1) then
-!         e(1,0,1) =  g2*e000
-!         e(0,0,1) =  a1*e000
-!      end
-!
-!      ! Return for eXX1
-!      if (max==1) return
-!
-!      ! Consider case b=0
-!      do a = 1,l_a-1
-!         ap = a + 1
-!         am = a - 1
-!         e(ap,ap,0) =  g2*e( a,a,0)
-!         e( a,ap,0) =  g2*e(am,a,0) - b1*e(a,a,0)
-!         e( 0,ap,0) = -b1*e( 0,a,0) +    e(1,a,0)
-!         do t = 1,am
-!            e(t,ap,0) = g2*e(t-1,a,0) - b1*e(t,a,0) + (t+1)*e(t+1,a,0)
-!         end
-!      end
-!
-!      ! Consider case a=0
-!      do b = 1,l_b-1
-!         bp = b + 1
-!         bm = b - 1
-!         e(bp,0,bp) =  g2*e( b,0,b)
-!         e( b,0,bp) =  g2*e(bm,0,b) + a1*e(b,0,b)
-!         e( 0,0,bp) =  a1*e( 0,0,b) +    e(1,0,b)
-!         do t = 1,bm
-!            e(t,0,bp) = g2*e(t-1,0,b) + a1*e(t,0,b) + (t+1)*e(t+1,0,b)
-!         end
-!      end
-!
-!      ! Now do the rest, a/=0 & b/=0
-!      do b = 1,l_b
-!         do a = 0,l_a-1
-!            ab  = a + b
-!            ap  = a + 1
-!            abp = ab + 1
-!            abm = ab - 1
-!            e(abp,ap,b) =  g2*e( ab,a,b)
-!            e( ab,ap,b) =  g2*e(abm,a,b) - b1*e(ab,a,b)
-!            e(  0,ap,b) = -b1*e(  0,a,b) +    e( 1,a,b)
-!            do t = 1,abm
-!               e(t,ap,b) = g2*e(t-1,a,b) - b1*e(t,a,b) + (t+1)*e(t+1,a,b)
-!            end
-!         end
-!      end
-!
-!   end
-
-!!! new stuff on ft
 
    normalize_ft(ft)
    ! Multiplies the ft product at a series of k points, by the normalisation
@@ -6982,9 +6147,9 @@ contains
       pifac = sqrt(PI_on_gamma) * PI_on_gamma
 
       ! Space for fourier transform of each component
-      ft_x.create([0,.a.l],[0,.b.l])
-      ft_y.create([0,.a.l],[0,.b.l])
-      ft_z.create([0,.a.l],[0,.b.l])
+      ft_x.create(0,.a.l, 0,.b.l)
+      ft_y.create(0,.a.l, 0,.b.l)
+      ft_z.create(0,.a.l, 0,.b.l)
 
       ! Reciprocal lattice K points
       k_x => h1
@@ -7094,12 +6259,12 @@ contains
       pifac = sqrt(PI_on_gamma) * PI_on_gamma
 
       ! Space for fourier transform of each component
-      ft_x.create([0,.a.l],[0,.b.l])
-      ft_y.create([0,.a.l],[0,.b.l])
-      ft_z.create([0,.a.l],[0,.b.l])
-      pftp_x.create([0,.a.l],[0,.b.l])
-      pftp_y.create([0,.a.l],[0,.b.l])
-      pftp_z.create([0,.a.l],[0,.b.l])
+        ft_x.create(0,.a.l, 0,.b.l)
+        ft_y.create(0,.a.l, 0,.b.l)
+        ft_z.create(0,.a.l, 0,.b.l)
+      pftp_x.create(0,.a.l, 0,.b.l)
+      pftp_y.create(0,.a.l, 0,.b.l)
+      pftp_z.create(0,.a.l, 0,.b.l)
 
       ! Reciprocal lattice K points
       k_x => h1
@@ -7167,12 +6332,11 @@ contains
       t_max = .a.l+.b.l
 
       ! Make the E coefficients
-      e.create([0,t_max],[0,.a.l],[0,.b.l])
+      e.create(0,t_max, 0,.a.l, 0,.b.l)
       .make_e_coeff(e,comp)
 
       ! Define kp array containing powers k_pts(n)^t
-      nullify(kp)
-      kp.create([1,t_max])
+      kp.create(t_max)
       if (t_max>0) then
          kp(1) = k_pts
          do t = 2,t_max
@@ -7226,11 +6390,11 @@ contains
       t_max = .a.l+.b.l+2
 
       ! Make the E coefficients
-      e.create([0,t_max],[0,.a.l+1],[0,.b.l+1])
+      e.create(0,t_max, 0,.a.l+1, 0,.b.l+1)
       .make_e_coeff_dadb(e,comp)
 
       ! Define kp array containing powers k_pts(n)^t
-      kp.create([1,t_max])
+      kp.create(t_max)
       if (t_max>0) then
          kp(1) = k_pts
          do t = 2,t_max
@@ -7391,6 +6555,84 @@ contains
             end
          end
       end
+
+   end
+
+!  ==============
+!  Output methods
+!  ==============
+
+   put
+   ! Put the object to file "stdout"
+      self :: IN
+
+      stdout.flush
+      stdout.text("GAUSSIAN2:")
+      stdout.flush
+      stdout.show("l_a   =",.a.l)
+      stdout.show("l_b   =",.b.l)
+      stdout.show("pos_a =",.a.position)
+      stdout.show("pos_b =",.b.position)
+      stdout.show("ex_a  =",.a.exponent)
+      stdout.show("ex_b  =",.b.exponent)
+
+   end
+
+   put_e_coeff
+   ! Put the McMurchie Davidson E coefficients to file "out"
+      self :: IN
+
+      Ex,Ey,Ez :: MAT3{REAL}@
+      a,b,t :: INT
+
+      stdout.flush
+      stdout.text("GAUSSIAN2 output:")
+      stdout.flush
+      stdout.text("Dylan Jayatilaka, University of Western Australia, March 1998")
+
+      stdout.flush
+      stdout.show("l_a   =",.a.l)
+      stdout.show("l_b   =",.a.l)
+      stdout.show("Ra    =",.a.position)
+      stdout.show("Rb    =",.b.position)
+      stdout.show("R     =",.a.position-.b.position)
+      stdout.show("alpha =",.a.exponent)
+      stdout.show("beta  =",.b.exponent)
+
+      stdout.flush
+      stdout.dash(int_fields=3,real_fields=3)
+      stdout.put("a",int_width=TRUE)
+      stdout.put("b",int_width=TRUE)
+      stdout.put("t",int_width=TRUE)
+      stdout.put("Ex(t,a,b)")
+      stdout.put("Ey(t,a,b)")
+      stdout.put("Ez(t,a,b)")
+
+      stdout.flush
+      Ex.create(0,.a.l+.b.l, 0,.a.l, 0,.b.l)
+      .make_e_coeff(Ex,1)
+      Ey.create(0,.a.l+.b.l, 0,.a.l, 0,.b.l)
+      .make_e_coeff(Ey,2)
+      Ez.create(0,.a.l+.b.l, 0,.a.l, 0,.b.l)
+      .make_e_coeff(Ez,3)
+      stdout.dash(int_fields=3,real_fields=3)
+      do a = 0,.a.l
+      do b = 0,.b.l
+      do t = 0,a+b
+         stdout.put(a)
+         stdout.put(b)
+         stdout.put(t)
+         stdout.put(Ex(t,a,b))
+         stdout.put(Ey(t,a,b))
+         stdout.put(Ez(t,a,b))
+         stdout.flush
+      end
+      end
+      end
+
+      Ez.destroy
+      Ey.destroy
+      Ex.destroy
 
    end
 
