@@ -293,15 +293,6 @@ contains
    ! variable.  The data list must be terminated by a "}".
    end
 
-   data_length_BL_terminated result (length) ::: get_from(VEC{OBJECT}), selfless, private
-   ! defined in the associated list-element type module.
-   ! Read ahead in "stdin" to get the "length" of the list-data. The
-   ! data must begin with the first data item, *not* a "{" symbol but
-   ! must be terminated by a blank line (BL). The order of data items
-   ! comprising the list-data is given by the "keys" OBJECT module
-   ! variable.
-   end
-
 !  ======
 !  Output
 !  ======

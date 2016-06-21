@@ -69,6 +69,24 @@ contains
 
    end
 
+   create(lub1,lub2,lub3) ::: leaky, PURE
+   ! Allocate "self" with the given bounds
+      self :: allocatable, OUT
+      lub1,lub2,lub3 :: VEC{INT}(2), IN
+
+#ifdef USE_PRECONDITIONS
+      status :: INT
+#endif
+
+#ifdef USE_PRECONDITIONS
+      allocate(self(lub1(1):lub1(2),lub2(1):lub2(2),lub3(1):lub3(2)),stat=status)
+      ENSURE(status==0,"error in deallocating memory")
+#else
+      allocate(self(lub1(1):lub1(2),lub2(1):lub2(2),lub3(1):lub3(2)))
+#endif
+
+   end
+
    destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
    end

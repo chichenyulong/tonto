@@ -40,6 +40,10 @@ contains
    ! Allocate "self" with the given bounds
    end
 
+   create(lub1,lub2,lub3) ::: leaky, get_from(MAT3{OBJECT}), PURE
+   ! Allocate "self" with the given bounds
+   end
+
    destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
    end

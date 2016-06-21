@@ -35,7 +35,6 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: shell2.foo 4354 2014-05-06 18:22:09Z bucinsky $
 !-------------------------------------------------------------------------------
 
 module SHELL2
@@ -64,33 +63,6 @@ contains
 
    destroyed result (res) ::: get_from(OBJECT), pure
    ! Returns true if self has *not* been allocated
-   end
-
-
-   create(shell_a,shell_b) ::: leaky
-   ! Create a copy of a shell1 objects
-      self :: allocatable, INOUT
-      shell_a,shell_b :: SHELL1, IN
-      .create
-      .copy(shell_a,shell_b)
-   end
-
-   create(shell_a,shell_b,pos_a,pos_b) ::: leaky
-   ! Create a copy of a shell1 objects with positions
-      self :: allocatable, INOUT
-      shell_a,shell_b :: SHELL1, IN
-      pos_a,pos_b :: VEC{REAL}(3), IN
-      .create
-      .copy(shell_a,shell_b,pos_a,pos_b)
-   end
-
-   create(shell_a,shell_b,pos_a,pos_b) ::: leaky
-   ! Create a copy of a shell1 objects with positions
-      self :: allocatable, INOUT
-      shell_a,shell_b :: SHELL, IN
-      pos_a,pos_b :: VEC{REAL}(3), IN
-      .create
-      .copy(shell_a,shell_b,pos_a,pos_b)
    end
 
 !  ===========
@@ -389,94 +361,112 @@ contains
 !  Fourier transform integrals
 !  ===========================
 
-   skip_ft(cutoff) result (res)
+   skip_ft(cutoff) result (res) ::: PURE
    ! Whether the ft for this shell pair is too small.
       self :: IN
       cutoff :: REAL, IN
       res :: BIN
 
-    ! R2 :: REAL
-    ! AB :: VEC{REAL}(3)
       gamma,g1,e2,ex,ey,ez,e000x,e000y,e000z :: REAL
       a,b,t_max :: INT
       e :: MAT3{REAL}@
       G :: GAUSSIAN2
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
 
       t_max = .a.l + .b.l
-      e.create((/0,t_max/),(/0,.a.l/),(/0,.b.l/))
+
+      e.create( [0,t_max], [0,.a.l], [0,.b.l] )
       e = ZERO
 
-    ! AB = (.a.position-.b.position)
-    ! R2 = dot_product(AB,AB)
-
       res = TRUE
+
       do a = 1, .a.n_cc
-       G.set(ex_a=.a.exponent(a))
-       do b = 1, .b.n_cc
-         G.set(ex_b=.b.exponent(b))
-         G.make_e_coeff(e,1);   ex=maxval(e); e000x = e(0,0,0)
-         G.make_e_coeff(e,2);   ey=maxval(e); e000y = e(0,0,0)
-         G.make_e_coeff(e,3);   ez=maxval(e); e000z = e(0,0,0)
-         gamma = .a.exponent(a) + .b.exponent(b)
-         g1 = ONE/gamma
-    !    e2 = ex*ey*ez*(g1)**(THREE/TWO)*exp(-.a.exponent(a)*.b.exponent(b)*g1*R2)
-         e2 = ex*ey*ez*g1*sqrt(g1)*e000x*e000y*e000z
-         if (e2>cutoff) then
-           res = FALSE
-           e.destroy
-           return
+
+         G.a.exponent = .a.exponent(a)
+
+         do b = 1, .b.n_cc
+
+            G.b.exponent = .b.exponent(b)
+
+            G.make_e_coeff(e,1); ex = maxval(e); e000x = e(0,0,0)
+            G.make_e_coeff(e,2); ey = maxval(e); e000y = e(0,0,0)
+            G.make_e_coeff(e,3); ez = maxval(e); e000z = e(0,0,0)
+
+            gamma = .a.exponent(a) + .b.exponent(b)
+            g1 = ONE/gamma
+
+            e2 = ex*ey*ez*g1*sqrt(g1)*e000x*e000y*e000z
+
+            if (e2>cutoff) then
+               res = FALSE
+               e.destroy
+               return
+            end
+
          end
-       end
       end
+
       e.destroy
 
    end
 
-   skip_ft(Pmax,cutoff) result (res)
+   skip_ft(Pmax,cutoff) result (res) ::: PURE
    ! Whether the ft for this shell pair is too small.
       self :: IN
       Pmax,cutoff :: REAL, IN
       res :: BIN
-    ! R2 :: REAL
-    ! AB :: VEC{REAL}(3)
+
       fac,gamma,g1,e2,ex,ey,ez,e000x,e000y,e000z :: REAL
       a,b,t_max :: INT
       e :: MAT3{REAL}@
       G :: GAUSSIAN2
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       t_max = .a.l + .b.l
-      e.create((/0,t_max/),(/0,.a.l/),(/0,.b.l/))
+
+      e.create( [0,t_max], [0,.a.l], [0,.b.l] )
       e = ZERO
-    ! AB = (.a.position-.b.position)
-    ! R2 = dot_product(AB,AB)
+
       res = TRUE
       do a = 1, .a.n_cc
-       G.set(ex_a=.a.exponent(a))
-       fac=.a.contraction(a)*Pmax
-       do b = 1, .b.n_cc
-         G.set(ex_b=.b.exponent(b))
-         G.make_e_coeff(e,1);   ex=maxval(e); e000x = e(0,0,0)
-         G.make_e_coeff(e,2);   ey=maxval(e); e000y = e(0,0,0)
-         G.make_e_coeff(e,3);   ez=maxval(e); e000z = e(0,0,0)
-         gamma = .a.exponent(a) + .b.exponent(b)
-         g1 = ONE/gamma
-    !    e2 = ex*ey*ez*(g1)**(THREE/TWO)*exp(-.a.exponent(a)*.b.exponent(b)*g1*R2)
-         e2 = ex*ey*ez*g1*sqrt(g1)*e000x*e000y*e000z
-         if (e2*.b.contraction(b)*fac>cutoff) then
-           res = FALSE
-           e.destroy
-           return
+
+         G.a.exponent = .a.exponent(a)
+         fac=.a.contraction(a)*Pmax
+
+         do b = 1, .b.n_cc
+
+            G.b.exponent = .b.exponent(b)
+
+            G.make_e_coeff(e,1); ex = maxval(e); e000x = e(0,0,0)
+            G.make_e_coeff(e,2); ey = maxval(e); e000y = e(0,0,0)
+            G.make_e_coeff(e,3); ez = maxval(e); e000z = e(0,0,0)
+
+            gamma = .a.exponent(a) + .b.exponent(b)
+            g1 = ONE/gamma
+
+            e2 = ex*ey*ez*g1*sqrt(g1)*e000x*e000y*e000z
+
+            if (e2*.b.contraction(b)*fac>cutoff) then
+               res = FALSE
+               e.destroy
+               return
+            end
+
          end
-       end
+
       end
+
       e.destroy
+
    end
 
 ! These versions do no thermal smearing or partitioning
 
-   make_ft_static(res,k_pts)
+   make_ft_static(res,k_pts) ::: PURE
    ! Calculates the Fourier transform for a product of two contracted
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
@@ -512,7 +502,7 @@ contains
 
    end
 
-   make_ft_c(res,k_pts) ::: private
+   make_ft_c(res,k_pts) ::: private, PURE
    ! Calculates the Fourier transform for a product of two contracted
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
@@ -524,7 +514,7 @@ contains
 
    end
 
-   make_ft_c(res,k_x,k_y,k_z) ::: private
+   make_ft_c(res,k_x,k_y,k_z) ::: private, PURE
    ! Calculates the Fourier transform for a product of two contracted
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
@@ -534,14 +524,15 @@ contains
       res :: MAT3{CPX}, target, OUT
       k_x,k_y,k_z :: VEC{REAL}, IN
 
-      ft_x,ft_y,ft_z :: MAT3{CPX}@
+      ft_x,ft_y,ft_z :: MAT3{CPX}@, target
+      ft_xb,ft_yb,ft_zb :: VEC{CPX}* ! ptr ok
+      ft_xbx,ft_yby,ft_zbz :: MAT{CPX}* ! ptr ok
       G :: GAUSSIAN2
       e :: MAT3{REAL}@
       pos :: VEC{REAL}(3)
       k_x2,k_y2,k_z2 :: VEC{REAL}@
-      res_ij,prefac,ft_xb,ft_yb,ft_zb :: VEC{CPX}@
+      prefac :: VEC{CPX}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
-      ft_xbx,ft_yby,ft_zbz :: MAT{CPX}@
       ft_x01,ft_x10,ft_y01,ft_y10,ft_z01,ft_z10 :: VEC{CPX}@
       pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
       a,b,k,xa,ya,za,xb,yb,zb,bxlast,bylast,bzlast,aa,bb,k_max,fa,la,fb,lb :: INT
@@ -552,28 +543,29 @@ contains
       Ex211,Ey211,Ez211,Ex011,Ey011,Ez011 :: REAL
       PA1,PA2,PA3,PB1,PB2,PB3,r2 :: REAL
 
-      k_max  = size(k_x,1)
+      k_max  = k_x.dim1
 
       res = ZERO
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       select case (.a.l)
 
-        case (0)
+      case (0)
 
-          select case(.b.l)
-
-            case (0)
-
-              pos = .a.position - .b.position
-              r2 = dot_product(pos,pos)
-              res_ij => res(:,1,1)
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              do a = 1, .a.n_cc
-                ca = .a.contraction(a)
-                ex_a = .a.exponent(a)
-                do b = 1, .b.n_cc
+         select case(.b.l)
+        
+         case (0) ! (0,0)
+        
+            pos = .a.position - .b.position
+            r2  = dot_product(pos,pos)
+            PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
+            PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
+            do a = 1, .a.n_cc
+               ca = .a.contraction(a)
+               ex_a = .a.exponent(a)
+               do b = 1, .b.n_cc
                   ex_b = .b.exponent(b)
                   g1 = ONE/(ex_a+ex_b)
                   g4 = -QUARTER*g1
@@ -587,27 +579,29 @@ contains
                   e00 = exp(-ex_a*ex_b*r2*g1)
                   fac1= cmplx(pifac*e00,ZERO,kind=CPX_KIND) * ca * .b.contraction(b)
                   do k = 1, k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = g4 * (k1*k1+k2*k2+k3*k3)
-                    res_ij(k) = res_ij(k) + (fac1 * exp(cmplx(dot2,dot1,kind=CPX_KIND)))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = g4 * (k1*k1+k2*k2+k3*k3)
+                     res(k,1,1) = res(k,1,1) + fac1*exp(COMPLEXIFY(dot2,dot1))
                   end
-                end
-              end
-
-            case (1)
-
-              prefac.create(k_max)
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              e.create((/0,1/),(/0,0/),(/0,1/))
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
+               end
+            end
+        
+         case (1) ! (0,1)
+        
+            prefac.create(k_max)
+            PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
+            PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
+            e.create( [0,1], [0,0], [0,1] )
+            do aa = 1, .a.n_cc
+               ca = .a.contraction(aa)
+               ex_a = .a.exponent(aa)
+               G.a.exponent = ex_a
+               do bb = 1, .b.n_cc
+                  ex_b = .b.exponent(bb)
+                  G.b.exponent = ex_b
                   gamma = G.a.exponent+G.b.exponent
                   g1 = ONE/gamma
                   g4 = QUARTER*g1
@@ -632,39 +626,46 @@ contains
                   Ez101 = e(1,0,1)
                   fac = pifac * ca * .b.contraction(bb)
                   do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-                  res_ij => res(:,1,1)
-                  res_ij(:) = res_ij(:) + cmplx(Ex001,Ex101*k_x,kind=CPX_KIND)*Ey000*Ez000*prefac(:)
-                  res_ij => res(:,1,2)
-                  res_ij(:) = res_ij(:) + Ex000*cmplx(Ey001,Ey101*k_y,kind=CPX_KIND)*Ez000*prefac(:)
-                  res_ij => res(:,1,3)
-                  res_ij(:) = res_ij(:) + Ex000*Ey000*cmplx(Ez001,Ez101*k_z,kind=CPX_KIND)*prefac(:)
-                end
-              end
-              e.destroy
-              prefac.destroy
-
-            case default
-
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              prefac.create(k_max)
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
+                  res(:,1,1) = res(:,1,1) + prefec*COMPLEXIFY(Ex001,Ex101*k_x)*Ey000*Ez000
+                  res(:,1,2) = res(:,1,2) + prefec*Ex000*COMPLEXIFY(Ey001,Ey101*k_y)*Ez000
+                  res(:,1,3) = res(:,1,3) + prefec*Ex000*Ey000*COMPLEXIFY(Ez001,Ez101*k_z)
+               end
+            end
+            e.destroy
+            prefac.destroy
+        
+         case default ! (0,lb)
+        
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
+           
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
+           
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+           
+            prefac.create(k_max)
+           
+            PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
+            PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
+           
+            do aa = 1, .a.n_cc
+               ca = .a.contraction(aa)
+               ex_a = .a.exponent(aa)
+               G.a.exponent = ex_a
+               do bb = 1, .b.n_cc
+                  ex_b = .b.exponent(bb)
+                  G.b.exponent = ex_b
                   gamma = G.a.exponent+G.b.exponent
                   g1 = ONE/gamma
                   g4 = QUARTER*g1
@@ -680,13 +681,16 @@ contains
                   G.make_ft_component(ft_z,3,k_z)
                   fac = pifac * ca * .b.contraction(bb)
                   do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-                  do b=0,.b.l ! incorporate prefac into ft_z
-                    ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
+                  ! incorporate prefac into ft_z
+                  do b = 0,.b.l 
+                     ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
                   end
                   bxlast = bx(1)
                   bylast = by(1)
@@ -695,48 +699,48 @@ contains
                   ft_yb => ft_y(:,0,bylast)
                   ft_zb => ft_z(:,0,bzlast)
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    if (bxlast/=xb) then
-                      ft_xb => ft_x(:,0,xb)
-                      bxlast = xb
-                    end
-                    if (bylast/=yb) then
-                      ft_yb=> ft_y(:,0,yb)
-                      bylast = yb
-                    end
-                    if (bzlast/=zb) then
-                      ft_zb=> ft_z(:,0,zb)
-                      bzlast = zb
-                    end
-                    res_ij => res(:,1,b)
-                    res_ij(:) = res_ij(:) + ft_xb(:)*ft_yb(:)*ft_zb(:)
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     if (bxlast/=xb) then
+                        ft_xb => ft_x(:,0,xb)
+                        bxlast = xb
+                     end
+                     if (bylast/=yb) then
+                        ft_yb => ft_y(:,0,yb)
+                        bylast = yb
+                     end
+                     if (bzlast/=zb) then
+                        ft_zb => ft_z(:,0,zb)
+                        bzlast = zb
+                     end
+                     res(:,1,b) = res(:,1,b) + ft_xb(:)*ft_yb(:)*ft_zb(:)
                   end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_y.destroy
-              ft_z.destroy
-          end
+               end
+            end
+            prefac.destroy
+            ft_x.destroy
+            ft_y.destroy
+            ft_z.destroy
+         end
 
-        case (1)
+      case (1)
 
-          select case (.b.l)
+         select case (.b.l)
+        
+         case (0) ! (1,0)
 
-            case (0)
-              prefac.create(k_max)
-              e.create((/0,1/),(/0,1/),(/0,0/))
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
+            prefac.create(k_max)
+            e.create([0,1],[0,1],[0,0])
+            PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
+            PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
+            do aa = 1, .a.n_cc
+               ca = .a.contraction(aa)
+               ex_a = .a.exponent(aa)
+               G.a.exponent = ex_a
+               do bb = 1, .b.n_cc
+                  ex_b = .b.exponent(bb)
+                  G.b.exponent = ex_b
                   gamma = G.a.exponent+G.b.exponent
                   g1 = ONE/gamma
                   g4 = QUARTER*g1
@@ -761,50 +765,49 @@ contains
                   Ez110 = e(1,1,0)
                   fac = pifac * ca * .b.contraction(bb)
                   do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-                  res_ij => res(:,1,1)
-                  res_ij(:) = res_ij(:) + cmplx(Ex010,Ex110*k_x(:),kind=CPX_KIND)*Ey000*Ez000*prefac(:)
-                  res_ij => res(:,2,1)
-                  res_ij(:) = res_ij(:) + Ex000*cmplx(Ey010,Ey110*k_y(:),kind=CPX_KIND)*Ez000*prefac(:)
-                  res_ij => res(:,3,1)
-                  res_ij(:) = res_ij(:) + Ex000*Ey000*cmplx(Ez010,Ez110*k_z(:),kind=CPX_KIND)*prefac(:)
-                end
-              end
-              e.destroy
-              prefac.destroy
-
-            case (1)
-
-              ft_x.create((/1,k_max/),(/0,1/),(/0,1/))
-              ft_y.create((/1,k_max/),(/0,1/),(/0,1/))
-              ft_z.create((/1,k_max/),(/0,1/),(/0,1/))
-              prefac.create(k_max)
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              e.create((/0,2/),(/0,1/),(/0,1/))
-              ft_x01.create(k_max)
-              ft_x10.create(k_max)
-              ft_y01.create(k_max)
-              ft_y10.create(k_max)
-              ft_z01.create(k_max)
-              ft_z10.create(k_max)
-              k_x2.create(k_max)
-              k_y2.create(k_max)
-              k_z2.create(k_max)
-              k_x2=k_x*k_x
-              k_y2=k_y*k_y
-              k_z2=k_z*k_z
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
+                  res(:,1,1) = res(:,1,1) + prefac*COMPLEXIFY(Ex010,Ex110*k_x)*Ey000*Ez000
+                  res(:,2,1) = res(:,2,1) + prefac*Ex000*COMPLEXIFY(Ey010,Ey110*k_y)*Ez000
+                  res(:,3,1) = res(:,3,1) + prefac*Ex000*Ey000*COMPLEXIFY(Ez010,Ez110*k_z)
+               end
+            end
+            e.destroy
+            prefac.destroy
+        
+         case (1) ! (1,1)
+        
+            ft_x.create([1,k_max],[0,1],[0,1])
+            ft_y.create([1,k_max],[0,1],[0,1])
+            ft_z.create([1,k_max],[0,1],[0,1])
+            prefac.create(k_max)
+            PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
+            PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
+            e.create([0,2],[0,1],[0,1])
+            ft_x01.create(k_max)
+            ft_x10.create(k_max)
+            ft_y01.create(k_max)
+            ft_y10.create(k_max)
+            ft_z01.create(k_max)
+            ft_z10.create(k_max)
+            k_x2.create(k_max)
+            k_y2.create(k_max)
+            k_z2.create(k_max)
+            k_x2 = k_x*k_x
+            k_y2 = k_y*k_y
+            k_z2 = k_z*k_z
+            do aa = 1, .a.n_cc
+               ca   = .a.contraction(aa)
+               ex_a = .a.exponent(aa)
+               G.a.exponent = ex_a
+               do bb = 1, .b.n_cc
+                  ex_b = .b.exponent(bb)
+                  G.b.exponent = ex_b
                   gamma = G.a.exponent+G.b.exponent
                   g1 = ONE/gamma
                   g4 = QUARTER*g1
@@ -817,10 +820,12 @@ contains
                   P3 = g1_exa*PA3 + g1_exb*PB3
                   fac = pifac * ca * .b.contraction(bb)
                   do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
                   G.make_e_coeff(e,1)
                   Ex000 = e(0,0,0)
@@ -849,62 +854,60 @@ contains
                   Ez110 = e(1,1,0)
                   Ez111 = e(1,1,1)
                   Ez211 = e(2,1,1)
-                  ft_x01(:) = cmplx(Ex001,Ex101*k_x(:),kind=CPX_KIND)
-                  ft_x10(:) = cmplx(Ex010,Ex110*k_x(:),kind=CPX_KIND)
-                  ft_y01(:) = cmplx(Ey001,Ey101*k_y(:),kind=CPX_KIND)
-                  ft_y10(:) = cmplx(Ey010,Ey110*k_y(:),kind=CPX_KIND)
-                  ft_z01(:) = cmplx(Ez001,Ez101*k_z(:),kind=CPX_KIND)
-                  ft_z10(:) = cmplx(Ez010,Ez110*k_z(:),kind=CPX_KIND)
-                  res_ij => res(:,1,1)
-                  res_ij(:) = res_ij(:) + cmplx(Ex011-Ex211*k_x2(:),Ex111*k_x(:),kind=CPX_KIND)*Ey000*Ez000*prefac(:)
-                  res_ij => res(:,2,1)
-                  res_ij(:) = res_ij(:) + ft_x01(:)*ft_y10(:)*Ez000*prefac(:)
-                  res_ij => res(:,3,1)
-                  res_ij(:) = res_ij(:) + ft_x01(:)*Ey000*ft_z10(:)*prefac(:)
-                  res_ij => res(:,1,2)
-                  res_ij(:) = res_ij(:) + ft_x10(:)*ft_y01(:)*Ez000*prefac(:)
-                  res_ij => res(:,2,2)
-                  res_ij(:) = res_ij(:) + Ex000*cmplx(Ey011-Ey211*k_y2(:),Ey111*k_y(:),kind=CPX_KIND)*Ez000*prefac(:)
-                  res_ij => res(:,3,2)
-                  res_ij(:) = res_ij(:) + Ex000*ft_y01(:)*ft_z10(:)*prefac(:)
-                  res_ij => res(:,1,3)
-                  res_ij(:) = res_ij(:) + ft_x10(:)*Ey000*ft_z01(:)*prefac(:)
-                  res_ij => res(:,2,3)
-                  res_ij(:) = res_ij(:) + Ex000*ft_y10(:)*ft_z01(:)*prefac(:)
-                  res_ij => res(:,3,3)
-                  res_ij(:) = res_ij(:) + Ex000*Ey000*cmplx(Ez011-Ez211*k_z2(:),Ez111*k_z(:),kind=CPX_KIND)*prefac(:)
-                end
-              end
-              k_z2.destroy
-              k_y2.destroy
-              k_x2.destroy
-              ft_z10.destroy
-              ft_z01.destroy
-              ft_y10.destroy
-              ft_y01.destroy
-              ft_x10.destroy
-              ft_x01.destroy
-              e.destroy
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-
-            case default
-
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              prefac.create(k_max)
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
+                  ft_x01 = COMPLEXIFY(Ex001,Ex101*k_x)
+                  ft_x10 = COMPLEXIFY(Ex010,Ex110*k_x)
+                  ft_y01 = COMPLEXIFY(Ey001,Ey101*k_y)
+                  ft_y10 = COMPLEXIFY(Ey010,Ey110*k_y)
+                  ft_z01 = COMPLEXIFY(Ez001,Ez101*k_z)
+                  ft_z10 = COMPLEXIFY(Ez010,Ez110*k_z)
+                  res(:,1,1) = res(:,1,1) + prefac*COMPLEXIFY(Ex011-Ex211*k_x2,Ex111*k_x)*Ey000*Ez000
+                  res(:,2,1) = res(:,2,1) + prefac*ft_x01*ft_y10*Ez000
+                  res(:,3,1) = res(:,3,1) + prefac*ft_x01*Ey000*ft_z10
+                  res(:,1,2) = res(:,1,2) + prefac*ft_x10*ft_y01*Ez000
+                  res(:,2,2) = res(:,2,2) + prefac*Ex000*COMPLEXIFY(Ey011-Ey211*k_y2,Ey111*k_y)*Ez000
+                  res(:,3,2) = res(:,3,2) + prefac*Ex000*ft_y01*ft_z10
+                  res(:,1,3) = res(:,1,3) + prefac*ft_x10*Ey000*ft_z01
+                  res(:,2,3) = res(:,2,3) + prefac*Ex000*ft_y10*ft_z01
+                  res(:,3,3) = res(:,3,3) + prefac*Ex000*Ey000*COMPLEXIFY(Ez011-Ez211*k_z2,Ez111*k_z)
+               end
+            end
+            k_z2.destroy
+            k_y2.destroy
+            k_x2.destroy
+            ft_z10.destroy
+            ft_z01.destroy
+            ft_y10.destroy
+            ft_y01.destroy
+            ft_x10.destroy
+            ft_x01.destroy
+            e.destroy
+            prefac.destroy
+            ft_x.destroy
+            ft_z.destroy
+            ft_y.destroy
+        
+         case default ! (1,lb)
+        
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+            
+            prefac.create(k_max)
+            
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
+            
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
+            
+            do aa = 1, .a.n_cc
+               ca   = .a.contraction(aa)
+               ex_a = .a.exponent(aa)
+               G.a.exponent = ex_a
+               do bb = 1, .b.n_cc
+                  ex_b = .b.exponent(bb)
+                  G.b.exponent = ex_b
                   gamma = G.a.exponent+G.b.exponent
                   g1 = ONE/gamma
                   g4 = QUARTER*g1
@@ -920,55 +923,62 @@ contains
                   G.make_ft_component(ft_z,3,k_z)
                   fac = pifac * ca * .b.contraction(bb)
                   do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-                  do b=0,.b.l
-                    ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
-                    ft_z(:,1,b) = ft_z(:,1,b) * prefac(:)
+                  do b = 0,.b.l
+                     ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
+                     ft_z(:,1,b) = ft_z(:,1,b) * prefac(:)
                   end
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    ft_xb => ft_x(:,0,xb)
-                    ft_yb => ft_y(:,0,yb)
-                    ft_zb => ft_z(:,0,zb)
-                    res_ij => res(:,1,b)
-                    res_ij(:) = res_ij(:) + ft_x(:,1,xb)*ft_yb*ft_zb
-                    res_ij => res(:,2,b)
-                    res_ij(:) = res_ij(:) + ft_xb*ft_y(:,1,yb)*ft_zb
-                    res_ij => res(:,3,b)
-                    res_ij(:) = res_ij(:) + ft_xb*ft_yb*ft_z(:,1,zb)
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     ft_xb => ft_x(:,0,xb)
+                     ft_yb => ft_y(:,0,yb)
+                     ft_zb => ft_z(:,0,zb)
+                     res(:,1,b) = res(:,1,b) + ft_x(:,1,xb)*ft_yb*ft_zb
+                     res(:,2,b) = res(:,2,b) + ft_xb*ft_y(:,1,yb)*ft_zb
+                     res(:,3,b) = res(:,3,b) + ft_xb*ft_yb*ft_z(:,1,zb)
                   end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-          end
+               end
+            end
+            prefac.destroy
+            ft_x.destroy
+            ft_z.destroy
+            ft_y.destroy
+         end
 
-        case default
+      case default
 
-          select case (.b.l)
+         select case (.b.l)
+        
+         case (0) ! (la,0)
 
-            case (0)
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              prefac.create(k_max)
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+            
+            prefac.create(k_max)
+            
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
+            
+            do aa = 1, .a.n_cc
+               ca   = .a.contraction(aa)
+               ex_a = .a.exponent(aa)
+               G.a.exponent = ex_a
+               do bb = 1, .b.n_cc
+                  ex_b = .b.exponent(bb)
+                  G.b.exponent = ex_b
                   gamma = G.a.exponent+G.b.exponent
                   g1 = ONE/gamma
                   g4 = QUARTER*g1
@@ -984,43 +994,51 @@ contains
                   G.make_ft_component(ft_z,3,k_z)
                   fac = pifac * ca * .b.contraction(bb)
                   do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
                   do a=0,.a.l
-                    ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
+                     ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
                   end
                   do a = 1,.a.n_comp
-                    xa = ax(a)
-                    ya = ay(a)
-                    za = az(a)
-                    res_ij => res(:,a,1)
-                    res_ij(:) = res_ij(:) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,0)
+                     xa = ax(a)
+                     ya = ay(a)
+                     za = az(a)
+                     res(:,a,1) = res(:,a,1) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,0)
                   end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-
-            case (1)
-
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              prefac.create(k_max)
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
+               end
+            end
+            prefac.destroy
+            ft_x.destroy
+            ft_z.destroy
+            ft_y.destroy
+        
+         case (1) ! (la,1)
+        
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+            
+            prefac.create(k_max)
+            
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
+            
+            do aa = 1, .a.n_cc
+               ca   = .a.contraction(aa)
+               ex_a = .a.exponent(aa)
+               G.a.exponent = ex_a
+               do bb = 1, .b.n_cc
+                  ex_b = .b.exponent(bb)
+                  G.b.exponent = ex_b
                   gamma = G.a.exponent+G.b.exponent
                   g1 = ONE/gamma
                   g4 = QUARTER*g1
@@ -1036,52 +1054,56 @@ contains
                   G.make_ft_component(ft_z,3,k_z)
                   fac = pifac * ca * .b.contraction(bb)
                   do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-                  do a=0,.a.l ! incorporate prefac into ft_z
-                    ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
-                    ft_z(:,a,1) = ft_z(:,a,1) * prefac(:)
+                  ! incorporate prefac into ft_z
+                  do a = 0,.a.l 
+                     ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
+                     ft_z(:,a,1) = ft_z(:,a,1) * prefac(:)
                   end
                   do a = 1,.a.n_comp
-                    xa = ax(a)
-                    ya = ay(a)
-                    za = az(a)
-                    res_ij => res(:,a,1)
-                    res_ij(:) = res_ij(:) + ft_x(:,xa,1)*ft_y(:,ya,0)*ft_z(:,za,0)
-                    res_ij => res(:,a,2)
-                    res_ij(:) = res_ij(:) + ft_x(:,xa,0)*ft_y(:,ya,1)*ft_z(:,za,0)
-                    res_ij => res(:,a,3)
-                    res_ij(:) = res_ij(:) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,1)
+                     xa = ax(a)
+                     ya = ay(a)
+                     za = az(a)
+                     res(:,a,1) = res(:,a,1) + ft_x(:,xa,1)*ft_y(:,ya,0)*ft_z(:,za,0)
+                     res(:,a,2) = res(:,a,2) + ft_x(:,xa,0)*ft_y(:,ya,1)*ft_z(:,za,0)
+                     res(:,a,3) = res(:,a,3) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,1)
                   end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-
-            case default
-
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              prefac.create(k_max)
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-             ! This is the general routine.  It includes reduced multiplication,
-             ! and use of pointers to minimise array finding.
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
+               end
+            end
+            prefac.destroy
+            ft_x.destroy
+            ft_z.destroy
+            ft_y.destroy
+        
+         case default ! (la,lb)
+        
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+           
+            prefac.create(k_max)
+           
+            fa = .a.first_gaussian; la = .a.last_gaussian
+            fb = .b.first_gaussian; lb = .b.last_gaussian
+           
+            ax = GAUSSIAN_DATA::px(fa:la); ay = GAUSSIAN_DATA::py(fa:la); az = GAUSSIAN_DATA::pz(fa:la)
+            bx = GAUSSIAN_DATA::px(fb:lb); by = GAUSSIAN_DATA::py(fb:lb); bz = GAUSSIAN_DATA::pz(fb:lb)
+           
+            ! This is the general routine.  It includes reduced multiplication,
+            ! and use of pointers to minimise array finding.
+            do aa = 1, .a.n_cc
+               ca   = .a.contraction(aa)
+               ex_a = .a.exponent(aa)
+               G.a.exponent = ex_a
+               do bb = 1, .b.n_cc
+                  ex_b = .b.exponent(bb)
+                  G.b.exponent = ex_b
                   gamma = G.a.exponent+G.b.exponent
                   g1 = ONE/gamma
                   g4 = QUARTER*g1
@@ -1097,15 +1119,18 @@ contains
                   G.make_ft_component(ft_z,3,k_z)
                   fac = pifac * ca * .b.contraction(bb)
                   do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-                  do b=0,.b.l ! incorporate prefac into ft_z
-                    do a=0,.a.l
-                      ft_z(:,a,b) = ft_z(:,a,b) * prefac(:)
-                    end
+                  ! incorporate prefac into ft_z
+                  do b=0,.b.l 
+                  do a=0,.a.l
+                     ft_z(:,a,b) = ft_z(:,a,b) * prefac(:)
+                  end
                   end
                   bxlast = bx(1)
                   bylast = by(1)
@@ -1114,74 +1139,39 @@ contains
                   ft_yby => ft_y(:,:,bylast)
                   ft_zbz => ft_z(:,:,bzlast)
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    if (bxlast/=xb) then
-                      ft_xbx => ft_x(:,:,xb)
-                      bxlast = xb
-                    end
-                    if (bylast/=yb) then
-                      ft_yby=> ft_y(:,:,yb)
-                      bylast = yb
-                    end
-                    if (bzlast/=zb) then
-                      ft_zbz=> ft_z(:,:,zb)
-                      bzlast = zb
-                    end
-                    do a = 1,.a.n_comp
-                      xa = ax(a)
-                      ya = ay(a)
-                      za = az(a)
-                      res_ij => res(:,a,b)
-                      res_ij(:) = res_ij(:) + ft_xbx(:,xa+1)*ft_yby(:,ya+1)*ft_zbz(:,za+1)
-                    end
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     if (bxlast/=xb) then
+                        ft_xbx => ft_x(:,:,xb)
+                        bxlast = xb
+                     end
+                     if (bylast/=yb) then
+                        ft_yby=> ft_y(:,:,yb)
+                        bylast = yb
+                     end
+                     if (bzlast/=zb) then
+                        ft_zbz=> ft_z(:,:,zb)
+                        bzlast = zb
+                     end
+                     do a = 1,.a.n_comp
+                        xa = ax(a)
+                        ya = ay(a)
+                        za = az(a)
+                        res(:,a,b) = res(:,a,b) + ft_xbx(:,xa+1)*ft_yby(:,ya+1)*ft_zbz(:,za+1)
+                     end
                   end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-          end
+               end
+            end
+            prefac.destroy
+            ft_x.destroy
+            ft_z.destroy
+            ft_y.destroy
+         end
 
       end
 
    end
-
-!   make_ft_c_alt(res,k_pts) ::: private
-!   ! Calculates the Fourier transform for a product of two contracted
-!   ! gaussian shells, evaluated at a series of k points k_pts
-!   ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
-!      res :: MAT3{CPX}
-!      k_pts :: MAT{REAL}, IN
-!
-!      G :: GAUSSIAN2
-!      ft_ab :: MAT3{CPX}@
-!      a,b,k_max :: INT
-!      ca,fac :: REAL
-!
-!      k_max  = k_pts.dim1
-!      ft_ab.create(k_max,.a.n_comp,.b.n_comp)
-!
-!      res = ZERO
-!
-!      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
-!
-!      do a = 1, .a.n_cc
-!         G.set(ex_a=.a.exponent(a))
-!         ca = .a.contraction(a)
-!         do b = 1, .b.n_cc
-!            G.set(ex_b=.b.exponent(b))
-!            G.make_ft(ft_ab,k_pts)
-!            fac = ca * .b.contraction(b)
-!            res = res + fac*ft_ab
-!         end
-!      end
-!
-!      ft_ab.destroy
-!
-!   end
 
 ! This versions does only partitioning
 ! It is intended for single-atom partitions
@@ -2701,9 +2691,14 @@ contains
       Ex010,Ey010,Ez010,Ex110,Ey110,Ez110,Ex111,Ey111,Ez111 :: REAL
       Ex211,Ey211,Ez211,Ex011,Ey011,Ez011 :: REAL
       PA1,PA2,PA3,PB1,PB2,PB3,r2 :: REAL
-      k_max  = size(k_pts,1)
+
+      k_max  = k_pts.dim1
+
       res = ZERO
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       select case (.a.l)
         case (0)
           select case(.b.l)
@@ -2744,7 +2739,7 @@ contains
               k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
               PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
               PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              e.create((/0,1/),(/0,0/),(/0,1/))
+              e.create([0,1],[0,0],[0,1])
               do aa = 1, .a.n_cc
                 ca = .a.contraction(aa)
                 ex_a=.a.exponent(aa)
@@ -2795,9 +2790,9 @@ contains
             case default
               fb = .b.first_gaussian; lb = .b.last_gaussian
               bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
+              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
               prefac.create(k_max)
               PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
               PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
@@ -2869,7 +2864,7 @@ contains
           select case (.b.l)
             case (0)
               prefac.create(k_max)
-              e.create((/0,1/),(/0,1/),(/0,0/))
+              e.create([0,1],[0,1],[0,0])
               PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
               PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
               k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
@@ -2921,14 +2916,14 @@ contains
               e.destroy
               prefac.destroy
             case (1)
-              ft_x.create((/1,k_max/),(/0,1/),(/0,1/))
-              ft_y.create((/1,k_max/),(/0,1/),(/0,1/))
-              ft_z.create((/1,k_max/),(/0,1/),(/0,1/))
+              ft_x.create([1,k_max],[0,1],[0,1])
+              ft_y.create([1,k_max],[0,1],[0,1])
+              ft_z.create([1,k_max],[0,1],[0,1])
               prefac.create(k_max)
               k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
               PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
               PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              e.create((/0,2/),(/0,1/),(/0,1/))
+              e.create([0,2],[0,1],[0,1])
               ft_x01.create(k_max)
               ft_x10.create(k_max)
               ft_y01.create(k_max)
@@ -3034,9 +3029,9 @@ contains
               ft_z.destroy
               ft_y.destroy
             case default
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
+              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
               prefac.create(k_max)
               k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
               fb = .b.first_gaussian; lb = .b.last_gaussian
@@ -3097,9 +3092,9 @@ contains
         case default
           select case (.b.l)
             case (0)
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
+              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
               prefac.create(k_max)
               k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
               fa = .a.first_gaussian; la = .a.last_gaussian
@@ -3149,9 +3144,9 @@ contains
               ft_z.destroy
               ft_y.destroy
             case (1)
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
+              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
               prefac.create(k_max)
               k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
               fa = .a.first_gaussian; la = .a.last_gaussian
@@ -3206,9 +3201,9 @@ contains
               ft_z.destroy
               ft_y.destroy
             case default
-              ft_x.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_y.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
-              ft_z.create((/1,k_max/),(/0,.a.l/),(/0,.b.l/))
+              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
               prefac.create(k_max)
               k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
               fa = .a.first_gaussian; la = .a.last_gaussian
@@ -3312,7 +3307,9 @@ contains
 
       res = ZERO
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do a = 1,.a.n_cc
          G.set(ex_a=.a.exponent(a))
          ca = .a.contraction(a)
@@ -3357,7 +3354,10 @@ contains
 
       res = ZERO
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do a = 1,.a.n_cc
          G.set(ex_a=.a.exponent(a))
          ca = .a.contraction(a)
@@ -3466,8 +3466,11 @@ contains
 
          ! Loop on primitive pairs and make the FT integrals
          i = 0
+
          res = ZERO
-         G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+         G.a.set(.a.l,.a.position)
+         G.b.set(.b.l,.b.position)
 
          do bg = 1,.b.n_cc
 
@@ -4255,7 +4258,8 @@ contains
 
       res = ZERO
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
 
       do a = 1, .a.n_cc
 
@@ -4298,7 +4302,10 @@ contains
       ca,cb,fac :: REAL
       k_max  = size(k_pts,1)
       res = ZERO
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do a = 1, .a.n_cc
          G.set(ex_a=.a.exponent(a))
          ca = .a.contraction(a)
@@ -4333,7 +4340,10 @@ contains
       ca,cb,cacb :: REAL
       k_max  = size(k_pts,1)
       res = ZERO
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do a = 1, .a.n_cc
          G.set(ex_a=.a.exponent(a))
          ca = .a.contraction(a)
@@ -4393,7 +4403,9 @@ contains
       fac_wt.create(n_pts)
       k_pts.create(n_pts,3)
       ft_ab.create(n_pts,.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
 
       ! Loop over each k_value one by one
       do k = 1,k_values.dim
@@ -4486,7 +4498,8 @@ contains
       k_pts.create(n_pts,3)
       ft_ab.create(n_pts,.a.n_comp,.b.n_comp)
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
 
       ! Loop over each k_value one by one
       do k = 1,k_values.dim
@@ -4523,28 +4536,6 @@ contains
             f = f + phi.n_points
             l = l + phi.n_points
          end
-
-       ! f = 1
-       ! l = phi.n_points
-       ! do t = 1,n_theta+1
-       !    do a = 1,.a.n_cc
-       !       G.set(ex_a=.a.exponent(a))
-       !       ca = .a.contraction(a)
-       !       do b = 1,.b.n_cc
-       !          G.set(ex_b=.b.exponent(b))
-       !          G.make_ft(ft_ab,k_pts)
-       !          fac = ca*.b.contraction(b)
-       !          fac_wt = fac*phi.weight
-       !          do j = 1,.b.n_comp
-       !          do i = 1,.a.n_comp
-       !              res(i,j,k,t) = res(i,j,k,t) + sum(ft_ab(f:l,i,j)*fac_wt)
-       !          end
-       !          end
-       !       end
-       !    end
-       !    f = f + phi.n_points
-       !    l = l + phi.n_points
-       ! end
 
       end
 
@@ -4596,9 +4587,14 @@ contains
        G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       S = ZERO
+
       SS.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
          G.set(.a.exponent(a),.b.exponent(b))
@@ -4621,10 +4617,15 @@ contains
       G :: GAUSSIAN2
       a,b,i :: INT
       cacb,fa,fb :: REAL
+
       Sa = ZERO
       Sb = ZERO
+
       SS.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       i = 0
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
@@ -4643,36 +4644,6 @@ contains
       SS.destroy
    end
 
-   make_oscillator_overlap_ints(S,c,d,lc_min,lc_max,ld_min,ld_max)
-   ! Calculates oscillator overlap integral matrix, using Gauss-Hermite
-   ! quadrature, like in CADPAC
-      S :: MAT4{REAL}
-      c,d :: VEC{REAL}(3)
-      lc_min,lc_max,ld_min,ld_max :: INT
-   ENSURE(S.dim1==.a.n_comp,"wrong size for S")
-   ENSURE(S.dim2==.b.n_comp,"wrong size for S")
-   ENSURE(S.dim3==(GAUSSIAN_DATA:n_comp_up_to(lc_max)-GAUSSIAN_DATA:n_comp_up_to(lc_min-1)),"wrong size for S")
-   ENSURE(S.dim4==(GAUSSIAN_DATA:n_comp_up_to(ld_max)-GAUSSIAN_DATA:n_comp_up_to(ld_min-1)),"wrong size for S")
-      SS :: MAT4{REAL}@
-      G :: GAUSSIAN2
-      cacb :: REAL
-      a,b,nc,nd :: INT
-      S = ZERO
-      nc = GAUSSIAN_DATA:n_comp_up_to(lc_max) - GAUSSIAN_DATA:n_comp_up_to(lc_min-1)
-      nd = GAUSSIAN_DATA:n_comp_up_to(ld_max) - GAUSSIAN_DATA:n_comp_up_to(ld_min-1)
-      SS.create(.a.n_comp,.b.n_comp,nc,nd)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
-      do b = 1,.b.n_cc
-      do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
-         cacb = .a.contraction(a)*.b.contraction(b)
-         G.make_oscillator_overlap_ints(SS,c,d,lc_min,lc_max,ld_min,ld_max)
-         S = S + SS*cacb
-      end
-      end
-      SS.destroy
-   end
-
    make_S_1st_deriv_ints(Ax,Ay,Az)
    ! Calculates the derivatives of the overlap integrals with respect to
    ! position A, in "Ax", "Ay", and "Az" using Gauss-Hermite quadrature.
@@ -4681,11 +4652,16 @@ contains
        G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       Ax = ZERO; Ay = ZERO; Az = ZERO
+
       AAx.create(.a.n_comp,.b.n_comp)
       AAy.create(.a.n_comp,.b.n_comp)
       AAz.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
          G.set(.a.exponent(a),.b.exponent(b))
@@ -4696,6 +4672,7 @@ contains
          Az = Az + AAz*cacb
       end
       end
+
       AAz.destroy
       AAy.destroy
       AAx.destroy
@@ -4705,15 +4682,21 @@ contains
    ! Calculates the derivatives of the kinetic integrals with respect to
    ! position A, in "Ax", "Ay", and "Az" using Gauss-Hermite quadrature.
       Ax,Ay,Az :: MAT{REAL}
+
       AAx,AAy,AAz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       Ax = ZERO; Ay = ZERO; Az = ZERO
+
       AAx.create(.a.n_comp,.b.n_comp)
       AAy.create(.a.n_comp,.b.n_comp)
       AAz.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
          G.set(.a.exponent(a),.b.exponent(b))
@@ -4724,9 +4707,11 @@ contains
          Az = Az + AAz*cacb
       end
       end
+
       AAz.destroy
       AAy.destroy
       AAx.destroy
+
    end
 
    make_NA_1st_deriv_ints(Ax,Ay,Az,Bx,By,Bz,c)
@@ -4734,20 +4719,26 @@ contains
    ! positions A *and* B, in "Ax", "Ay", "Az", and "Bx", "By", "Bz" for a given
    ! nuclear position "c".
       Ax,Ay,Az, Bx,By,Bz :: MAT{REAL}
-       c :: VEC{REAL}(3)
+      c :: VEC{REAL}(3)
+
       AAx,AAy,AAz, BBx,BBy,BBz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       Ax = ZERO; Ay = ZERO; Az = ZERO
       Bx = ZERO; By = ZERO; Bz = ZERO
+
       AAx.create(.a.n_comp,.b.n_comp)
       AAy.create(.a.n_comp,.b.n_comp)
       AAz.create(.a.n_comp,.b.n_comp)
       BBx.create(.a.n_comp,.b.n_comp)
       BBy.create(.a.n_comp,.b.n_comp)
       BBz.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
          G.set(.a.exponent(a),.b.exponent(b))
@@ -4761,8 +4752,10 @@ contains
          Bz = Bz + BBz*cacb
       end
       end
+
       BBz.destroy; BBy.destroy; BBx.destroy
       AAz.destroy; AAy.destroy; AAx.destroy
+
    end
 
    make_dipole_ints(Dx,Dy,Dz,origin)
@@ -4787,7 +4780,8 @@ contains
       DDy.create(n_a,n_b)
       DDz.create(n_a,n_b)
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
 
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
@@ -4810,15 +4804,25 @@ contains
    ! Make the weighted dipole moment integral matrices.
    ! Dipole origin are at the respective shell positions.
       Ax,Ay,Az,Bx,By,Bz :: MAT{REAL}
+
       DDx,DDy,DDz :: MAT{REAL}@
       G :: GAUSSIAN2
       a,b,n_a,n_b :: INT
       fa,fb,cacb :: REAL
+
       Ax = ZERO; Ay = ZERO; Az = ZERO
       Bx = ZERO; By = ZERO; Bz = ZERO
-      n_a = .a.n_comp; n_b = .b.n_comp
-      DDx.create(n_a,n_b); DDy.create(n_a,n_b); DDz.create(n_a,n_b)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      n_a = .a.n_comp
+      n_b = .b.n_comp
+
+      DDx.create(n_a,n_b)
+      DDy.create(n_a,n_b)
+      DDz.create(n_a,n_b)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
          G.set(.a.exponent(a),.b.exponent(b))
@@ -4841,16 +4845,24 @@ contains
    ! with gauge origin "origin"
       Qxx,Qyy,Qzz,Qxy,Qxz,Qyz :: MAT{REAL}
       origin :: VEC{REAL}(3)
+
       QQxx,QQyy,QQzz,QQxy,QQxz,QQyz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b,n_a,n_b :: INT
       cacb :: REAL
+
       Qxx = ZERO; Qyy = ZERO; Qzz = ZERO
       Qxy = ZERO; Qxz = ZERO; Qyz = ZERO
-      n_a = .a.n_comp; n_b = .b.n_comp
+
+      n_a = .a.n_comp
+      n_b = .b.n_comp
+
       QQxx.create(n_a,n_b); QQyy.create(n_a,n_b); QQzz.create(n_a,n_b)
       QQxy.create(n_a,n_b); QQxz.create(n_a,n_b); QQyz.create(n_a,n_b)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
          G.set(.a.exponent(a),.b.exponent(b))
@@ -4860,8 +4872,10 @@ contains
          Qxy = Qxy + QQxy*cacb; Qxz = Qxz + QQxz*cacb; Qyz = Qyz + QQyz*cacb
       end
       end
+
       QQyz.destroy; QQxz.destroy; QQxy.destroy
       QQzz.destroy; QQyy.destroy; QQxx.destroy
+
    end
 
    make_octupole_ints(Oxxx,Oyyy,Ozzz,Oxxy,Oxxz,Oyyx,Oyyz,Ozzx,Ozzy,Oxyz,origin)
@@ -4869,22 +4883,30 @@ contains
    ! with gauge origin "origin"
       Oxxx,Oyyy,Ozzz,Oxxy,Oxxz,Oyyx,Oyyz,Ozzx,Ozzy,Oxyz :: MAT{REAL}
       origin :: VEC{REAL}(3)
+
       OOxxx,OOyyy,OOzzz,OOxxy,OOxxz,OOyyx,OOyyz,OOzzx,OOzzy,OOxyz :: MAT{REAL}@
       G :: GAUSSIAN2
       a,b,n_a,n_b :: INT
       cacb :: REAL
+
       Oxxx = ZERO; Oyyy = ZERO; Ozzz = ZERO
       Oxxy = ZERO; Oxxz = ZERO
       Oyyx = ZERO; Oyyz = ZERO
       Ozzx = ZERO; Ozzy = ZERO
       Oxyz = ZERO
-      n_a = .a.n_comp; n_b = .b.n_comp
+
+      n_a = .a.n_comp
+      n_b = .b.n_comp
+
       OOxxx.create(n_a,n_b); OOyyy.create(n_a,n_b); OOzzz.create(n_a,n_b)
       OOxxy.create(n_a,n_b); OOxxz.create(n_a,n_b)
       OOyyx.create(n_a,n_b); OOyyz.create(n_a,n_b)
       OOzzx.create(n_a,n_b); OOzzy.create(n_a,n_b)
       OOxyz.create(n_a,n_b)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
          G.set(.a.exponent(a),.b.exponent(b))
@@ -4897,104 +4919,152 @@ contains
          Oxyz = Oxyz + OOxyz*cacb
       end
       end
+
       OOxyz.destroy
       OOzzy.destroy; OOzzx.destroy
       OOyyz.destroy; OOyyx.destroy
       OOxxz.destroy; OOxxy.destroy
       OOzzz.destroy; OOyyy.destroy; OOxxx.destroy
+
    end
 
    make_nuclear_attraction_ints(N,c)
    ! Make the nuclear attraction integral matrix "N" for nucleus at position "c"
-       N :: MAT{REAL}
-       c :: VEC{REAL}(3)
+      N :: MAT{REAL}
+      c :: VEC{REAL}(3)
+
       NN :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       N = ZERO
+
       NN.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
          G.make_nuclear_attraction_ints(NN,c)
          cacb = .a.contraction(a)*.b.contraction(b)
          N = N + NN*cacb
       end
       end
+
       NN.destroy
+
    end
 
    make_E_field_ints(Ex,Ey,Ez,p)
    ! Make the electric field integral matrices "Ei" evaluated at
    ! the position "p"
       Ex,Ey,Ez :: MAT{REAL}
-       p :: VEC{REAL}(3)
+      p :: VEC{REAL}(3)
+
       EEx,EEy,EEz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b,n_a,n_b :: INT
       cacb :: REAL
-      Ex = ZERO; Ey = ZERO; Ez = ZERO
-      n_a = .a.n_comp; n_b = .b.n_comp
-      EEx.create(n_a,n_b); EEy.create(n_a,n_b); EEz.create(n_a,n_b)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      Ex = ZERO
+      Ey = ZERO
+      Ez = ZERO
+
+      n_a = .a.n_comp
+      n_b = .b.n_comp
+
+      EEx.create(n_a,n_b)
+      EEy.create(n_a,n_b)
+      EEz.create(n_a,n_b)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
          G.make_E_field_ints(EEx,EEy,EEz,p)
          cacb = .a.contraction(a)*.b.contraction(b)
          Ex = Ex + EEx*cacb; Ey = Ey + EEy*cacb; Ez = Ez + EEz*cacb
       end
       end
-      EEz.destroy; EEy.destroy; EEx.destroy
+
+      EEz.destroy
+      EEy.destroy
+      EEx.destroy
+
    end
 
    make_E_gradient_ints(Exx,Eyy,Ezz,Exy,Exz,Eyz,c)
    ! Make the electric field gradient integral matrices "Eij" evaluated
    ! at the position "c".
-      Exx,Eyy,Ezz,Exy,Exz,Eyz :: MAT{REAL}
-       c :: VEC{REAL}
+      self :: IN
+      Exx,Eyy,Ezz,Exy,Exz,Eyz :: MAT{REAL}, OUT
+      c :: VEC{REAL}, IN
+
       EExx,EEyy,EEzz,EExy,EExz,EEyz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b,n_a,n_b :: INT
       cacb :: REAL
+
       Exx = ZERO; Eyy = ZERO; Ezz = ZERO
       Exy = ZERO; Exz = ZERO; Eyz = ZERO
-      n_a = .a.n_comp; n_b = .b.n_comp
+
+      n_a = .a.n_comp
+      n_b = .b.n_comp
+
       EExx.create(n_a,n_b); EEyy.create(n_a,n_b); EEzz.create(n_a,n_b)
       EExy.create(n_a,n_b); EExz.create(n_a,n_b); EEyz.create(n_a,n_b)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
          G.make_E_gradient_ints(EExx,EEyy,EEzz,EExy,EExz,EEyz,c)
          cacb = .a.contraction(a)*.b.contraction(b)
          Exx = Exx + EExx*cacb; Eyy = Eyy + EEyy*cacb; Ezz = Ezz + EEzz*cacb
          Exy = Exy + EExy*cacb; Exz = Exz + EExz*cacb; Eyz = Eyz + EEyz*cacb
       end
       end
+
       EEyz.destroy; EExz.destroy; EExy.destroy
       EEzz.destroy; EEyy.destroy; EExx.destroy
+
    end
 
    make_spin_orbit_ints(Lx,Ly,Lz,c)
    ! Make the spin orbit integral matrices "Lx" "Ly" and "Lz" for nucleus at
    ! position "c"
-      Lx,Ly,Lz :: MAT{REAL}
-       c :: VEC{REAL}(3)
+      self :: IN
+      Lx,Ly,Lz :: MAT{REAL}, OUT
+      c :: VEC{REAL}(3), IN
+
       LLx,LLy,LLz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       Lx = ZERO; Ly = ZERO; Lz = ZERO
+
       LLx.create(.a.n_comp,.b.n_comp)
       LLy.create(.a.n_comp,.b.n_comp)
       LLz.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
          G.make_spin_orbit_ints(LLx,LLy,LLz,c)
          cacb = .a.contraction(a)*.b.contraction(b)
          Lx = Lx + LLx*cacb
@@ -5002,122 +5072,187 @@ contains
          Lz = Lz + LLz*cacb
       end
       end
+
       LLz.destroy; LLy.destroy; LLx.destroy
+
    end
 
    make_spin_orbit_B_ints(Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz,c,origin)
    ! Make the gauge modified (B field) spin orbit integral matrices "Qij"
    ! for nucleus at position "c" and gauge origin "origin"
-      Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz :: MAT{REAL}
-      c,origin :: VEC{REAL}(3)
+      self :: IN
+      Qxx,Qxy,Qxz,Qyx,Qyy,Qyz,Qzx,Qzy,Qzz :: MAT{REAL}, OUT
+      c,origin :: VEC{REAL}(3), IN
+
       QQxx,QQxy,QQxz,QQyx,QQyy,QQyz,QQzx,QQzy,QQzz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b,n_a,n_b :: INT
       cacb :: REAL
+
       Qxx = ZERO; Qyx = ZERO; Qzx = ZERO
       Qxy = ZERO; Qyy = ZERO; Qzy = ZERO
       Qxz = ZERO; Qyz = ZERO; Qzz = ZERO
-      n_a = .a.n_comp; n_b = .b.n_comp
+
+      n_a = .a.n_comp
+      n_b = .b.n_comp
+
       QQxx.create(n_a,n_b); QQyx.create(n_a,n_b); QQzx.create(n_a,n_b)
       QQxy.create(n_a,n_b); QQyy.create(n_a,n_b); QQzy.create(n_a,n_b)
       QQxz.create(n_a,n_b); QQyz.create(n_a,n_b); QQzz.create(n_a,n_b)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_spin_orbit_B_ints(QQxx,QQxy,QQxz,QQyx,QQyy,QQyz,QQzx,QQzy,QQzz,c,origin)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          Qxx = Qxx + QQxx*cacb; Qxy = Qxy + QQxy*cacb; Qxz = Qxz + QQxz*cacb
          Qyx = Qyx + QQyx*cacb; Qyy = Qyy + QQyy*cacb; Qyz = Qyz + QQyz*cacb
          Qzx = Qzx + QQzx*cacb; Qzy = Qzy + QQzy*cacb; Qzz = Qzz + QQzz*cacb
+
       end
       end
+
       QQzz.destroy; QQyz.destroy; QQxz.destroy
       QQzy.destroy; QQyy.destroy; QQxy.destroy
       QQzx.destroy; QQyx.destroy; QQxx.destroy
+
    end
 
    make_L_ints(Lx,Ly,Lz,origin)
    ! Calculate the angular momentum integral matrices "Lx", "Ly", "Lz",
    ! with "origin" as gauge origin, using Gauss-Hermite quadrature
-      Lx,Ly,Lz :: MAT{REAL}
-      origin :: VEC{REAL}(3)
+      self :: IN
+      Lx,Ly,Lz :: MAT{REAL}, OUT
+      origin :: VEC{REAL}(3), IN
+
       LLx,LLy,LLz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       Lx = ZERO; Ly = ZERO; Lz = ZERO
+
       LLx.create(.a.n_comp,.b.n_comp)
       LLy.create(.a.n_comp,.b.n_comp)
       LLz.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_L_ints(LLx,LLy,LLz,origin)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          Lx = Lx + LLx*cacb
          Ly = Ly + LLy*cacb
          Lz = Lz + LLz*cacb
+
       end
       end
+
       LLz.destroy; LLy.destroy; LLx.destroy
+
    end
 
    make_solenoidal_jp_ints(Jx,Jy,Jz,c)
    ! Make the solenoidal "Ji" integral matrices evaluated at position "c"
-      Jx,Jy,Jz :: MAT{REAL}
-       c :: VEC{REAL}(3)
+      self :: IN
+      Jx,Jy,Jz :: MAT{REAL}, OUT
+      c :: VEC{REAL}(3), IN
+
       Ix,Iy,Iz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       Jx = ZERO; Jy = ZERO; Jz = ZERO
+
       Ix.create(.a.n_comp,.b.n_comp)
       Iy.create(.a.n_comp,.b.n_comp)
       Iz.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_solenoidal_jp_ints(Ix,Iy,Iz,c)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          Jx = Jx + Ix*cacb
          Jy = Jy + Iy*cacb
          Jz = Jz + Iz*cacb
+
       end
       end
+
       Iz.destroy; Iy.destroy; Ix.destroy
+
    end
 
    make_irrotational_jp_ints(Jx,Jy,Jz,c)
    ! Make the irrotational "Ji" integral matrices evaluated at position "c"
-      Jx,Jy,Jz :: MAT{REAL}
-       c :: VEC{REAL}(3)
+      self :: IN
+      Jx,Jy,Jz :: MAT{REAL}, OUT
+      c :: VEC{REAL}(3), IN
+
       Ix,Iy,Iz :: MAT{REAL}@
-       G :: GAUSSIAN2
+      G :: GAUSSIAN2
       a,b :: INT
       cacb :: REAL
+
       Jx = ZERO; Jy = ZERO; Jz = ZERO
+
       Ix.create(.a.n_comp,.b.n_comp)
       Iy.create(.a.n_comp,.b.n_comp)
       Iz.create(.a.n_comp,.b.n_comp)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_irrotational_jp_ints(Ix,Iy,Iz,c)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          Jx = Jx + Ix*cacb
          Jy = Jy + Iy*cacb
          Jz = Jz + Iz*cacb
+
       end
       end
+
       Iz.destroy; Iy.destroy; Ix.destroy
+
    end
 
    make_magnetic_jp_ints(Jx,Jy,Jz,c)
    ! Make the magnetic "Ji" integral matrices evaluated at position "c"
+      self :: IN
       Jx,Jy,Jz :: MAT{REAL}, OUT
       c :: VEC{REAL}(3), IN
 
@@ -5137,17 +5272,24 @@ contains
       Iz.create(.a.n_comp,.b.n_comp)
 
       ! The the pair (no exponents)
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
 
       ! Get the primitive integrals
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_magnetic_jp_ints(Ix,Iy,Iz,c)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          Jx = Jx + Ix*cacb
          Jy = Jy + Iy*cacb
          Jz = Jz + Iz*cacb
+
       end
       end
 
@@ -5160,8 +5302,9 @@ contains
 
    make_magnetic_S_ints(M,c)
    ! Make the magnetic "M(:,:,i,j)" integral matrices evaluated at position "c"
-      M :: MAT4{REAL}
-      c :: VEC{REAL}(3)
+      self :: IN
+      M :: MAT4{REAL}, OUT
+      c :: VEC{REAL}(3), IN
 
    ENSURE(M.dim3==3,"wrong shape for M")
    ENSURE(M.dim4==3,"wrong shape for M")
@@ -5177,13 +5320,22 @@ contains
       ! Primitive integrals
       I.create(.a.n_comp,.b.n_comp,3,3)
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_magnetic_S_ints(I,c)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          M = M + I*cacb
+
       end
       end
 
@@ -5194,8 +5346,9 @@ contains
 
    make_nabla_field_ints(M,c)
    ! Make the nabla field "M(:,:,i,j)" integral matrices evaluated at position "c"
-      M :: MAT4{REAL}
-      c :: VEC{REAL}(3)
+      self :: IN
+      M :: MAT4{REAL}, OUT
+      c :: VEC{REAL}(3), IN
 
    ENSURE(M.dim3==3,"wrong shape for M")
    ENSURE(M.dim4==3,"wrong shape for M")
@@ -5211,13 +5364,21 @@ contains
       ! Primitive integrals
       I.create(.a.n_comp,.b.n_comp,3,3)
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_nabla_field_ints(I,c)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          M = M + I*cacb
+
       end
       end
 
@@ -5228,8 +5389,9 @@ contains
 
    make_nabla_field_ints(M,N,c)
    ! Make the nabla field "M(:,:,i,j)" integral matrices evaluated at position "c"
-      M,N :: MAT4{REAL}
-      c :: VEC{REAL}(3)
+      self :: IN
+      M,N :: MAT4{REAL}, OUT
+      c :: VEC{REAL}(3), IN
 
    ENSURE(M.dim3==3,"wrong shape for M")
    ENSURE(M.dim4==3,"wrong shape for M")
@@ -5248,28 +5410,47 @@ contains
       ! Primitive integrals
       I.create(.a.n_comp,.b.n_comp,3,3)
 
-      G.set(.a.l,.a.position,ZERO,.b.l,.b.position,ZERO)
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.a.exponent(a),.b.exponent(b))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_nabla_field_ints(I,c)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          M = M + I*cacb
+
       end
       end
+
       ! Clean
       I.destroy
 
       J.create(.b.n_comp,.a.n_comp,3,3)
-      G.set(.b.l,.b.position,ZERO,.a.l,.a.position,ZERO)
+
+      G.a.set(.a.l,.a.position)
+      G.b.set(.b.l,.b.position)
+
       do b = 1,.b.n_cc
       do a = 1,.a.n_cc
-         G.set(.b.exponent(b),.a.exponent(a))
+
+         G.a.exponent = .a.exponent(a)
+         G.b.exponent = .b.exponent(b)
+
          G.make_nabla_field_ints(J,c)
+
          cacb = .a.contraction(a)*.b.contraction(b)
+
          N = N + J*cacb
+
       end
       end
+
       ! Clean
       J.destroy
 
@@ -6480,8 +6661,7 @@ contains
 !  Momentum transfer from A <-> B 
 !  ==============================
 
-
-   transfer_l_a_to_l_b(es,ab)
+   transfer_l_a_to_l_b(es,ab) ::: PURE
    ! Applies the transfer equation to (e|s) to give (a|b)
       self :: IN
       es :: VEC{REAL}, IN
@@ -6503,7 +6683,7 @@ contains
 
    end
 
-   transfer_l_a_same(es,ab) ::: private
+   transfer_l_a_same(es,ab) ::: private, PURE
    ! Applies the transfer equation to (e|s) to give (a|b) where shell a has the higher
    ! angular momentum. This version when a and b have the same center.
       self :: IN
@@ -6561,68 +6741,96 @@ contains
 
       case default                           
       
+         ! l == 1
+
          ! general (a|b) case
          fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1) 
 
-         ! No. of a's in int_new goes down
-         na = es.dim - GAUSSIAN_DATA:n_comp(.l_sum)
-
-         int_new.create(na,3)
-
-         ! Start with p shell on a
-         do a = 1,na                      
-            aa = a+fa
-            a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
-            a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
-            a3 = GAUSSIAN_DATA::index_p1(aa,3) - fa
-            int_new(a,1) = es(a1)
-            int_new(a,2) = es(a2)
-            int_new(a,3) = es(a3)
-         end
+            ! No. of a's in int_new goes down
+            na = es.dim - GAUSSIAN_DATA:n_comp(.l_sum)
+           
+            int_new.create(na,3)
+           
+            ! Start with p shell on a
+            do a = 1,na                      
+               aa = a+fa
+               a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
+               a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
+               a3 = GAUSSIAN_DATA::index_p1(aa,3) - fa
+               int_new(a,1) = es(a1)
+               int_new(a,2) = es(a2)
+               int_new(a,3) = es(a3)
+            end
+      
+         ! l == 2,.b.l-1
 
          fb = 1
          nb = 3
 
          do l = 2,.b.l-1
+
             ! No. of a's in int_new goes down
             na = na - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     
-            pb = fb      ! Previous offset for b, in int_old
-            fb = fb + nb ! Offset into index arrays
-            nb = GAUSSIAN_DATA:n_comp(l) ! Make only the needed b's
-            int_old => int_new
+
+            ! Previous offset for b, in int_old,
+            ! Offset into index arrays
+            pb = fb      
+            fb = fb + nb 
+
+            ! Make only the needed b's
+            nb = GAUSSIAN_DATA:n_comp(l) 
+            call move_alloc(int_new,int_old)
+
             int_new.create(na,nb)
+
             do b = 1,nb
-               b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb      ! b1 relative to int_old
-               t = GAUSSIAN_DATA::first_nonzero(b+fb)       ! Transfer component
+
+               ! b1 relative to int_old
+               b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb      
+
+               ! Transfer component
+               t  = GAUSSIAN_DATA::first_nonzero(b+fb)       
                do a = 1,na
                   a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
                   int_new(a,b) = int_old(a1,b1)
                end
+
             end
             int_old.destroy
+
          end
 
+         ! l == .b.l
          ! Final transfer into (a|b)
-         na = .a.n_comp                   
-         pb = fb
-         fb = fb + nb
-         nb = .b.n_comp
-         int_old => int_new
-         do b = 1,nb
-            b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb
-            t = GAUSSIAN_DATA::first_nonzero(b+fb)
-            do a = 1,na
-               a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
-               ab(a,b) = int_old(a1,b1)
+
+
+            ! No. of a's in int_new goes down
+            na = .a.n_comp                   
+
+            ! Previous offset for b, in int_old,
+            ! Offset into index arrays
+            pb = fb
+            fb = fb + nb
+
+            ! Make only the needed b's
+            nb = .b.n_comp
+            call move_alloc(int_new,int_old)
+
+            do b = 1,nb
+               b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb
+               t = GAUSSIAN_DATA::first_nonzero(b+fb)
+               do a = 1,na
+                  a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
+                  ab(a,b) = int_old(a1,b1)
+               end
             end
-         end
-         int_old.destroy
+            int_old.destroy
 
       end
 
    end
 
-   transfer_l_b_same(es,ab) ::: private
+   transfer_l_b_same(es,ab) ::: private, PURE
    ! Applies the transfer equation to (e|s) to give (a|b) where shell b has the higher
    ! angular momentum. This version when a and b have the same center.
       self :: IN
@@ -6682,71 +6890,95 @@ contains
 
       case default
 
+         ! l == 1
          ! Offset into the index array
          fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)           
 
-         ! No. of b's in int_new goes down
-         nb = es.dim - GAUSSIAN_DATA:n_comp(.l_sum)        
+            ! No. of b's in int_new goes down
+            nb = es.dim - GAUSSIAN_DATA:n_comp(.l_sum)        
+           
+            int_new.create(nb,3) ! NOTE: int_new ia transposed
+           
+            ! Start with p shell on a
+            do b = 1,nb                      
+               bb = b+fb
+               b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
+               b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
+               b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
+               int_new(b,1) = es(b1)
+               int_new(b,2) = es(b2)
+               int_new(b,3) = es(b3)
+            end
 
-         int_new.create(nb,3) ! NOTE: int_new ia transposed
-
-         ! Start with p shell on a
-         do b = 1,nb                      
-            bb = b+fb
-            b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
-            b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
-            b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
-            int_new(b,1) = es(b1)
-            int_new(b,2) = es(b2)
-            int_new(b,3) = es(b3)
-         end
-
+         ! l == 2,.a.l-1
          fa = 1
          na = 3
 
          do l = 2,.a.l-1
+
             ! No. of b's in int_new goes down
             nb = nb - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     
-            pa = fa      ! Previous offset for a, in int_old
-            fa = fa + na ! Offset into index arrays
-            na = GAUSSIAN_DATA:n_comp(l)                   
+
+            ! Previous offset for a, in int_old
+            ! Offset into index arrays
+            pa = fa      
+            fa = fa + na 
+
             ! Make only the needed a's
-            int_old => int_new
-            int_new.create(nb,na)  ! TRANSPOSED!
+            na = GAUSSIAN_DATA:n_comp(l)                   
+            call move_alloc(int_new,int_old)
+
+            ! TRANSPOSED!
+            int_new.create(nb,na)  
+
             do a = 1,na
+
                ! b1 relative to int_old
                a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa      
-               t = GAUSSIAN_DATA::first_nonzero(a+fa)       
+
                ! Transfer component
+               t = GAUSSIAN_DATA::first_nonzero(a+fa)       
                do b = 1,nb
                   b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
                   int_new(b,a) = int_old(b1,a1)
                end
+
             end
             int_old.destroy
+
          end
 
+         ! l == a.l
          ! Final transfer into (a|b)
-         nb = .b.n_comp                   
-         pa = fa
-         fa = fa + na
-         na = .a.n_comp
-         int_old => int_new
-         do a = 1,na
-            a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa
-            t = GAUSSIAN_DATA::first_nonzero(a+fa)
-            do b = 1,nb
-               b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
-               ab(a,b) = int_old(b1,a1)
+
+            ! No. of b's in int_new goes down
+            nb = .b.n_comp                   
+
+
+            ! Previous offset for a, in int_old
+            ! Offset into index arrays
+            pa = fa
+            fa = fa + na
+
+            ! Make only the needed a's
+            na = .a.n_comp
+            call move_alloc(int_new,int_old)
+
+            do a = 1,na
+               a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa
+               t = GAUSSIAN_DATA::first_nonzero(a+fa)
+               do b = 1,nb
+                  b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
+                  ab(a,b) = int_old(b1,a1)
+               end
             end
-         end
-         int_old.destroy
+            int_old.destroy
 
         end ! case statement
 
    end
 
-   transfer_l_a_high(es,ab) ::: private
+   transfer_l_a_high(es,ab) ::: private, PURE
    ! Applies the transfer equation to (e|s) to give (a|b) where shell a has the higher
    ! angular momentum. NOTE: .set_hrr_indexing_arrays must be called beforehand.
       self :: IN
@@ -6764,12 +6996,23 @@ contains
       a,b,a1,a2,a3,aa,b1,l,na,fa,nb,fb,pb,t :: INT
 
       select case (.b.l)
-        case (0)                               ! (a|s) case
+
+        case (0)                               
+
+           ! (a|s) case
            ab(:,1) = es
+
         case (1)
+
+           ! (a|p) case
            R  = .a.position - .b.position
-           R1 = R(1); R2 = R(2); R3 = R(3)
-           if (.a.l==1) then                   ! (p|p) case
+           R1 = R(1)
+           R2 = R(2)
+           R3 = R(3)
+
+           if (.a.l==1) then                   
+
+              ! (p|p) case
               es_a = es(1)
               ab(1,1) = es(4) + R1*es_a
               ab(1,2) = es(7) + R2*es_a
@@ -6782,10 +7025,17 @@ contains
               ab(3,1) = es(8) + R1*es_a
               ab(3,2) = es(9) + R2*es_a
               ab(3,3) = es(6) + R3*es_a
-           else                                ! (a|p) case
+
+           else                                
+           
+              ! (a|p) case
               na = .a.n_comp
-              fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)        ! Offset into the index array
-              do a = 1,na                      ! Put es straight to ab
+
+              ! Offset into the index array
+              fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)        
+
+              ! Put es straight to ab
+              do a = 1,na                      
                  aa = a+fa
                  a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
                  a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
@@ -6795,14 +7045,28 @@ contains
                  ab(a,2) = es(a2) + R2*es_a
                  ab(a,3) = es(a3) + R3*es_a
               end
+
            end
-        case default                           ! general (a|b) case
+
+        case default                           
+        
+           ! general (a|b) case
            R  = .a.position - .b.position
-           R1 = R(1); R2 = R(2); R3 = R(3)
-           fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)           ! Offset into the index array
-           na = es.dim - GAUSSIAN_DATA:n_comp(.l_sum)        ! No. of a's in int_new goes down
-           int_new.create(na,3)
-              do a = 1,na                      ! Start with p shell on a
+           R1 = R(1)
+           R2 = R(2)
+           R3 = R(3)
+
+           ! l == 1
+
+              ! Offset into the index array
+              ! No. of a's in int_new goes down
+              fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)           
+              na = es.dim - GAUSSIAN_DATA:n_comp(.l_sum)        
+             
+              int_new.create(na,3)
+
+              ! Start with p shell on a
+              do a = 1,na                      
                  aa = a+fa
                  a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
                  a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
@@ -6812,31 +7076,60 @@ contains
                  int_new(a,2) = es(a2) + R2*es_a
                  int_new(a,3) = es(a3) + R3*es_a
               end
+
+           ! l == 2,.b.l-1
            fb = 1
            nb = 3
+
            do l = 2,.b.l-1
-              na = na - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     ! No. of a's in int_new goes down
-              pb = fb                          ! Previous offset for b, in int_old
-              fb = fb + nb                     ! Offset into index arrays
-              nb = GAUSSIAN_DATA:n_comp(l)                   ! Make only the needed b's
-              int_old => int_new
+
+              ! No. of a's in int_new goes down
+              na = na - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     
+
+              ! Previous offset for b, in int_old,
+              ! Offset into index arrays
+              pb = fb                          
+              fb = fb + nb                     
+
+              ! Make only the needed b's
+              nb = GAUSSIAN_DATA:n_comp(l)                   
+              call move_alloc(int_new,int_old)
+
               int_new.create(na,nb)
+
               do b = 1,nb
-                 b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb      ! b1 relative to int_old
-                 t = GAUSSIAN_DATA::first_nonzero(b+fb)       ! Transfer component
+
+                 ! b1 relative to int_old
+                 b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb      
+
+                 ! Transfer component
+                 t  = GAUSSIAN_DATA::first_nonzero(b+fb)       
                  Rt = R(t)
                  do a = 1,na
                     a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
                     int_new(a,b) = int_old(a1,b1) + Rt*int_old(a,b1)
                  end
+
               end
               int_old.destroy
+
            end
-              na = .a.n_comp                   ! Final transfer into (a|b)
+
+           ! l == 2,.b.l-1
+           ! Final transfer into (a|b)
+
+              ! No. of a's in int_new goes down
+              na = .a.n_comp                   
+
+              ! Previous offset for b, in int_old,
+              ! Offset into index arrays
               pb = fb
               fb = fb + nb
+
+              ! Make only the needed b's
               nb = .b.n_comp
-              int_old => int_new
+              cal move_alloc(int_new,int_old)
+
               do b = 1,nb
                  b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb
                  t = GAUSSIAN_DATA::first_nonzero(b+fb)
@@ -6845,12 +7138,14 @@ contains
                     a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
                     ab(a,b) = int_old(a1,b1) + Rt*int_old(a,b1)
                  end
-               end
-               int_old.destroy
+              end
+              int_old.destroy
+
         end ! case statement
+
    end
 
-   transfer_l_b_high(es,ab) ::: private
+   transfer_l_b_high(es,ab) ::: private, PURE
    ! Applies the transfer equation to (e|s) to give (a|b) where shell b has the higher
    ! angular momentum. NOTE: .set_hrr_indexing_arrays must be called beforehand.
       self :: IN
@@ -6868,12 +7163,23 @@ contains
       a,b,a1,b1,b2,b3,bb,l,na,fa,pa,nb,fb,t :: INT
 
       select case (.a.l)
-        case (0)                               ! (s|b) case
+
+        case (0)                               
+
+           ! (s|b) case
            ab(1,:) = es
+
         case (1)
+
+           ! (p|b) case
            R  = .b.position - .a.position
-           R1 = R(1); R2 = R(2); R3 = R(3)
-           if (.b.l==1) then                   ! (p|p) case
+           R1 = R(1)
+           R2 = R(2)
+           R3 = R(3)
+
+           if (.b.l==1) then                   
+
+              ! (p|p) case
               es_b = es(1)
               ab(1,1) = es(4) + R1*es_b
               ab(2,1) = es(7) + R2*es_b
@@ -6886,10 +7192,17 @@ contains
               ab(1,3) = es(8) + R1*es_b
               ab(2,3) = es(9) + R2*es_b
               ab(3,3) = es(6) + R3*es_b
-           else                                ! (p|b) case
+
+           else                                
+           
+              ! (p|b) case
               nb = .b.n_comp
-              fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)        ! Offset into the index array
-              do b = 1,nb                      ! Put es straight to ab
+
+              ! Offset into the index array
+              fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)        
+
+              ! Put es straight to ab
+              do b = 1,nb                      
                  bb = b+fb
                  b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
                  b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
@@ -6899,14 +7212,29 @@ contains
                  ab(2,b) = es(b2) + R2*es_b
                  ab(3,b) = es(b3) + R3*es_b
               end
+
            end
+
        case default
+
            R  = .b.position - .a.position
-           R1 = R(1); R2 = R(2); R3 = R(3)
-           fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)           ! Offset into the index array
-           nb = es.dim - GAUSSIAN_DATA:n_comp(.l_sum)        ! No. of b's in int_new goes down
-           int_new.create(nb,3)                ! NOTE: int_new ia transposed
-              do b = 1,nb                      ! Start with p shell on a
+           R1 = R(1)
+           R2 = R(2)
+
+           ! l == 1
+           R3 = R(3)
+
+           ! Offset into the index array
+           fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)           
+
+              ! No. of b's in int_new goes down
+              nb = es.dim - GAUSSIAN_DATA:n_comp(.l_sum)        
+   
+              ! NOTE: int_new is transposed
+              int_new.create(nb,3)                
+
+              ! Start with p shell on a
+              do b = 1,nb                      
                  bb = b+fb
                  b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
                  b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
@@ -6916,31 +7244,61 @@ contains
                  int_new(b,2) = es(b2) + R2*es_b
                  int_new(b,3) = es(b3) + R3*es_b
               end
+
+           ! l == 2,.a.l-1
            fa = 1
            na = 3
+
            do l = 2,.a.l-1
-              nb = nb - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     ! No. of b's in int_new goes down
-              pa = fa                          ! Previous offset for a, in int_old
-              fa = fa + na                     ! Offset into index arrays
-              na = GAUSSIAN_DATA:n_comp(l)                   ! Make only the needed a's
-              int_old => int_new
-              int_new.create(nb,na)            ! TRANSPOSED!
+
+              ! No. of b's in int_new goes down
+              nb = nb - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     
+
+              ! Previous offset for a, in int_old,
+              ! Offset into index arrays
+              pa = fa                          
+              fa = fa + na                     
+
+              ! Make only the needed a's
+              na = GAUSSIAN_DATA:n_comp(l)                   
+              call move_alloc(int_new,int_old)
+
+              ! TRANSPOSED!
+              int_new.create(nb,na)            
+
               do a = 1,na
-                 a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa      ! b1 relative to int_old
-                 t = GAUSSIAN_DATA::first_nonzero(a+fa)       ! Transfer component
+
+                 ! a1 relative to int_old
+                 a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa      
+
+                 ! Transfer component
+                 t  = GAUSSIAN_DATA::first_nonzero(a+fa)       
                  Rt = R(t)
                  do b = 1,nb
                     b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
                     int_new(b,a) = int_old(b1,a1) + Rt*int_old(b,a1)
                  end
+
               end
               int_old.destroy
+
            end
-              nb = .b.n_comp                   ! Final transfer into (a|b)
+
+           ! l == .a.l-1
+           ! Final transfer into (a|b)
+
+              ! No. of b's in int_new goes down
+              nb = .b.n_comp                   
+
+              ! Previous offset for a, in int_old,
+              ! Offset into index arrays
               pa = fa
               fa = fa + na
+
+              ! Make only the needed a's
               na = .a.n_comp
-              int_old => int_new
+              call move_alloc(int_new,int_old)
+
               do a = 1,na
                  a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa
                  t = GAUSSIAN_DATA::first_nonzero(a+fa)
@@ -6951,26 +7309,33 @@ contains
                  end
               end
               int_old.destroy
+
         end ! case statement
    end
 
-   transfer_ft(es,ab)
+   transfer_ft(es,ab) ::: PURE
    ! Applies the transfer equation to (e|s) to give (a|b)
       self :: IN
       es :: MAT{CPX}, IN
       ab :: MAT3{CPX}, OUT
+
       if (.same_center) then
-        if (.a.l > .b.l) then; .transfer_l_a_same_ft(es,ab)
-        else;                  .transfer_l_b_same_ft(es,ab)
-        end
+
+         if (.a.l > .b.l) then; .transfer_l_a_same_ft(es,ab)
+         else;                  .transfer_l_b_same_ft(es,ab)
+         end
+
       else
-        if (.a.l > .b.l) then; .transfer_l_a_high_ft(es,ab)
-        else;                  .transfer_l_b_high_ft(es,ab)
-        end
+
+         if (.a.l > .b.l) then; .transfer_l_a_high_ft(es,ab)
+         else;                  .transfer_l_b_high_ft(es,ab)
+         end
+
       end
+
    end
 
-   transfer_l_a_same_ft(es,ab) ::: private
+   transfer_l_a_same_ft(es,ab) ::: private, PURE
    ! Applies the transfer equation to (e|s) to give (a|b) where shell a has the higher
    ! angular momentum. This version when a and b have the same center.
       self :: IN
@@ -6989,10 +7354,17 @@ contains
       nk = es.dim1
 
       select case (.b.l)
-        case (0)                               ! (a|s) case
+
+        case (0)                               
+
+           ! (a|s) case
            ab(:,:,1) = es
+
         case (1)
-           if (.a.l==1) then                   ! (p|p) case
+
+           if (.a.l==1) then                   
+
+              ! (p|p) case
               ab(:,1,1) = es(:,4)
               ab(:,1,2) = es(:,7)
               ab(:,1,3) = es(:,8)
@@ -7002,10 +7374,17 @@ contains
               ab(:,3,1) = es(:,8)
               ab(:,3,2) = es(:,9)
               ab(:,3,3) = es(:,6)
-           else                                ! (a|p) case
+
+           else                                
+           
+              ! (a|p) case
               na = .a.n_comp
-              fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)        ! Offset into the index array
-              do a = 1,na                      ! Put es straight to ab
+
+              ! Offset into the index array
+              fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)        
+
+              ! Put es straight to ab
+              do a = 1,na                      
                  aa = a+fa
                  a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
                  a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
@@ -7014,12 +7393,23 @@ contains
                  ab(:,a,2) = es(:,a2)
                  ab(:,a,3) = es(:,a3)
               end
+
            end
-        case default                           ! general (a|b) case
-           fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)           ! Offset into the index array
-           na = es.dim2 - GAUSSIAN_DATA:n_comp(.l_sum)       ! No. of a's in int_new goes down
+
+        case default                           
+
+           ! general (a|b) case
+           fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)           
+
+           ! l == 1
+
+           ! Offset into the index array
+           ! No. of a's in int_new goes down
+           na = es.dim2 - GAUSSIAN_DATA:n_comp(.l_sum)       
            int_new.create(nk,na,3)
-              do a = 1,na                      ! Start with p shell on a
+
+              ! Start with p shell on a
+              do a = 1,na                      
                  aa = a+fa
                  a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
                  a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
@@ -7028,30 +7418,58 @@ contains
                  int_new(:,a,2) = es(:,a2)
                  int_new(:,a,3) = es(:,a3)
               end
+
+           ! l == 2,.b.l-1
            fb = 1
            nb = 3
+
            do l = 2,.b.l-1
-              na = na - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     ! No. of a's in int_new goes down
-              pb = fb                          ! Previous offset for b, in int_old
-              fb = fb + nb                     ! Offset into index arrays
-              nb = GAUSSIAN_DATA:n_comp(l)                   ! Make only the needed b's
-              int_old => int_new
+
+              ! No. of a's in int_new goes down
+              na = na - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     
+
+              ! Previous offset for b, in int_old
+              ! Offset into index arrays
+              pb = fb                          
+              fb = fb + nb                     
+
+              ! Make only the needed b's
+              nb = GAUSSIAN_DATA:n_comp(l)                   
+              call move_alloc(int_new,int_old)
+
               int_new.create(nk,na,nb)
+
               do b = 1,nb
-                 b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb      ! b1 relative to int_old
-                 t = GAUSSIAN_DATA::first_nonzero(b+fb)       ! Transfer component
+                 ! b1 relative to int_old
+                 b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb      
+
+                 ! Transfer component
+                 t = GAUSSIAN_DATA::first_nonzero(b+fb)       
                  do a = 1,na
                     a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
                     int_new(:,a,b) = int_old(:,a1,b1)
                  end
+
               end
               int_old.destroy
+
            end
-              na = .a.n_comp                   ! Final transfer into (a|b)
+
+           ! Final transfer into (a|b)
+           ! l == b.l
+
+              ! No. of a's in int_new goes down
+              na = .a.n_comp                   
+
+              ! Previous offset for b, in int_old
+              ! Offset into index arrays
               pb = fb
               fb = fb + nb
+
+              ! Make only the needed b's
               nb = .b.n_comp
-              int_old => int_new
+              call move_alloc(int_new,int_old)
+
               do b = 1,nb
                  b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb
                  t = GAUSSIAN_DATA::first_nonzero(b+fb)
@@ -7059,12 +7477,14 @@ contains
                     a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
                     ab(:,a,b) = int_old(:,a1,b1)
                  end
-               end
-               int_old.destroy
+              end
+              int_old.destroy
+
         end ! case statement
+
    end
 
-   transfer_l_b_same_ft(es,ab) ::: private
+   transfer_l_b_same_ft(es,ab) ::: private, PURE
    ! Applies the transfer equation to (e|s) to give (a|b) where shell b has the higher
    ! angular momentum. This version when a and b have the same center.
       self :: IN
@@ -7083,86 +7503,142 @@ contains
       nk = es.dim1
 
       select case (.a.l)
-        case (0)                               ! (s|b) case
-           ab(:,1,:) = es
-        case (1)
-           if (.b.l==1) then                   ! (p|p) case
-              ab(:,1,1) = es(:,4)
-              ab(:,2,1) = es(:,7)
-              ab(:,3,1) = es(:,8)
-              ab(:,1,2) = es(:,7)
-              ab(:,2,2) = es(:,5)
-              ab(:,3,2) = es(:,9)
-              ab(:,1,3) = es(:,8)
-              ab(:,2,3) = es(:,9)
-              ab(:,3,3) = es(:,6)
-           else                                ! (p|b) case
-              nb = .b.n_comp
-              fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)        ! Offset into the index array
-              do b = 1,nb                      ! Put es straight to ab
-                 bb = b+fb
-                 b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
-                 b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
-                 b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
-                 ab(:,1,b) = es(:,b1)
-                 ab(:,2,b) = es(:,b2)
-                 ab(:,3,b) = es(:,b3)
-              end
-           end
-       case default
-           fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)           ! Offset into the index array
-           nb = es.dim2 - GAUSSIAN_DATA:n_comp(.l_sum)        ! No. of b's in int_new goes down
-           int_new.create(nk,nb,3)                ! NOTE: int_new ia transposed
-              do b = 1,nb                      ! Start with p shell on a
-                 bb = b+fb
-                 b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
-                 b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
-                 b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
-                 int_new(:,b,1) = es(:,b1)
-                 int_new(:,b,2) = es(:,b2)
-                 int_new(:,b,3) = es(:,b3)
-              end
-           fa = 1
-           na = 3
-           do l = 2,.a.l-1
-              nb = nb - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     ! No. of b's in int_new goes down
-              pa = fa                          ! Previous offset for a, in int_old
-              fa = fa + na                     ! Offset into index arrays
-              na = GAUSSIAN_DATA:n_comp(l)                   ! Make only the needed a's
-              int_old => int_new
-              int_new.create(nk,nb,na)            ! TRANSPOSED!
-              do a = 1,na
-                 a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa      ! b1 relative to int_old
-                 t = GAUSSIAN_DATA::first_nonzero(a+fa)       ! Transfer component
-                 do b = 1,nb
-                    b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
-                    int_new(:,b,a) = int_old(:,b1,a1)
-                 end
-              end
-              int_old.destroy
-           end
-              nb = .b.n_comp                   ! Final transfer into (a|b)
-              pa = fa
-              fa = fa + na
-              na = .a.n_comp
-              int_old => int_new
-              do a = 1,na
-                 a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa
-                 t = GAUSSIAN_DATA::first_nonzero(a+fa)
-                 do b = 1,nb
-                    b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
-                    ab(:,a,b) = int_old(:,b1,a1)
-                 end
-              end
-              int_old.destroy
-        end ! case statement
+
+      case (0)                               
+      
+         ! (s|b) case
+         ab(:,1,:) = es
+
+      case (1)
+
+         if (.b.l==1) then                   
+
+            ! (p|p) case
+            ab(:,1,1) = es(:,4)
+            ab(:,2,1) = es(:,7)
+            ab(:,3,1) = es(:,8)
+            ab(:,1,2) = es(:,7)
+            ab(:,2,2) = es(:,5)
+            ab(:,3,2) = es(:,9)
+            ab(:,1,3) = es(:,8)
+            ab(:,2,3) = es(:,9)
+            ab(:,3,3) = es(:,6)
+
+         else                                
+         
+            ! (p|b) case
+            nb = .b.n_comp
+
+            ! Offset into the index array
+            fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)        
+            do b = 1,nb                      ! Put es straight to ab
+               bb = b+fb
+               b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
+               b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
+               b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
+               ab(:,1,b) = es(:,b1)
+               ab(:,2,b) = es(:,b2)
+               ab(:,3,b) = es(:,b3)
+            end
+
+         end
+
+      case default
+
+         ! Offset into the index array
+         fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)           
+
+         ! l == 1
+
+         ! No. of b's in int_new goes down
+         ! NOTE: int_new is transposed
+         nb = es.dim2 - GAUSSIAN_DATA:n_comp(.l_sum)        
+
+            int_new.create(nk,nb,3)                
+
+            ! Start with p shell on a
+            do b = 1,nb                      
+               bb = b+fb
+               b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
+               b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
+               b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
+               int_new(:,b,1) = es(:,b1)
+               int_new(:,b,2) = es(:,b2)
+               int_new(:,b,3) = es(:,b3)
+            end
+
+         ! l == 2,.a.l-1
+         fa = 1
+         na = 3
+
+         do l = 2,.a.l-1
+
+            ! No. of b's in int_new goes down
+            nb = nb - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     
+
+            ! Previous offset for a, in int_old
+            pa = fa                          
+
+            ! Offset into index arrays
+            ! Make only the needed a's
+            fa = fa + na                     
+            na = GAUSSIAN_DATA:n_comp(l)                   
+            call move_alloc(int_new,int_old)
+
+            ! TRANSPOSED!
+            int_new.create(nk,nb,na)            
+
+            do a = 1,na
+
+               ! b1 relative to int_old
+               a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa      
+
+               ! Transfer component
+               t  = GAUSSIAN_DATA::first_nonzero(a+fa)       
+               do b = 1,nb
+                  b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
+                  int_new(:,b,a) = int_old(:,b1,a1)
+               end
+
+            end
+            int_old.destroy
+
+         end
+
+         ! l == a.l
+         ! Final transfer into (a|b)
+
+            ! No. of b's in int_new goes down
+            nb = .b.n_comp                   
+
+            ! Previous offset for a, in int_old
+            pa = fa
+            fa = fa + na
+
+            ! Offset into index arrays
+            ! Make only the needed a's
+            na = .a.n_comp
+            call move_alloc(int_new,int_old)
+
+            do a = 1,na
+               a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa
+               t = GAUSSIAN_DATA::first_nonzero(a+fa)
+               do b = 1,nb
+                  b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
+                  ab(:,a,b) = int_old(:,b1,a1)
+               end
+            end
+            int_old.destroy
+
+      end ! case statement
+
    end
 
-   transfer_l_a_high_ft(es,ab) ::: private
+   transfer_l_a_high_ft(es,ab) ::: private, PURE
    ! Applies the transfer equation to (e|s) to give (a|b) where shell a has the higher
    ! angular momentum. NOTE: .set_hrr_indexing_arrays must be called beforehand.
       self :: IN
-      es :: MAT{CPX}, target, IN
+      es :: MAT{CPX}, IN
       ab :: MAT3{CPX}, OUT
 
    ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
@@ -7173,104 +7649,162 @@ contains
 
       int_new,int_old :: MAT3{CPX}@
       R :: VEC{REAL}(3)
-      es_a :: VEC{CPX}@
       Rt,R1,R2,R3 :: REAL
       nk,a,b,a1,a2,a3,aa,b1,l,na,fa,nb,fb,pb,t :: INT
 
       nk = es.dim1
 
       select case (.b.l)
-        case (0)                               ! (a|s) case
-           ab(:,:,1) = es
-        case (1)
-           R  = .a.position - .b.position
-           R1 = R(1); R2 = R(2); R3 = R(3)
-           if (.a.l==1) then                   ! (p|p) case
-              es_a => es(:,1)
-              ab(:,1,1) = es(:,4) + R1*es_a
-              ab(:,1,2) = es(:,7) + R2*es_a
-              ab(:,1,3) = es(:,8) + R3*es_a
-              es_a => es(:,2)
-              ab(:,2,1) = es(:,7) + R1*es_a
-              ab(:,2,2) = es(:,5) + R2*es_a
-              ab(:,2,3) = es(:,9) + R3*es_a
-              es_a => es(:,3)
-              ab(:,3,1) = es(:,8) + R1*es_a
-              ab(:,3,2) = es(:,9) + R2*es_a
-              ab(:,3,3) = es(:,6) + R3*es_a
-           else                                ! (a|p) case
-              na = .a.n_comp
-              fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)        ! Offset into the index array
-              do a = 1,na                      ! Put es straight to ab
-                 aa = a+fa
-                 a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
-                 a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
-                 a3 = GAUSSIAN_DATA::index_p1(aa,3) - fa
-                 es_a => es(:,a)
-                 ab(:,a,1) = es(:,a1) + R1*es_a
-                 ab(:,a,2) = es(:,a2) + R2*es_a
-                 ab(:,a,3) = es(:,a3) + R3*es_a
-              end
-           end
-        case default                           ! general (a|b) case
-           R  = .a.position - .b.position
-           R1 = R(1); R2 = R(2); R3 = R(3)
-           fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)           ! Offset into the index array
-           na = es.dim2 - GAUSSIAN_DATA:n_comp(.l_sum)        ! No. of a's in int_new goes down
-           int_new.create(nk,na,3)
-              do a = 1,na                      ! Start with p shell on a
-                 aa = a+fa
-                 a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
-                 a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
-                 a3 = GAUSSIAN_DATA::index_p1(aa,3) - fa
-                 es_a => es(:,a)
-                 int_new(:,a,1) = es(:,a1) + R1*es_a
-                 int_new(:,a,2) = es(:,a2) + R2*es_a
-                 int_new(:,a,3) = es(:,a3) + R3*es_a
-              end
-           fb = 1
-           nb = 3
-           do l = 2,.b.l-1
-              na = na - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     ! No. of a's in int_new goes down
-              pb = fb                          ! Previous offset for b, in int_old
-              fb = fb + nb                     ! Offset into index arrays
-              nb = GAUSSIAN_DATA:n_comp(l)                   ! Make only the needed b's
-              int_old => int_new
-              int_new.create(nk,na,nb)
-              do b = 1,nb
-                 b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb      ! b1 relative to int_old
-                 t = GAUSSIAN_DATA::first_nonzero(b+fb)       ! Transfer component
-                 Rt = R(t)
-                 do a = 1,na
-                    a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
-                    int_new(:,a,b) = int_old(:,a1,b1) + Rt*int_old(:,a,b1)
-                 end
-              end
-              int_old.destroy
-           end
-              na = .a.n_comp                   ! Final transfer into (a|b)
-              pb = fb
-              fb = fb + nb
-              nb = .b.n_comp
-              int_old => int_new
-              do b = 1,nb
-                 b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb
-                 t = GAUSSIAN_DATA::first_nonzero(b+fb)
-                 Rt = R(t)
-                 do a = 1,na
-                    a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
-                    ab(:,a,b) = int_old(:,a1,b1) + Rt*int_old(:,a,b1)
-                 end
+
+      case (0)                               
+
+         ! (a|s) case
+         ab(:,:,1) = es
+
+      case (1)
+
+         R  = .a.position - .b.position
+         R1 = R(1)
+         R2 = R(2)
+         R3 = R(3)
+
+         if (.a.l==1) then                   
+         
+            ! (p|p) case
+            ab(:,1,1) = es(:,4) + R1*es(:,1)
+            ab(:,1,2) = es(:,7) + R2*es(:,1)
+            ab(:,1,3) = es(:,8) + R3*es(:,1)
+            ab(:,2,1) = es(:,7) + R1*es(:,2)
+            ab(:,2,2) = es(:,5) + R2*es(:,2)
+            ab(:,2,3) = es(:,9) + R3*es(:,2)
+            ab(:,3,1) = es(:,8) + R1*es(:,3)
+            ab(:,3,2) = es(:,9) + R2*es(:,3)
+            ab(:,3,3) = es(:,6) + R3*es(:,3)
+
+         else                                
+         
+            ! (a|p) case
+            na = .a.n_comp
+
+            ! Offset into the index array
+            fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)        
+
+            ! Put es straight to ab
+            do a = 1,na                      
+               aa = a+fa
+               a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
+               a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
+               a3 = GAUSSIAN_DATA::index_p1(aa,3) - fa
+               ab(:,a,1) = es(:,a1) + R1*es(:,a)
+               ab(:,a,2) = es(:,a2) + R2*es(:,a)
+               ab(:,a,3) = es(:,a3) + R3*es(:,a)
+            end
+         end
+
+      case default                           
+      
+         ! general (a|b) case
+         R  = .a.position - .b.position
+         R1 = R(1)
+         R2 = R(2)
+         R3 = R(3)
+
+         ! l == 1
+
+         ! Offset into the index array
+         fa = GAUSSIAN_DATA:n_comp_up_to(.a.l-1)           
+
+            ! No. of a's in int_new goes down
+            na = es.dim2 - GAUSSIAN_DATA:n_comp(.l_sum)        
+
+            int_new.create(nk,na,3)
+
+            ! Start with p shell on a
+            do a = 1,na                      
+               aa = a+fa
+               a1 = GAUSSIAN_DATA::index_p1(aa,1) - fa
+               a2 = GAUSSIAN_DATA::index_p1(aa,2) - fa
+               a3 = GAUSSIAN_DATA::index_p1(aa,3) - fa
+               int_new(:,a,1) = es(:,a1) + R1*es(:,a)
+               int_new(:,a,2) = es(:,a2) + R2*es(:,a)
+               int_new(:,a,3) = es(:,a3) + R3*es(:,a)
+            end
+
+         ! l == 2,.b.l-1
+         ! Offset into the index array
+         fb = 1
+         nb = 3
+
+         do l = 2,.b.l-1
+
+            ! No. of a's in int_new goes down
+            na = na - GAUSSIAN_DATA:n_comp(.l_sum-l+1)     
+
+            ! Previous offset for b, in int_old
+            ! Offset into index arrays
+            pb = fb                          
+            fb = fb + nb                     
+
+            ! Make only the needed b's
+            nb = GAUSSIAN_DATA:n_comp(l)                   
+            call move_alloc(int_new,int_old)
+
+            int_new.create(nk,na,nb)
+
+            do b = 1,nb
+
+               ! b1 relative to int_old
+               b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb      
+
+               ! Transfer component
+               t  = GAUSSIAN_DATA::first_nonzero(b+fb)       
+               Rt = R(t)
+               do a = 1,na
+                  a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
+                  int_new(:,a,b) = int_old(:,a1,b1) + Rt*int_old(:,a,b1)
                end
-               int_old.destroy
-        end ! case statement
+
+            end
+
+            int_old.destroy
+
+         end
+
+         ! l == .b.l
+         ! Final transfer into (a|b)
+
+            ! No. of a's in int_new goes down
+            na = .a.n_comp                   
+
+            ! Previous offset for b, in int_old
+            ! Offset into index arrays
+            pb = fb
+            fb = fb + nb
+
+            ! Make only the needed b's
+            nb = .b.n_comp
+            call move_alloc(int_new,int_old)
+
+            do b = 1,nb
+               b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb
+               t = GAUSSIAN_DATA::first_nonzero(b+fb)
+               Rt = R(t)
+               do a = 1,na
+                  a1 = GAUSSIAN_DATA::index_p1(a+fa,t) - fa
+                  ab(:,a,b) = int_old(:,a1,b1) + Rt*int_old(:,a,b1)
+               end
+            end
+            int_old.destroy
+
+      end ! case statement
+
    end
 
-   transfer_l_b_high_ft(es,ab) ::: private
+   transfer_l_b_high_ft(es,ab) ::: private, PURE
    ! Applies the transfer equation to (e|s) to give (a|b) where shell b has the higher
    ! angular momentum. NOTE: .set_hrr_indexing_arrays must be called beforehand.
       self :: IN
-      es :: MAT{CPX}, target, IN
+      es :: MAT{CPX}, IN
       ab :: MAT3{CPX}, OUT
 
    ENSURE(.b.l>=.a.l,"shell b must have higher momentum than a")
@@ -7281,179 +7815,232 @@ contains
 
       int_new,int_old :: MAT3{CPX}@
       R :: VEC{REAL}(3)
-      es_b :: VEC{CPX}@
       Rt,R1,R2,R3 :: REAL
       nk,a,b,a1,b1,b2,b3,bb,l,na,fa,pa,nb,fb,t :: INT
 
       nk = es.dim1
 
       select case (.a.l)
-        case (0)                                ! (s|b) case
-           ab(:,1,:) = es
-        case (1)
-           R  = .b.position - .a.position
-           R1 = R(1); R2 = R(2); R3 = R(3)
-           if (.b.l==1) then                    ! (p|p) case
-              es_b => es(:,1)
-              ab(:,1,1) = es(:,4) + R1*es_b
-              ab(:,2,1) = es(:,7) + R2*es_b
-              ab(:,3,1) = es(:,8) + R3*es_b
-              es_b => es(:,2)
-              ab(:,1,2) = es(:,7) + R1*es_b
-              ab(:,2,2) = es(:,5) + R2*es_b
-              ab(:,3,2) = es(:,9) + R3*es_b
-              es_b => es(:,3)
-              ab(:,1,3) = es(:,8) + R1*es_b
-              ab(:,2,3) = es(:,9) + R2*es_b
-              ab(:,3,3) = es(:,6) + R3*es_b
-           else                                 ! (p|b) case
-              nb = .b.n_comp
-              fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1) ! Offset into the index array
-              do b = 1,nb                       ! Put es straight to ab
-                 bb = b+fb
-                 b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
-                 b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
-                 b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
-                 es_b => es(:,b)
-                 ab(:,1,b) = es(:,b1) + R1*es_b
-                 ab(:,2,b) = es(:,b2) + R2*es_b
-                 ab(:,3,b) = es(:,b3) + R3*es_b
-              end
-           end
-       case default
-           R  = .b.position - .a.position
-           R1 = R(1); R2 = R(2); R3 = R(3)
-           fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)    ! Offset into the index array
-           nb = es.dim2 - GAUSSIAN_DATA:n_comp(.l_sum)  ! No. of b's in int_new goes down
-           int_new.create(nk,nb,3)              ! NOTE: int_new ia transposed
-              do b = 1,nb                       ! Start with p shell on a
-                 bb = b+fb
-                 b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
-                 b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
-                 b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
-                 es_b => es(:,b)
-                 int_new(:,b,1) = es(:,b1) + R1*es_b
-                 int_new(:,b,2) = es(:,b2) + R2*es_b
-                 int_new(:,b,3) = es(:,b3) + R3*es_b
-              end
-           fa = 1
-           na = 3
-           do l = 2,.a.l-1
-              nb = nb - GAUSSIAN_DATA:n_comp(.l_sum-l+1) ! No. of b's in int_new goes down
-              pa = fa                             ! Previous offset for a, in int_old
-              fa = fa + na                        ! Offset into index arrays
-              na = GAUSSIAN_DATA:n_comp(l)               ! Make only the needed a's
-              int_old => int_new
-              int_new.create(nk,nb,na)            ! TRANSPOSED!
-              do a = 1,na
-                 a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa      ! b1 relative to int_old
-                 t = GAUSSIAN_DATA::first_nonzero(a+fa)       ! Transfer component
-                 Rt = R(t)
-                 do b = 1,nb
-                    b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
-                    int_new(:,b,a) = int_old(:,b1,a1) + Rt*int_old(:,b,a1)
-                 end
-              end
-              int_old.destroy
-           end
-              nb = .b.n_comp                   ! Final transfer into (a|b)
-              pa = fa
-              fa = fa + na
-              na = .a.n_comp
-              int_old => int_new
-              do a = 1,na
-                 a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa
-                 t = GAUSSIAN_DATA::first_nonzero(a+fa)
-                 Rt = R(t)
-                 do b = 1,nb
-                    b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
-                    ab(:,a,b) = int_old(:,b1,a1) + Rt*int_old(:,b,a1)
-                 end
-              end
-              int_old.destroy
-        end ! case statement
+
+      case (0) 
+      
+         ! (s|b) case
+         ab(:,1,:) = es
+
+      case (1) 
+      
+         ! (p|b) case
+         R  = .b.position - .a.position
+         R1 = R(1)
+         R2 = R(2)
+         R3 = R(3)
+
+         if (.b.l==1) then                    
+
+            ! (p|p) case
+            ab(:,1,1) = es(:,4) + R1*es(:,1)
+            ab(:,2,1) = es(:,7) + R2*es(:,1)
+            ab(:,3,1) = es(:,8) + R3*es(:,1)
+            ab(:,1,2) = es(:,7) + R1*es(:,2)
+            ab(:,2,2) = es(:,5) + R2*es(:,2)
+            ab(:,3,2) = es(:,9) + R3*es(:,2)
+            ab(:,1,3) = es(:,8) + R1*es(:,3)
+            ab(:,2,3) = es(:,9) + R2*es(:,3)
+            ab(:,3,3) = es(:,6) + R3*es(:,3)
+
+         else                                 
+         
+            ! general (p|b) case
+            nb = .b.n_comp
+
+            ! Offset into the index array
+            fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1) 
+
+            ! Put es straight to ab
+            do b = 1,nb                       
+               bb = b+fb
+               b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
+               b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
+               b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
+               ab(:,1,b) = es(:,b1) + R1*es(:,b)
+               ab(:,2,b) = es(:,b2) + R2*es(:,b)
+               ab(:,3,b) = es(:,b3) + R3*es(:,b)
+            end
+
+         end
+
+      case default
+
+         ! (a|b) case
+         R  = .b.position - .a.position
+         R1 = R(1)
+         R2 = R(2)
+         R3 = R(3)
+
+         ! l == 1
+
+         ! Offset into the index array
+         fb = GAUSSIAN_DATA:n_comp_up_to(.b.l-1)    
+
+            ! No. of b's in int_new goes down
+            nb = es.dim2 - GAUSSIAN_DATA:n_comp(.l_sum)  
+
+            ! NOTE: int_new is transposed
+            int_new.create(nk,nb,3)              
+
+            ! Start with p shell on a
+            do b = 1,nb                       
+               bb = b+fb
+               b1 = GAUSSIAN_DATA::index_p1(bb,1) - fb
+               b2 = GAUSSIAN_DATA::index_p1(bb,2) - fb
+               b3 = GAUSSIAN_DATA::index_p1(bb,3) - fb
+               int_new(:,b,1) = es(:,b1) + R1*es(:,b)
+               int_new(:,b,2) = es(:,b2) + R2*es(:,b)
+               int_new(:,b,3) = es(:,b3) + R3*es(:,b)
+            end
+
+         ! l == 2,.a.l-1
+         ! Offset into the index array
+         fa = 1
+         na = 3
+
+         do l = 2,.a.l-1
+
+            ! No. of b's in int_new goes down
+            nb = nb - GAUSSIAN_DATA:n_comp(.l_sum-l+1) 
+
+            ! Previous offset for a, in int_old
+            pa = fa                             
+
+            ! Offset into index arrays
+            ! Make only the needed a's
+            fa = fa + na                        
+            na = GAUSSIAN_DATA:n_comp(l)               
+            call move_alloc(int_new,int_old)
+
+            ! TRANSPOSED!
+            int_new.create(nk,nb,na)            
+
+            do a = 1,na
+
+               ! a1 relative to int_old
+               a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa      
+
+               ! Transfer component
+               t  = GAUSSIAN_DATA::first_nonzero(a+fa)       
+               Rt = R(t)
+               do b = 1,nb
+                  b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
+                  int_new(:,b,a) = int_old(:,b1,a1) + Rt*int_old(:,b,a1)
+               end
+
+            end
+
+            int_old.destroy
+
+         end
+
+         ! l == .a.l
+         ! Final transfer into (a|b)
+
+            ! No. of b's in int_new goes down
+            nb = .b.n_comp                   
+
+            ! Previous offset for a, in int_old
+            pa = fa
+
+            ! Make only the needed a's
+            ! Offset into index arrays
+            fa = fa + na
+            na = .a.n_comp
+            call move_alloc(int_new,int_old)
+
+            do a = 1,na
+               a1 = GAUSSIAN_DATA::index_m1(a+fa) - pa
+               t = GAUSSIAN_DATA::first_nonzero(a+fa)
+               Rt = R(t)
+               do b = 1,nb
+                  b1 = GAUSSIAN_DATA::index_p1(b+fb,t) - fb
+                  ab(:,a,b) = int_old(:,b1,a1) + Rt*int_old(:,b,a1)
+               end
+            end
+            int_old.destroy
+
+      end ! case statement
+
    end
 
-! ====================================
-! Normalization routines and functions
-! ====================================
+!  ====================================
+!  Normalization routines and functions
+!  ====================================
 
-   change_to_spherical(C,S)
+   change_to_spherical(C,S) ::: PURE
    ! Change a cartesian integral block "C" to a spherical integral
    ! block "S"
       self :: IN
       C :: MAT{REAL}, IN
       S :: MAT{REAL}, OUT
 
-      UU  :: VEC{MAT_{REAL}}@
       W,U :: MAT{REAL}@
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
 
       if (.l_max<2) then
          S = C             ! don't use this case
       else if (.l_min>=2) then
          W.create(.a.n_comp,.b.n_sph)
-         U => UU(.b.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          W.to_product_of(C,U)
-         U => UU(.a.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S.to_product_of(U,W,transpose_a=TRUE)
          W.destroy
       else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          S.to_product_of(C,U)
       else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S.to_product_of(U,C,transpose_a=TRUE)
       end
 
    end
 
-   change_to_spherical(C,S)
+   change_to_spherical(C,S) ::: PURE
    ! Change a cartesian integral block "C" to a spherical integral
    ! block "S"
       self :: IN
       C :: MAT{CPX}, IN
       S :: MAT{CPX}, OUT
 
-      UU  :: VEC{MAT_{REAL}}@
       U :: MAT{REAL}@
       W ::  MAT{CPX}@
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
 
       if (.l_max<2) then
          S = C             ! don't use this case
       else if (.l_min>=2) then
          W.create(.a.n_comp,.b.n_sph)
-         U => UU(.b.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          W.to_product_of(C,U)
-         U => UU(.a.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S.to_product_of(U,W,transpose_a=TRUE)
          W.destroy
       else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          S.to_product_of(C,U)
       else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S.to_product_of(U,C,transpose_a=TRUE)
       end
 
    end
 
-   change_to_spherical(C,S)
+   change_to_spherical(C,S) ::: PURE
    ! Change a cartesian integral block "C" to a spherical integral
    ! block "S"
       self :: IN
       C :: MAT3{CPX}, IN
       S :: MAT3{CPX}, OUT
 
-      UU  :: VEC{MAT_{REAL}}@
       U :: MAT{REAL}@
       W ::  MAT3{CPX}@
       i :: INT
-
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
 
       do i = 1,C.dim3
 
@@ -7461,16 +8048,16 @@ contains
          S = C             ! don't use this case
       else if (.l_min>=2) then
          W.create(.a.n_comp,.b.n_sph,C.dim3)
-         U => UU(.b.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          W(:,:,i).to_product_of(C(:,:,i),U)
-         U => UU(.a.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S(:,:,i).to_product_of(U,W(:,:,i),transpose_a=TRUE)
          W.destroy
       else if (.a.l<2 AND .b.l>=2) then
-         U => UU(.b.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.b.l)
          S(:,:,i).to_product_of(C(:,:,i),U)
       else if (.b.l<2 AND .a.l>=2) then
-         U => UU(.a.l).element
+         U = GAUSSIAN_DATA:spherical_harmonic_mx(.a.l)
          S(:,:,i).to_product_of(U,C(:,:,i),transpose_a=TRUE)
       end
 
@@ -7478,6 +8065,9 @@ contains
 
    end
 
+!  ======
+!  Output
+!  ======
 
    put
    ! Put the shell2 information on file "out"

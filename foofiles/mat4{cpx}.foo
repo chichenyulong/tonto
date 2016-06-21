@@ -68,6 +68,10 @@ contains
 
    end
 
+   create(lub1,lub2,lub3,lub4) ::: leaky, get_from(MAT4{OBJECT}), PURE
+   ! Allocate "self" with the given bounds
+   end
+
    destroy ::: get_from(OBJECT), leaky, PURE
    ! Deallocate "self"
    end

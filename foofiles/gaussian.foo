@@ -52,13 +52,14 @@ contains
 !  Set methods
 !  ===========
 
-   set_position(pos) ::: pure
-   ! Set the position
+   set(l,pos) ::: pure
+   ! Set the l value
       self :: INOUT
+      l :: INT, IN
       pos :: VEC{REAL}(3), IN
 
-      .position = pos
-
+      .set_l(l)
+      .set_position(pos)
    end
 
    set_l(l) ::: pure
@@ -73,6 +74,15 @@ contains
 
       .first_gaussian = GAUSSIAN_DATA:n_comp_up_to(l-1) + 1
       .last_gaussian  = .first_gaussian + .n_comp - 1
+
+   end
+
+   set_position(pos) ::: pure
+   ! Set the position
+      self :: INOUT
+      pos :: VEC{REAL}(3), IN
+
+      .position = pos
 
    end
 
