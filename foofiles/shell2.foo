@@ -633,9 +633,9 @@ contains
                      dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
                      prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-                  res(:,1,1) = res(:,1,1) + prefec*COMPLEXIFY(Ex001,Ex101*k_x)*Ey000*Ez000
-                  res(:,1,2) = res(:,1,2) + prefec*Ex000*COMPLEXIFY(Ey001,Ey101*k_y)*Ez000
-                  res(:,1,3) = res(:,1,3) + prefec*Ex000*Ey000*COMPLEXIFY(Ez001,Ez101*k_z)
+                  res(:,1,1) = res(:,1,1) + prefac*COMPLEXIFY(Ex001,Ex101*k_x)*Ey000*Ez000
+                  res(:,1,2) = res(:,1,2) + prefac*Ex000*COMPLEXIFY(Ey001,Ey101*k_y)*Ez000
+                  res(:,1,3) = res(:,1,3) + prefac*Ex000*Ey000*COMPLEXIFY(Ez001,Ez101*k_z)
                end
             end
             e.destroy
@@ -1176,7 +1176,7 @@ contains
 ! This versions does only partitioning
 ! It is intended for single-atom partitions
 
-   make_FT_parted(FT,k1,k2,k3,partition)
+   make_FT_parted(FT,k1,k2,k3,partition) ::: PURE
    ! Calculate the "FT[k_max,.a.n_comp,.b_n_comp]" for the two shells
    ! in "self" for series of k points (k1,k2,k3) partitioned with
    ! factors "partition" of dimension [k_max,.a.n_comp,.b.n_comp].
@@ -1216,13 +1216,14 @@ contains
 
    end
 
-   make_FT_parted_c(FT,k1,k2,k3,partition) ::: private
+   make_FT_parted_c(FT,k1,k2,k3,partition) ::: private, PURE
    ! Calculates the Fourier transform for a product of two contracted
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
    ! Also adds in thermal correction and partition factors.
    ! This version has the gaussian2 stuff inlined and special cases optimised,
    ! it's pretty messy but much faster.
+      self :: IN
       FT :: MAT3{CPX}, OUT
       k1,k2,k3 :: VEC{REAL}, IN
       partition :: MAT{REAL}, IN
@@ -1264,45 +1265,47 @@ contains
 
       case (0)
 
-          select case(.b.l)
+         select case(.b.l)
 
-          case (0) ! (l_a,l_b) = (0,0)
+         case (0) ! (l_a,l_b) = (0,0)
 
-              i = 0
-              do b = 1,.b.n_cc
-                do a = 1,.a.n_cc
+            i = 0
+            do b = 1,.b.n_cc
+            do a = 1,.a.n_cc
 
-                  i = i + 1
-                  g1 = .exponent_inv(i)
-                  g4 = -QUARTER*g1
-                  P1 = .pair_center(1,i)
-                  P2 = .pair_center(2,i)
-                  P3 = .pair_center(3,i)
-                  fac = pi32 * .contraction_prefactor(i) * partition(a,b)
+               i = i + 1
+               g1 = .exponent_inv(i)
+               g4 = -QUARTER*g1
+               P1 = .pair_center(1,i)
+               P2 = .pair_center(2,i)
+               P3 = .pair_center(3,i)
+               fac = pi32 * .contraction_prefactor(i) * partition(a,b)
+              
+              
+               do k = 1, k_max
+                  k1k = k1(k)
+                  k2k = k2(k)
+                  k3k = k3(k)
+                  dot1 = k1k*P1+k2k*P2+k3k*P3
+                  dot2 = g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                  FT(k,1,1) = FT(k,1,1) + fac * exp(COMPLEXIFY(dot2,dot1))
+               end
 
+            end
+            end
 
-                  do k = 1, k_max
-                    k1k = k1(k);    k2k = k2(k);    k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    FT(k,1,1) = FT(k,1,1) + fac * exp(COMPLEXIFY(dot2,dot1))
-                  end
+         case (1) ! (l_a,l_b) = (0,1)
 
-                end
-              end
+            prefac.create(k_max)
+            e.create([0,1],[0,0],[0,1])
 
-          case (1) ! (l_a,l_b) = (0,1)
+            i = 0
+            do b = 1,.b.n_cc
 
-              prefac.create(k_max)
-              e.create([0,1],[0,0],[0,1])
-
-              i = 0
-              do b = 1,.b.n_cc
-
-                ex_b = .b.exponent(b)
-
-                do a = 1,.a.n_cc
-
+               ex_b = .b.exponent(b)
+             
+               do a = 1,.a.n_cc
+             
                   i = i + 1
                   ex_a = .a.exponent(a)
                   g1 = .exponent_inv(i)
@@ -1312,60 +1315,62 @@ contains
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
                   .make_e_coeff(e,AB1,ex_a,ex_b,g1,g2)
-
+                  
                   Ex001 = e(0,0,1)
                   Ex101 = e(1,0,1)
-
+                  
                   .make_e_coeff(e,AB2,ex_a,ex_b,g1,g2)
                   Ey001 = e(0,0,1)
                   Ey101 = e(1,0,1)
-
+                  
                   .make_e_coeff(e,AB3,ex_a,ex_b,g1,g2)
                   Ez001 = e(0,0,1)
                   Ez101 = e(1,0,1)
-
+                  
                   fac = pi32 * .contraction_prefactor(i) * partition(a,b)
-
+                  
                   do k = 1,k_max
-                    k1k = k1(k); k2k = k2(k); k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
+                     k1k = k1(k)
+                     k2k = k2(k)
+                     k3k = k3(k)
+                     dot1 = k1k*P1+k2k*P2+k3k*P3
+                     dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-
+                  
                   FT(:,1,1) = FT(:,1,1) + COMPLEXIFY(Ex001,Ex101*k1)*prefac
                   FT(:,1,2) = FT(:,1,2) + COMPLEXIFY(Ey001,Ey101*k2)*prefac
                   FT(:,1,3) = FT(:,1,3) + COMPLEXIFY(Ez001,Ez101*k3)*prefac
+             
+               end
+            end
 
-                end
-              end
+            e.destroy
+            prefac.destroy
 
-              e.destroy
-              prefac.destroy
+         case default ! (l_a,l_b) = (0,X)
 
-          case default ! (l_a,l_b) = (0,X)
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
 
-              fb = .b.first_gaussian
-              lb = .b.last_gaussian
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
 
-              bx => GAUSSIAN_DATA::px(fb:lb)
-              by => GAUSSIAN_DATA::py(fb:lb)
-              bz => GAUSSIAN_DATA::pz(fb:lb)
+            ft1.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft2.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft3.create([1,k_max],[0,.a.l],[0,.b.l])
+            prefac.create(k_max)
 
-              ft1.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft2.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft3.create([1,k_max],[0,.a.l],[0,.b.l])
-              prefac.create(k_max)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -1373,59 +1378,62 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_ft_component(ft1,AB1,ex_a,ex_b,g1,g2,k1,k_max)
                   .make_ft_component(ft2,AB2,ex_a,ex_b,g1,g2,k2,k_max)
                   .make_ft_component(ft3,AB3,ex_a,ex_b,g1,g2,k3,k_max)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
+                 
                   do k = 1,k_max
-                    k1k = k1(k); k2k = k2(k); k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
+                     k1k = k1(k)
+                     k2k = k2(k)
+                     k3k = k3(k)
+                     dot1 = k1k*P1+k2k*P2+k3k*P3
+                     dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-
-                  do b=0,.b.l ! incorporate prefac into ft3
-                    ft3(:,0,b) = ft3(:,0,b) * prefac(:)
+                 
+                  ! incorporate prefac into ft3
+                  do b = 0,.b.l 
+                     ft3(:,0,b) = ft3(:,0,b) * prefac(:)
                   end
-
+                 
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    FT(:,1,b) = FT(:,1,b) + ft1(:,0,xb)*ft2(:,0,yb)*ft3(:,0,zb)
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     FT(:,1,b) = FT(:,1,b) + ft1(:,0,xb)*ft2(:,0,yb)*ft3(:,0,zb)
                   end
+              
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft1.destroy
+            ft2.destroy
+            ft3.destroy
 
-              prefac.destroy
-              ft1.destroy
-              ft2.destroy
-              ft3.destroy
-
-          end
+         end
 
       case (1)
 
-          select case (.b.l)
+         select case (.b.l)
 
-          case (0) ! (l_a,l_b) = (1,0)
+         case (0) ! (l_a,l_b) = (1,0)
 
-              prefac.create(k_max)
-              e.create([0,1],[0,1],[0,0])
+            prefac.create(k_max)
+            e.create([0,1],[0,1],[0,0])
 
-              i = 0
-              do bb = 1,.b.n_cc
+            i = 0
+            do bb = 1,.b.n_cc
 
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -1433,65 +1441,67 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_e_coeff(e,AB1,ex_a,ex_b,g1,g2)
                   Ex010 = e(0,1,0)
                   Ex110 = e(1,1,0)
-
+                 
                   .make_e_coeff(e,AB2,ex_a,ex_b,g1,g2)
                   Ey010 = e(0,1,0)
                   Ey110 = e(1,1,0)
-
+                 
                   .make_e_coeff(e,AB3,ex_a,ex_b,g1,g2)
                   Ez010 = e(0,1,0)
                   Ez110 = e(1,1,0)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
+                 
                   do k = 1,k_max
-                    k1k = k1(k); k2k = k2(k); k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
+                     k1k = k1(k)
+                     k2k = k2(k)
+                     k3k = k3(k)
+                     dot1 = k1k*P1+k2k*P2+k3k*P3
+                     dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-
+                 
                   FT(:,1,1) = FT(:,1,1) + COMPLEXIFY(Ex010,Ex110*k1)*prefac
                   FT(:,2,1) = FT(:,2,1) + COMPLEXIFY(Ey010,Ey110*k2)*prefac
                   FT(:,3,1) = FT(:,3,1) + COMPLEXIFY(Ez010,Ez110*k3)*prefac
+              
+               end
+            end
 
-                end
-              end
+            e.destroy
+            prefac.destroy
 
-              e.destroy
-              prefac.destroy
+         case (1) ! (l_a,l_b) = (1,1)
 
-          case (1) ! (l_a,l_b) = (1,1)
+            ft1.create([1,k_max],[0,1],[0,1])
+            ft2.create([1,k_max],[0,1],[0,1])
+            ft3.create([1,k_max],[0,1],[0,1])
 
-              ft1.create([1,k_max],[0,1],[0,1])
-              ft2.create([1,k_max],[0,1],[0,1])
-              ft3.create([1,k_max],[0,1],[0,1])
+            prefac.create(k_max)
+            e.create([0,2],[0,1],[0,1])
 
-              prefac.create(k_max)
-              e.create([0,2],[0,1],[0,1])
+            ft101.create(k_max); ft201.create(k_max); ft301.create(k_max)
+            ft110.create(k_max); ft210.create(k_max); ft310.create(k_max)
 
-              ft101.create(k_max); ft201.create(k_max); ft301.create(k_max)
-              ft110.create(k_max); ft210.create(k_max); ft310.create(k_max)
+            k12.create(k_max); k22.create(k_max); k32.create(k_max)
 
-              k12.create(k_max); k22.create(k_max); k32.create(k_max)
+            k12 = k1*k1
+            k22 = k2*k2
+            k32 = k3*k3
 
-              k12 = k1*k1
-              k22 = k2*k2
-              k32 = k3*k3
+            i = 0
+            do bb = 1,.b.n_cc
 
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -1499,16 +1509,18 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
+                 
                   do k = 1,k_max
-                    k1k = k1(k); k2k = k2(k); k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
+                     k1k = k1(k)
+                     k2k = k2(k)
+                     k3k = k3(k)
+                     dot1 = k1k*P1+k2k*P2+k3k*P3
+                     dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-
+                 
                   .make_e_coeff(e,AB1,ex_a,ex_b,g1,g2)
                   Ex001 = e(0,0,1)
                   Ex010 = e(0,1,0)
@@ -1517,7 +1529,7 @@ contains
                   Ex110 = e(1,1,0)
                   Ex111 = e(1,1,1)
                   Ex211 = e(2,1,1)
-
+                 
                   .make_e_coeff(e,AB2,ex_a,ex_b,g1,g2)
                   Ey001 = e(0,0,1)
                   Ey010 = e(0,1,0)
@@ -1526,7 +1538,7 @@ contains
                   Ey110 = e(1,1,0)
                   Ey111 = e(1,1,1)
                   Ey211 = e(2,1,1)
-
+                 
                   .make_e_coeff(e,AB3,ex_a,ex_b,g1,g2)
                   Ez001 = e(0,0,1)
                   Ez010 = e(0,1,0)
@@ -1535,14 +1547,14 @@ contains
                   Ez110 = e(1,1,0)
                   Ez111 = e(1,1,1)
                   Ez211 = e(2,1,1)
-
+                 
                   ft101 = COMPLEXIFY(Ex001,Ex101*k1)
                   ft110 = COMPLEXIFY(Ex010,Ex110*k1)
                   ft201 = COMPLEXIFY(Ey001,Ey101*k2)
                   ft210 = COMPLEXIFY(Ey010,Ey110*k2)
                   ft301 = COMPLEXIFY(Ez001,Ez101*k3)
                   ft310 = COMPLEXIFY(Ez010,Ez110*k3)
-
+                 
                   FT(:,1,1) = FT(:,1,1) + COMPLEXIFY(Ex011-Ex211*k12,Ex111*k1)*prefac
                   FT(:,2,2) = FT(:,2,2) + COMPLEXIFY(Ey011-Ey211*k22,Ey111*k2)*prefac
                   FT(:,3,3) = FT(:,3,3) + COMPLEXIFY(Ez011-Ez211*k32,Ez111*k3)*prefac
@@ -1552,39 +1564,39 @@ contains
                   FT(:,1,3) = FT(:,1,3) + ft110*ft301*prefac
                   FT(:,3,2) = FT(:,3,2) + ft201*ft310*prefac
                   FT(:,2,3) = FT(:,2,3) + ft210*ft301*prefac
+              
+               end
+            end
 
-                end
-              end
+            k32.destroy; k22.destroy; k12.destroy
+            ft310.destroy; ft301.destroy; ft210.destroy
+            ft201.destroy; ft110.destroy; ft101.destroy
+            e.destroy; prefac.destroy
+            ft1.destroy; ft3.destroy; ft2.destroy
 
-              k32.destroy; k22.destroy; k12.destroy
-              ft310.destroy; ft301.destroy; ft210.destroy
-              ft201.destroy; ft110.destroy; ft101.destroy
-              e.destroy; prefac.destroy
-              ft1.destroy; ft3.destroy; ft2.destroy
+         case default ! (l_a,l_b) = (1,X)
 
-          case default ! (l_a,l_b) = (1,X)
+            ft1.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft2.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft3.create([1,k_max],[0,.a.l],[0,.b.l])
 
-              ft1.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft2.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft3.create([1,k_max],[0,.a.l],[0,.b.l])
+            prefac.create(k_max)
 
-              prefac.create(k_max)
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
 
-              fb = .b.first_gaussian
-              lb = .b.last_gaussian
-              bx => GAUSSIAN_DATA::px(fb:lb)
-              by => GAUSSIAN_DATA::py(fb:lb)
-              bz => GAUSSIAN_DATA::pz(fb:lb)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a=.a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -1592,69 +1604,73 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_ft_component(ft1,AB1,ex_a,ex_b,g1,g2,k1,k_max)
                   .make_ft_component(ft2,AB2,ex_a,ex_b,g1,g2,k2,k_max)
                   .make_ft_component(ft3,AB3,ex_a,ex_b,g1,g2,k3,k_max)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
+                 
                   do k = 1,k_max
-                    k1k = k1(k); k2k = k2(k); k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
+                     k1k = k1(k)
+                     k2k = k2(k)
+                     k3k = k3(k)
+                     dot1 = k1k*P1+k2k*P2+k3k*P3
+                     dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-
+                 
                   do b=0,.b.l
-                    ft3(:,0,b) = ft3(:,0,b) * prefac(:)
-                    ft3(:,1,b) = ft3(:,1,b) * prefac(:)
+                     ft3(:,0,b) = ft3(:,0,b) * prefac(:)
+                     ft3(:,1,b) = ft3(:,1,b) * prefac(:)
                   end
-
+                 
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    FT(:,1,b) = FT(:,1,b) + ft1(:,1,xb)*ft2(:,0,yb)*ft3(:,0,zb)
-                    FT(:,2,b) = FT(:,2,b) + ft1(:,0,xb)*ft2(:,1,yb)*ft3(:,0,zb)
-                    FT(:,3,b) = FT(:,3,b) + ft1(:,0,xb)*ft2(:,0,yb)*ft3(:,1,zb)
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     FT(:,1,b) = FT(:,1,b) + ft1(:,1,xb)*ft2(:,0,yb)*ft3(:,0,zb)
+                     FT(:,2,b) = FT(:,2,b) + ft1(:,0,xb)*ft2(:,1,yb)*ft3(:,0,zb)
+                     FT(:,3,b) = FT(:,3,b) + ft1(:,0,xb)*ft2(:,0,yb)*ft3(:,1,zb)
                   end
+              
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft3.destroy
+            ft2.destroy
+            ft1.destroy
 
-              prefac.destroy
-              ft1.destroy; ft3.destroy; ft2.destroy
-
-          end
+         end
 
       case default
 
-          select case (.b.l)
+         select case (.b.l)
 
-          case (0) ! (l_a,l_b) = (X,0)
+         case (0) ! (l_a,l_b) = (X,0)
 
-              ft1.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft2.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft3.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft1.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft2.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft3.create([1,k_max],[0,.a.l],[0,.b.l])
 
-              prefac.create(k_max)
+            prefac.create(k_max)
 
-              fa = .a.first_gaussian
-              la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la)
-              ay => GAUSSIAN_DATA::py(fa:la)
-              az => GAUSSIAN_DATA::pz(fa:la)
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
 
-              i = 0
-              do bb = 1,.b.n_cc
+            i = 0
+            do bb = 1,.b.n_cc
 
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -1662,60 +1678,64 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_ft_component(ft1,AB1,ex_a,ex_b,g1,g2,k1,k_max)
                   .make_ft_component(ft2,AB2,ex_a,ex_b,g1,g2,k2,k_max)
                   .make_ft_component(ft3,AB3,ex_a,ex_b,g1,g2,k3,k_max)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
+                 
                   do k = 1,k_max
-                    k1k = k1(k); k2k = k2(k); k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
+                     k1k = k1(k)
+                     k2k = k2(k)
+                     k3k = k3(k)
+                     dot1 = k1k*P1+k2k*P2+k3k*P3
+                     dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-
+                 
                   do a=0,.a.l
-                    ft3(:,a,0) = ft3(:,a,0) * prefac(:)
+                     ft3(:,a,0) = ft3(:,a,0) * prefac(:)
                   end
-
+                 
                   do a = 1,.a.n_comp
-                    xa = ax(a)
-                    ya = ay(a)
-                    za = az(a)
-                    FT(:,a,1)  = FT(:,a,1) + ft1(:,xa,0)*ft2(:,ya,0)*ft3(:,za,0)
+                     xa = ax(a)
+                     ya = ay(a)
+                     za = az(a)
+                     FT(:,a,1)  = FT(:,a,1) + ft1(:,xa,0)*ft2(:,ya,0)*ft3(:,za,0)
                   end
+              
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft3.destroy
+            ft2.destroy
+            ft1.destroy
 
-              prefac.destroy
-              ft1.destroy; ft3.destroy; ft2.destroy
+         case (1) ! (l_a,l_b) = (X,1)
 
-          case (1) ! (l_a,l_b) = (X,1)
+            ft1.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft2.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft3.create([1,k_max],[0,.a.l],[0,.b.l])
 
-              ft1.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft2.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft3.create([1,k_max],[0,.a.l],[0,.b.l])
+            prefac.create(k_max)
 
-              prefac.create(k_max)
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
 
-              fa = .a.first_gaussian
-              la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la)
-              ay => GAUSSIAN_DATA::py(fa:la)
-              az => GAUSSIAN_DATA::pz(fa:la)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -1723,70 +1743,75 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_ft_component(ft1,AB1,ex_a,ex_b,g1,g2,k1,k_max)
                   .make_ft_component(ft2,AB2,ex_a,ex_b,g1,g2,k2,k_max)
                   .make_ft_component(ft3,AB3,ex_a,ex_b,g1,g2,k3,k_max)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
+                 
                   do k = 1,k_max
-                    k1k = k1(k); k2k = k2(k); k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
+                     k1k = k1(k)
+                     k2k = k2(k)
+                     k3k = k3(k)
+                     dot1 = k1k*P1+k2k*P2+k3k*P3
+                     dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-
-                  do a=0,.a.l ! incorporate prefac into ft3
-                    ft3(:,a,0) = ft3(:,a,0) * prefac(:)
-                    ft3(:,a,1) = ft3(:,a,1) * prefac(:)
+                 
+                  ! incorporate prefac into ft3
+                  do a = 0,.a.l 
+                     ft3(:,a,0) = ft3(:,a,0) * prefac(:)
+                     ft3(:,a,1) = ft3(:,a,1) * prefac(:)
                   end
-
+                 
                   do a = 1,.a.n_comp
-                    xa = ax(a)
-                    ya = ay(a)
-                    za = az(a)
-                    FT(:,a,1) = FT(:,a,1) + ft1(:,xa,1)*ft2(:,ya,0)*ft3(:,za,0)
-                    FT(:,a,2) = FT(:,a,2) + ft1(:,xa,0)*ft2(:,ya,1)*ft3(:,za,0)
-                    FT(:,a,3) = FT(:,a,3) + ft1(:,xa,0)*ft2(:,ya,0)*ft3(:,za,1)
+                     xa = ax(a)
+                     ya = ay(a)
+                     za = az(a)
+                     FT(:,a,1) = FT(:,a,1) + ft1(:,xa,1)*ft2(:,ya,0)*ft3(:,za,0)
+                     FT(:,a,2) = FT(:,a,2) + ft1(:,xa,0)*ft2(:,ya,1)*ft3(:,za,0)
+                     FT(:,a,3) = FT(:,a,3) + ft1(:,xa,0)*ft2(:,ya,0)*ft3(:,za,1)
                   end
+              
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft3.destroy
+            ft2.destroy
+            ft1.destroy
 
-              prefac.destroy
-              ft1.destroy; ft3.destroy; ft2.destroy
+         case default ! (l_a,l_b) = (X,X)
 
-          case default ! (l_a,l_b) = (X,X)
+            ! This is the general routine.
 
-             ! This is the general routine.
+            ft1.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft2.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft3.create([1,k_max],[0,.a.l],[0,.b.l])
 
-              ft1.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft2.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft3.create([1,k_max],[0,.a.l],[0,.b.l])
+            prefac.create(k_max)
 
-              prefac.create(k_max)
+            fa = .a.first_gaussian; la = .a.last_gaussian
+            fb = .b.first_gaussian; lb = .b.last_gaussian
 
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              fb = .b.first_gaussian; lb = .b.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
 
-              ax => GAUSSIAN_DATA::px(fa:la)
-              ay => GAUSSIAN_DATA::py(fa:la)
-              az => GAUSSIAN_DATA::pz(fa:la)
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
 
-              bx => GAUSSIAN_DATA::px(fb:lb)
-              by => GAUSSIAN_DATA::py(fb:lb)
-              bz => GAUSSIAN_DATA::pz(fb:lb)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -1794,47 +1819,50 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_ft_component(ft1,AB1,ex_a,ex_b,g1,g2,k1,k_max)
                   .make_ft_component(ft2,AB2,ex_a,ex_b,g1,g2,k2,k_max)
                   .make_ft_component(ft3,AB3,ex_a,ex_b,g1,g2,k3,k_max)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
+                 
                   do k = 1,k_max
-                    k1k = k1(k); k2k = k2(k); k3k = k3(k)
-                    dot1 = k1k*P1+k2k*P2+k3k*P3
-                    dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
-                    prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
+                     k1k = k1(k)
+                     k2k = k2(k)
+                     k3k = k3(k)
+                     dot1 = k1k*P1+k2k*P2+k3k*P3
+                     dot2 = -g4 * (k1k*k1k+k2k*k2k+k3k*k3k)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1))
                   end
-
-                  do b=0,.b.l ! incorporate prefac into ft3
-                  do a=0,.a.l
+                 
+                  ! incorporate prefac into ft3
+                  do b = 0,.b.l 
+                  do a = 0,.a.l
                      ft3(:,a,b) = ft3(:,a,b) * prefac(:)
                   end
                   end
-
+                 
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    do a = 1,.a.n_comp
-                      xa = ax(a)
-                      ya = ay(a)
-                      za = az(a)
-                      FT(:,a,b) = FT(:,a,b) + ft1(:,xa,xb)*ft2(:,ya,yb)*ft3(:,za,zb)
-                    end
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     do a = 1,.a.n_comp
+                        xa = ax(a)
+                        ya = ay(a)
+                        za = az(a)
+                        FT(:,a,b) = FT(:,a,b) + ft1(:,xa,xb)*ft2(:,ya,yb)*ft3(:,za,zb)
+                     end
                   end
+              
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft3.destroy
+            ft2.destroy
+            ft1.destroy
 
-              prefac.destroy
-              ft3.destroy
-              ft2.destroy
-              ft1.destroy
-
-          end
+         end
 
       end
 
@@ -1843,11 +1871,12 @@ contains
 ! This versions does thermal smearing and partitioning
 ! It seems to be the main routine
 
-   make_ft(res,k_pts,thermal,partition)
+   make_ft(res,k_pts,thermal,partition) ::: PURE
    ! Calculates the Fourier transform for a product of two contracted
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
-      res :: MAT3{CPX}
+      self :: IN
+      res :: MAT3{CPX}, OUT
       k_pts :: MAT{REAL}, IN
       thermal :: MAT3{REAL}, IN
       partition :: MAT{REAL}, IN
@@ -1863,15 +1892,12 @@ contains
     !    read_option = FALSE
     ! end
     ! select case (option)
-    ! case ("old "); .make_ft_old(res,k_pts,thermal,partition)
-    ! case ("old2"); .make_ft_old2(res,k_pts,thermal,partition)
     ! case ("v0  "); .make_ft_v0(res,k_pts,thermal,partition)
     ! case ("v1  "); .make_ft_v1(res,k_pts,thermal,partition)
     ! case ("v2  "); .make_ft_v2(res,k_pts,thermal,partition)
     ! case ("v3  "); .make_ft_v3(res,k_pts,thermal,partition)
     ! case default;  UNKNOWN(option)
     ! end
-    ! .make_ft_v3(res,k_pts,thermal,partition)
 
       if (NOT .is_spherical) then
 
@@ -1896,21 +1922,22 @@ contains
 
    end
 
-   make_ft_c(res,k_pts,thermal,partition)
+   make_ft_c(res,k_x,k_y,k_z,thermal,partition) ::: PURE
    ! Calculates the Fourier transform for a product of two contracted
    ! gaussian shells, evaluated at a series of k points k_pts
    ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
    ! Also adds in thermal correction and partition factors.
    ! This version has the gaussian2 stuff inlined and special cases optimised,
    ! it's pretty messy but much faster.
-      res :: MAT3{CPX}
-      k_pts :: MAT{REAL}, target
-      thermal :: MAT3{REAL}, target
+      self :: IN
+      res :: MAT3{CPX}, OUT
+      k_x,k_y,k_z :: VEC{REAL}, IN
+      thermal :: MAT3{REAL}, IN
       partition :: MAT{REAL}, IN
 
       e :: MAT3{REAL}@
       ft_x,ft_y,ft_z :: MAT3{CPX}@
-      therm,k_x,k_y,k_z,k_x2,k_y2,k_z2 :: VEC{REAL}@
+      therm,k_x2,k_y2,k_z2 :: VEC{REAL}@
       prefac,ft_x01,ft_x10,ft_y01,ft_y10,ft_z01,ft_z10 :: VEC{CPX}@
       ax,ay,az,bx,by,bz :: VEC{INT}@
       fac,pi32,g1,g2,g4,dot1,dot2,k1,k2,k3,P1,P2,P3,ex_a,ex_b :: REAL
@@ -1922,11 +1949,7 @@ contains
 
       pi32 = sqrt(PI) * PI
 
-      k_max = k_pts.dim1
-
-      k_x => k_pts(:,1)
-      k_y => k_pts(:,2)
-      k_z => k_pts(:,3)
+      k_max = k_x.dim
 
       PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
       PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
@@ -1940,46 +1963,48 @@ contains
 
       case (0)
 
-          select case(.b.l)
+         select case(.b.l)
 
-          case (0) ! (l_a,l_b) = (0,0)
+         case (0) ! (l_a,l_b) = (0,0)
 
-              i = 0
-              do b = 1,.b.n_cc
-                do a = 1,.a.n_cc
+            i = 0
+            do b = 1,.b.n_cc
+            do a = 1,.a.n_cc
 
-                  i = i + 1
-                  g1 = .exponent_inv(i)
-                  g4 = -QUARTER*g1
-                  P1 = .pair_center(1,i)
-                  P2 = .pair_center(2,i)
-                  P3 = .pair_center(3,i)
-                  fac = pi32 * .contraction_prefactor(i) * partition(a,b)
+               i = i + 1
+               g1 = .exponent_inv(i)
+               g4 = -QUARTER*g1
+               P1 = .pair_center(1,i)
+               P2 = .pair_center(2,i)
+               P3 = .pair_center(3,i)
+               fac = pi32 * .contraction_prefactor(i) * partition(a,b)
 
-                  therm => thermal(:,a,b)
+               therm = thermal(:,a,b)
 
-                  do k = 1, k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = g4 * (k1*k1+k2*k2+k3*k3)
-                    res(k,1,1) = res(k,1,1) + therm(k) * (fac * exp(cmplx(dot2,dot1,kind=CPX_KIND)))
-                  end
+               do k = 1, k_max
+                  k1 = k_x(k)
+                  k2 = k_y(k)
+                  k3 = k_z(k)
+                  dot1 = k1*P1+k2*P2+k3*P3
+                  dot2 = g4 * (k1*k1+k2*k2+k3*k3)
+                  res(k,1,1) = res(k,1,1) + therm(k) * fac * exp(COMPLEXIFY(dot2,dot1))
+               end
 
-                end
-              end
+            end
+            end
 
-          case (1) ! (l_a,l_b) = (0,1)
+         case (1) ! (l_a,l_b) = (0,1)
 
-              prefac.create(k_max)
-              e.create([0,1],[0,0],[0,1])
+            prefac.create(k_max)
+            e.create([0,1],[0,0],[0,1])
 
-              i = 0
-              do b = 1,.b.n_cc
+            i = 0
+            do b = 1,.b.n_cc
 
-                ex_b = .b.exponent(b)
-
-                do a = 1,.a.n_cc
-
+               ex_b = .b.exponent(b)
+              
+               do a = 1,.a.n_cc
+              
                   i = i + 1
                   ex_a = .a.exponent(a)
                   g1 = .exponent_inv(i)
@@ -1989,62 +2014,64 @@ contains
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
                   .make_e_coeff(e,AB1,ex_a,ex_b,g1,g2)
-
+                 
                   Ex001 = e(0,0,1)
                   Ex101 = e(1,0,1)
-
+                 
                   .make_e_coeff(e,AB2,ex_a,ex_b,g1,g2)
                   Ey001 = e(0,0,1)
                   Ey101 = e(1,0,1)
-
+                 
                   .make_e_coeff(e,AB3,ex_a,ex_b,g1,g2)
                   Ez001 = e(0,0,1)
                   Ez101 = e(1,0,1)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(a,b)
-
-                  therm => thermal(:,a,b)
-
+                 
+                  therm = thermal(:,a,b)
+                 
                   do k = 1,k_max
-                    k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))*therm(k)
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))*therm(k)
                   end
+                 
+                  res(:,1,1) = res(:,1,1) + COMPLEXIFY(Ex001,Ex101*k_x)*prefac
+                  res(:,1,2) = res(:,1,2) + COMPLEXIFY(Ey001,Ey101*k_y)*prefac
+                  res(:,1,3) = res(:,1,3) + COMPLEXIFY(Ez001,Ez101*k_z)*prefac
+              
+               end
+            end
 
-                  res(:,1,1) = res(:,1,1) + cmplx(Ex001,Ex101*k_x,kind=CPX_KIND)*prefac
-                  res(:,1,2) = res(:,1,2) + cmplx(Ey001,Ey101*k_y,kind=CPX_KIND)*prefac
-                  res(:,1,3) = res(:,1,3) + cmplx(Ez001,Ez101*k_z,kind=CPX_KIND)*prefac
+            e.destroy
+            prefac.destroy
 
-                end
-              end
+         case default ! (l_a,l_b) = (0,X)
 
-              e.destroy
-              prefac.destroy
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
 
-          case default ! (l_a,l_b) = (0,X)
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
 
-              fb = .b.first_gaussian
-              lb = .b.last_gaussian
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+            prefac.create(k_max)
 
-              bx => GAUSSIAN_DATA::px(fb:lb)
-              by => GAUSSIAN_DATA::py(fb:lb)
-              bz => GAUSSIAN_DATA::pz(fb:lb)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
-              prefac.create(k_max)
-
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -2052,61 +2079,64 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_ft_component(ft_x,AB1,ex_a,ex_b,g1,g2,k_x,k_max)
                   .make_ft_component(ft_y,AB2,ex_a,ex_b,g1,g2,k_y,k_max)
                   .make_ft_component(ft_z,AB3,ex_a,ex_b,g1,g2,k_z,k_max)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
-                  therm => thermal(:,aa,bb)
-
+                 
+                  therm = thermal(:,aa,bb)
+                 
                   do k = 1,k_max
-                    k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1)) * therm(k)
                   end
-
-                  do b=0,.b.l ! incorporate prefac into ft_z
-                    ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
+                 
+                  ! incorporate prefac into ft_z
+                  do b=0,.b.l 
+                     ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
                   end
-
+                 
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    res(:,1,b) = res(:,1,b) + ft_x(:,0,xb)*ft_y(:,0,yb)*ft_z(:,0,zb)
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     res(:,1,b) = res(:,1,b) + ft_x(:,0,xb)*ft_y(:,0,yb)*ft_z(:,0,zb)
                   end
+              
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft_x.destroy
+            ft_y.destroy
+            ft_z.destroy
 
-              prefac.destroy
-              ft_x.destroy
-              ft_y.destroy
-              ft_z.destroy
-
-          end
+         end
 
       case (1)
 
-          select case (.b.l)
+         select case (.b.l)
 
-          case (0) ! (l_a,l_b) = (1,0)
+         case (0) ! (l_a,l_b) = (1,0)
 
-              prefac.create(k_max)
-              e.create([0,1],[0,1],[0,0])
+            prefac.create(k_max)
+            e.create([0,1],[0,1],[0,0])
 
-              i = 0
-              do bb = 1,.b.n_cc
+            i = 0
+            do bb = 1,.b.n_cc
 
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -2114,67 +2144,69 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_e_coeff(e,AB1,ex_a,ex_b,g1,g2)
                   Ex010 = e(0,1,0)
                   Ex110 = e(1,1,0)
-
+                 
                   .make_e_coeff(e,AB2,ex_a,ex_b,g1,g2)
                   Ey010 = e(0,1,0)
                   Ey110 = e(1,1,0)
-
+                 
                   .make_e_coeff(e,AB3,ex_a,ex_b,g1,g2)
                   Ez010 = e(0,1,0)
                   Ez110 = e(1,1,0)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
-                  therm => thermal(:,aa,bb)
-
+                 
+                  therm = thermal(:,aa,bb)
+                 
                   do k = 1,k_max
-                    k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1)) * therm(k)
                   end
+                 
+                  res(:,1,1) = res(:,1,1) + COMPLEXIFY(Ex010,Ex110*k_x)*prefac
+                  res(:,2,1) = res(:,2,1) + COMPLEXIFY(Ey010,Ey110*k_y)*prefac
+                  res(:,3,1) = res(:,3,1) + COMPLEXIFY(Ez010,Ez110*k_z)*prefac
+              
+               end
+            end
 
-                  res(:,1,1) = res(:,1,1) + cmplx(Ex010,Ex110*k_x,kind=CPX_KIND)*prefac
-                  res(:,2,1) = res(:,2,1) + cmplx(Ey010,Ey110*k_y,kind=CPX_KIND)*prefac
-                  res(:,3,1) = res(:,3,1) + cmplx(Ez010,Ez110*k_z,kind=CPX_KIND)*prefac
+            e.destroy
+            prefac.destroy
 
-                end
-              end
+         case (1) ! (l_a,l_b) = (1,1)
 
-              e.destroy
-              prefac.destroy
+            ft_x.create([1,k_max],[0,1],[0,1])
+            ft_y.create([1,k_max],[0,1],[0,1])
+            ft_z.create([1,k_max],[0,1],[0,1])
 
-          case (1) ! (l_a,l_b) = (1,1)
+            prefac.create(k_max)
+            e.create([0,2],[0,1],[0,1])
 
-              ft_x.create([1,k_max],[0,1],[0,1])
-              ft_y.create([1,k_max],[0,1],[0,1])
-              ft_z.create([1,k_max],[0,1],[0,1])
+            ft_x01.create(k_max); ft_y01.create(k_max); ft_z01.create(k_max)
+            ft_x10.create(k_max); ft_y10.create(k_max); ft_z10.create(k_max)
 
-              prefac.create(k_max)
-              e.create([0,2],[0,1],[0,1])
+            k_x2.create(k_max); k_y2.create(k_max); k_z2.create(k_max)
 
-              ft_x01.create(k_max); ft_y01.create(k_max); ft_z01.create(k_max)
-              ft_x10.create(k_max); ft_y10.create(k_max); ft_z10.create(k_max)
+            k_x2 = k_x*k_x
+            k_y2 = k_y*k_y
+            k_z2 = k_z*k_z
 
-              k_x2.create(k_max); k_y2.create(k_max); k_z2.create(k_max)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              k_x2 = k_x*k_x
-              k_y2 = k_y*k_y
-              k_z2 = k_z*k_z
-
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+               
+               do aa = 1,.a.n_cc
+               
                   ex_a = .a.exponent(aa)
-
+                
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -2182,18 +2214,20 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
-                  therm => thermal(:,aa,bb)
-
+                
+                  therm = thermal(:,aa,bb)
+                
                   do k = 1,k_max
-                    k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1)) * therm(k)
                   end
-
+                
                   .make_e_coeff(e,AB1,ex_a,ex_b,g1,g2)
                   Ex001 = e(0,0,1)
                   Ex010 = e(0,1,0)
@@ -2202,7 +2236,7 @@ contains
                   Ex110 = e(1,1,0)
                   Ex111 = e(1,1,1)
                   Ex211 = e(2,1,1)
-
+                
                   .make_e_coeff(e,AB2,ex_a,ex_b,g1,g2)
                   Ey001 = e(0,0,1)
                   Ey010 = e(0,1,0)
@@ -2211,7 +2245,7 @@ contains
                   Ey110 = e(1,1,0)
                   Ey111 = e(1,1,1)
                   Ey211 = e(2,1,1)
-
+                
                   .make_e_coeff(e,AB3,ex_a,ex_b,g1,g2)
                   Ez001 = e(0,0,1)
                   Ez010 = e(0,1,0)
@@ -2220,56 +2254,56 @@ contains
                   Ez110 = e(1,1,0)
                   Ez111 = e(1,1,1)
                   Ez211 = e(2,1,1)
-
-                  ft_x01 = cmplx(Ex001,Ex101*k_x,kind=CPX_KIND)
-                  ft_x10 = cmplx(Ex010,Ex110*k_x,kind=CPX_KIND)
-                  ft_y01 = cmplx(Ey001,Ey101*k_y,kind=CPX_KIND)
-                  ft_y10 = cmplx(Ey010,Ey110*k_y,kind=CPX_KIND)
-                  ft_z01 = cmplx(Ez001,Ez101*k_z,kind=CPX_KIND)
-                  ft_z10 = cmplx(Ez010,Ez110*k_z,kind=CPX_KIND)
-
-                  res(:,1,1) = res(:,1,1) + cmplx(Ex011-Ex211*k_x2,Ex111*k_x,kind=CPX_KIND)*prefac
-                  res(:,2,2) = res(:,2,2) + cmplx(Ey011-Ey211*k_y2,Ey111*k_y,kind=CPX_KIND)*prefac
-                  res(:,3,3) = res(:,3,3) + cmplx(Ez011-Ez211*k_z2,Ez111*k_z,kind=CPX_KIND)*prefac
+                
+                  ft_x01 = COMPLEXIFY(Ex001,Ex101*k_x)
+                  ft_x10 = COMPLEXIFY(Ex010,Ex110*k_x)
+                  ft_y01 = COMPLEXIFY(Ey001,Ey101*k_y)
+                  ft_y10 = COMPLEXIFY(Ey010,Ey110*k_y)
+                  ft_z01 = COMPLEXIFY(Ez001,Ez101*k_z)
+                  ft_z10 = COMPLEXIFY(Ez010,Ez110*k_z)
+                
+                  res(:,1,1) = res(:,1,1) + COMPLEXIFY(Ex011-Ex211*k_x2,Ex111*k_x)*prefac
+                  res(:,2,2) = res(:,2,2) + COMPLEXIFY(Ey011-Ey211*k_y2,Ey111*k_y)*prefac
+                  res(:,3,3) = res(:,3,3) + COMPLEXIFY(Ez011-Ez211*k_z2,Ez111*k_z)*prefac
                   res(:,2,1) = res(:,2,1) + ft_x01*ft_y10*prefac
                   res(:,1,2) = res(:,1,2) + ft_x10*ft_y01*prefac
                   res(:,3,1) = res(:,3,1) + ft_x01*ft_z10*prefac
                   res(:,1,3) = res(:,1,3) + ft_x10*ft_z01*prefac
                   res(:,3,2) = res(:,3,2) + ft_y01*ft_z10*prefac
                   res(:,2,3) = res(:,2,3) + ft_y10*ft_z01*prefac
+               
+               end
+            end
 
-                end
-              end
+            k_z2.destroy; k_y2.destroy; k_x2.destroy
+            ft_z10.destroy; ft_z01.destroy; ft_y10.destroy
+            ft_y01.destroy; ft_x10.destroy; ft_x01.destroy
+            e.destroy; prefac.destroy
+            ft_x.destroy; ft_z.destroy; ft_y.destroy
 
-              k_z2.destroy; k_y2.destroy; k_x2.destroy
-              ft_z10.destroy; ft_z01.destroy; ft_y10.destroy
-              ft_y01.destroy; ft_x10.destroy; ft_x01.destroy
-              e.destroy; prefac.destroy
-              ft_x.destroy; ft_z.destroy; ft_y.destroy
+         case default ! (l_a,l_b) = (1,X)
 
-          case default ! (l_a,l_b) = (1,X)
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
 
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+            prefac.create(k_max)
 
-              prefac.create(k_max)
+            fb = .b.first_gaussian
+            lb = .b.last_gaussian
+            bx = GAUSSIAN_DATA::px(fb:lb)
+            by = GAUSSIAN_DATA::py(fb:lb)
+            bz = GAUSSIAN_DATA::pz(fb:lb)
 
-              fb = .b.first_gaussian
-              lb = .b.last_gaussian
-              bx => GAUSSIAN_DATA::px(fb:lb)
-              by => GAUSSIAN_DATA::py(fb:lb)
-              bz => GAUSSIAN_DATA::pz(fb:lb)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a=.a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -2277,71 +2311,73 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_ft_component(ft_x,AB1,ex_a,ex_b,g1,g2,k_x,k_max)
                   .make_ft_component(ft_y,AB2,ex_a,ex_b,g1,g2,k_y,k_max)
                   .make_ft_component(ft_z,AB3,ex_a,ex_b,g1,g2,k_z,k_max)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
-                  therm => thermal(:,aa,bb)
-
+                 
+                  therm = thermal(:,aa,bb)
+                 
                   do k = 1,k_max
-                    k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1)) * therm(k)
                   end
-
+                 
                   do b=0,.b.l
-                    ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
-                    ft_z(:,1,b) = ft_z(:,1,b) * prefac(:)
+                     ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
+                     ft_z(:,1,b) = ft_z(:,1,b) * prefac(:)
                   end
-
+                 
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    res(:,1,b) = res(:,1,b) + ft_x(:,1,xb)*ft_y(:,0,yb)*ft_z(:,0,zb)
-                    res(:,2,b) = res(:,2,b) + ft_x(:,0,xb)*ft_y(:,1,yb)*ft_z(:,0,zb)
-                    res(:,3,b) = res(:,3,b) + ft_x(:,0,xb)*ft_y(:,0,yb)*ft_z(:,1,zb)
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     res(:,1,b) = res(:,1,b) + ft_x(:,1,xb)*ft_y(:,0,yb)*ft_z(:,0,zb)
+                     res(:,2,b) = res(:,2,b) + ft_x(:,0,xb)*ft_y(:,1,yb)*ft_z(:,0,zb)
+                     res(:,3,b) = res(:,3,b) + ft_x(:,0,xb)*ft_y(:,0,yb)*ft_z(:,1,zb)
                   end
+              
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft_x.destroy; ft_z.destroy; ft_y.destroy
 
-              prefac.destroy
-              ft_x.destroy; ft_z.destroy; ft_y.destroy
-
-          end
+         end
 
       case default
 
-          select case (.b.l)
+         select case (.b.l)
 
-          case (0) ! (l_a,l_b) = (X,0)
+         case (0) ! (l_a,l_b) = (X,0)
 
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
 
-              prefac.create(k_max)
+            prefac.create(k_max)
 
-              fa = .a.first_gaussian
-              la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la)
-              ay => GAUSSIAN_DATA::py(fa:la)
-              az => GAUSSIAN_DATA::pz(fa:la)
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
 
-              i = 0
-              do bb = 1,.b.n_cc
+            i = 0
+            do bb = 1,.b.n_cc
 
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+              
+               do aa = 1,.a.n_cc
+              
                   ex_a = .a.exponent(aa)
-
+                 
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -2349,62 +2385,64 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                 
                   .make_ft_component(ft_x,AB1,ex_a,ex_b,g1,g2,k_x,k_max)
                   .make_ft_component(ft_y,AB2,ex_a,ex_b,g1,g2,k_y,k_max)
                   .make_ft_component(ft_z,AB3,ex_a,ex_b,g1,g2,k_z,k_max)
-
+                 
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
-                  therm => thermal(:,aa,bb)
-
+                 
+                  therm = thermal(:,aa,bb)
+                 
                   do k = 1,k_max
-                    k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1)) * therm(k)
                   end
-
+                 
                   do a=0,.a.l
-                    ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
+                     ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
                   end
-
+                 
                   do a = 1,.a.n_comp
-                    xa = ax(a)
-                    ya = ay(a)
-                    za = az(a)
-                    res(:,a,1)  = res(:,a,1) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,0)
+                     xa = ax(a)
+                     ya = ay(a)
+                     za = az(a)
+                     res(:,a,1)  = res(:,a,1) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,0)
                   end
+              
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft_x.destroy; ft_z.destroy; ft_y.destroy
 
-              prefac.destroy
-              ft_x.destroy; ft_z.destroy; ft_y.destroy
+         case (1) ! (l_a,l_b) = (X,1)
 
-          case (1) ! (l_a,l_b) = (X,1)
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
 
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+            prefac.create(k_max)
 
-              prefac.create(k_max)
+            fa = .a.first_gaussian
+            la = .a.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la)
+            ay = GAUSSIAN_DATA::py(fa:la)
+            az = GAUSSIAN_DATA::pz(fa:la)
 
-              fa = .a.first_gaussian
-              la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la)
-              ay => GAUSSIAN_DATA::py(fa:la)
-              az => GAUSSIAN_DATA::pz(fa:la)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+               
+               do aa = 1,.a.n_cc
+               
                   ex_a = .a.exponent(aa)
-
+                
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -2412,67 +2450,70 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                
                   .make_ft_component(ft_x,AB1,ex_a,ex_b,g1,g2,k_x,k_max)
                   .make_ft_component(ft_y,AB2,ex_a,ex_b,g1,g2,k_y,k_max)
                   .make_ft_component(ft_z,AB3,ex_a,ex_b,g1,g2,k_z,k_max)
-
+                
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
-                  therm => thermal(:,aa,bb)
-
+                
+                  therm = thermal(:,aa,bb)
+                
                   do k = 1,k_max
-                    k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
                   end
-
-                  do a=0,.a.l ! incorporate prefac into ft_z
-                    ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
-                    ft_z(:,a,1) = ft_z(:,a,1) * prefac(:)
+                
+                  ! incorporate prefac into ft_z
+                  do a = 0,.a.l 
+                     ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
+                     ft_z(:,a,1) = ft_z(:,a,1) * prefac(:)
                   end
-
+                
                   do a = 1,.a.n_comp
-                    xa = ax(a)
-                    ya = ay(a)
-                    za = az(a)
-                    res(:,a,1) = res(:,a,1) + ft_x(:,xa,1)*ft_y(:,ya,0)*ft_z(:,za,0)
-                    res(:,a,2) = res(:,a,2) + ft_x(:,xa,0)*ft_y(:,ya,1)*ft_z(:,za,0)
-                    res(:,a,3) = res(:,a,3) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,1)
+                     xa = ax(a)
+                     ya = ay(a)
+                     za = az(a)
+                     res(:,a,1) = res(:,a,1) + ft_x(:,xa,1)*ft_y(:,ya,0)*ft_z(:,za,0)
+                     res(:,a,2) = res(:,a,2) + ft_x(:,xa,0)*ft_y(:,ya,1)*ft_z(:,za,0)
+                     res(:,a,3) = res(:,a,3) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,1)
                   end
+               
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft_x.destroy; ft_z.destroy; ft_y.destroy
 
-              prefac.destroy
-              ft_x.destroy; ft_z.destroy; ft_y.destroy
+         case default ! (l_a,l_b) = (X,X)
 
-          case default ! (l_a,l_b) = (X,X)
+            ! This is the general routine.
 
-             ! This is the general routine.
+            ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
+            ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
 
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
+            prefac.create(k_max)
 
-              prefac.create(k_max)
+            fa = .a.first_gaussian; la = .a.last_gaussian
+            fb = .b.first_gaussian; lb = .b.last_gaussian
 
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              fb = .b.first_gaussian; lb = .b.last_gaussian
+            ax = GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
+            bx = GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
 
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
+            i = 0
+            do bb = 1,.b.n_cc
 
-              i = 0
-              do bb = 1,.b.n_cc
-
-                ex_b = .b.exponent(bb)
-
-                do aa = 1,.a.n_cc
-
+               ex_b = .b.exponent(bb)
+               
+               do aa = 1,.a.n_cc
+               
                   ex_a = .a.exponent(aa)
-
+                
                   i = i + 1
                   g1 = .exponent_inv(i)
                   g2 = HALF*g1
@@ -2480,47 +2521,50 @@ contains
                   P1 = .pair_center(1,i)
                   P2 = .pair_center(2,i)
                   P3 = .pair_center(3,i)
-
+                
                   .make_ft_component(ft_x,AB1,ex_a,ex_b,g1,g2,k_x,k_max)
                   .make_ft_component(ft_y,AB2,ex_a,ex_b,g1,g2,k_y,k_max)
                   .make_ft_component(ft_z,AB3,ex_a,ex_b,g1,g2,k_z,k_max)
-
+                
                   fac = pi32 * .contraction_prefactor(i) * partition(aa,bb)
-
-                  therm => thermal(:,aa,bb)
-
+                
+                  therm = thermal(:,aa,bb)
+                
                   do k = 1,k_max
-                    k1 = k_x(k); k2 = k_y(k); k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
+                     k1 = k_x(k)
+                     k2 = k_y(k)
+                     k3 = k_z(k)
+                     dot1 = k1*P1+k2*P2+k3*P3
+                     dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
+                     prefac(k) = fac*exp(COMPLEXIFY(dot2,dot1)) * therm(k)
                   end
-
-                  do b=0,.b.l ! incorporate prefac into ft_z
+                
+                  ! incorporate prefac into ft_z
+                  do b=0,.b.l 
                   do a=0,.a.l
                      ft_z(:,a,b) = ft_z(:,a,b) * prefac(:)
                   end
                   end
-
+                
                   do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    do a = 1,.a.n_comp
-                      xa = ax(a)
-                      ya = ay(a)
-                      za = az(a)
-                      res(:,a,b) = res(:,a,b) + ft_x(:,xa,xb)*ft_y(:,ya,yb)*ft_z(:,za,zb)
-                    end
+                     xb = bx(b)
+                     yb = by(b)
+                     zb = bz(b)
+                     do a = 1,.a.n_comp
+                        xa = ax(a)
+                        ya = ay(a)
+                        za = az(a)
+                        res(:,a,b) = res(:,a,b) + ft_x(:,xa,xb)*ft_y(:,ya,yb)*ft_z(:,za,zb)
+                     end
                   end
+               
+               end
+            end
 
-                end
-              end
+            prefac.destroy
+            ft_x.destroy; ft_z.destroy; ft_y.destroy
 
-              prefac.destroy
-              ft_x.destroy; ft_z.destroy; ft_y.destroy
-
-          end
+         end
 
       end
 
@@ -2596,7 +2640,7 @@ contains
 
    end
 
-   make_ft_component(res,R,ex_a,ex_b,g1,g2,k_pts,k_max) ::: private
+   make_ft_component(res,R,ex_a,ex_b,g1,g2,k_pts,k_max) ::: private, PURE
    ! Do the Fourier transform of component "comp" of the gaussian pair
    ! evaluated at the points "k_pts", without the prefactors.
    ! Used only in the default case
@@ -2616,7 +2660,6 @@ contains
       .make_e_coeff(e,R,ex_a,ex_b,g1,g2)
 
       ! Define kp array containing powers k_pts(n)^t
-      nullify(kp)
       if (.l_sum>0) then
          kp.create([1,k_max],[1,.l_sum])
          kp(:,1) = k_pts
@@ -2650,7 +2693,7 @@ contains
             vi = vi + e(t,a,b)*kp(:,t)
          end
 
-         res(:,a,b) = cmplx(vr,vi,kind=CPX_KIND)
+         res(:,a,b) = COMPLEXIFY(vr,vi)
 
       end
       end
@@ -2662,628 +2705,6 @@ contains
 
 ! There is a lot of dead code here
 ! Leave it for testing/optimization
-
-   make_ft_old(res,k_pts,thermal,partition)
-   ! Calculates the Fourier transform for a product of two contracted
-   ! gaussian shells, evaluated at a series of k points k_pts
-   ! Dimensions of res are [k_max,.a.n_comp,.b.n_comp].
-   ! Also adds in thermal correction and partition factors.
-   ! This version has the gaussian2 stuff inlined and special cases optimised,
-   ! it's pretty messy but much faster.
-      res :: MAT3{CPX}, target
-      k_pts :: MAT{REAL}, target
-      thermal :: MAT3{REAL}, target
-      partition :: MAT{REAL}, IN
-      ft_x,ft_y,ft_z :: MAT3{CPX}@
-      G :: GAUSSIAN2
-      e :: MAT3{REAL}@
-      pos :: VEC{REAL}(3)
-      therm,k_x,k_y,k_z,k_x2,k_y2,k_z2 :: VEC{REAL}@
-      res_ij,prefac,ft_xb,ft_yb,ft_zb :: VEC{CPX}@
-      ax,ay,az,bx,by,bz :: VEC{INT}@
-      ft_xbx,ft_yby,ft_zbz :: MAT{CPX}@
-      ft_x01,ft_x10,ft_y01,ft_y10,ft_z01,ft_z10 :: VEC{CPX}@
-      pifac,gamma,g1,g4,dot1,dot2,k1,k2,k3,P1,P2,P3,PI_on_gamma :: REAL
-      a,b,k,xa,ya,za,xb,yb,zb,bxlast,bylast,bzlast,aa,bb,k_max,fa,la,fb,lb :: INT
-      fac1 :: CPX
-      g1_exa,g1_exb,e00,ex_a,ex_b,ca,fac :: REAL
-      Ex000,Ey000,Ez000,Ex001,Ey001,Ez001,Ex101,Ey101,Ez101 :: REAL
-      Ex010,Ey010,Ez010,Ex110,Ey110,Ez110,Ex111,Ey111,Ez111 :: REAL
-      Ex211,Ey211,Ez211,Ex011,Ey011,Ez011 :: REAL
-      PA1,PA2,PA3,PB1,PB2,PB3,r2 :: REAL
-
-      k_max  = k_pts.dim1
-
-      res = ZERO
-
-      G.a.set(.a.l,.a.position)
-      G.b.set(.b.l,.b.position)
-
-      select case (.a.l)
-        case (0)
-          select case(.b.l)
-            case (0)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              pos = .a.position - .b.position
-              r2 = dot_product(pos,pos)
-              res_ij => res(:,1,1)
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              do a = 1, .a.n_cc
-                ca = .a.contraction(a)
-                ex_a = .a.exponent(a)
-                do b = 1, .b.n_cc
-                  ex_b = .b.exponent(b)
-                  g1 = ONE/(ex_a+ex_b)
-                  g4 = -QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*ex_a
-                  g1_exb = g1*ex_b
-                  P1 = g1_exa*PA1 + g1_exb*PB1
-                  P2 = g1_exa*PA2 + g1_exb*PB2
-                  P3 = g1_exa*PA3 + g1_exb*PB3
-                  e00 = exp(-ex_a*ex_b*r2*g1)
-                  fac1= cmplx(pifac*e00,ZERO,kind=CPX_KIND) * ca * .b.contraction(b) * partition(a,b)
-                  therm => thermal(:,a,b)
-                  do k = 1, k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = g4 * (k1*k1+k2*k2+k3*k3)
-                    res_ij(k) = res_ij(k) + therm(k) * (fac1 * exp(cmplx(dot2,dot1,kind=CPX_KIND)))
-                  end
-                end
-              end
-            case (1)
-              prefac.create(k_max)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              e.create([0,1],[0,0],[0,1])
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
-                  gamma = G.a.exponent+G.b.exponent
-                  g1 = ONE/gamma
-                  g4 = QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*G.a.exponent
-                  g1_exb = g1*G.b.exponent
-                  P1 = g1_exa*PA1 + g1_exb*PB1
-                  P2 = g1_exa*PA2 + g1_exb*PB2
-                  P3 = g1_exa*PA3 + g1_exb*PB3
-                  G.make_e_coeff(e,1)
-                  Ex000 = e(0,0,0)
-                  Ex001 = e(0,0,1)
-                  Ex101 = e(1,0,1)
-                  G.make_e_coeff(e,2)
-                  Ey000 = e(0,0,0)
-                  Ey001 = e(0,0,1)
-                  Ey101 = e(1,0,1)
-                  G.make_e_coeff(e,3)
-                  Ez000 = e(0,0,0)
-                  Ez001 = e(0,0,1)
-                  Ez101 = e(1,0,1)
-                  fac = pifac * ca * .b.contraction(bb) * partition(aa,bb)
-                  therm => thermal(:,aa,bb)
-                  do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND))*therm(k)
-                  end
-                  res_ij => res(:,1,1)
-                  res_ij(:) = res_ij(:) + cmplx(Ex001,Ex101*k_x,kind=CPX_KIND)*Ey000*Ez000*prefac(:)
-                  res_ij => res(:,1,2)
-                  res_ij(:) = res_ij(:) + Ex000*cmplx(Ey001,Ey101*k_y,kind=CPX_KIND)*Ez000*prefac(:)
-                  res_ij => res(:,1,3)
-                  res_ij(:) = res_ij(:) + Ex000*Ey000*cmplx(Ez001,Ez101*k_z,kind=CPX_KIND)*prefac(:)
-                end
-              end
-              e.destroy
-              prefac.destroy
-            case default
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
-              prefac.create(k_max)
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
-                  gamma = G.a.exponent+G.b.exponent
-                  g1 = ONE/gamma
-                  g4 = QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*G.a.exponent
-                  g1_exb = g1*G.b.exponent
-                  P1 = g1_exa*PA1 + g1_exb*PB1
-                  P2 = g1_exa*PA2 + g1_exb*PB2
-                  P3 = g1_exa*PA3 + g1_exb*PB3
-                  G.make_ft_component(ft_x,1,k_x)
-                  G.make_ft_component(ft_y,2,k_y)
-                  G.make_ft_component(ft_z,3,k_z)
-                  fac = pifac * ca * .b.contraction(bb) * partition(aa,bb)
-                  therm => thermal(:,aa,bb)
-                  do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
-                  end
-                  do b=0,.b.l ! incorporate prefac into ft_z
-                    ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
-                  end
-                  bxlast = bx(1)
-                  bylast = by(1)
-                  bzlast = bz(1)
-                  ft_xb => ft_x(:,0,bxlast)
-                  ft_yb => ft_y(:,0,bylast)
-                  ft_zb => ft_z(:,0,bzlast)
-                  do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    if (bxlast/=xb) then
-                      ft_xb => ft_x(:,0,xb)
-                      bxlast = xb
-                    end
-                    if (bylast/=yb) then
-                      ft_yb=> ft_y(:,0,yb)
-                      bylast = yb
-                    end
-                    if (bzlast/=zb) then
-                      ft_zb=> ft_z(:,0,zb)
-                      bzlast = zb
-                    end
-                    res_ij => res(:,1,b)
-                    res_ij(:) = res_ij(:) + ft_xb(:)*ft_yb(:)*ft_zb(:)
-                  end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_y.destroy
-              ft_z.destroy
-          end
-        case (1)
-          select case (.b.l)
-            case (0)
-              prefac.create(k_max)
-              e.create([0,1],[0,1],[0,0])
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
-                  gamma = G.a.exponent+G.b.exponent
-                  g1 = ONE/gamma
-                  g4 = QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*G.a.exponent
-                  g1_exb = g1*G.b.exponent
-                  P1 = g1_exa*PA1 + g1_exb*PB1
-                  P2 = g1_exa*PA2 + g1_exb*PB2
-                  P3 = g1_exa*PA3 + g1_exb*PB3
-                  G.make_e_coeff(e,1)
-                  Ex000 = e(0,0,0)
-                  Ex010 = e(0,1,0)
-                  Ex110 = e(1,1,0)
-                  G.make_e_coeff(e,2)
-                  Ey000 = e(0,0,0)
-                  Ey010 = e(0,1,0)
-                  Ey110 = e(1,1,0)
-                  G.make_e_coeff(e,3)
-                  Ez000 = e(0,0,0)
-                  Ez010 = e(0,1,0)
-                  Ez110 = e(1,1,0)
-                  fac = pifac * ca * .b.contraction(bb) * partition(aa,bb)
-                  therm => thermal(:,aa,bb)
-                  do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
-                  end
-                  res_ij => res(:,1,1)
-                  res_ij(:) = res_ij(:) + cmplx(Ex010,Ex110*k_x(:),kind=CPX_KIND)*Ey000*Ez000*prefac(:)
-                  res_ij => res(:,2,1)
-                  res_ij(:) = res_ij(:) + Ex000*cmplx(Ey010,Ey110*k_y(:),kind=CPX_KIND)*Ez000*prefac(:)
-                  res_ij => res(:,3,1)
-                  res_ij(:) = res_ij(:) + Ex000*Ey000*cmplx(Ez010,Ez110*k_z(:),kind=CPX_KIND)*prefac(:)
-                end
-              end
-              e.destroy
-              prefac.destroy
-            case (1)
-              ft_x.create([1,k_max],[0,1],[0,1])
-              ft_y.create([1,k_max],[0,1],[0,1])
-              ft_z.create([1,k_max],[0,1],[0,1])
-              prefac.create(k_max)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              PA1 = .a.position(1); PA2 = .a.position(2); PA3 = .a.position(3)
-              PB1 = .b.position(1); PB2 = .b.position(2); PB3 = .b.position(3)
-              e.create([0,2],[0,1],[0,1])
-              ft_x01.create(k_max)
-              ft_x10.create(k_max)
-              ft_y01.create(k_max)
-              ft_y10.create(k_max)
-              ft_z01.create(k_max)
-              ft_z10.create(k_max)
-              k_x2.create(k_max)
-              k_y2.create(k_max)
-              k_z2.create(k_max)
-              k_x2=k_x*k_x
-              k_y2=k_y*k_y
-              k_z2=k_z*k_z
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
-                  gamma = G.a.exponent+G.b.exponent
-                  g1 = ONE/gamma
-                  g4 = QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*G.a.exponent
-                  g1_exb = g1*G.b.exponent
-                  P1 = g1_exa*PA1 + g1_exb*PB1
-                  P2 = g1_exa*PA2 + g1_exb*PB2
-                  P3 = g1_exa*PA3 + g1_exb*PB3
-                  fac = pifac * ca * .b.contraction(bb) * partition(aa,bb)
-                  therm => thermal(:,aa,bb)
-                  do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
-                  end
-                  G.make_e_coeff(e,1)
-                  Ex000 = e(0,0,0)
-                  Ex001 = e(0,0,1)
-                  Ex010 = e(0,1,0)
-                  Ex011 = e(0,1,1)
-                  Ex101 = e(1,0,1)
-                  Ex110 = e(1,1,0)
-                  Ex111 = e(1,1,1)
-                  Ex211 = e(2,1,1)
-                  G.make_e_coeff(e,2)
-                  Ey000 = e(0,0,0)
-                  Ey001 = e(0,0,1)
-                  Ey010 = e(0,1,0)
-                  Ey011 = e(0,1,1)
-                  Ey101 = e(1,0,1)
-                  Ey110 = e(1,1,0)
-                  Ey111 = e(1,1,1)
-                  Ey211 = e(2,1,1)
-                  G.make_e_coeff(e,3)
-                  Ez000 = e(0,0,0)
-                  Ez001 = e(0,0,1)
-                  Ez010 = e(0,1,0)
-                  Ez011 = e(0,1,1)
-                  Ez101 = e(1,0,1)
-                  Ez110 = e(1,1,0)
-                  Ez111 = e(1,1,1)
-                  Ez211 = e(2,1,1)
-                  ft_x01(:) = cmplx(Ex001,Ex101*k_x(:),kind=CPX_KIND)
-                  ft_x10(:) = cmplx(Ex010,Ex110*k_x(:),kind=CPX_KIND)
-                  ft_y01(:) = cmplx(Ey001,Ey101*k_y(:),kind=CPX_KIND)
-                  ft_y10(:) = cmplx(Ey010,Ey110*k_y(:),kind=CPX_KIND)
-                  ft_z01(:) = cmplx(Ez001,Ez101*k_z(:),kind=CPX_KIND)
-                  ft_z10(:) = cmplx(Ez010,Ez110*k_z(:),kind=CPX_KIND)
-                  res_ij => res(:,1,1)
-                  res_ij(:) = res_ij(:) + cmplx(Ex011-Ex211*k_x2(:),Ex111*k_x(:),kind=CPX_KIND)*Ey000*Ez000*prefac(:)
-                  res_ij => res(:,2,1)
-                  res_ij(:) = res_ij(:) + ft_x01(:)*ft_y10(:)*Ez000*prefac(:)
-                  res_ij => res(:,3,1)
-                  res_ij(:) = res_ij(:) + ft_x01(:)*Ey000*ft_z10(:)*prefac(:)
-                  res_ij => res(:,1,2)
-                  res_ij(:) = res_ij(:) + ft_x10(:)*ft_y01(:)*Ez000*prefac(:)
-                  res_ij => res(:,2,2)
-                  res_ij(:) = res_ij(:) + Ex000*cmplx(Ey011-Ey211*k_y2(:),Ey111*k_y(:),kind=CPX_KIND)*Ez000*prefac(:)
-                  res_ij => res(:,3,2)
-                  res_ij(:) = res_ij(:) + Ex000*ft_y01(:)*ft_z10(:)*prefac(:)
-                  res_ij => res(:,1,3)
-                  res_ij(:) = res_ij(:) + ft_x10(:)*Ey000*ft_z01(:)*prefac(:)
-                  res_ij => res(:,2,3)
-                  res_ij(:) = res_ij(:) + Ex000*ft_y10(:)*ft_z01(:)*prefac(:)
-                  res_ij => res(:,3,3)
-                  res_ij(:) = res_ij(:) + Ex000*Ey000*cmplx(Ez011-Ez211*k_z2(:),Ez111*k_z(:),kind=CPX_KIND)*prefac(:)
-                end
-              end
-              k_z2.destroy
-              k_y2.destroy
-              k_x2.destroy
-              ft_z10.destroy
-              ft_z01.destroy
-              ft_y10.destroy
-              ft_y01.destroy
-              ft_x10.destroy
-              ft_x01.destroy
-              e.destroy
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-            case default
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
-              prefac.create(k_max)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
-                  gamma = G.a.exponent+G.b.exponent
-                  g1 = ONE/gamma
-                  g4 = QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*G.a.exponent
-                  g1_exb = g1*G.b.exponent
-                  P1 = g1_exa*.a.position(1) + g1_exb*.b.position(1)
-                  P2 = g1_exa*.a.position(2) + g1_exb*.b.position(2)
-                  P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
-                  G.make_ft_component(ft_x,1,k_x)
-                  G.make_ft_component(ft_y,2,k_y)
-                  G.make_ft_component(ft_z,3,k_z)
-                  fac = pifac * ca * .b.contraction(bb) * partition(aa,bb)
-                  therm => thermal(:,aa,bb)
-                  do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
-                  end
-                  do b=0,.b.l
-                    ft_z(:,0,b) = ft_z(:,0,b) * prefac(:)
-                    ft_z(:,1,b) = ft_z(:,1,b) * prefac(:)
-                  end
-                  do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    ft_xb => ft_x(:,0,xb)
-                    ft_yb => ft_y(:,0,yb)
-                    ft_zb => ft_z(:,0,zb)
-                    res_ij => res(:,1,b)
-                    res_ij(:) = res_ij(:) + ft_x(:,1,xb)*ft_yb*ft_zb
-                    res_ij => res(:,2,b)
-                    res_ij(:) = res_ij(:) + ft_xb*ft_y(:,1,yb)*ft_zb
-                    res_ij => res(:,3,b)
-                    res_ij(:) = res_ij(:) + ft_xb*ft_yb*ft_z(:,1,zb)
-                  end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-          end
-        case default
-          select case (.b.l)
-            case (0)
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
-              prefac.create(k_max)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
-                  gamma = G.a.exponent+G.b.exponent
-                  g1 = ONE/gamma
-                  g4 = QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*G.a.exponent
-                  g1_exb = g1*G.b.exponent
-                  P1 = g1_exa*.a.position(1) + g1_exb*.b.position(1)
-                  P2 = g1_exa*.a.position(2) + g1_exb*.b.position(2)
-                  P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
-                  G.make_ft_component(ft_x,1,k_x)
-                  G.make_ft_component(ft_y,2,k_y)
-                  G.make_ft_component(ft_z,3,k_z)
-                  fac = pifac * ca * .b.contraction(bb) * partition(aa,bb)
-                  therm => thermal(:,aa,bb)
-                  do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
-                  end
-                  do a=0,.a.l
-                    ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
-                  end
-                  do a = 1,.a.n_comp
-                    xa = ax(a)
-                    ya = ay(a)
-                    za = az(a)
-                    res_ij => res(:,a,1)
-                    res_ij(:) = res_ij(:) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,0)
-                  end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-            case (1)
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
-              prefac.create(k_max)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
-                  gamma = G.a.exponent+G.b.exponent
-                  g1 = ONE/gamma
-                  g4 = QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*G.a.exponent
-                  g1_exb = g1*G.b.exponent
-                  P1 = g1_exa*.a.position(1) + g1_exb*.b.position(1)
-                  P2 = g1_exa*.a.position(2) + g1_exb*.b.position(2)
-                  P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
-                  G.make_ft_component(ft_x,1,k_x)
-                  G.make_ft_component(ft_y,2,k_y)
-                  G.make_ft_component(ft_z,3,k_z)
-                  fac = pifac * ca * .b.contraction(bb) * partition(aa,bb)
-                  therm => thermal(:,aa,bb)
-                  do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
-                  end
-                  do a=0,.a.l ! incorporate prefac into ft_z
-                    ft_z(:,a,0) = ft_z(:,a,0) * prefac(:)
-                    ft_z(:,a,1) = ft_z(:,a,1) * prefac(:)
-                  end
-                  do a = 1,.a.n_comp
-                    xa = ax(a)
-                    ya = ay(a)
-                    za = az(a)
-                    res_ij => res(:,a,1)
-                    res_ij(:) = res_ij(:) + ft_x(:,xa,1)*ft_y(:,ya,0)*ft_z(:,za,0)
-                    res_ij => res(:,a,2)
-                    res_ij(:) = res_ij(:) + ft_x(:,xa,0)*ft_y(:,ya,1)*ft_z(:,za,0)
-                    res_ij => res(:,a,3)
-                    res_ij(:) = res_ij(:) + ft_x(:,xa,0)*ft_y(:,ya,0)*ft_z(:,za,1)
-                  end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-            case default
-              ft_x.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_y.create([1,k_max],[0,.a.l],[0,.b.l])
-              ft_z.create([1,k_max],[0,.a.l],[0,.b.l])
-              prefac.create(k_max)
-              k_x => k_pts(:,1); k_y => k_pts(:,2); k_z => k_pts(:,3)
-              fa = .a.first_gaussian; la = .a.last_gaussian
-              fb = .b.first_gaussian; lb = .b.last_gaussian
-              ax => GAUSSIAN_DATA::px(fa:la); ay => GAUSSIAN_DATA::py(fa:la); az => GAUSSIAN_DATA::pz(fa:la)
-              bx => GAUSSIAN_DATA::px(fb:lb); by => GAUSSIAN_DATA::py(fb:lb); bz => GAUSSIAN_DATA::pz(fb:lb)
-             ! This is the general routine.  It includes reduced multiplication,
-             ! and use of pointers to minimise array finding.
-              do aa = 1, .a.n_cc
-                ca = .a.contraction(aa)
-                ex_a=.a.exponent(aa)
-                G.set(ex_a=ex_a)
-                do bb = 1, .b.n_cc
-                  ex_b=.b.exponent(bb)
-                  G.set(ex_b=ex_b)
-                  gamma = G.a.exponent+G.b.exponent
-                  g1 = ONE/gamma
-                  g4 = QUARTER*g1
-                  PI_on_gamma = PI*g1
-                  pifac = sqrt(PI_on_gamma) * PI_on_gamma
-                  g1_exa = g1*G.a.exponent
-                  g1_exb = g1*G.b.exponent
-                  P1 = g1_exa*.a.position(1) + g1_exb*.b.position(1)
-                  P2 = g1_exa*.a.position(2) + g1_exb*.b.position(2)
-                  P3 = g1_exa*.a.position(3) + g1_exb*.b.position(3)
-                  G.make_ft_component(ft_x,1,k_x)
-                  G.make_ft_component(ft_y,2,k_y)
-                  G.make_ft_component(ft_z,3,k_z)
-                  fac = pifac * ca * .b.contraction(bb) * partition(aa,bb)
-                  therm => thermal(:,aa,bb)
-                  do k = 1,k_max
-                    k1 = k_x(k);    k2 = k_y(k);    k3 = k_z(k)
-                    dot1 = k1*P1+k2*P2+k3*P3
-                    dot2 = -g4 * (k1*k1+k2*k2+k3*k3)
-                    prefac(k) = fac*exp(cmplx(dot2,dot1,kind=CPX_KIND)) * therm(k)
-                  end
-                  do b=0,.b.l ! incorporate prefac into ft_z
-                    do a=0,.a.l
-                      ft_z(:,a,b) = ft_z(:,a,b) * prefac(:)
-                    end
-                  end
-                  bxlast = bx(1)
-                  bylast = by(1)
-                  bzlast = bz(1)
-                  ft_xbx => ft_x(:,:,bxlast)
-                  ft_yby => ft_y(:,:,bylast)
-                  ft_zbz => ft_z(:,:,bzlast)
-                  do b = 1,.b.n_comp
-                    xb = bx(b)
-                    yb = by(b)
-                    zb = bz(b)
-                    if (bxlast/=xb) then
-                      ft_xbx => ft_x(:,:,xb)
-                      bxlast = xb
-                    end
-                    if (bylast/=yb) then
-                      ft_yby=> ft_y(:,:,yb)
-                      bylast = yb
-                    end
-                    if (bzlast/=zb) then
-                      ft_zbz=> ft_z(:,:,zb)
-                      bzlast = zb
-                    end
-                    do a = 1,.a.n_comp
-                      xa = ax(a)
-                      ya = ay(a)
-                      za = az(a)
-                      res_ij => res(:,a,b)
-                      res_ij(:) = res_ij(:) + ft_xbx(:,xa+1)*ft_yby(:,ya+1)*ft_zbz(:,za+1)
-                    end
-                  end
-                end
-              end
-              prefac.destroy
-              ft_x.destroy
-              ft_z.destroy
-              ft_y.destroy
-          end
-      end
-   end
 
    make_ft_v0(res,k_pts,thermal,partition)
    ! Calculates the Fourier transform for a product of two contracted
@@ -3377,6 +2798,7 @@ contains
       end
 
       ft_ab.destroy
+
    end
 
    make_ft_v2(res,k_pts,thermal,partition)
@@ -3653,7 +3075,6 @@ contains
                .make_ft_es(ft_z,AB3,ea,eb,g1,g2,k_z,k_max,prefac)
 
                ! Make the FT integrals with reduced multiplication
-             ! .make_ft_rms_v1(ft,ft_x,ft_y,ft_z,prefac)
                .make_ft_rms_v2(ft,ft_x,ft_y,ft_z,prefac)
 
             end
@@ -3974,116 +3395,26 @@ contains
 
    end
 
-!   make_ft_rms_v1(es,Ix,Iy,Iz,wt) ::: private
-!   ! Multiply the Ix, Iy, Iz integrals to get the (e|s) integrals
-!   ! using th reduced multiplication scheme. This version for FT
-!   ! integrals. WARNING: the 0,0,0 case is eliminated, assumed
-!   ! to be handled by special case code.
-!      es :: MAT{CPX}
-!      Ix,Iy,Iz :: MAT{CPX}(1:,0:), IN
-!      wt :: VEC{CPX}, IN
-!
-!      Ixy :: VEC{CPX}@
-!   !  exyz0 :: VEC{INT}@
-!      ex,ey,ez, eyz0,exz0,exy0,ez0,ey0,ex0,en0,erms :: VEC{INT}@
-!      exy_rms :: VEC{VEC_{INT}}@
-!      er :: RMS_INDICES@
-!      ee,em,e,x,y,z,f,l :: INT
-!
-!      f = .first_gaussian
-!      l = .last_gaussian
-!      ex => GAUSSIAN_DATA::px(f:l); ey => GAUSSIAN_DATA::py(f:l); ez => GAUSSIAN_DATA::pz(f:l)
-!      er => GAUSSIAN_DATA::rms_indices(.l_max,.l_min)
-!   !  exyz0 => er.xyz0
-!      eyz0  => er.yz0; exz0 => er.xz0; exy0 => er.xy0
-!      ez0   => er.z0;  ey0  => er.y0;  ex0  => er.x0
-!      en0   => er.n0
-!
-!   ! do ee = 1,exyz0.dim
-!   !    e = exyz0(ee)
-!   !    es(:,e) = es(:,e) + wt
-!   ! end
-!      do ee = 1,eyz0.dim
-!        e = eyz0(ee)
-!        x = ex(e)
-!        es(:,e) = es(:,e) + Ix(:,x)*wt
-!      end
-!      do ee = 1,exz0.dim
-!        e = exz0(ee)
-!        y = ey(e)
-!        es(:,e) = es(:,e) + Iy(:,y)*wt
-!      end
-!      do ee = 1,exy0.dim
-!        e = exy0(ee)
-!        z = ez(e)
-!        es(:,e) = es(:,e) + Iz(:,z)
-!      end
-!      do ee = 1,ez0.dim
-!        e = ez0(ee)
-!        x = ex(e)
-!        y = ey(e)
-!        es(:,e) = es(:,e) + Ix(:,x)*Iy(:,y)*wt
-!      end
-!      do ee = 1,ey0.dim
-!        e = ey0(ee)
-!        x = ex(e)
-!        z = ez(e)
-!        es(:,e) = es(:,e) + Ix(:,x)*Iz(:,z)
-!      end
-!      do ee = 1,ex0.dim
-!        e = ex0(ee)
-!        y = ey(e)
-!        z = ez(e)
-!        es(:,e) = es(:,e) + Iy(:,y)*Iz(:,z)
-!      end
-!      exy_rms => er.xy_rms_n
-!      if (exy_rms.dim==en0.dim) then
-!        do ee = 1,en0.dim
-!           e = en0(ee)
-!           x = ex(e); y = ey(e); z = ez(e)
-!           es(:,e) = es(:,e) + Ix(:,x)*Iy(:,y)*Iz(:,z)
-!        end
-!      else if (exy_rms.dim>0) then
-!        Ixy.create(Ix.dim1)
-!        do ee = 1,exy_rms.dim                 ! Apply (e) RMS here
-!           erms => exy_rms(ee).element
-!           e = en0(erms(1))
-!           x = ex(e)
-!           y = ey(e)
-!           z = ez(e)
-!           Ixy = Ix(:,x)*Iy(:,y)
-!           es(:,e) = es(:,e) + Ixy*Iz(:,z)
-!           do em = 2,erms.dim
-!              e = en0(erms(em))
-!              z = ez(e)
-!              es(:,e) = es(:,e) + Ixy*Iz(:,z)
-!           end
-!        end
-!        Ixy.destroy
-!      end
-!   end
-
-   make_ft_rms_v2(es,Ix,Iy,Iz,wt) ::: private
+   make_ft_rms_v2(es,Ix,Iy,Iz,wt) ::: private, pure
    ! Multiply the Ix, Iy, Iz integrals to get the (e|s) integrals
    ! using th reduced multiplication scheme. This version for FT
    ! integrals. This version removes one level of indirection on the
    ! RMS arrays. WARNING: the 0,0,0 case is eliminated, assumed
    ! to be handled by special case code.
-      es :: MAT{CPX}
+      self :: IN
+      es :: MAT{CPX}, OUT
       Ix,Iy,Iz :: MAT{CPX}(1:,0:), IN
       wt :: VEC{CPX}, IN
 
       Ixy :: VEC{CPX}@
-    ! xyz0 :: VEC{INT}@
-      yz0,yz0px,xz0,xz0py,xy0,xy0pz :: VEC{INT}@
-      z0,z0px,z0py,y0,y0px,y0pz,x0,x0py,x0pz :: VEC{INT}@
-      n1,n1px,n1py,n1pz :: VEC{INT}@
-      n2,n2px,n2py,n2pz :: VEC{VEC_{INT}}@
-      er :: RMS_INDICES@
+      yz0,yz0px,xz0,xz0py,xy0,xy0pz :: VEC{INT}*          ! ptr ok
+      z0,z0px,z0py,y0,y0px,y0pz,x0,x0py,x0pz :: VEC{INT}* ! ptr ok
+      n1,n1px,n1py,n1pz :: VEC{INT}*                      ! ptr ok
+      n2,n2px,n2py,n2pz :: VEC{VEC_{INT}}*                ! ptr ok
+      er :: RMS_INDICES*                                  ! ptr ok
       ee,em,e,x,y,z :: INT
 
       er => GAUSSIAN_DATA::rms_indices(.l_max,.l_min)
-    ! xyz0 => er.xyz0
       yz0  => er.yz0; yz0px => er.yz0px
       xz0  => er.xz0; xz0py => er.xz0py
       xy0  => er.xy0; xy0pz => er.xy0pz
@@ -4093,30 +3424,26 @@ contains
       n1   => er.n1;  n1px => er.n1px; n1py => er.n1py; n1pz => er.n1pz
       n2   => er.n2;  n2px => er.n2px; n2py => er.n2py; n2pz => er.n2pz
 
-   ! do ee = 1,xyz0.dim
-   !    e = xyz0(ee)
-   !    es(:,e) = es(:,e) + wt
-   ! end
       do ee = 1,yz0.dim
-        e = yz0(ee)
-        x = yz0px(ee)
-        es(:,e) = es(:,e) + Ix(:,x)*wt
+         e = yz0(ee)
+         x = yz0px(ee)
+         es(:,e) = es(:,e) + Ix(:,x)*wt
       end
       do ee = 1,xz0.dim
-        e = xz0(ee)
-        y = xz0py(ee)
-        es(:,e) = es(:,e) + Iy(:,y)*wt
+         e = xz0(ee)
+         y = xz0py(ee)
+         es(:,e) = es(:,e) + Iy(:,y)*wt
       end
       do ee = 1,xy0.dim
-        e = xy0(ee)
-        z = xy0pz(ee)
-        es(:,e) = es(:,e) + Iz(:,z)
+         e = xy0(ee)
+         z = xy0pz(ee)
+         es(:,e) = es(:,e) + Iz(:,z)
       end
       do ee = 1,z0.dim
-        e = z0(ee)
-        x = z0px(ee)
-        y = z0py(ee)
-        es(:,e) = es(:,e) + Ix(:,x)*Iy(:,y)*wt
+         e = z0(ee)
+         x = z0px(ee)
+         y = z0py(ee)
+         es(:,e) = es(:,e) + Ix(:,x)*Iy(:,y)*wt
       end
       do ee = 1,y0.dim
         e = y0(ee)
@@ -4125,34 +3452,40 @@ contains
         es(:,e) = es(:,e) + Ix(:,x)*Iz(:,z)
       end
       do ee = 1,x0.dim
-        e = x0(ee)
-        y = x0py(ee)
-        z = x0pz(ee)
-        es(:,e) = es(:,e) + Iy(:,y)*Iz(:,z)
+         e = x0(ee)
+         y = x0py(ee)
+         z = x0pz(ee)
+         es(:,e) = es(:,e) + Iy(:,y)*Iz(:,z)
       end
       do ee = 1,n1.dim
-        e = n1(ee)
-        x = n1px(ee)
-        y = n1py(ee)
-        z = n1pz(ee)
-        es(:,e) = es(:,e) + Ix(:,x)*Iy(:,y)*Iz(:,z)
+         e = n1(ee)
+         x = n1px(ee)
+         y = n1py(ee)
+         z = n1pz(ee)
+         es(:,e) = es(:,e) + Ix(:,x)*Iy(:,y)*Iz(:,z)
       end
+
       if (n2.dim==0) return
+
       Ixy.create(Ix.dim1)
-      do ee = 1,n2.dim                 ! Apply RMS here
-        e = n2(ee)[1]
-        x = n2px(ee)[1]
-        y = n2py(ee)[1]
-        z = n2pz(ee)[1]
-        Ixy = Ix(:,x)*Iy(:,y)
-        es(:,e) = es(:,e) + Ixy*Iz(:,z)
-        do em = 2,n2(ee).element.dim
-           e = n2(ee)[em]
-           z = n2pz(ee)[em]
-           es(:,e) = es(:,e) + Ixy*Iz(:,z)
-        end
+
+      ! Apply RMS here
+      do ee = 1,n2.dim                 
+         e = n2(ee)[1]
+         x = n2px(ee)[1]
+         y = n2py(ee)[1]
+         z = n2pz(ee)[1]
+         Ixy = Ix(:,x)*Iy(:,y)
+         es(:,e) = es(:,e) + Ixy*Iz(:,z)
+         do em = 2,n2(ee).element.dim
+            e = n2(ee)[em]
+            z = n2pz(ee)[em]
+            es(:,e) = es(:,e) + Ixy*Iz(:,z)
+         end
       end
+
       Ixy.destroy
+
    end
 
 !  ==============================
@@ -7128,7 +6461,7 @@ contains
 
               ! Make only the needed b's
               nb = .b.n_comp
-              cal move_alloc(int_new,int_old)
+              call move_alloc(int_new,int_old)
 
               do b = 1,nb
                  b1 = GAUSSIAN_DATA::index_m1(b+fb) - pb
