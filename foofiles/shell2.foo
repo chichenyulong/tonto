@@ -5279,10 +5279,10 @@ contains
 
    end
 
-   get_nuc_c(ab,mass_c,pos_c)
+   get_nuc_c(ab,mass_c,pos_c) ::: PURE
    ! Calculate the nuclear attraction matrix for the two shells with the
    ! nucleus at c.
-   !   self :: IN
+      self :: IN
       ab :: MAT{REAL}, OUT
       mass_c :: REAL, IN
       pos_c :: VEC{REAL}(3), IN
@@ -5319,7 +5319,8 @@ contains
 
       else
 
-         n = GAUSSIAN_DATA:n_comp_up_to(.l_sum) - GAUSSIAN_DATA:n_comp_up_to(.l_max-1)
+         n = GAUSSIAN_DATA:n_comp_up_to(.l_sum) &
+           - GAUSSIAN_DATA:n_comp_up_to(.l_max-1)
          es.create(n)
          .make_nuc_es(es,mass_c,pos_c)
          .transfer_l_a_to_l_b(es,ab)
@@ -5329,7 +5330,7 @@ contains
 
    end
 
-   make_nuc_es(es,mass_c,pos_c) ::: private
+   make_nuc_es(es,mass_c,pos_c) ::: private, PURE
    ! Make the (es) nuclear attraction integrals, summed over primitives
    ! Numbers may be slightly different to cadpac due to a relativistic
    ! correction term.
@@ -5337,16 +5338,17 @@ contains
       es :: VEC{REAL}, OUT
       mass_c :: REAL, IN
       pos_c :: VEC{REAL}(3), IN
-      Ixa,Iya,Iza :: MAT{REAL}@
-      Ix,Iy,Iz :: VEC{REAL}@
+
+      Ixa,Iya,Iza :: MAT{REAL}@, target
+      Ix,Iy,Iz :: VEC{REAL}* ! ptr ok
       rys :: RYS@
       rzt,ce,e1_ce,rho_zinv,half_zinv,Ix2,Iy2,Iz2,wt :: REAL
       QPx,QPy,QPz,PAx,PAy,PAz,zeta,zinv,rho,xx,eta_c,two_pi :: REAL
       Ixe,Iye,Ize,Ixe1,Iye1,Ize1,Ixep1,Iyep1,Izep1 :: REAL
       ag,bg,e,ep1,n_roots,i,j,n,n_sum :: INT
 
-      if (mass_c < TOL(15)) then; eta_c=1.0d30  ! Very big.
-      else;                       eta_c=3880000000d0*(mass_c**(-TWOTHIRD))
+      if (mass_c < TOL(15)) then; eta_c = 1.0d30  ! Very big.
+      else;                       eta_c = 3880000000d0*(mass_c**(-TWOTHIRD))
       end
       eta_c = 1.0d60 ! uncomment this to get rid of relativistic correction.
 
@@ -5357,11 +5359,11 @@ contains
       Iya.create(n_sum,.l_sum+1)
       Iza.create(n_sum,.l_sum+1)
 
-      two_pi=TWO*PI
+      two_pi = TWO*PI
       i = 0
       j = 0
       do bg = 1, .b.n_cc
-       do ag = 1, .a.n_cc
+      do ag = 1, .a.n_cc
          i     = i + 1
          zeta  = .exponent_sum(i)
          zinv  = .exponent_inv(i)
@@ -5377,50 +5379,50 @@ contains
          rys.weight = rys.weight * (two_pi * .contraction_prefactor(i) * sqrt(rho))
          half_zinv = HALF * zinv
          rho_zinv = rho * zinv
-
+         
          do n = 1, n_roots
-           j = j + 1
-           Ix => Ixa(j,:)
-           Iy => Iya(j,:)
-           Iz => Iza(j,:)
-           wt = rys.weight(n)
-           Ix(1) = ONE
-           Iy(1) = ONE
-           Iz(1) = wt
-           if (.l_sum>0) then
-              rzt   = rys.root(n)*rho_zinv
-              Ix2 = PAx+rzt*QPx
-              Iy2 = PAy+rzt*QPy
-              Iz2 = PAz+rzt*QPz
-              Ix(2) = Ix2;    Iy(2) = Iy2;    Iz(2) = Iz2 * wt
-              if (.l_sum>1) then
-                ce    = (ONE-rzt)*half_zinv
-                Ixep1 = Ix2*Ix2+ce
-                Iyep1 = Iy2*Iy2+ce
-                Izep1 = Iz2*Iz2+ce
-                Ix(3) = Ixep1
-                Iy(3) = Iyep1
-                Iz(3) = Izep1 * wt
-                if (.l_sum>2) then
-                  Ixe1 = Ix2;      Iye1 = Iy2;      Ize1 = Iz2
-                  Ixe = Ixep1;     Iye = Iyep1;     Ize = Izep1
-                  e1_ce = ce
-                  do e = 3,.l_sum
-                    ep1   = e+1
-                  ! e1_ce = (e-1)*ce
-                    e1_ce = e1_ce+ce
-                    Ixep1 = Ix2*Ixe+e1_ce*Ixe1
-                    Iyep1 = Iy2*Iye+e1_ce*Iye1
-                    Izep1 = Iz2*Ize+e1_ce*Ize1
-                    Ix(ep1) = Ixep1; Iy(ep1) = Iyep1; Iz(ep1) = Izep1 * wt
-                    Ixe1 = Ixe;      Iye1 = Iye;      Ize1 = Ize
-                    Ixe = Ixep1;     Iye = Iyep1;     Ize = Izep1
+            j = j + 1
+            Ix => Ixa(j,:)
+            Iy => Iya(j,:)
+            Iz => Iza(j,:)
+            wt = rys.weight(n)
+            Ix(1) = ONE
+            Iy(1) = ONE
+            Iz(1) = wt
+            if (.l_sum>0) then
+               rzt   = rys.root(n)*rho_zinv
+               Ix2 = PAx+rzt*QPx
+               Iy2 = PAy+rzt*QPy
+               Iz2 = PAz+rzt*QPz
+               Ix(2) = Ix2;    Iy(2) = Iy2;    Iz(2) = Iz2 * wt
+               if (.l_sum>1) then
+                  ce    = (ONE-rzt)*half_zinv
+                  Ixep1 = Ix2*Ix2+ce
+                  Iyep1 = Iy2*Iy2+ce
+                  Izep1 = Iz2*Iz2+ce
+                  Ix(3) = Ixep1
+                  Iy(3) = Iyep1
+                  Iz(3) = Izep1 * wt
+                  if (.l_sum>2) then
+                     Ixe1 = Ix2;      Iye1 = Iy2;      Ize1 = Iz2
+                     Ixe = Ixep1;     Iye = Iyep1;     Ize = Izep1
+                     e1_ce = ce
+                     do e = 3,.l_sum
+                        ep1   = e+1
+                      ! e1_ce = (e-1)*ce
+                        e1_ce = e1_ce+ce
+                        Ixep1 = Ix2*Ixe+e1_ce*Ixe1
+                        Iyep1 = Iy2*Iye+e1_ce*Iye1
+                        Izep1 = Iz2*Ize+e1_ce*Ize1
+                        Ix(ep1) = Ixep1; Iy(ep1) = Iyep1; Iz(ep1) = Izep1 * wt
+                        Ixe1 = Ixe;      Iye1 = Iye;      Ize1 = Ize
+                        Ixe = Ixep1;     Iye = Iyep1;     Ize = Izep1
+                     end
                   end
-                end
-              end
-           end
+               end
+            end
          end
-       end
+      end
       end
 
       .combine_nuc_2d_ints(es,Ixa,Iya,Iza,Iza(:,1))
@@ -5429,133 +5431,120 @@ contains
       Iya.destroy
       Ixa.destroy
       rys.destroy
+
    end
 
-   combine_nuc_2d_ints(es,Ix,Iy,Iz,wt) ::: private
+   combine_nuc_2d_ints(es,Ix,Iy,Iz,wt) ::: private, PURE
    ! Sum the Ix, Iy, and Iz 2d-integrals to get the (e|s) integrals.
-      es :: VEC{REAL}
+      self :: IN
+      es :: VEC{REAL}, OUT
       Ix,Iy,Iz :: MAT{REAL}, IN
       wt :: VEC{REAL}, IN
+
       Ixy :: VEC{REAL}@
-      ex,ey,ez, exyz0,eyz0,exz0,exy0,ez0,ey0,ex0,en0,erms :: VEC{INT}@
-      exy_rms :: VEC{VEC_{INT}}@
-      er :: RMS_INDICES@
+      ex,ey,ez, exyz0,eyz0,exz0,exy0,ez0,ey0,ex0,en0,erms :: VEC{INT}* ! ptr ok
+      exy_rms :: VEC{VEC_{INT}}* ! ptr ok
+      er :: RMS_INDICES*         ! ptr ok
       ee,em,e,xe,ye,ze,f,l :: INT
+
       f = .first_gaussian
       l = .last_gaussian
-      ex => GAUSSIAN_DATA::nx(f:l); ey => GAUSSIAN_DATA::ny(f:l); ez => GAUSSIAN_DATA::nz(f:l)
-      er => GAUSSIAN_DATA::rms_indices(.l_max,.l_min)
+
+      ex    => GAUSSIAN_DATA::nx(f:l)
+      ey    => GAUSSIAN_DATA::ny(f:l)
+      ez    => GAUSSIAN_DATA::nz(f:l)
+
+      er    => GAUSSIAN_DATA::rms_indices(.l_max,.l_min)
       exyz0 => er.xyz0
-      eyz0  => er.yz0; exz0 => er.xz0; exy0 => er.xy0
-      ez0   => er.z0;  ey0  => er.y0;  ex0  => er.x0
+      eyz0  => er.yz0
+      exz0  => er.xz0
+      exy0  => er.xy0
+      ez0   => er.z0
+      ey0   => er.y0
+      ex0   => er.x0
       en0   => er.n0
+
       do ee = 1,exyz0.dim
-        e  = exyz0(ee)
-        es(e) = sum(wt)
+         e  = exyz0(ee)
+         es(e) = sum(wt)
       end
+
       do ee = 1,eyz0.dim
-        e  = eyz0(ee)
-        xe = ex(e)
-        es(e) = sum(Ix(:,xe)*wt)
+         e  = eyz0(ee)
+         xe = ex(e)
+         es(e) = sum(Ix(:,xe)*wt)
       end
+
       do ee = 1,exz0.dim
-        e  = exz0(ee)
-        ye = ey(e)
-        es(e) = sum(Iy(:,ye)*wt)
+         e  = exz0(ee)
+         ye = ey(e)
+         es(e) = sum(Iy(:,ye)*wt)
       end
+
       do ee = 1,exy0.dim
-        e  = exy0(ee)
-        ze = ez(e)
-        es(e) = sum(Iz(:,ze)   )
+         e  = exy0(ee)
+         ze = ez(e)
+         es(e) = sum(Iz(:,ze)   )
       end
+
       do ee = 1,ez0.dim
-        e  = ez0(ee)
-        xe = ex(e)
-        ye = ey(e)
-        es(e) = sum(Ix(:,xe)*Iy(:,ye)*wt      )
+         e  = ez0(ee)
+         xe = ex(e)
+         ye = ey(e)
+         es(e) = sum(Ix(:,xe)*Iy(:,ye)*wt      )
       end
+
       do ee = 1,ey0.dim
-        e  = ey0(ee)
-        xe = ex(e)
-        ze = ez(e)
-        es(e) = sum(Ix(:,xe)         *Iz(:,ze))
+         e  = ey0(ee)
+         xe = ex(e)
+         ze = ez(e)
+         es(e) = sum(Ix(:,xe)         *Iz(:,ze))
       end
+
       do ee = 1,ex0.dim
-        e  = ex0(ee)
-        ye = ey(e)
-        ze = ez(e)
-        es(e) = sum(         Iy(:,ye)*Iz(:,ze))
+         e  = ex0(ee)
+         ye = ey(e)
+         ze = ez(e)
+         es(e) = sum(         Iy(:,ye)*Iz(:,ze))
       end
+
       exy_rms => er.xy_rms_n
+
       if (exy_rms.dim==en0.dim) then
-        do ee = 1,en0.dim
-           e  = en0(ee)
-           xe = ex(e); ye = ey(e); ze = ez(e)
-           es(e) = sum(Ix(:,xe)*Iy(:,ye)*Iz(:,ze))
-        end
+
+         do ee = 1,en0.dim
+            e  = en0(ee)
+            xe = ex(e)
+            ye = ey(e)
+            ze = ez(e)
+            es(e) = sum(Ix(:,xe)*Iy(:,ye)*Iz(:,ze))
+         end
+
       else if (exy_rms.dim>0) then
-        Ixy.create(Ix.dim1)
-        do ee = 1,exy_rms.dim                 ! Apply (e) RMS here
-           erms => exy_rms(ee).element
-           e  = en0(erms(1))
-           xe = ex(e)
-           ye = ey(e)
-           ze = ez(e)
-           Ixy = Ix(:,xe)*Iy(:,ye)
-           es(e) = sum(Ixy*Iz(:,ze))
-           do em = 2,erms.dim
-              e = en0(erms(em))
-              ze = ez(e)
-              es(e) = sum(Ixy*Iz(:,ze))
-           end
-        end
-        Ixy.destroy
+
+         ! Apply (e) RMS here
+         Ixy.create(Ix.dim1)
+         do ee = 1,exy_rms.dim                 
+            erms => exy_rms(ee).element
+            e  = en0(erms(1))
+            xe = ex(e)
+            ye = ey(e)
+            ze = ez(e)
+            Ixy = Ix(:,xe)*Iy(:,ye)
+            es(e) = sum(Ixy*Iz(:,ze))
+            do em = 2,erms.dim
+               e = en0(erms(em))
+               ze = ez(e)
+               es(e) = sum(Ixy*Iz(:,ze))
+            end
+         end
+         Ixy.destroy
+
       end
+
    end
 
-!   combine_nuc_2d_ints(es,Ix,Iy,Iz) ::: private
-!   ! Sum the Ix, Iy, and Iz 2d-integrals to get the (e|s) integrals.
-!     es :: VEC{REAL}
-!     Ix,Iy,Iz :: MAT{REAL}, IN
-!     Ixy :: VEC{REAL}@
-!     ex,ey,ez,erms :: VEC{INT}@
-!     exy_rms :: VEC{VEC_{INT}}@
-!     er :: RMS_INDICES@
-!     ee,em,e,xe,ye,ze,f,l :: INT
-!     xe1,ye1,xy1 :: BIN
-!   ! ex   => eg.nx;  ey   => eg.ny;  ez   => eg.nz
-!!    do e = 1,es.dim
-!!       xe = ex(e); ye = ey(e); ze = ez(e)
-!!       es(e) = sum(Ix(:,xe)*Iy(:,ye)*Iz(:,ze))
-!!    end
-!     f = .first_gaussian
-!     l = .last_gaussian
-!     ex => nx(f:l); ey => ny(f:l); ez => nz(f:l)
-!     er => rms_indices(.l_max,.l_min)
-!     exy_rms => er.xy_rms
-!     Ixy.create(Ix.dim1)
-!     do ee = 1,exy_rms.dim                 ! Apply (e) RMS here
-!        erms => exy_rms(ee).element
-!        e = erms(1)
-!        xe  = ex(e); ye  = ey(e)
-!        xe1 = xe==1; ye1 = ye==1; xy1 = xe1 AND ye1
-!        if      (xy1) then; ! both factors are one
-!        else if (xe1) then; Ixy = Iy(:,ye)
-!        else if (ye1) then; Ixy = Ix(:,xe)
-!        else;               Ixy = Ix(:,xe) * Iy(:,ye)
-!        end
-!        do em = 1,erms.dim
-!           e = erms(em)
-!           ze = ez(e)
-!           if (xy1) then; es(e) = sum(    Iz(:,ze))
-!           else;          es(e) = sum(Ixy*Iz(:,ze))
-!           end
-!        end
-!     end
-!     Ixy.destroy
-!   end
-
-   make_nuc_dp(dp,mass_c,pos_c) ::: private
+   make_nuc_dp(dp,mass_c,pos_c) ::: private, PURE
    ! Make the (dp) nuclear attraction integrals, summed over primitives
    ! Numbers may be slightly different to cadpac due to a relativistic
    ! correction term.
@@ -5563,6 +5552,7 @@ contains
       dp :: MAT{REAL}, OUT
       mass_c :: REAL, IN
       pos_c :: VEC{REAL}(3), IN
+
       rys :: RYS@
       rzt,ce,rho_zinv,half_zinv,wt :: REAL
       QPx,QPy,QPz,PAx,PAy,PAz,zeta,zinv,rho,xx,eta_c,two_pi :: REAL
@@ -5579,16 +5569,19 @@ contains
       rys.create(2)
 
       two_pi=TWO*PI
+
       i = 0
       j = 0
+
       dxx_s = ZERO;  dyy_s = ZERO;  dzz_s = ZERO
       dxy_s = ZERO;  dxz_s = ZERO;  dyz_s = ZERO
       fxxx_s = ZERO; fyyy_s = ZERO; fzzz_s = ZERO
       fxxy_s = ZERO; fxxz_s = ZERO; fxyy_s = ZERO
       fyyz_s = ZERO; fxzz_s = ZERO; fyzz_s = ZERO
       fxyz_s = ZERO
+
       do bg = 1, .b.n_cc
-       do ag = 1, .a.n_cc
+      do ag = 1, .a.n_cc
          i     = i + 1
          zeta  = .exponent_sum(i)
          zinv  = .exponent_inv(i)
@@ -5604,132 +5597,146 @@ contains
          rys.weight = rys.weight * (two_pi * .contraction_prefactor(i) * sqrt(rho))
          half_zinv = HALF * zinv
          rho_zinv = rho * zinv
-
+         
          do n = 1, 2
-           j = j + 1
-           wt = rys.weight(n)
-           rzt   = rys.root(n)*rho_zinv
-           ce    = (ONE-rzt)*half_zinv
-           Ix2 = PAx+rzt*QPx
-           Iy2 = PAy+rzt*QPy
-           Iz2 = PAz+rzt*QPz
-           Ix3 = Ix2*Ix2+ce
-           Iy3 = Iy2*Iy2+ce
-           Iz3 = (Iz2*Iz2+ce)*wt
-           Iz2 = Iz2 * wt
-           two_ce = ce+ce
-           dxx_s  = dxx_s  + Ix3 * wt
-           dyy_s  = dyy_s  + Iy3 * wt
-           dzz_s  = dzz_s  + Iz3
-           dxy_s  = dxy_s  + Ix2 * Iy2 * wt
-           dxz_s  = dxz_s  + Ix2 * Iz2
-           dyz_s  = dyz_s  + Iy2 * Iz2
-           fxxx_s = fxxx_s + Ix2*(Ix3+two_ce) * wt
-           fyyy_s = fyyy_s + Iy2*(Iy3+two_ce) * wt
-           fzzz_s = fzzz_s + Iz2*(Iz3+two_ce) * wt
-           fxxy_s = fxxy_s + Ix3 * Iy2 * wt
-           fxxz_s = fxxz_s + Ix3 * Iz2
-           fxyy_s = fxyy_s + Ix2 * Iy3 * wt
-           fyyz_s = fyyz_s + Iy3 * Iz2
-           fxzz_s = fxzz_s + Ix3 * Iz3
-           fyzz_s = fyzz_s + Iy2 * Iz3
-           fxyz_s = fxyz_s + Ix2 * Iy2 * Iz2
+            j = j + 1
+            wt = rys.weight(n)
+            rzt   = rys.root(n)*rho_zinv
+            ce    = (ONE-rzt)*half_zinv
+            Ix2 = PAx+rzt*QPx
+            Iy2 = PAy+rzt*QPy
+            Iz2 = PAz+rzt*QPz
+            Ix3 = Ix2*Ix2+ce
+            Iy3 = Iy2*Iy2+ce
+            Iz3 = (Iz2*Iz2+ce)*wt
+            Iz2 = Iz2 * wt
+            two_ce = ce+ce
+            dxx_s  = dxx_s  + Ix3 * wt
+            dyy_s  = dyy_s  + Iy3 * wt
+            dzz_s  = dzz_s  + Iz3
+            dxy_s  = dxy_s  + Ix2 * Iy2 * wt
+            dxz_s  = dxz_s  + Ix2 * Iz2
+            dyz_s  = dyz_s  + Iy2 * Iz2
+            fxxx_s = fxxx_s + Ix2*(Ix3+two_ce) * wt
+            fyyy_s = fyyy_s + Iy2*(Iy3+two_ce) * wt
+            fzzz_s = fzzz_s + Iz2*(Iz3+two_ce) * wt
+            fxxy_s = fxxy_s + Ix3 * Iy2 * wt
+            fxxz_s = fxxz_s + Ix3 * Iz2
+            fxyy_s = fxyy_s + Ix2 * Iy3 * wt
+            fyyz_s = fyyz_s + Iy3 * Iz2
+            fxzz_s = fxzz_s + Ix3 * Iz3
+            fyzz_s = fyzz_s + Iy2 * Iz3
+            fxyz_s = fxyz_s + Ix2 * Iy2 * Iz2
          end
-       end
+
+      end
       end
 
       if (.same_center) then
-       if (.a.l==2) then
-         dp(1,1) = fxxx_s
-         dp(2,1) = fxyy_s
-         dp(3,1) = fxzz_s
-         dp(4,1) = fxxy_s
-         dp(5,1) = fxxz_s
-         dp(6,1) = fxyz_s
-         dp(1,2) = fxxy_s
-         dp(2,2) = fyyy_s
-         dp(3,2) = fyzz_s
-         dp(4,2) = fxyy_s
-         dp(5,2) = fxyz_s
-         dp(6,2) = fyyz_s
-         dp(1,3) = fxxz_s
-         dp(2,3) = fyyz_s
-         dp(3,3) = fzzz_s
-         dp(4,3) = fxyz_s
-         dp(5,3) = fxzz_s
-         dp(6,3) = fyzz_s
-       else
-         dp(1,1) = fxxx_s
-         dp(1,2) = fxyy_s
-         dp(1,3) = fxzz_s
-         dp(1,4) = fxxy_s
-         dp(1,5) = fxxz_s
-         dp(1,6) = fxyz_s
-         dp(2,1) = fxxy_s
-         dp(2,2) = fyyy_s
-         dp(2,3) = fyzz_s
-         dp(2,4) = fxyy_s
-         dp(2,5) = fxyz_s
-         dp(2,6) = fyyz_s
-         dp(3,1) = fxxz_s
-         dp(3,2) = fyyz_s
-         dp(3,3) = fzzz_s
-         dp(3,4) = fxyz_s
-         dp(3,5) = fxzz_s
-         dp(3,6) = fyzz_s
-       end
+
+         if (.a.l==2) then
+
+            dp(1,1) = fxxx_s
+            dp(2,1) = fxyy_s
+            dp(3,1) = fxzz_s
+            dp(4,1) = fxxy_s
+            dp(5,1) = fxxz_s
+            dp(6,1) = fxyz_s
+            dp(1,2) = fxxy_s
+            dp(2,2) = fyyy_s
+            dp(3,2) = fyzz_s
+            dp(4,2) = fxyy_s
+            dp(5,2) = fxyz_s
+            dp(6,2) = fyyz_s
+            dp(1,3) = fxxz_s
+            dp(2,3) = fyyz_s
+            dp(3,3) = fzzz_s
+            dp(4,3) = fxyz_s
+            dp(5,3) = fxzz_s
+            dp(6,3) = fyzz_s
+
+         else
+
+            dp(1,1) = fxxx_s
+            dp(1,2) = fxyy_s
+            dp(1,3) = fxzz_s
+            dp(1,4) = fxxy_s
+            dp(1,5) = fxxz_s
+            dp(1,6) = fxyz_s
+            dp(2,1) = fxxy_s
+            dp(2,2) = fyyy_s
+            dp(2,3) = fyzz_s
+            dp(2,4) = fxyy_s
+            dp(2,5) = fxyz_s
+            dp(2,6) = fyyz_s
+            dp(3,1) = fxxz_s
+            dp(3,2) = fyyz_s
+            dp(3,3) = fzzz_s
+            dp(3,4) = fxyz_s
+            dp(3,5) = fxzz_s
+            dp(3,6) = fyzz_s
+
+         end
+
       else
-       if (.a.l==2) then
-         ABx = .a.position(1) - .b.position(1)
-         ABy = .a.position(2) - .b.position(2)
-         ABz = .a.position(3) - .b.position(3)
-         dp(1,1) = fxxx_s + ABx * dxx_s
-         dp(2,1) = fxyy_s + ABx * dyy_s
-         dp(3,1) = fxzz_s + ABx * dzz_s
-         dp(4,1) = fxxy_s + ABx * dxy_s
-         dp(5,1) = fxxz_s + ABx * dxz_s
-         dp(6,1) = fxyz_s + ABx * dyz_s
-         dp(1,2) = fxxy_s + ABy * dxx_s
-         dp(2,2) = fyyy_s + ABy * dyy_s
-         dp(3,2) = fyzz_s + ABy * dzz_s
-         dp(4,2) = fxyy_s + ABy * dxy_s
-         dp(5,2) = fxyz_s + ABy * dxz_s
-         dp(6,2) = fyyz_s + ABy * dyz_s
-         dp(1,3) = fxxz_s + ABz * dxx_s
-         dp(2,3) = fyyz_s + ABz * dyy_s
-         dp(3,3) = fzzz_s + ABz * dzz_s
-         dp(4,3) = fxyz_s + ABz * dxy_s
-         dp(5,3) = fxzz_s + ABz * dxz_s
-         dp(6,3) = fyzz_s + ABz * dyz_s
-       else
-         ABx = .b.position(1) - .a.position(1)
-         ABy = .b.position(2) - .a.position(2)
-         ABz = .b.position(3) - .a.position(3)
-         dp(1,1) = fxxx_s + ABx * dxx_s
-         dp(1,2) = fxyy_s + ABx * dyy_s
-         dp(1,3) = fxzz_s + ABx * dzz_s
-         dp(1,4) = fxxy_s + ABx * dxy_s
-         dp(1,5) = fxxz_s + ABx * dxz_s
-         dp(1,6) = fxyz_s + ABx * dyz_s
-         dp(2,1) = fxxy_s + ABy * dxx_s
-         dp(2,2) = fyyy_s + ABy * dyy_s
-         dp(2,3) = fyzz_s + ABy * dzz_s
-         dp(2,4) = fxyy_s + ABy * dxy_s
-         dp(2,5) = fxyz_s + ABy * dxz_s
-         dp(2,6) = fyyz_s + ABy * dyz_s
-         dp(3,1) = fxxz_s + ABz * dxx_s
-         dp(3,2) = fyyz_s + ABz * dyy_s
-         dp(3,3) = fzzz_s + ABz * dzz_s
-         dp(3,4) = fxyz_s + ABz * dxy_s
-         dp(3,5) = fxzz_s + ABz * dxz_s
-         dp(3,6) = fyzz_s + ABz * dyz_s
-       end
+
+         if (.a.l==2) then
+
+            ABx = .a.position(1) - .b.position(1)
+            ABy = .a.position(2) - .b.position(2)
+            ABz = .a.position(3) - .b.position(3)
+            dp(1,1) = fxxx_s + ABx * dxx_s
+            dp(2,1) = fxyy_s + ABx * dyy_s
+            dp(3,1) = fxzz_s + ABx * dzz_s
+            dp(4,1) = fxxy_s + ABx * dxy_s
+            dp(5,1) = fxxz_s + ABx * dxz_s
+            dp(6,1) = fxyz_s + ABx * dyz_s
+            dp(1,2) = fxxy_s + ABy * dxx_s
+            dp(2,2) = fyyy_s + ABy * dyy_s
+            dp(3,2) = fyzz_s + ABy * dzz_s
+            dp(4,2) = fxyy_s + ABy * dxy_s
+            dp(5,2) = fxyz_s + ABy * dxz_s
+            dp(6,2) = fyyz_s + ABy * dyz_s
+            dp(1,3) = fxxz_s + ABz * dxx_s
+            dp(2,3) = fyyz_s + ABz * dyy_s
+            dp(3,3) = fzzz_s + ABz * dzz_s
+            dp(4,3) = fxyz_s + ABz * dxy_s
+            dp(5,3) = fxzz_s + ABz * dxz_s
+            dp(6,3) = fyzz_s + ABz * dyz_s
+
+         else
+
+            ABx = .b.position(1) - .a.position(1)
+            ABy = .b.position(2) - .a.position(2)
+            ABz = .b.position(3) - .a.position(3)
+            dp(1,1) = fxxx_s + ABx * dxx_s
+            dp(1,2) = fxyy_s + ABx * dyy_s
+            dp(1,3) = fxzz_s + ABx * dzz_s
+            dp(1,4) = fxxy_s + ABx * dxy_s
+            dp(1,5) = fxxz_s + ABx * dxz_s
+            dp(1,6) = fxyz_s + ABx * dyz_s
+            dp(2,1) = fxxy_s + ABy * dxx_s
+            dp(2,2) = fyyy_s + ABy * dyy_s
+            dp(2,3) = fyzz_s + ABy * dzz_s
+            dp(2,4) = fxyy_s + ABy * dxy_s
+            dp(2,5) = fxyz_s + ABy * dxz_s
+            dp(2,6) = fyyz_s + ABy * dyz_s
+            dp(3,1) = fxxz_s + ABz * dxx_s
+            dp(3,2) = fyyz_s + ABz * dyy_s
+            dp(3,3) = fzzz_s + ABz * dzz_s
+            dp(3,4) = fxyz_s + ABz * dxy_s
+            dp(3,5) = fxzz_s + ABz * dxz_s
+            dp(3,6) = fyzz_s + ABz * dyz_s
+
+         end
+
       end
 
       rys.destroy
+
    end
 
-   make_nuc_ds(ds,mass_c,pos_c) ::: private
+   make_nuc_ds(ds,mass_c,pos_c) ::: private, PURE
    ! Make the (ds) nuclear attraction integrals, summed over primitives
    ! Numbers may be slightly different to cadpac due to a relativistic
    ! correction term.
@@ -5737,6 +5744,7 @@ contains
       ds :: MAT{REAL}, OUT
       mass_c :: REAL, IN
       pos_c :: VEC{REAL}(3), IN
+
       rys :: RYS@
       rzt,ce,rho_zinv,half_zinv,Ix2,Iy2,Iz2,wt,Iz2_wt :: REAL
       QPx,QPy,QPz,PAx,PAy,PAz,zeta,zinv,rho,xx,eta_c,two_pi :: REAL
@@ -5749,12 +5757,15 @@ contains
       eta_c = 1.0d60 ! uncomment this to get rid of relativistic correction.
 
       rys.create(2)
+
       two_pi=TWO*PI
       dxx_s = ZERO;    dyy_s = ZERO;    dzz_s = ZERO
       dxy_s = ZERO;    dxz_s = ZERO;    dyz_s = ZERO
+
       i = 0
+
       do bg = 1, .b.n_cc
-       do ag = 1, .a.n_cc
+      do ag = 1, .a.n_cc
          i     = i + 1
          zeta  = .exponent_sum(i)
          zinv  = .exponent_inv(i)
@@ -5770,42 +5781,51 @@ contains
          rys.weight = rys.weight * (two_pi * .contraction_prefactor(i) * sqrt(rho))
          half_zinv = HALF * zinv
          rho_zinv = rho * zinv
+
          do n = 1,2
-           wt = rys.weight(n)
-           rzt   = rys.root(n)*rho_zinv
-           Ix2 = PAx+rzt*QPx
-           Iy2 = PAy+rzt*QPy
-           Iz2 = PAz+rzt*QPz
-           ce  = (ONE-rzt)*half_zinv
-           Iz2_wt = Iz2 * wt
-           dxx_s = dxx_s + (Ix2*Ix2+ce) * wt
-           dyy_s = dyy_s + (Iy2*Iy2+ce) * wt
-           dzz_s = dzz_s + (Iz2*Iz2+ce) * wt
-           dxy_s = dxy_s + Ix2 * Iy2    * wt
-           dxz_s = dxz_s + Ix2 *      Iz2_wt
-           dyz_s = dyz_s +      Iy2 * Iz2_wt
+            wt = rys.weight(n)
+            rzt   = rys.root(n)*rho_zinv
+            Ix2 = PAx+rzt*QPx
+            Iy2 = PAy+rzt*QPy
+            Iz2 = PAz+rzt*QPz
+            ce  = (ONE-rzt)*half_zinv
+            Iz2_wt = Iz2 * wt
+            dxx_s = dxx_s + (Ix2*Ix2+ce) * wt
+            dyy_s = dyy_s + (Iy2*Iy2+ce) * wt
+            dzz_s = dzz_s + (Iz2*Iz2+ce) * wt
+            dxy_s = dxy_s + Ix2 * Iy2    * wt
+            dxz_s = dxz_s + Ix2 *      Iz2_wt
+            dyz_s = dyz_s +      Iy2 * Iz2_wt
          end
-       end
+
       end
+      end
+
       rys.destroy
+
       if (.a.l==2) then
-       ds(1,1) = dxx_s
-       ds(2,1) = dyy_s
-       ds(3,1) = dzz_s
-       ds(4,1) = dxy_s
-       ds(5,1) = dxz_s
-       ds(6,1) = dyz_s
+
+         ds(1,1) = dxx_s
+         ds(2,1) = dyy_s
+         ds(3,1) = dzz_s
+         ds(4,1) = dxy_s
+         ds(5,1) = dxz_s
+         ds(6,1) = dyz_s
+
       else
-       ds(1,1) = dxx_s
-       ds(1,2) = dyy_s
-       ds(1,3) = dzz_s
-       ds(1,4) = dxy_s
-       ds(1,5) = dxz_s
-       ds(1,6) = dyz_s
+
+         ds(1,1) = dxx_s
+         ds(1,2) = dyy_s
+         ds(1,3) = dzz_s
+         ds(1,4) = dxy_s
+         ds(1,5) = dxz_s
+         ds(1,6) = dyz_s
+
       end
+
    end
 
-   make_nuc_pp(pp,mass_c,pos_c) ::: private
+   make_nuc_pp(pp,mass_c,pos_c) ::: private, PURE
    ! Make the (es) nuclear attraction integrals, summed over primitives
    ! Numbers may be slightly different to cadpac due to a relativistic
    ! correction term.
@@ -5813,6 +5833,7 @@ contains
       pp :: MAT{REAL}, OUT
       mass_c :: REAL, IN
       pos_c :: VEC{REAL}(3), IN
+
       rys :: RYS@
       rzt,ce,rho_zinv,half_zinv,Ix2,Iy2,Iz2,wt,Iy2_wt,Iz2_wt :: REAL
       QPx,QPy,QPz,PAx,PAy,PAz,zeta,zinv,rho,xx,eta_c,two_pi :: REAL
@@ -5827,12 +5848,15 @@ contains
       rys.create(2)
 
       two_pi=TWO*PI
+
       i = 0
+
       px_s = ZERO;   py_s = ZERO;   pz_s = ZERO
       dxx_s = ZERO;   dyy_s = ZERO;   dzz_s = ZERO
       dxy_s = ZERO;   dxz_s = ZERO;   dyz_s = ZERO
+
       do bg = 1, .b.n_cc
-       do ag = 1, .a.n_cc
+      do ag = 1, .a.n_cc
          i     = i + 1
          zeta  = .exponent_sum(i)
          zinv  = .exponent_inv(i)
@@ -5848,57 +5872,64 @@ contains
          rys.weight = rys.weight * (two_pi * .contraction_prefactor(i) * sqrt(rho))
          half_zinv = HALF * zinv
          rho_zinv = rho * zinv
-
+        
          do n = 1,2
-           wt = rys.weight(n)
-           rzt = rys.root(n)*rho_zinv
-           Ix2 = PAx+rzt*QPx
-           Iy2 = PAy+rzt*QPy
-           Iz2 = PAz+rzt*QPz
-           ce  = (ONE-rzt)*half_zinv
-           Iz2_wt = Iz2 * wt
-           Iy2_wt = Iy2 * wt
-           px_s = px_s + Ix2 * wt
-           py_s = py_s + Iy2_wt
-           pz_s = pz_s + Iz2_wt
-           dxx_s = dxx_s + (Ix2*Ix2+ce) * wt
-           dyy_s = dyy_s + (Iy2*Iy2+ce) * wt
-           dzz_s = dzz_s + (Iz2*Iz2+ce) * wt
-           dxy_s = dxy_s + Ix2 * Iy2_wt
-           dxz_s = dxz_s + Ix2 * Iz2_wt
-           dyz_s = dyz_s + Iy2 * Iz2_wt
+            wt = rys.weight(n)
+            rzt = rys.root(n)*rho_zinv
+            Ix2 = PAx+rzt*QPx
+            Iy2 = PAy+rzt*QPy
+            Iz2 = PAz+rzt*QPz
+            ce  = (ONE-rzt)*half_zinv
+            Iz2_wt = Iz2 * wt
+            Iy2_wt = Iy2 * wt
+            px_s = px_s + Ix2 * wt
+            py_s = py_s + Iy2_wt
+            pz_s = pz_s + Iz2_wt
+            dxx_s = dxx_s + (Ix2*Ix2+ce) * wt
+            dyy_s = dyy_s + (Iy2*Iy2+ce) * wt
+            dzz_s = dzz_s + (Iz2*Iz2+ce) * wt
+            dxy_s = dxy_s + Ix2 * Iy2_wt
+            dxz_s = dxz_s + Ix2 * Iz2_wt
+            dyz_s = dyz_s + Iy2 * Iz2_wt
          end
-       end
+
       end
+      end
+
       rys.destroy
 
       if (.same_center) then
-       pp(1,1) = dxx_s
-       pp(1,2) = dxy_s
-       pp(1,3) = dxz_s
-       pp(2,1) = dxy_s
-       pp(2,2) = dyy_s
-       pp(2,3) = dyz_s
-       pp(3,1) = dxz_s
-       pp(3,2) = dyz_s
-       pp(3,3) = dzz_s
+
+         pp(1,1) = dxx_s
+         pp(1,2) = dxy_s
+         pp(1,3) = dxz_s
+         pp(2,1) = dxy_s
+         pp(2,2) = dyy_s
+         pp(2,3) = dyz_s
+         pp(3,1) = dxz_s
+         pp(3,2) = dyz_s
+         pp(3,3) = dzz_s
+
       else
-       BAx = .b.position(1) - .a.position(1)
-       BAy = .b.position(2) - .a.position(2)
-       BAz = .b.position(3) - .a.position(3)
-       pp(1,1) = dxx_s + BAx * px_s
-       pp(1,2) = dxy_s + BAx * py_s
-       pp(1,3) = dxz_s + BAx * pz_s
-       pp(2,1) = dxy_s + BAy * px_s
-       pp(2,2) = dyy_s + BAy * py_s
-       pp(2,3) = dyz_s + BAy * pz_s
-       pp(3,1) = dxz_s + BAz * px_s
-       pp(3,2) = dyz_s + BAz * py_s
-       pp(3,3) = dzz_s + BAz * pz_s
+
+         BAx = .b.position(1) - .a.position(1)
+         BAy = .b.position(2) - .a.position(2)
+         BAz = .b.position(3) - .a.position(3)
+         pp(1,1) = dxx_s + BAx * px_s
+         pp(1,2) = dxy_s + BAx * py_s
+         pp(1,3) = dxz_s + BAx * pz_s
+         pp(2,1) = dxy_s + BAy * px_s
+         pp(2,2) = dyy_s + BAy * py_s
+         pp(2,3) = dyz_s + BAy * pz_s
+         pp(3,1) = dxz_s + BAz * px_s
+         pp(3,2) = dyz_s + BAz * py_s
+         pp(3,3) = dzz_s + BAz * pz_s
+
       end
+
    end
 
-   make_nuc_ps(ps,mass_c,pos_c) ::: private
+   make_nuc_ps(ps,mass_c,pos_c) ::: private, PURE
    ! Make the (ps) nuclear attraction integrals, summed over primitives
    ! Numbers may be slightly different to cadpac due to a relativistic
    ! correction term.
@@ -5906,6 +5937,7 @@ contains
       ps :: MAT{REAL}, OUT
       mass_c :: REAL, IN
       pos_c :: VEC{REAL}(3), IN
+
       rys :: RYS@
       rzt,wt :: REAL
       QPx,QPy,QPz,PAx,PAy,PAz,zeta,rho,xx,eta_c,two_pi,ps_x,ps_y,ps_z :: REAL
@@ -5922,7 +5954,7 @@ contains
       i = 0
       ps_x = ZERO;   ps_y = ZERO;   ps_z = ZERO
       do bg = 1, .b.n_cc
-       do ag = 1, .a.n_cc
+      do ag = 1, .a.n_cc
          i     = i + 1
          zeta  = .exponent_sum(i)
          rho   = zeta * eta_c / (zeta + eta_c)
@@ -5939,21 +5971,24 @@ contains
          ps_x = ps_x + (PAx+rzt*QPx) * wt
          ps_y = ps_y + (PAy+rzt*QPy) * wt
          ps_z = ps_z + (PAz+rzt*QPz) * wt
-       end
       end
+      end
+
       if (.a.l==1) then
-       ps(1,1) = ps_x
-       ps(2,1) = ps_y
-       ps(3,1) = ps_z
+         ps(1,1) = ps_x
+         ps(2,1) = ps_y
+         ps(3,1) = ps_z
       else
-       ps(1,1) = ps_x
-       ps(1,2) = ps_y
-       ps(1,3) = ps_z
+         ps(1,1) = ps_x
+         ps(1,2) = ps_y
+         ps(1,3) = ps_z
       end
+
       rys.destroy
+
    end
 
-   make_nuc_ss(es,mass_c,pos_c) ::: private
+   make_nuc_ss(es,mass_c,pos_c) ::: private, PURE
    ! Make the (ss) nuclear attraction integrals, summed over primitives
    ! Numbers may be slightly different to cadpac due to a relativistic
    ! correction term.
@@ -5961,6 +5996,7 @@ contains
       es :: REAL, OUT
       mass_c :: REAL, IN
       pos_c :: VEC{REAL}(3), IN
+
       rys :: RYS@
       QPx,QPy,QPz,zeta,rho,xx,eta_c,two_pi :: REAL
       ag,bg,i :: INT
@@ -5975,7 +6011,7 @@ contains
       es = ZERO
       i = 0
       do bg = 1, .b.n_cc
-       do ag = 1, .a.n_cc
+      do ag = 1, .a.n_cc
          i     = i + 1
          zeta  = .exponent_sum(i)
          rho   = zeta * eta_c / (zeta + eta_c)
@@ -5985,9 +6021,11 @@ contains
          xx    = rho * (QPx*QPx + QPy*QPy + QPz*QPz)
          rys.get_weights(xx)
          es    = es + (two_pi * .contraction_prefactor(i) * sqrt(rho)) * rys.weight(1)
-       end
       end
+      end
+
       rys.destroy
+
    end
 
 !  ==============================
