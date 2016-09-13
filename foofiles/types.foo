@@ -5629,7 +5629,7 @@ module TYPES
      ! point charges and point dipoles, summed to infinity using
      ! the Lorentz tensor.
 
-     delete_scf_archives :: BIN  DEFAULT(TRUE)
+     delete_scf_archives :: BIN  DEFAULT(FALSE)
      ! Delete all disk archives but the MO's and density matrix after
      ! an SCF calculation. Keeping archives can save work later.
 

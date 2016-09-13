@@ -255,7 +255,7 @@ contains
       ! how to change the finite gaussian nucleus radius
       .nhf = 0
 
-      .delete_scf_archives         = TRUE
+      .delete_scf_archives         = FALSE
       .delete_all_archives         = FALSE
 
    end
@@ -1335,12 +1335,12 @@ contains
       DIE_IF(.scf_kind==" ","no scf kind specified")
       DIE_IF(.max_iterations<.min_iterations,"max_it must be greater than min_it!")
 
-      if (.using_1e_zora_term)   .using_1e_sl_term = FALSE
-      if (.using_1e_sl_term)     .using_1e_zora_term = FALSE
-
       DIE_IF(.diis.keep           ==0,"diis.keep must be > 0")
       DIE_IF(.diis.start_iteration==0,"diis.start_iteration must be > 0")
       DIE_IF(.diis.save_iteration ==0,"diis.save_iteration must be > 0")
+
+      if (.using_1e_zora_term)   .using_1e_sl_term = FALSE
+      if (.using_1e_sl_term)     .using_1e_zora_term = FALSE
 
       if (.using_SC_cluster_charges OR .using_cluster_charges) then
 

@@ -637,20 +637,29 @@ contains
       else;                         .scfdata.set_defaults
       end
 
+      ! Restricted?
       if (.spin_multiplicity==1) .scfdata.set_scf_kind("rhf")
       if (.spin_multiplicity/=1) .scfdata.set_scf_kind("uhf")
 
       if (present(scfdata)) then
+
+         ! Set defaults from scfdata
          .scfdata = scfdata
          nullify(.scfdata.cluster)
          nullify(.scfdata.cluster_charges)
          nullify(.scfdata.cluster_charge_positions)
+
          if (.scfdata.scf_kind/=" ") then
-         if (.scfdata.is_DFT_calculation) then
-            if (.spin_multiplicity==1) .scfdata.set_scf_kind("rks")
-            if (.spin_multiplicity/=1) .scfdata.set_scf_kind("uks")
+
+            ! Process scfkind , make sure it is sensible
+            ! Always use restricted
+            if (.scfdata.is_DFT_calculation) then
+               if (.spin_multiplicity==1) .scfdata.set_scf_kind("rks")
+               if (.spin_multiplicity/=1) .scfdata.set_scf_kind("uks")
+            end
+
          end
-         end
+
       end
 
       .scfdata.nuclear_repulsion_energy = .::nuclear_repulsion_energy
