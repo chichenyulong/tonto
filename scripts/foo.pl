@@ -2979,6 +2979,8 @@ sub convert_inherited_type_arg_macros {
 
             # Convert the parent module type to the inherted module type
             my $type_name = $routine{$name}{parent_module};
+            $type_name =~ s/[{]/\\{/g;
+            $type_name =~ s/[}]/\\}/g;
             $fortran_out =~ s/\b${type_name}\b/${module_full_name}/;
          
             # Convert the parent module type args to the inherted module type args
@@ -2991,6 +2993,8 @@ sub convert_inherited_type_arg_macros {
                # Replace
                for ($i=1; $i<=$narg ; $i++) {
                   $oldarg = $inherited_type_arg[$i];
+                  $oldarg =~ s/[{]/\\{/g;
+                  $oldarg =~ s/[}]/\\}/g;
                   $newarg = $type_arg[$i];
                   $fortran_out =~ s/\b${oldarg}/${newarg}/;
                }
@@ -5985,9 +5989,9 @@ sub slice_dimension {
    while ($tail =~ /(.+?)(?:,|\Z)/g) {
       $index = '';
       if ($1) { $index = $1; }
-      if    ($index =~ ':')                                    { $cnt++; }
+      if    ($index =~ ':')                                     { $cnt++; }
       elsif ($local_var_info{$index}{type_name} &&
-             $local_var_info{$index}{type_name} =~ '^VEC{INT') { $cnt++; }
+             $local_var_info{$index}{type_name} =~ '^VEC\{INT') { $cnt++; }
    }
    return ($cnt);
 }

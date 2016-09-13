@@ -651,10 +651,8 @@ tests_for_CX :
 #------------------------------------------------------------------------------
 
 run_molecule: run_molecule.$(PROGSUFFIX)
-	@cd $(bindir) && ln -s run_molecule.$(PROGSUFFIX) tonto.$(PROGSUFFIX) 
 
 HARt: run_har.$(PROGSUFFIX)
-	@cd $(bindir) && ln -s run_har.$(PROGSUFFIX) HARt.$(PROGSUFFIX) 
 
 %.$(PROGSUFFIX) :
 	@$(MAKE) $(bindir)/$(*F).$(PROGSUFFIX)
