@@ -57,8 +57,8 @@ while (@ARGV) {
 }
 
 # Unprotect curly braces
-$foofile =~ s/\\{/{/g;
-$depfile =~ s/\\{/{/g;
+$foofile =~ s/\\[{]/{/g;
+$depfile =~ s/\\[{]/{/g;
 
 # Any errors?
 $foofile || do {$argerr = 1; warn "Error : -src flag not supplied\n"};

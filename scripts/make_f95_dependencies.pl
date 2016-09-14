@@ -369,7 +369,7 @@ sub uniq {
     my @words;
     foreach $x (@_) {
       $_ = join(" ",@words);
-      if (! /\b$x\b/) { push(@words,$x); }
+      if (! /\b\Q$x\E\b/) { push(@words,$x); }
     }
     return @words;
 }
