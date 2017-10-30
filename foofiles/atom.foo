@@ -5806,17 +5806,30 @@ contains
 
    end
 
-   no_of_occupied_NOs(axiskind,tol) result (res) ::: PURE
-   ! Returns the number of non-zero occupied natural orbitals. For this purpose,
-   ! zero is defined to be "tol" if present, or TOL(7) otherwise
+   no_of_occupied_NOs(tol,occ) result (res) ::: PURE
+   ! Returns the number of non-zero occupied natural orbitals. For
+   ! this purpose, zero is defined to be "tol" if present, or TOL(7)
+   ! otherwise. If "occ" is false return the no. of unoccupieds.
       self :: IN
-      axiskind :: STR, optional, IN
+    ! axiskind :: STR, optional, IN
       tol :: REAL, optional, IN
+      occ :: BIN, optional, IN
       res :: INT
 
    ENSURE(.occupation_numbers.associated,"no occupation numbers")
 
-      res = .occupation_numbers.no_of_occupied(axiskind,tol)
+      oc :: BIN
+
+      oc = TRUE
+      if (present(occ)) oc = occ
+
+      if (oc) then
+         ! Occupied
+         res = .occupation_numbers.no_of_occupied(tol=tol)
+      else
+         ! Unoccupied
+         res = .occupation_numbers.n_bf - .occupation_numbers.no_of_occupied(tol=tol)
+      end
 
    end
 

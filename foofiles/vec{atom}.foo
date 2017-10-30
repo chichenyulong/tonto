@@ -9264,11 +9264,12 @@ contains
 
    end
 
-   no_of_occupied_ANOs(ANOkind,tol) result (res) ::: PURE
-   ! Returns the number of non-zero occupied atomic natural orbitals. For this
-   ! purpose, zero is defined to be "tol" if present, or TOL(7) otherwise
+   no_of_occupied_ANOs(tol) result (res) ::: PURE
+   ! Returns the number of non-zero occupied atomic natural orbitals.
+   ! For this purpose, zero is defined to be "tol" if present, or
+   ! TOL(7) otherwise
       self :: IN
-      ANOkind :: STR, optional, IN
+   !  ANOkind :: STR, optional, IN
       tol :: REAL, optional, IN
       res :: INT
 
@@ -9278,7 +9279,7 @@ contains
 
       res = 0
       do a = 1,.dim
-         res = res + self(a).no_of_occupied_NOs(ANOkind,tol)
+         res = res + self(a).no_of_occupied_NOs(tol)
       end
 
    end

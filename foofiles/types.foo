@@ -5958,13 +5958,17 @@ module TYPES
      atom_ab :: VEC{INT}* DEFAULT_NULL
      ! The indices of the roby atoms defining spaces V_A and V_B
 
+     occ_a :: BIN  DEFAULT(TRUE)
+     ! Set FALSE if you want to use unoccupied orbitals
+     ! to define atomic space A i.e. use Q_A = 1 - P_A
+
+     occ_b :: BIN  DEFAULT(TRUE)
+     ! Set FALSE if you want to use unoccupied orbitals
+     ! to define atomic space B i.e. use Q_B = 1 - P_B
+
      ! =======
      ! Options
      ! =======
-
-     is_hyper_analysis :: BIN, readonly  DEFAULT(FALSE)
-     ! Whether the analysis is a hypervalent one which treats bonding
-     ! from space .atom(A) to everything not in any .atom(:)
 
      use_NAOs :: BIN  DEFAULT(FALSE)
      ! Set TRUE if you want to use NAO atomic projectors instead of
@@ -6027,25 +6031,25 @@ module TYPES
      ! Charges
      ! =======
 
-     gould_charge :: VEC{REAL}* DEFAULT_NULL
-     ! Roby-Gould charges
+   ! gould_charge :: VEC{REAL}* DEFAULT_NULL
+   ! ! Roby-Gould charges
 
-     cruickshank_charge :: VEC{REAL}* DEFAULT_NULL
-     ! Cruikshank-Avramedes charges
+   ! cruickshank_charge :: VEC{REAL}* DEFAULT_NULL
+   ! ! Cruikshank-Avramedes charges
 
-     summed_n2 :: VEC{REAL}* DEFAULT_NULL
-     ! Summed atom-group pair populations
+   ! summed_n2 :: VEC{REAL}* DEFAULT_NULL
+   ! ! Summed atom-group pair populations
 
-     summed_n3 :: VEC{REAL}* DEFAULT_NULL
-     ! Summed atom-group triple populations
+   ! summed_n3 :: VEC{REAL}* DEFAULT_NULL
+   ! ! Summed atom-group triple populations
 
-     subgroup_pop :: VEC{REAL}* DEFAULT_NULL
-     ! The subgroup population contributions when calculating multiple shared
-     ! populations.
+   ! subgroup_pop :: VEC{REAL}* DEFAULT_NULL
+   ! ! The subgroup population contributions when calculating multiple shared
+   ! ! populations.
 
-     proportion_a :: MAT{REAL}* DEFAULT_NULL
-     ! The proportion to partition for atom A, between two atoms (A,B)
-     ! using Gould's probabilistic scheme
+   ! proportion_a :: REAL DEFAULT_NULL
+   ! ! The proportion to partition for atom A, between two atoms (A,B)
+   ! ! using Gould's probabilistic scheme
 
      charge :: INT
      ! The total charge on the molecule
@@ -6057,23 +6061,23 @@ module TYPES
    ! E1 :: VEC{REAL}* DEFAULT_NULL
    ! ! Roby energy for each atom-group
 
-   ! E2 :: MAT{REAL}* DEFAULT_NULL
+   ! E2 :: REAL DEFAULT_NULL
    ! ! Roby pair energy for each atom-group pair
    ! ! NOTE: these are *not* shared populations
 
    ! E_shared :: REAL
    ! ! Roby multiple shared energy for a specified atom-group
 
-   ! E_cov_index :: MAT{REAL}* DEFAULT_NULL
+   ! E_cov_index :: REAL DEFAULT_NULL
    ! ! Energy covalent bond indices for each pair of atoms
 
-   ! E_ion_index :: MAT{REAL}* DEFAULT_NULL
+   ! E_ion_index :: REAL DEFAULT_NULL
    ! ! Energy ionic bond indices for each pair of atoms
 
-   ! E_bond_index :: MAT{REAL}* DEFAULT_NULL
+   ! E_bond_index :: REAL DEFAULT_NULL
    ! ! Gould Bond indices for each pair of atoms
 
-   ! E_percent_covalency :: MAT{REAL}* DEFAULT_NULL
+   ! E_percent_covalency :: REAL DEFAULT_NULL
    ! ! The energy % covalency of the given bond pair
 
      ! ===================
@@ -6131,23 +6135,23 @@ module TYPES
      ! Theta energy info
      ! =================
 
-     theta_E_C :: VEC{REAL}* DEFAULT_NULL
-     ! Covalent theta orbital energies
+   ! theta_E_C :: VEC{REAL}* DEFAULT_NULL
+   ! ! Covalent theta orbital energies
 
-     theta_E_I :: VEC{REAL}* DEFAULT_NULL
-     ! Ionic theta orbital energies
+   ! theta_E_I :: VEC{REAL}* DEFAULT_NULL
+   ! ! Ionic theta orbital energies
 
-     theta_E_A :: VEC{REAL}* DEFAULT_NULL
-     ! Atom "A" energies
+   ! theta_E_A :: VEC{REAL}* DEFAULT_NULL
+   ! ! Atom "A" energies
 
-     theta_E_B :: VEC{REAL}* DEFAULT_NULL
-     ! Atom "B" energies
+   ! theta_E_B :: VEC{REAL}* DEFAULT_NULL
+   ! ! Atom "B" energies
 
-     theta_E_cov_index :: VEC{REAL}* DEFAULT_NULL
-     ! The vector of each covalent theta energy bond index
+   ! theta_E_cov_index :: VEC{REAL}* DEFAULT_NULL
+   ! ! The vector of each covalent theta energy bond index
 
-     theta_E_ion_index :: VEC{REAL}* DEFAULT_NULL
-     ! The vector of each covalent theta energy bond index
+   ! theta_E_ion_index :: VEC{REAL}* DEFAULT_NULL
+   ! ! The vector of each covalent theta energy bond index
 
      ! =============
      ! Molecule info
