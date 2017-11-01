@@ -117,6 +117,7 @@ contains
       .genre     = " " ! generic genre
       .format    = " " ! assume binary format
       .use_all_commas = FALSE
+      .use_all_dashes = TRUE
    end
 
    set(root_name,name,genre,format)
@@ -177,8 +178,20 @@ contains
 
    set_use_all_commas(val)
    ! Set whether to use all commas in the archive name
+      self :: INOUT
       val :: BIN
+
       .use_all_commas = val
+
+   end
+
+   set_use_all_dashes(val)
+   ! Set whether to use all dashes in the archive name
+      self :: INOUT
+      val :: BIN
+
+      .use_all_dashes = val
+
    end
 
 !  ===============
@@ -200,22 +213,29 @@ contains
 
       ! Add the file name
       if (.name /=" ") then
-         if (.use_all_commas) then
-         res = trim(res) // "," // trim(.name)
-         else
-         res = trim(res) // "." // trim(.name)
+         if      (.use_all_commas) then; res = trim(res) // "," // trim(.name)
+         else if (.use_all_dashes) then; res = trim(res) // "-" // trim(.name)
+         else;                           res = trim(res) // "." // trim(.name)
          end
       end
 
       ! Add the genrw
       k = .genre
       if (present(genre)) k = genre
-      if (k/=" ")  &
-         res = trim(res) // "," // trim(k)
+      if (k/=" ")  then
+         if      (.use_all_commas) then; res = trim(res) // "," // trim(k)
+         else if (.use_all_dashes) then; res = trim(res) // "-" // trim(k)
+         else;                           res = trim(res) // "," // trim(.name)
+         end
+      end
 
       ! Add the format
-      if (.format/=" ") &
-         res = trim(res) // "," // .format
+      if (.format/=" ") then
+         if      (.use_all_commas) then; res = trim(res) // "," // trim(.format)
+         else if (.use_all_dashes) then; res = trim(res) // "-" // trim(.format)
+         else;                           res = trim(res) // "," // trim(.format)
+         end
+      end
 
    end
 
@@ -1282,6 +1302,8 @@ contains
       .Afile.text("MIN_VALUE = "//trim(grid.contour_min_value.to_str("f8.4")))
       .Afile.text("INCREMENT = "//trim(grid.contour_increment.to_str("f8.4")))
       .Afile.text("MAX_VALUE = "//trim(grid.contour_max_value.to_str("f8.4")))
+    ! .Afile.text("MAJORTICF = "//trim(grid.contour_tic_freq.to_str("f8.4")))
+    ! .Afile.text("MAJORTICS = INCREMENT*MAJORTICF")
 
       ! Sanity check
       .Afile.flush
@@ -1604,6 +1626,7 @@ contains
       val = grid.contour_tic_dps.to_str
       .Afile.flush
       .Afile.text("# Make CBTICS")
+      .Afile.text("mod(x,y) = (x-floor(x/y)*y)")
       .Afile.text("str(val) = gprintf('%."//trim(val)//"f',val)")
       .Afile.text("add_tic(sign,pow,lev,comma) = '"//'"'//"'.sign.'10^{'.str(pow).'}"//'"'//" '.str(lev).comma")
 
@@ -1613,8 +1636,10 @@ contains
       if (NOT pos_logplot) then
       .Afile.text("pow = MAX_VALUE")
       .Afile.text("do for "//op//"i=-n:-1"//cl//" {    # -ve  cbtic")
+    ! .Afile.text("   if (mod(i,MAJORTICF)==0) {")
       .Afile.text("   CBTICS= CBTICS.add_tic('-',pow,i,', ')")
       .Afile.text("   pow = pow - INCREMENT")
+    ! .Afile.text("   }")
       .Afile.text("}")
       end
       .Afile.text("   CBTICS= CBTICS.'"//'"0"'//" 0, ' # zero cbtic")
@@ -1622,8 +1647,10 @@ contains
       if (NOT neg_logplot) then
       .Afile.text("pow = MIN_VALUE")
       .Afile.text("do for "//op//"i=1:n-1"//cl//" {    # 0ve  cbtic")
+    ! .Afile.text("   if (mod(i,MAJORTICF)==0) {")
       .Afile.text("   CBTICS= CBTICS.add_tic('',pow,i,', ')")
       .Afile.text("   pow = pow + INCREMENT")
+    ! .Afile.text("   }")
       .Afile.text("}")
       end
       .Afile.text("   CBTICS= CBTICS.add_tic('',pow,n,'')")
@@ -1645,6 +1672,7 @@ contains
       .Afile.text("set cbrange "//op//"MIN_MAP:MAX_MAP"//cl)
       else
       .Afile.text("set cbtics in nomirror MIN_VALUE,INCREMENT,MAX_VALUE font ',"//trim(val)//"'")
+    ! .Afile.text("set mcbtics MAJORTICF")
       .Afile.text("set cbrange "//op//"MIN_VALUE:MAX_VALUE"//cl)
       end ! -- logplot
 

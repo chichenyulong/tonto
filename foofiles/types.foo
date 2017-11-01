@@ -745,6 +745,9 @@ module TYPES
      use_all_commas :: BIN   DEFAULT(FALSE)
      ! Whether to use all commas in the archive name
 
+     use_all_dashes :: BIN   DEFAULT(TRUE)
+     ! Whether to use all dashes in the archive name
+
      Afile :: TEXTFILE*  DEFAULT_NULL
      ! ASCII (text) file part
 
@@ -4913,7 +4916,10 @@ module TYPES
      contour_fade_factor :: REAL  DEFAULT(0.8)
      ! Factor to fade the contour-colors by, for the palette
 
-     contour_tic_dps :: INT  DEFAULT(2)
+     contour_tic_freq :: INT  DEFAULT(1)
+     ! Specify 2 for major tic every other minor tic, etc.
+
+     contour_tic_dps :: INT  DEFAULT(1)
      ! No of decimal places on the colorbox tics
 
      contour_font_size :: INT  DEFAULT(9)

@@ -170,6 +170,7 @@ contains
       .contour_increment     = ZERO
       .contour_line_width    = 1.25d0
       .contour_fade_factor   = 0.8d0
+      .contour_tic_freq      = 1
       .contour_tic_dps       = 2
       .contour_font_size     = 9
       .use_colorbox_scale    = TRUE
@@ -813,6 +814,10 @@ contains
    end
 
    set_contour_fade_factor(val) ::: get_from(OBJECT:set, VAL?=>REAL, ARG?=>.contour_fade_factor), pure
+   ! Generic set
+   end
+
+   set_contour_tic_freq(val) ::: get_from(OBJECT:set, VAL?=>INT, ARG?=>.contour_tic_freq), pure
    ! Generic set
    end
 
@@ -1471,6 +1476,7 @@ contains
          case ("centre_atoms=             "); .read_center_atoms
          case ("contour_color_scale=      "); .read_contour_color_scale
          case ("contour_tic_dps=          "); .read_contour_tic_dps
+         case ("contour_tic_freq=         "); .read_contour_tic_freq
          case ("contour_fade_factor=      "); .read_contour_fade_factor
          case ("contour_font_size=        "); .read_contour_font_size
          case ("contour_increment=        "); .read_contour_increment
@@ -2072,6 +2078,10 @@ contains
 
    read_contour_line_width ::: get_from(OBJECT:read_and_set, VAL?=>REAL, SET?=>.set_contour_line_width), private
    ! Generic read and set a quantity with units
+   end
+
+   read_contour_tic_freq ::: get_from(OBJECT:read_and_set, VAL?=>INT, SET?=>.set_contour_tic_freq), private
+   ! Generic read and set
    end
 
    read_contour_tic_dps ::: get_from(OBJECT:read_and_set, VAL?=>INT, SET?=>.set_contour_tic_dps), private

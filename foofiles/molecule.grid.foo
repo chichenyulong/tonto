@@ -8226,7 +8226,7 @@ contains
             ! Make the gnuplot plot archive
             ! Use all commas so that .eps can be handled by latex
             arch.set(title,name,format="gnuplot.contour")
-            arch.set_use_all_commas(TRUE)
+            arch.set_use_all_dashes(TRUE)
             arch.write_gnuplot_contour(grid,.plot_grid,pos,bonds)
 
             ! Clean
