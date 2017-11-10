@@ -142,14 +142,14 @@ contains
 
       .atom_list.destroy
       .atom_group.destroy
-      .atom_a.destroy
-      .atom_b.destroy
-      .atom_ab.destroy
+    ! .atom_a.destroy
+    ! .atom_b.destroy
+    ! .atom_ab.destroy
 
-      .theta_C.destroy
-      .eigen_C.destroy
-      .theta_I.destroy
-      .eigen_I.destroy
+    ! .theta_C.destroy
+    ! .eigen_C.destroy
+    ! .theta_I.destroy
+    ! .eigen_I.destroy
       .theta_pop_C.destroy
       .theta_pop_C_A.destroy
       .theta_pop_C_B.destroy
@@ -259,6 +259,42 @@ contains
 
    end
 
+   set_analyze_all_atom_pairs(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.analyze_all_atom_pairs), pure
+   ! Generic set
+   end
+
+   set_analyze_vdw_atom_pairs(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.analyze_vdw_atom_pairs), pure
+   ! Generic set
+   end
+
+   set_bond_range_factor(val) ::: get_from(OBJECT:set, VAL?=>REAL, ARG?=>.bond_range_factor), pure
+   ! Generic set
+   end
+
+   set_occ_a(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.occ_a), pure
+   ! Generic set
+   end
+
+   set_occ_b(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.occ_b), pure
+   ! Generic set
+   end
+
+   set_occupied_ANO_cutoff(val) ::: get_from(OBJECT:set, VAL?=>REAL, ARG?=>.occupied_ANO_cutoff), pure
+   ! Generic set
+   end
+
+   set_output_theta_info(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.output_theta_info), pure
+   ! Generic set
+   end
+
+   set_use_NAOs(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.use_NAOs), pure
+   ! Generic set
+   end
+
+   set_zero_angle_cutoff(val) ::: get_from(OBJECT:set, VAL?=>REAL, ARG?=>.zero_angle_cutoff), pure
+   ! Generic set
+   end
+
 !  =============
 !  Input methods
 !  =============
@@ -287,11 +323,13 @@ contains
          case ("atom_groups=           "); .read_atom_groups
          case ("atom_list=             "); .read_atom_list
 
-         case ("bond_scale_factors=    "); .read_bond_scale_factor
+         case ("bond_range_factor=     "); .read_bond_range_factor
 
          case ("kind=                  "); .read_kind
 
-         case ("occupied_ano_cutoff=   "); .read_occupied_ano_cutoff
+         case ("occ_a=                 "); .read_occ_a
+         case ("occ_b=                 "); .read_occ_b
+         case ("occupied_ano_cutoff=   "); .read_occupied_ANO_cutoff
          case ("output_theta_info=     "); .read_output_theta_info
 
          case ("put_core_matrix        "); stdout.put(.core_matrix)
@@ -322,21 +360,6 @@ contains
 
    end
 
-   read_kind
-   ! Read the SCF type
-      self :: INOUT
-
-      stdin.read(.roby_kind)
-
-      select case (.roby_kind)
-      case("atom_bond_analysis       ")
-      case("atom_energy_bond_analysis")
-      case("group_bond_analysis      ")
-      case default;  UNKNOWN(.roby_kind)
-      end
-
-   end
-
    read_atom_list ::: leaky
    ! Read the list of atoms indices defining a Roby group
       self :: INOUT
@@ -353,72 +376,55 @@ contains
 
    end
 
-   read_occupied_ANO_cutoff
-   ! Read the cutoff to decide occupied ANOs or NAOs
-      self :: INOUT
-
-      stdin.read_quantity(.occupied_ANO_cutoff)
-
+   read_analyze_all_atom_pairs ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_analyze_all_atom_pairs), private
+   ! Generic read and set
    end
 
-   read_zero_angle_cutoff
-   ! Angles (in radians) *less* than this one inputted are regareded as zero
-      self :: INOUT
-
-      stdin.read_quantity(.zero_angle_cutoff)
-
+   read_analyze_vdw_atom_pairs ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_analyze_vdw_atom_pairs), private
+   ! Generic read and set
    end
 
-   read_output_theta_info
-   ! Read in a switch which tells whether to output detailed
-   ! theta-subspace bond information
-      self :: INOUT
-
-      stdin.read(.output_theta_info)
-
+   read_bond_range_factor ::: get_from(OBJECT:read_and_set, VAL?=>REAL, SET?=>.set_bond_range_factor), private
+   ! Generic read and set
    end
 
-   read_analyze_all_atom_pairs
-   ! Read in a switch which tells whether to bond-analyze all atoms
-   ! pairs or not - actually this just changes the bond_range_factor
-   ! by an order of magnitude
+   read_kind
+   ! Read the SCF type
       self :: INOUT
 
-      stdin.read(.analyze_all_atom_pairs)
+      stdin.read(.roby_kind)
 
-      if (.analyze_all_atom_pairs) then
-         .bond_range_factor = FIVE*BOHR_PER_ANGSTROM
+      select case (.roby_kind)
+      case("atom_bond_analysis       ")
+      case("atom_energy_bond_analysis")
+      case("group_bond_analysis      ")
+      case default;  UNKNOWN(.roby_kind)
       end
 
    end
 
-   read_analyze_vdw_atom_pairs
-   ! Read in a switch which tells whether to bond-analyze all atoms
-   ! pairs or not - actually this just changes the bond_range_factor
-   ! by an order of magnitude
-      self :: INOUT
-
-      stdin.read(.analyze_vdw_atom_pairs)
-
+   read_occ_a ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_occ_a), private
+   ! Generic read and set
    end
 
-   read_use_NAOs
-   ! Read whether to use NAOs as atomic projectors instead
-   ! of ANOs as in the original 2008 paper.
-      self :: INOUT
-
-      stdin.read(.use_NAOs)
-
+   read_occ_b ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_occ_b), private
+   ! Generic read and set
    end
 
-   read_bond_scale_factor
-   ! Read in a bond scale factor used to multiply the sum of the
-   ! Bragg-Slater radii for two atoms, to determine a distance cutoff
-   ! within which atoms are regarded to be bonded
-      self :: INOUT
+   read_occupied_ANO_cutoff ::: get_from(OBJECT:read_and_set, VAL?=>REAL, SET?=>.set_occupied_ANO_cutoff), private
+   ! Generic read and set
+   end
 
-      stdin.read(.bond_range_factor)
+   read_output_theta_info ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_output_theta_info), private
+   ! Generic read and set
+   end
 
+   read_use_NAOs ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_use_NAOs), private
+   ! Generic read and set
+   end
+
+   read_zero_angle_cutoff ::: get_from(OBJECT:read_and_set, VAL?=>REAL, SET?=>.set_zero_angle_cutoff), private
+   ! Generic read and set
    end
 
 !  ===================
@@ -558,7 +564,7 @@ contains
       oc  = TRUE
       if (present(occ)) oc = occ
 
-      if (occ) then
+      if (oc) then
          ! Occupied orbitals 
          res = .atom(group).no_of_occupied_NAOs(tol=eps)
       else
@@ -589,7 +595,7 @@ contains
       oc  = TRUE
       if (present(occ)) oc = occ
 
-      if (occ) then
+      if (oc) then
          ! Occupied orbitals 
          res = .atom(group).no_of_occupied_ANOs(tol=eps)
       else
@@ -701,13 +707,12 @@ contains
          .atom_ab.append(.atom_a,.atom_b)
          !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
-         !!!!!!!!!!!!!!!!!!!
+         ! Make theta populations & bond indices
          .destroy_theta_info
          .make_theta_info
-         !!!!!!!!!!!!!!!!!!!
-        
          ind = .gould_bond_index(cov,ion,pcc)
         
+         ! Store results
          .bond_index(a,b)        =  ind
          .cov_index(a,b)         =  cov
          .ion_index(a,b)         =  ion
@@ -845,8 +850,8 @@ contains
    ENSURE(.overlap_matrix.associated,"no overlap matrix")
 
       P :: MAT{REAL}*
-      gr :: VEC{INT}*
       n_gr :: INT
+    ! gr :: VEC{INT}*
     ! rev :: BIN
 
       ! Reverse
@@ -1133,19 +1138,19 @@ contains
 
       I.destroy
 
-      stdout.text("eigen_I")
-      stdout.put(eigen_I)
+    ! stdout.text("eigen_I")
+    ! stdout.put(eigen_I)
 
       ! Prune zero eigenvalues
       n0 = eigen_I.no_of_abs_vals_larger_than(.zero_angle_cutoff) 
 
-      stdout.show("n0 = ",n0)
+    ! stdout.show("n0 = ",n0)
 
       ind.create(n0)
       ind = eigen_I.indices_of_abs_vals_larger_than(.zero_angle_cutoff) 
 
-      stdout.text("ind")
-      stdout.put(ind)
+    ! stdout.text("ind")
+    ! stdout.put(ind)
 
       .theta_I.create(n_ab,n0)
       .eigen_I.create(n0)
@@ -1157,11 +1162,11 @@ contains
       eigen_I.destroy
       theta_I.destroy
 
-      stdout.text(".theta_I")
-      stdout.put(.theta_I)
+    ! stdout.text(".theta_I")
+    ! stdout.put(.theta_I)
 
-      stdout.text(".eigen_I")
-      stdout.put(.eigen_I)
+    ! stdout.text(".eigen_I")
+    ! stdout.put(.eigen_I)
 
     ! stdout.text(".theta_I")
     ! stdout.put(.theta_I)
@@ -1170,15 +1175,15 @@ contains
       .pair.create(n0)
       .eigen_I.find_non_unit_pairs(.pair,ROBY::match_pair,tol=TOL(8))
 
-      stdout.text("pair")
-      stdout.put(.pair)
+    ! stdout.text("pair")
+    ! stdout.put(.pair)
 
       ! Make theta angles
       .theta_angle.create(n0)
       .make_theta_angles
 
-      stdout.text("theta_angle")
-      stdout.put(.theta_angle)
+    ! stdout.text("theta_angle")
+    ! stdout.put(.theta_angle)
 
       ! Clean up |ion> states
       .make_gould_ionic_orbitals
@@ -1188,10 +1193,10 @@ contains
       .eigen_C.create(n0)
       .make_cov_from_ion_orbitals
 
-      stdout.text(".theta_I")
-      stdout.put(.theta_C)
-      stdout.text(".eigen_C")
-      stdout.put(.eigen_C)
+    ! stdout.text(".theta_I")
+    ! stdout.put(.theta_C)
+    ! stdout.text(".eigen_C")
+    ! stdout.put(.eigen_C)
 
       ! Covalent theta populations
       .theta_pop_C.create(n0)
@@ -1205,6 +1210,11 @@ contains
       .theta_pop_I_B.create(n0)
       .make_theta_populations(.theta_pop_I,.theta_pop_I_A,.theta_pop_I_B,.theta_I)
 
+    ! stdout.text(".theta_pop_C")
+    ! stdout.put(.theta_pop_C)
+    ! stdout.text(".theta_pop_I")
+    ! stdout.put(.theta_pop_I)
+
    end
 
 ! Low level helper routines
@@ -1215,7 +1225,25 @@ contains
       arg1,arg2 :: REAL, IN
       res :: REAL
 
-      res = abs(arg1 + arg2)
+      ang1,ang2 :: REAL
+      zero_cutoff :: REAL
+      do_ang1,do_ang2 :: BIN
+
+      ! Convert args to angles
+      ang1 = arg1.arcsin
+      ang2 = arg2.arcsin
+      ang1 = ang1.to_units("degree")
+      ang2 = ang2.to_units("degree")
+
+      ! Do we do the test?
+      ! Must not be within tol of 0 or 90 degrees ...
+      zero_cutoff = ROBY_ZERO_ANGLE_CUTOFF ! In degrees !
+      do_ang1 = (90.0-abs(ang1))>zero_cutoff AND abs(ang1)>zero_cutoff
+      do_ang2 = (90.0-abs(ang2))>zero_cutoff AND abs(ang2)>zero_cutoff
+
+      ! Evaluate the test
+      res = ONE
+      if (do_ang1 AND do_ang2) res = abs(arg1 + arg2)
 
    end
 
@@ -1281,12 +1309,11 @@ contains
    ENSURE(.atom_ab.associated,"No roby atom AB")
    ENSURE(.atom.associated,"No atom information")
    ENSURE(.theta_I.associated,"No theta_I array")
-   ENSURE(.theta_I.dim1==.n_bf_ab,"wrong shape, theta_I")
-   ENSURE(.theta_I.is_square,"wrong shape, theta_I")
    ENSURE(.eigen_I.associated,"No eval_I array")
-   ENSURE(.eigen_I.dim==.n_bf_ab,"wrong size, eigen_I")
    ENSURE(.pair.associated,"No pair array")
-   ENSURE(.pair.dim==.n_bf_ab,"wrong shape, pair")
+   ENSURE(.theta_I.dim1==.n_bf_ab,"wrong shape, theta_I")
+   ENSURE(.eigen_I.dim==.theta_I.dim2,"eigen_I and theta_I incompatible")
+   ENSURE(.pair.dim==.theta_I.dim2,"pair and theta_I incompatible")
 
       PAS,PBS,PA,PB :: MAT{REAL}*
       A,B :: VEC{REAL}*
@@ -1442,17 +1469,15 @@ contains
       self :: INOUT
 
    ENSURE(.theta_I.associated,"no theta_I array")
-   ENSURE(.theta_I.dim1==.n_bf_ab,"wrong dim1, theta_I")
-   ENSURE(.theta_I.is_square,"wrong shape, theta_I")
-   ENSURE(.eigen_I.associated,"no eval_I array")
-   ENSURE(.eigen_I.dim==.n_bf_ab,"wrong dim, eval_I")
    ENSURE(.theta_C.associated,"no theta_C array")
-   ENSURE(.theta_C.dim1==.n_bf_ab,"wrong dim1, theta_C")
-   ENSURE(.theta_C.is_square,"wrong shape, theta_C")
+   ENSURE(.eigen_I.associated,"no eval_I array")
    ENSURE(.eigen_C.associated,"no eval_C array")
-   ENSURE(.eigen_C.dim==.n_bf_ab,"wrong dim, eval_C")
    ENSURE(.pair.associated,"no pair array")
-   ENSURE(.pair.dim==.n_bf_ab,"wrong shape, pair")
+   ENSURE(.theta_I.dim1==.n_bf_ab,"wrong dim1, theta_I")
+   ENSURE(.theta_C.dim1==.n_bf_ab,"wrong shape, theta_I")
+   ENSURE(.eigen_I.dim==.theta_I.dim2,"wrong dim, eval_I")
+   ENSURE(.eigen_C.dim==.theta_I.dim2,"eigen_I and theta_I incompatible")
+   ENSURE(.pair.dim==.theta_I.dim2,"pair and theta_I incompatible")
 
       fac,c,s :: REAL
       i,j :: INT
@@ -2929,6 +2954,9 @@ contains
       labels :: VEC{INT}*
       n_e,f :: INT
 
+      ! Change decimal places
+      stdout.save
+      stdout.set_real_precision(3)
 
       stdout.flush
       stdout.text("=====================")
@@ -2978,6 +3006,9 @@ contains
       charge.destroy
       symbols.destroy
 
+      ! Change decimal places
+      stdout.unsave
+
    end
 
    put_bond_indices
@@ -3017,6 +3048,10 @@ contains
       n_group, n_pair,i,a,b :: INT
 
       n_group = .n_group
+
+      ! Change decimal places
+      stdout.save
+      stdout.set_real_precision(3)
 
       ! Title
       stdout.flush
@@ -3130,6 +3165,9 @@ contains
       g_B.destroy
       g_A.destroy
 
+      ! Change decimal places
+      stdout.unsave
+
    end
 
    put_bond_indices_atoms
@@ -3156,6 +3194,10 @@ contains
       ! Has unique labels?
       has_unique_labels = .atom.has_unique_labels
       DIE_IF(NOT has_unique_labels,"atoms are not uniquely labelled!")
+
+      ! Change decimal places
+      stdout.save
+      stdout.set_real_precision(3)
 
       ! Title
       if (.analyze_vdw_atom_pairs) then
@@ -3361,6 +3403,9 @@ contains
       table.destroy
       Z_list.destroy
 
+      ! Change decimal places
+      stdout.unsave
+
    end
 
    put_bond_indices_sortd
@@ -3388,6 +3433,10 @@ contains
       ! Has unique labels?
       has_unique_labels = .atom.has_unique_labels
       DIE_IF(NOT has_unique_labels,"atoms are not uniquely labelled!")
+
+      ! Change decimal places
+      stdout.save
+      stdout.set_real_precision(3)
 
       ! Title
       if (.analyze_vdw_atom_pairs) then
@@ -3557,6 +3606,9 @@ contains
       table.clear_columns
       table.destroy
       Z_list.destroy
+
+      ! Change decimal places
+      stdout.unsave
 
    end
 
@@ -4898,6 +4950,18 @@ contains
       stdout.flush
       .put_unique_tags(.atom_a,"(A)")
       .put_unique_tags(.atom_b,"(B)")
+
+      stdout.flush
+      if (.occ_a) then
+      stdout.text(". Atom (A) uses occupied orbitals")
+      else
+      stdout.text(". Atom (A) uses virtual orbitals")
+      end
+      if (.occ_b) then
+      stdout.text(". Atom (B) uses occupied orbitals")
+      else
+      stdout.text(". Atom (B) uses virtual orbitals")
+      end
     ! else
     ! stdout.text(". This is a hypervalent analysis")
     ! stdout.flush
@@ -4955,6 +5019,10 @@ contains
       stdout.text("Araki angle subspaces:")
       stdout.flush
 
+      ! Change decimal places
+      stdout.save
+      stdout.set_real_precision(3)
+
       ! Do table
       table.create(5)
 
@@ -4987,6 +5055,9 @@ contains
       ang.destroy
       par.destroy
       evn.destroy
+
+      ! Change decimal places
+      stdout.unsave
 
    end
 
@@ -5029,9 +5100,11 @@ contains
                i_m(j) = .theta_pop_I(.pair(i))
          else
                par(j) = "("//i.to_str.trim//")"
-            if      (.eigen_I(i)>ZERO) then
+            if      (.eigen_I(i)>=ZERO) then
                i_p(j) = .theta_pop_I(i)
-            else if (.eigen_I(i)<ZERO) then
+               i_m(j) = ZERO
+            else if (.eigen_I(i)< ZERO) then
+               i_p(j) = ZERO
                i_m(j) = .theta_pop_I(i)
             end
          end
@@ -5175,10 +5248,10 @@ contains
                imb(j) = .theta_pop_I_B(.pair(i))
          else
                par(j) = "("//i.to_str.trim//")"
-            if      (.eigen_I(i)>ZERO) then
+            if      (.eigen_I(i)>=ZERO) then
                ipa(j) = .theta_pop_I_A(i)
                ipb(j) = .theta_pop_I_B(i)
-            else if (.eigen_I(i)<ZERO) then
+            else if (.eigen_I(i)< ZERO) then
                ima(j) = .theta_pop_I_A(i)
                imb(j) = .theta_pop_I_B(i)
             end
