@@ -4670,8 +4670,8 @@ contains
     ! case("atom_hyper_analysis       ")
     !    .roby.atom_hyper_analysis
 
-      case("group_bond_analysis      ")
-         .roby.group_bond_analysis
+    ! case("group_bond_analysis      ")
+    !    .roby.group_bond_analysis
 
     ! case("group_hyper_analysis      ")
     !    .roby.group_hyper_analysis

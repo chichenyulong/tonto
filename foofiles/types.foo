@@ -6001,13 +6001,11 @@ module TYPES
      ! Bonds
      ! =====
 
-     n1 :: VEC{REAL}* DEFAULT_NULL
-     ! Roby population for each atom-group
+     n1 :: MAT{REAL}* DEFAULT_NULL
+     ! Roby population for each atom-group, and its opposite
 
-     n2 :: MAT{REAL}* DEFAULT_NULL
-     ! Roby pair population for each atom-group pair
-     ! NOTE: these are *not* shared populations
-     ! The not atom-group populations
+     n2 :: MAT3{REAL}* DEFAULT_NULL
+     ! Roby pair population for each atom-group pair and it's opposite
 
      n_all :: REAL  DEFAULT(ZERO)
      ! Population of all the atoms
@@ -6015,16 +6013,16 @@ module TYPES
      n_shared :: REAL  DEFAULT(ZERO)
      ! Roby multiple shared population for a specified atom-group
 
-     cov_index :: MAT{REAL}* DEFAULT_NULL
+     cov_index :: MAT4{REAL}* DEFAULT_NULL
      ! Gould covalent bond indices for each pair of atoms
 
-     ion_index :: MAT{REAL}* DEFAULT_NULL
+     ion_index :: MAT4{REAL}* DEFAULT_NULL
      ! Gould ionic bond indices for each pair of atoms
 
-     bond_index :: MAT{REAL}* DEFAULT_NULL
+     bnd_index :: MAT4{REAL}* DEFAULT_NULL
      ! Gould Bond indices for each pair of atoms
 
-     percent_covalency :: MAT{REAL}* DEFAULT_NULL
+     pct_coval :: MAT4{REAL}* DEFAULT_NULL
      ! The % covalency of the given bond pair
 
      ! =======
@@ -6050,9 +6048,6 @@ module TYPES
    ! proportion_a :: REAL DEFAULT_NULL
    ! ! The proportion to partition for atom A, between two atoms (A,B)
    ! ! using Gould's probabilistic scheme
-
-     charge :: INT
-     ! The total charge on the molecule
 
      ! ========
      ! Energies
@@ -6156,6 +6151,9 @@ module TYPES
      ! =============
      ! Molecule info
      ! =============
+
+     charge :: INT
+     ! The total charge on the molecule
 
      spin_multiplicity :: INT DEFAULT(1)
      ! The spin multiplicity of the molecule
