@@ -859,20 +859,6 @@ contains
 
       P :: MAT{REAL}*
       n_gr :: INT
-    ! gr :: VEC{INT}*
-    ! rev :: BIN
-
-      ! Reverse
-    ! rev = FALSE
-    ! if (present(reverse)) rev = reverse
-
-      ! Group atom indices
-    ! if (rev) then
-    !    gr.to_sequence(1,.atom.dim)
-    !    gr.prune(group)
-    ! else
-    !    gr.create_copy(group)
-    ! end
 
       ! No. of groups
       n_gr = .n_bf(group)
@@ -882,11 +868,11 @@ contains
       .make_projection_matrix(P,group,occ,ANO)
 
       ! Evaluate
-      res = .expectation(P,group)
+    ! res = .expectation(P,group)
+      res = .expectation_minus(P,group)
 
       ! Clean
       P.destroy
-    ! gr.destroy
 
    end
 
@@ -2090,59 +2076,55 @@ contains
 !
 !   end
 
-!   make_full_projection(P,group,ANO) ::: private
-!   ! Make "P" the matrix of the Roby projection operator for the atoms
-!   ! whose indices are in "group" in the full AO basis of .atom's. If
-!   ! present, use the columns of "ANO" as atomic orbital coefficients
-!   ! to form the projection operator instead of the actual atomic
-!   ! natural orbitals.
-!      self :: IN
-!      P :: MAT{REAL}, OUT
-!      group :: VEC{INT}, IN
-!      ANO :: MAT{REAL}, optional, IN
-!
-!   ENSURE(P.dim1==.n_bf,"wrong dimension, P")
-!   ENSURE(P.is_square,"P is incorrectly dimensioned")
-!
-!      W :: MAT{REAL}*
-!      n_bf :: INT
-!
-!      ! Small group
-!      n_bf = .n_bf(group)
-!
-!      ! Make the "small" projector (reuse code)
-!      W.create(n_bf,n_bf)
-!      .make_projection_matrix(W,group,ANO=ANO)
-!
-!      ! Copy into full basis
-!      .AO_subspace_set(P,W,A_row_atom=group,A_col_atom=group)
-!
-!      ! Clean
-!      W.destroy
-!
-!   end
+   make_full_projection(P,group) ::: private
+   ! Make "P" the matrix of the Roby projection operator for the atoms
+   ! whose indices are in "group" in the full AO basis of .atom's. If
+   ! present, use the columns of "ANO" as atomic orbital coefficients
+   ! to form the projection operator instead of the actual atomic
+   ! natural orbitals.
+      self :: IN
+      P :: MAT{REAL}, OUT
+      group :: VEC{INT}, IN
 
-   make_projection_matrix(P,group,occ,ANO) ::: private
-   ! Make "P", the matrix of the Roby projection *operator in the
-   ! (nonorthgogonal) AO basis. The AO basis is the concatenated set
+   ENSURE(P.dim1==.n_bf,"wrong dimension, P")
+   ENSURE(P.is_square,"P is incorrectly dimensioned")
+
+      W :: MAT{REAL}*
+      n_bf :: INT
+
+      ! Small group
+      n_bf = .n_bf(group)
+
+      ! Make the "small" projector (reuse code)
+      W.create(n_bf,n_bf)
+      .make_projection_matrix(W,group,tol=ZERO)
+
+      ! Copy into full basis
+      .AO_subspace_set(P,W,A_row_atom=group,A_col_atom=group)
+
+      ! Clean
+      W.destroy
+
+   end
+
+   make_projection_matrix(P,group,occ,ANO,tol) ::: private
+   ! Make "P", the matrix of the Roby projection operator in the
+   ! *nonorthgogonal* AO basis. The AO basis is the concatenated set
    ! of basis functions for each atom in "group". If present, use the
    ! columns of "ANO" as atomic orbital coefficients to form the
-   ! projection operator instead of the actual atomic natural orbitals.
+   ! projection operator instead of the atomic natural orbitals.
       self :: IN
       P :: MAT{REAL}, OUT
       group :: VEC{INT}, optional, IN
       occ :: BIN, optional, IN
       ANO :: MAT{REAL}, optional, IN
+      tol :: REAL, optional, IN
 
    ENSURE(P.dim1==.n_bf(group),"wrong dimension, P ")
    ENSURE(P.is_square,"P is incorrectly dimensioned")
 
       W,X,Y :: MAT{REAL}*
       n_occ,n_bf :: INT
-    ! oc :: BIN
-
-    ! oc = TRUE
-    ! if (present(occ)) oc = occ
 
       n_bf = .n_bf(group)
 
@@ -2156,15 +2138,15 @@ contains
 
       else if (.use_NAOs) then
       
-         n_occ = .no_of_occupied_NAOs(group,occ)
+         n_occ = .no_of_occupied_NAOs(group,occ,tol)
          W.create(n_bf,n_occ)
-         .make_NAO_matrix(W,group,occ)
+         .make_NAO_matrix(W,group,occ,tol)
 
       else
 
-         n_occ = .no_of_occupied_ANOs(group,occ)
+         n_occ = .no_of_occupied_ANOs(group,occ,tol)
          W.create(n_bf,n_occ)
-         .make_ANO_matrix(W,group,occ)
+         .make_ANO_matrix(W,group,occ,tol)
 
       end
 
@@ -2501,7 +2483,7 @@ contains
 ! Low level Roby routines used all over the place
 ! ===============================================
 
-   expectation(P,group,rho) result (res) ::: private
+   expectation(P,group) result (res) ::: private
    ! Get the expectation value of the projection operator matrix "P"
    ! over a certain "group" of atoms, i.e:
    !    res = Trace ( S(:,group) P S(group,:) rho )
@@ -2510,31 +2492,73 @@ contains
       self :: IN
       P :: MAT{REAL}, IN
       group :: VEC{INT}, IN
-      rho :: OPMATRIX*, optional, IN
       res :: REAL
 
    ENSURE(P.dim1==.n_bf(group),"wrong P dimension")
    ENSURE(P.is_square,"P is not square")
 
-      density :: OPMATRIX*
       W :: MAT{REAL}*
       n_bf :: INT
-
-      density => .rho
-      if (present(rho)) density => rho
 
       n_bf = .n_bf
 
       ! Make W = S P S
       W.create(n_bf,n_bf)
-      .overlap_transform(P,W,group)
+      .overlap_transform(P,W,row_atom=group)
 
       ! Make Tr ( S P S rho)
       if (.spin_multiplicity/=1) then
-         res = density.alpha.trace_product_with(W) &
-             + density.beta.trace_product_with(W)
+         res = .rho.alpha.trace_product_with(W) &
+             + .rho.beta.trace_product_with(W)
       else
-         res = density.restricted.trace_product_with(W)
+         res = .rho.restricted.trace_product_with(W)
+      end
+
+      W.destroy
+
+   end
+
+   expectation_minus(P,group) result (res) ::: private
+   ! Get the expectation value of the projection operator matrix "P"
+   ! over a certain "group" of atoms, i.e:
+   !    res = Trace ( S(:,group) P S(group,:) rho )
+   ! Note that "group" are the indices of the atoms whose basis functions
+   ! are used to define the matrix "P".
+      self :: IN
+      P :: MAT{REAL}, IN
+      group :: VEC{INT}, IN
+      res :: REAL
+
+   ENSURE(P.dim1==.n_bf(group),"wrong P dimension")
+   ENSURE(P.is_square,"P is not square")
+
+      W,X,Q :: MAT{REAL}*
+      n_bf,n_gr :: INT
+
+      n_bf = .n_bf
+
+      ! Make W = S P S
+      W.create(n_bf,n_bf)
+      .overlap_transform(P,W,row_atom=group)
+
+      ! Make projector for whole group
+      n_gr = .n_bf(group)
+      X.create(n_bf,n_bf)
+      Q.create(n_gr,n_gr)
+      .make_full_projection(Q,group)
+      .overlap_transform(Q,X,row_atom=group)
+      Q.destroy
+      X.destroy
+
+      ! Subtract Q part
+      W = W - Q
+
+      ! Make Tr ( S P S rho)
+      if (.spin_multiplicity/=1) then
+         res = .rho.alpha.trace_product_with(W) &
+             + .rho.beta.trace_product_with(W)
+      else
+         res = .rho.restricted.trace_product_with(W)
       end
 
       W.destroy
@@ -2545,7 +2569,8 @@ contains
    ! Do: Y = P^T S(col_atom,row_atom) X S(row_atom,col_atom) P where
    ! S(col_atom,row_atom) is the AO subspace section of the full
    ! overlap matrix specified by the basis functions on the atom
-   ! indices in "row_atom" and "col_atom", and "P" is a matrix
+   ! indices in "row_atom" and "col_atom", and "P" is a projection
+   ! matrix, and "X" is an operator, both in the AO basis.
       X,P,Y :: MAT{REAL}
       row_atom,col_atom :: VEC{INT}
 
@@ -2573,7 +2598,8 @@ contains
       self :: IN
       X :: MAT{REAL}, IN
       Y :: MAT{REAL}, OUT
-      row_atom, col_atom :: VEC{INT}, optional, IN
+      row_atom :: VEC{INT}, optional, IN
+      col_atom :: VEC{INT}, optional, IN
 
       SS :: MAT{REAL}*
       n_row,n_col :: INT
