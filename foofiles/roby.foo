@@ -1195,7 +1195,7 @@ contains
     ! stdout.put(.theta_angle)
 
       ! Clean up |ion> states
-      .make_gould_ionic_orbitals
+      .make_gould_ionic_orbitals(occ_a,occ_b)
 
       ! Make |cov> pairs from |ion> pairs
       .theta_C.create(n_ab,n0)
@@ -1301,7 +1301,7 @@ contains
 
    end
 
-   make_gould_ionic_orbitals ::: private
+   make_gould_ionic_orbitals(occ_a,occ_b) ::: private
    ! Generate the gould ionic orbitals ".theta_I" in such a way that
    ! the negative eigenvector of each pair is generated explicitly
    ! from the positive eigenvector by constructing the |a> and |b>
@@ -1312,6 +1312,7 @@ contains
    ! V_B and V_AB are defined by ".atom_a", ".atom_b", and ".atom_ab".
    ! This routine is necessary in cases where there are degeneracies.
       self :: INOUT
+      occ_a,occ_b :: BIN, optional, IN
 
    ENSURE(.atom_a.associated,"No roby atom A")
    ENSURE(.atom_b.associated,"No roby atom B")
@@ -1341,8 +1342,8 @@ contains
       PA.create(n_a,n_a)
       PB.create(n_b,n_b)
 
-      .make_projection_matrix(PA,.atom_a)
-      .make_projection_matrix(PB,.atom_b)
+      .make_projection_matrix(PA,.atom_a,occ_a)
+      .make_projection_matrix(PB,.atom_b,occ_b)
 
       .right_overlap_transform(PA,PAS,.atom_a,.atom_ab)
       .right_overlap_transform(PB,PBS,.atom_b,.atom_ab)
@@ -2138,10 +2139,10 @@ contains
 
       W,X,Y :: MAT{REAL}*
       n_occ,n_bf :: INT
-      oc :: BIN
+    ! oc :: BIN
 
-      oc = TRUE
-      if (present(occ)) oc = occ
+    ! oc = TRUE
+    ! if (present(occ)) oc = occ
 
       n_bf = .n_bf(group)
 
@@ -2157,13 +2158,13 @@ contains
       
          n_occ = .no_of_occupied_NAOs(group,occ)
          W.create(n_bf,n_occ)
-         .make_NAO_matrix(W,group,oc)
+         .make_NAO_matrix(W,group,occ)
 
       else
 
          n_occ = .no_of_occupied_ANOs(group,occ)
          W.create(n_bf,n_occ)
-         .make_ANO_matrix(W,group,oc)
+         .make_ANO_matrix(W,group,occ)
 
       end
 
