@@ -2058,6 +2058,9 @@ contains
 
          ! Make the constraint term
          .:make_constraint(C)
+         if (.scfdata.use_pc_lambda) then
+         .fock_matrix.scale_by(ONE-.scfdata.lambda)
+         endif
          .fock_matrix.plus_scaled(C,.scfdata.lambda)
 
       end

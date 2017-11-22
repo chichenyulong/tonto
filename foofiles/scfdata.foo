@@ -1270,6 +1270,14 @@ contains
    ! Generic set
    end
 
+   set_use_pc_lambda(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.use_pc_lambda), pure
+   ! Generic set
+   end
+
+   set_use_energy_chi2(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.use_energy_chi2), pure
+   ! Generic set
+   end
+   
    set_using_PIE(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.using_PIE), pure
    ! Generic set
    end
@@ -1429,6 +1437,8 @@ contains
          case ("use_nomo=                    "); .read_use_NOMO
          case ("use_nudo=                    "); .read_using_NUDO
          case ("use_orbital_locking=         "); .read_using_orbital_locking
+         case ("use_pc_lambda=               "); .read_use_pc_lambda
+         case ("use_energy_chi2=             "); .read_use_energy_chi2
          case ("use_pce_corr=                "); .read_using_PCE_correction
          case ("use_pie=                     "); .read_using_PIE
          case ("use_ppzpp=                   "); .read_using_ppzpp_method
@@ -1806,6 +1816,14 @@ contains
    ! Generic read and set
    end
 
+   read_use_pc_lambda ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_use_pc_lambda), private
+   ! Generic read and set
+   end
+
+   read_use_energy_chi2 ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_use_energy_chi2), private
+   ! Generic read and set
+   end
+   
    read_using_PIE ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_using_PIE), private
    ! Generic read and set
    end

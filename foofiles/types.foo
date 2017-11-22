@@ -5514,6 +5514,12 @@ module TYPES
      lambda :: REAL, readonly  DEFAULT(ZERO)
      ! The initial lambda value to use in a constrained SCF procedure
 
+     use_pc_lambda :: BIN DEFAULT(FALSE)
+     ! Whether to use lambda and 1-lambda in the XCW (percentage lambda)
+     
+     use_energy_chi2 :: BIN DEFAULT(FALSE)
+     ! Whether to use chi2 in the unit of an energy
+
      initial_lambda :: REAL, readonly  DEFAULT(ZERO)
      ! The starting lambda value in a constrained SCF procedure
 
