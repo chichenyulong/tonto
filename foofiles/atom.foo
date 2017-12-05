@@ -5788,21 +5788,29 @@ contains
 
 !  ANOs
 
-   no_of_occupied_NAOs(tol) result (res) ::: PURE
-   ! Returns the number of non-zero occupied NAOs. For this purpose,
-   ! occupied is greated than 1/14. See ROBY.
+   no_of_occupied_NAOs(tol,occ) result (res) ::: PURE
+   ! Returns the number of non-zero NAOs. For this purpose, zero is
+   ! defined to be "tol" if present, or TOL(7) otherwise. If "occ" is
+   ! false return the no. of unoccupieds.
       self :: IN
       tol :: REAL, optional, IN
+      occ :: BIN, optional, IN
       res :: INT
 
    ENSURE(.NAO_occupations.associated,"no NAO occupations")
 
-      eps :: REAL
+      oc :: BIN
 
-      eps = ROBY_OCCUPIED_ANO_CUTOFF
-      if (present(tol)) eps = tol
+      oc = TRUE
+      if (present(occ)) oc = occ
 
-      res = count(.NAO_occupations>=eps)
+      if (oc) then
+         ! Occupied
+         res = .NAO_occupations.no_of_vals_larger_than(tol=tol)
+      else
+         ! Unoccupied
+         res = .NAO_occupations.dim - .NAO_occupations.no_of_vals_larger_than(tol=tol)
+      end
 
    end
 
@@ -5811,7 +5819,6 @@ contains
    ! this purpose, zero is defined to be "tol" if present, or TOL(7)
    ! otherwise. If "occ" is false return the no. of unoccupieds.
       self :: IN
-    ! axiskind :: STR, optional, IN
       tol :: REAL, optional, IN
       occ :: BIN, optional, IN
       res :: INT

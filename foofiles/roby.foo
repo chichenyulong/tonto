@@ -554,21 +554,21 @@ contains
 
    ENSURE(.atom.associated,"no atom information")
 
-      eps :: REAL
+      roby_tol :: REAL
       oc :: BIN
 
-      eps = .occupied_ANO_cutoff
-      if (present(tol)) eps = tol
+      roby_tol = .occupied_ANO_cutoff
+      if (present(tol)) roby_tol = tol
 
       oc  = TRUE
       if (present(occ)) oc = occ
 
       if (oc) then
          ! Occupied orbitals 
-         res = .atom(group).no_of_occupied_NAOs(tol=eps)
+         res = .atom(group).no_of_occupied_NAOs(tol=roby_tol)
       else
          ! Unoccupied orbitals
-         res = .n_bf(group) - .atom(group).no_of_occupied_NAOs(tol=eps)
+         res = .n_bf(group) - .atom(group).no_of_occupied_NAOs(tol=roby_tol)
       end
 
    end
@@ -585,21 +585,21 @@ contains
 
    ENSURE(.atom.associated,"no atom information")
 
-      eps :: REAL
+      roby_tol :: REAL
       oc :: BIN
 
-      eps = .occupied_ANO_cutoff
-      if (present(tol)) eps = tol
+      roby_tol = .occupied_ANO_cutoff
+      if (present(tol)) roby_tol = tol
 
       oc  = TRUE
       if (present(occ)) oc = occ
 
       if (oc) then
          ! Occupied orbitals 
-         res = .atom(group).no_of_occupied_ANOs(tol=eps)
+         res = .atom(group).no_of_occupied_ANOs(tol=roby_tol)
       else
          ! Unoccupied orbitals
-         res = .n_bf(group) - .atom(group).no_of_occupied_ANOs(tol=eps)
+         res = .n_bf(group) - .atom(group).no_of_occupied_ANOs(tol=roby_tol)
       end
 
    end
@@ -868,8 +868,8 @@ contains
       .make_projection_matrix(P,group,occ,ANO)
 
       ! Evaluate
-    ! res = .expectation(P,group)
-      res = .expectation_minus(P,group)
+      res = .expectation(P,group)
+    ! res = .expectation_minus(P,group)
 
       ! Clean
       P.destroy
@@ -2273,7 +2273,7 @@ contains
             l = n_bf
          end
 
-         NAO(b+1:b+n_bf,n+1:n+n_occ) = .atom(a).NAOs(:,1:n_occ)
+         NAO(b+1:b+n_bf,n+1:n+n_occ) = .atom(a).NAOs(:,f:l)
 
          b = b + n_bf
          n = n + n_occ
@@ -2548,10 +2548,10 @@ contains
       .make_full_projection(Q,group)
       .overlap_transform(Q,X,row_atom=group)
       Q.destroy
-      X.destroy
 
       ! Subtract Q part
-      W = W - Q
+      W = W - X
+      X.destroy
 
       ! Make Tr ( S P S rho)
       if (.spin_multiplicity/=1) then
