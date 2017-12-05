@@ -291,6 +291,10 @@ contains
    ! Generic set
    end
 
+   set_use_NANOs(val) ::: get_from(OBJECT:set, VAL?=>BIN, ARG?=>.use_NANOs), pure
+   ! Generic set
+   end
+
    set_zero_angle_cutoff(val) ::: get_from(OBJECT:set, VAL?=>REAL, ARG?=>.zero_angle_cutoff), pure
    ! Generic set
    end
@@ -337,7 +341,8 @@ contains
          case ("put_fock_matrix        "); stdout.put(.fock_matrix)
          case ("put_overlap_matrix     "); stdout.put(.overlap_matrix)
          
-         case ("use_naos=              "); .read_use_naos
+         case ("use_nanos=             "); .read_use_NANOs
+         case ("use_naos=              "); .read_use_NAOs
          
          case ("zero_angle_cutoff=     "); .read_zero_angle_cutoff
 
@@ -420,6 +425,10 @@ contains
    end
 
    read_use_NAOs ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_use_NAOs), private
+   ! Generic read and set
+   end
+
+   read_use_NANOs ::: get_from(OBJECT:read_and_set, VAL?=>BIN, SET?=>.set_use_NANOs), private
    ! Generic read and set
    end
 
@@ -2186,6 +2195,13 @@ contains
          W.create(n_bf,n_occ)
          .make_NAO_matrix(W,group,occ,tol)
 
+      else if (.use_NANOs) then
+      
+         n_occ = .no_of_occupied_ANOs(group,occ,tol) &
+               + .no_of_occupied_NAOs(group,occ,tol) 
+         W.create(n_bf,n_occ)
+         .make_NANO_matrix(W,group,occ,tol)
+
       else
 
          n_occ = .no_of_occupied_ANOs(group,occ,tol)
@@ -2323,6 +2339,27 @@ contains
          n = n + n_occ
 
       end
+
+   end
+
+   make_NANO_matrix(NANO,group,occ,tol) ::: private, PURE
+   ! Make the "NANO" matrix, comprised of columns of the occupied
+   ! natural atomic orbitals, for each atom whose index appears in
+   ! "group".  If "tol" is present, use this cutoff to determine what
+   ! is an occupied natural orbital.
+      self :: IN
+      NANO :: MAT{REAL}, OUT
+      group :: VEC{INT}, IN
+      occ :: BIN, optional, IN
+      tol :: REAL, optional, IN
+
+   ENSURE(NANO.dim1==.n_bf(group),"wrong shape, NANO")
+
+      n_occ :: INT
+
+      n_occ = .no_of_occupied_ANOs(group,occ,tol)
+      .make_ANO_matrix(NANO(:,1      :n_occ),group,occ,tol)
+      .make_NAO_matrix(NANO(:,n_occ+1:     ),group,occ,tol)
 
    end
 

@@ -5974,6 +5974,10 @@ module TYPES
      ! Set TRUE if you want to use NAO atomic projectors instead of
      ! ANO's as defined in the original Gould et al 2008 TCA paper.
 
+     use_NANOs :: BIN  DEFAULT(FALSE)
+     ! Set TRUE if you want to use both NAO *and* ANOs atomic
+     ! to define at atom in a molecule.
+
      analyze_all_atom_pairs :: BIN  DEFAULT(ROBY_ANALYZE_ALL_ATOM_PAIRS)
      ! If set TRUE, the bond index information is printed out ONLY for every
      ! atom pair which is considered "bonded". Otherwise all pairs of atoms are
