@@ -659,14 +659,17 @@ contains
       ! Bond orders
       .bond_analysis
 
-      ! Output
+      ! Output virtual stuff
+      .put_basics
+      .put_pair_populations(occ=FALSE)
+      .put_bond_indices_atoms(occ_a=TRUE ,occ_B=FALSE)
+      .put_bond_indices_atoms(occ_a=FALSE,occ_B=TRUE)
+
+      ! Output normal occ-occ stuff
       .put_basics
       .put_mono_populations
       .put_pair_populations(occ=TRUE)
-      .put_pair_populations(occ=FALSE)
       .put_bond_indices_atoms(occ_a=TRUE ,occ_B=TRUE)
-      .put_bond_indices_atoms(occ_a=TRUE ,occ_B=FALSE)
-      .put_bond_indices_atoms(occ_a=FALSE,occ_B=TRUE)
 
    end
 
@@ -877,8 +880,8 @@ contains
       .make_projection_matrix(P,group,occ,ANO)
 
       ! Evaluate
-    ! res = .expectation(P,group)
-      res = .expectation_corrected(P,group)
+      res = .expectation(P,group)
+    ! res = .expectation_corrected(P,group)
 
       ! Clean
       P.destroy
@@ -928,11 +931,11 @@ contains
 
    end
 
-   subpopulation(P,subgroup,group,occ,ANO) result (res) ::: private
+   subpopulation(P,subgroup,group,occ) result (res) ::: private
    ! Return the Roby subpopulation for the subgroup of atoms whose
    ! indices are given in "subgroup", in the whole group of atoms
    ! whose indices are are given in "group", i.e
-   !    res = Tr ( P_{subgroup} P_{group;ANO} P_{subgroup} rho )
+   !    res = Tr ( P_{subgroup} P_{group} P_{subgroup} rho )
    ! If present, the columns of the "ANO" matrix are used to define
    ! the middle Roby projector instead of the atomic natural orbitals.
    ! Note that the real atomic natural orbitals are always used for
@@ -943,7 +946,6 @@ contains
       subgroup :: VEC{INT}, IN
       group :: VEC{INT}, IN
       occ :: BIN, optional, IN
-      ANO :: MAT{REAL}, optional, IN
       res :: REAL
 
    ENSURE(.rho.associated,"no rho matrix")
@@ -2197,8 +2199,8 @@ contains
 
       else if (.use_NANOs) then
       
-         n_occ = .no_of_occupied_ANOs(group,occ,tol) &
-               + .no_of_occupied_NAOs(group,occ,tol) 
+         n_occ = .no_of_occupied_ANOs(group,occ,tol)  
+         n_occ = .no_of_occupied_NAOs(group,occ,tol) + n_occ
          W.create(n_bf,n_occ)
          .make_NANO_matrix(W,group,occ,tol)
 
@@ -2599,51 +2601,51 @@ contains
 
    end
 
-   expectation_corrected(P,group) result (res) ::: private
-   ! Get the expectation value of the projection operator matrix "P"
-   ! over a certain "group" of atoms, i.e:
-   !    res = Trace ( S(:,group) P S(group,:) rho )
-   ! Note that "group" are the indices of the atoms whose basis functions
-   ! are used to define the matrix "P".
-      self :: IN
-      P :: MAT{REAL}, IN
-      group :: VEC{INT}, IN
-      res :: REAL
-
-   ENSURE(P.dim1==.n_bf(group),"wrong P dimension")
-   ENSURE(P.is_square,"P is not square")
-
-      Q :: MAT{REAL}*
-      no_group :: VEC{INT}*
-      one,n_bf :: INT
-
-      ! Uncorrected expectation
-      res = .expectation(P,group)
-
-      if (group.dim==.atom.dim) return
-
-      ! Make the not group
-      one = 1
-      no_group => one.sequence_up_to(.atom.dim)
-      stdout.text("no_group")
-      stdout.put(no_group)
-      no_group.prune(group)
-      stdout.text("no_group")
-      stdout.put(no_group)
-
-
-      ! Make not projection Q
-      n_bf = .n_bf(no_group)
-      Q.create(n_bf,n_bf)
-      .make_projection_matrix(Q,no_group)
-
-      ! Correct
-      res = res - .subpopulation(P,no_group,group)
-
-      ! Clean
-      Q.destroy
-
-   end
+!   expectation_corrected(P,group) result (res) ::: private
+!   ! Get the expectation value of the projection operator matrix "P"
+!   ! over a certain "group" of atoms, i.e:
+!   !    res = Trace ( S(:,group) P S(group,:) rho )
+!   ! Note that "group" are the indices of the atoms whose basis functions
+!   ! are used to define the matrix "P".
+!      self :: IN
+!      P :: MAT{REAL}, IN
+!      group :: VEC{INT}, IN
+!      res :: REAL
+!
+!   ENSURE(P.dim1==.n_bf(group),"wrong P dimension")
+!   ENSURE(P.is_square,"P is not square")
+!
+!      Q :: MAT{REAL}*
+!      no_group :: VEC{INT}*
+!      one,n_bf :: INT
+!
+!      ! Uncorrected expectation
+!      res = .expectation(P,group)
+!
+!      if (group.dim==.atom.dim) return
+!
+!      ! Make the not group
+!      one = 1
+!      no_group => one.sequence_up_to(.atom.dim)
+!    ! stdout.text("no_group")
+!    ! stdout.put(no_group)
+!      no_group.prune(group)
+!    ! stdout.text("no_group")
+!    ! stdout.put(no_group)
+!
+!
+!      ! Make not projection Q
+!      n_bf = .n_bf(no_group)
+!      Q.create(n_bf,n_bf)
+!      .make_projection_matrix(Q,no_group)
+!
+!      ! Correct
+!      res = res - .subpopulation(P,no_group,group)
+!
+!      ! Clean
+!      Q.destroy
+!
+!   end
 
    project(X,P,Y,row_atom,col_atom) ::: private
    ! Do: Y = P^T S(col_atom,row_atom) X S(row_atom,col_atom) P where
