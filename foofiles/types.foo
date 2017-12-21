@@ -3504,6 +3504,10 @@ module TYPES
      refine_ADPs_only :: BIN  DEFAULT(FALSE)
      ! Set TRUE if you only want to fit/refine the hydrogen ADP's
 
+     !test new refine_H_atoms Lorraine
+     refine_H_pos :: BIN  DEFAULT(TRUE)
+     ! Set TRUE if you want to fit/refine the hydrogen positions
+
      refine_H_ADPs :: BIN  DEFAULT(TRUE)
      ! Set TRUE if you want to fit/refine the hydrogen ADP's
 
@@ -5897,6 +5901,10 @@ module TYPES
      cluster :: CLUSTER*  DEFAULT_NULL
      ! A cluster used to get the cluster charges
 
+     defragment :: BIN, readonly  DEFAULT(TRUE)
+     ! The defragment option in case of network compounds should be
+     ! false Lorraine
+
      save_cluster_charges :: BIN, readonly  DEFAULT(FALSE)
      ! Set TRUE if you want to save the cluster charges
 
@@ -5968,6 +5976,10 @@ module TYPES
      ! Options
      ! =======
 
+     is_hyper_analysis :: BIN, readonly  DEFAULT(FALSE)
+     ! Whether the analysis is a hypervalent one which treats bonding
+     ! from space .atom(A) to everything not in any .atom(:)
+
      use_NAOs :: BIN  DEFAULT(FALSE)
      ! Set TRUE if you want to use NAO atomic projectors instead of
      ! ANO's as defined in the original Gould et al 2008 TCA paper.
@@ -5983,19 +5995,8 @@ module TYPES
      bond_range_factor :: REAL  DEFAULT(ROBY_BOND_RANGE_FACTOR)
      ! Used to extend the range of the CCDC bonded test.
 
-     covalent_cutoff :: REAL  DEFAULT(ROBY_COVALENT_CUTOFF*RADIAN_PER_DEGREE)
-     ! Angles (in radians) greater than this are ignored when calculating
-     ! the covalent bond index
-
-     ionic_cutoff :: REAL  DEFAULT(ROBY_IONIC_CUTOFF*RADIAN_PER_DEGREE)
-     ! Angles (in radians) greater than this are ignored when calculating
-     ! the ionic bond index
-
-     zero_cutoff :: REAL  DEFAULT(ROBY_ZERO_CUTOFF*RADIAN_PER_DEGREE)
+     zero_angle_cutoff :: REAL  DEFAULT(ROBY_ZERO_ANGLE_CUTOFF*RADIAN_PER_DEGREE)
      ! Angles (in radians) *less* than this are regareded as zero
-
-     pi_on_2_cutoff :: REAL DEFAULT(ROBY_PI_ON_2_CUTOFF*RADIAN_PER_DEGREE)
-     ! Angles (in radians) greater than this are regareded as pi/2
 
      occupied_ANO_cutoff :: REAL  DEFAULT(ROBY_OCCUPIED_ANO_CUTOFF)
      ! Atomic natural orbitals with occupations less than this number
@@ -6016,8 +6017,12 @@ module TYPES
      n2 :: MAT{REAL}* DEFAULT_NULL
      ! Roby pair population for each atom-group pair
      ! NOTE: these are *not* shared populations
+     ! The not atom-group populations
 
-     n_shared :: REAL
+     n_all :: REAL  DEFAULT(ZERO)
+     ! Population of all the atoms
+
+     n_shared :: REAL  DEFAULT(ZERO)
      ! Roby multiple shared population for a specified atom-group
 
      cov_index :: MAT{REAL}* DEFAULT_NULL
@@ -6115,14 +6120,20 @@ module TYPES
      theta_pop_C :: VEC{REAL}* DEFAULT_NULL
      ! Covalent theta orbital populations
 
+     theta_pop_C_A :: VEC{REAL}* DEFAULT_NULL
+     ! Atom "A" theta covalent orbital popualtions
+
+     theta_pop_C_B :: VEC{REAL}* DEFAULT_NULL
+     ! Atom "B" theta covalent orbital populations
+
      theta_pop_I :: VEC{REAL}* DEFAULT_NULL
      ! Ionic theta orbital populations
 
-     theta_pop_A :: VEC{REAL}* DEFAULT_NULL
-     ! Atom "A" theta orbital popualtions
+     theta_pop_I_A :: VEC{REAL}* DEFAULT_NULL
+     ! Atom "A" theta ionic orbital popualtions
 
-     theta_pop_B :: VEC{REAL}* DEFAULT_NULL
-     ! Atom "B" theta orbital populations
+     theta_pop_I_B :: VEC{REAL}* DEFAULT_NULL
+     ! Atom "B" theta ionic orbital populations
 
      theta_cov_index :: VEC{REAL}* DEFAULT_NULL
      ! The vector of each covalent theta bond index
