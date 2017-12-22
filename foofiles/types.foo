@@ -4133,7 +4133,7 @@ module TYPES
      pnd_data :: DIFFRACTION_DATA* DEFAULT_NULL
      ! The PND scalar structure factor and fitting data
 
-     r_free_percentage :: INT  DEFAULT(0)
+     r_free_percentage :: REAL  DEFAULT(ZERO)
      ! A percentage which tells how much of the data is to be reserved
      ! and not fitted in the model
 

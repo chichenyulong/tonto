@@ -37,6 +37,19 @@ contains
 ! Numerical operations
 ! ====================
 
+   swap_with(x) ::: pure
+   ! Swap the value of "self" and "x"
+      self :: INOUT
+      x :: INT, INOUT
+
+      keep :: INT
+
+      keep = self
+      self = x
+      x    = keep
+
+   end
+
    to_sum_of(v) ::: get_from(INTRINSIC), pure
    ! Set "self" to the sum of elements in vector "v"
    end
@@ -44,6 +57,22 @@ contains
    to_sum_of(mx) ::: get_from(INTRINSIC), pure
    ! Set "self" to the sum of elements in matrix "mx"
    end
+
+   to_random_number_between(minimum,maximum) 
+   ! Set "self" to be a random number between "minimum" and "maximum".
+    self :: OUT
+    minimum, maximum :: INT, IN
+
+    harvest :: REAL
+
+    
+    ! Randoms in [0,1]
+    call random_number(harvest)
+
+    ! Reset range
+    self = nint( harvest*(maximum-minimum) + minimum )
+
+   end 
 
 ! ================
 ! Equality testing
@@ -236,10 +265,14 @@ contains
       self :: IN
       n :: INT, IN
       res :: REAL
+
  ! ENSURE(self>=0,"must have non-negative argument")
  ! ENSURE(n   >=0,"must have non-negative n")
+
       i :: INT
+
       res = ONE
+
       if (self>=n) then
          do i = n+1,self
             res = res * i
@@ -250,6 +283,7 @@ contains
          end
          res = ONE/res
       end
+
    end
 
    permutation(n,m) result (res) ::: pure
@@ -414,6 +448,33 @@ contains
          val    = val + s
 
       end
+
+   end
+
+   ceiling_of(percentage) result (res) ::: PURE
+   ! Multiply "self" by "percentage", a number in [0,100],
+   ! and return the ceiling. Useful for calculating the
+   ! width of bins associated the "self".
+      self :: IN
+      percentage :: REAL, IN
+
+      res :: INT 
+      pc :: REAL
+     
+      pc = percentage * 0.01
+      
+      res = ceiling(real(self)*pc) 
+
+   end
+   
+   ceiling_of_ratio(bot) result(res) ::: PURE
+   ! Return the ceiling of the ratio of "self" and "bot".
+   ! Useful for calculating the number of bins.
+      self :: IN
+      bot :: INT, IN
+      res :: INT
+
+      res = ceiling(real(self)/ real(bot)) 
 
    end
 

@@ -351,6 +351,9 @@ contains
       unit_cell :: UNIT_CELL, IN
       spacegroup :: SPACEGROUP, IN
 
+      stl :: VEC{REAL}*
+      ind :: VEC{INT}*
+
       if (.reflections.disassociated) then
 
          ! Set hkl range ?
@@ -363,17 +366,26 @@ contains
 
       else
 
-         ! Keep original reflections
-         .reflection0.destroy
-         .reflection0.create_copy(.reflections)
-        
          ! Set d, stl, theta 
-         .reflection0.set_d_and_theta(unit_cell)
          .reflections.set_d_and_theta(unit_cell)
-        
+
          ! Equivalence factors
-         .reflection0.set_equivalence_factors(spacegroup)
          .reflections.set_equivalence_factors(spacegroup)
+
+         ! Reorder reflections by stl
+         ind.create(.reflections.dim)
+         stl.create(.reflections.dim)
+         stl = .reflections(:).stl
+         stl.quick_sort(ind) 
+         stl.destroy
+
+         ! Keep original (sorted) reflections
+         .reflection0.destroy
+         .reflection0.create_copy(.reflections(ind))
+
+         ! Copy sorted reflections
+         .reflections.destroy
+         .reflections.create_copy(.reflection0)
         
          ! Prune !!!!!!!!!!
          .prune_reflections
@@ -3090,11 +3102,12 @@ contains
 
       tmp = ZERO
       do n=1,n_refl
-       ref => .reflections(n)
-       tmp1 = (abs(ref.F_calc) * ext(n) - ref.F_exp) / ref.F_sigma
-       tmp = tmp + tmp1 * tmp1
+         ref => .reflections(n)
+         tmp1 = (abs(ref.F_calc) * ext(n) - ref.F_exp) / ref.F_sigma
+         tmp = tmp + tmp1 * tmp1
       end
       res = tmp / max(n_refl-.n_param,1)
+
       ext.destroy
 
    end
@@ -5076,6 +5089,7 @@ contains
    ! Output the structure factor goodness of fit statistics.
       self :: IN
 
+      ! Stats
       .reflections.put_F_free_stats
 
    end

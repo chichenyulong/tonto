@@ -936,6 +936,8 @@ contains
 
    end
 
+! Old stuff ... delete when safe
+
    quick_sort(indices,decreasing_order) ::: pure
    ! Return the "indices" which sort self from smallest to largest, i.e. on
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
@@ -1063,6 +1065,116 @@ contains
       do n = 1,.dim/2
          .swap_elements(n,dim-n+1)
       end
+
+   end
+
+! New stuff
+
+   quick_sort_new ::: recursive, PURE
+   ! Sort array "self" from smallest to largest
+      self :: INOUT
+
+      i, j, n :: INT
+      chosen, temp :: REAL
+
+      n = .dim
+
+      chosen = self((1+n)/2)
+      i = 0
+      j = n + 1
+      
+      do 
+
+         ! Scan from lower until element >= chosen is found
+         do 
+            i = i + 1
+            if (self(i) >= chosen) exit
+         end do
+         
+         ! Scan from upper end unit element <= chosen is found
+         do
+            j = j - 1
+            if (self(j) <= chosen) exit
+         end do 
+         
+         ! Swap elements if i < j 
+         if (i < j) then
+            self(i).swap_with(self(j))
+         else if (i==j) then
+            i = i + 1
+            exit
+         else 
+            exit
+         end if
+
+      end do
+     
+      ! Sort bottom & top end
+      if (1 < j) self(1:j).quick_sort_new
+      if (i < n) self(i:n).quick_sort_new
+
+   end
+
+   quick_sort_indices(indices) ::: PURE
+   ! Sort "indices" so that "self(indices)" goes smallest to largest
+      self :: IN
+      indices :: VEC{INT}, INOUT
+
+      i :: INT
+
+      ! Initialise indices
+      i = 0
+      indices = [ (i,i=1,.dim) ] 
+
+      ! Sort
+      .quick_sort_helper(indices, 1, .dim)
+
+   end
+
+   quick_sort_helper(indices, left_end, right_end) ::: recursive, private, PURE
+   ! Sort "indices" so that "self(indices)" goes smallest to largest
+      self :: IN
+      indices :: VEC{INT}, INOUT
+      left_end, right_end :: INT, IN
+
+      i, j, n :: INT
+      chosen, temp :: REAL
+
+      n = indices.dim
+
+      chosen = self(indices((left_end+right_end)/2))
+      i = left_end - 1
+      j = right_end + 1
+      
+      do 
+
+         ! Scan from lower until element >= chosen is found
+         do 
+            i = i + 1
+            if (self(indices(i)) >= chosen) exit
+         end do
+         
+         ! Scan from upper end unit element <= chosen is found
+         do
+            j = j - 1
+            if (self(indices(j)) <= chosen) exit
+         end do 
+         
+         ! Swap elements if i < j 
+         if (indices(i) < indices(j)) then
+            indices(i).swap_with(indices(j))
+         else if (i==j) then
+            i = i + 1
+            exit
+         else 
+            exit
+         end if
+
+      end do
+     
+      ! Sort bottom & top end
+      if (left_end < j) .quick_sort_helper(indices, left_end, j)
+      if (i < right_end) .quick_sort_helper(indices, i, right_end)
 
    end
 

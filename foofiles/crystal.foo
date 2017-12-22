@@ -363,6 +363,7 @@ contains
            .xray_r_free_data.create_copy(.xray_data)
            .xray_r_free_data.reflections.destroy
            .set_r_free_reflections(.xray_data.reflections,.xray_r_free_data.reflections)
+           .assign_xray ! Dangerous for pnd
         end
 
       end
@@ -376,6 +377,7 @@ contains
            .pnd_r_free_data.create_copy(.xray_data)
            .pnd_r_free_data.reflections.destroy
            .set_r_free_reflections(.pnd_data.reflections,.pnd_r_free_data.reflections)
+           .assign_pnd ! Dangerous for xray
         end
 
       end
@@ -392,39 +394,35 @@ contains
    ENSURE(free_data.disassociated,"r_free_data exists")
 
       keep_data :: VEC{REFLECTION}*
-      harvest :: VEC{REAL}*
       free,keep :: VEC{INT}*
       percentage :: REAL
-      i,n :: INT
+      n,n_bins,width :: INT
 
       if (.r_free_percentage<=0) return
       if (data.disassociated) return
 
       ! Set the percentage of reflections to reject
-      percentage = .r_free_percentage/100.0d0
-
-      ! Harvest random numbers
-      n = data.dim
-      harvest.create(n)
-
-      if (tonto.is_master_processor) then
-         call random_number(harvest)
-      end
-      PARALLEL_BROADCAST(harvest,0)
+      percentage = .r_free_percentage
 
       ! Reflections for r_free have p<percentage
       ! Otherwise, they are kept and used for fitting
-      nullify(free)
-      nullify(keep)
-      do i = 1,n
-         if (harvest(i)<percentage) then; free.append(i)
-         else;                            keep.append(i)
-         end
-      end
-      harvest.destroy
+      n = data.dim
+      n_bins = n.ceiling_of(percentage)
+      width  = n.ceiling_of_ratio(n_bins)
 
-      stdout.show("No. of reflections kept for R free =",free.dim)
       stdout.flush
+      stdout.text("================================")
+      stdout.text("Reserving reflections for R_free")
+      stdout.text("================================")
+
+      stdout.flush
+      stdout.show("No. of reflections                 =",n)
+      stdout.show("R free percentage                  =",.r_free_percentage)
+      stdout.show("No. of reflections kept for R free =",n_bins)
+      stdout.show("Bin width for selecting randoms    =",width)
+
+      free.to_binned_random_indices(n,percentage)
+      keep.prune_from_sequence_up_to(n,free)
 
       ! Set free_data
       free_data.create(free.dim)
@@ -597,9 +595,13 @@ contains
 
    read_r_free_percentage
    ! Read the R free percentage
+      self :: INOUT
+
       stdin.read(.r_free_percentage)
-      DIE_IF(.r_free_percentage<0,  "percentage must be non-negative")
-      DIE_IF(.r_free_percentage>100,"percentage must be less than 100")
+
+   DIE_IF(.r_free_percentage<0.,  "percentage must be non-negative")
+   DIE_IF(.r_free_percentage>100.,"percentage must be less than 100")
+
    end
 
    read_same_atom_tol
@@ -8307,7 +8309,7 @@ contains
    ! Put XD fco reflection file
       self :: INOUT
 
-      F000,F_cal,F2_cal,F2_exp,F2_sig,factor :: REAL
+      F000,F2_cal,F2_exp,F2_sig,factor :: REAL
       F_p :: VEC{CPX}@
       F_exp :: VEC{REAL}@
       d_max,d_min :: REAL
@@ -8956,7 +8958,9 @@ contains
 
    put_correction_data
    ! Output the correction data
+
    ENSURE(.data_exists, "no diffraction data")
+
       .data.put_correction_data
 
       if (.asymmetric_unit_atom.has_any_ADP3s_and_errors) then

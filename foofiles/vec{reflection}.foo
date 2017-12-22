@@ -436,7 +436,9 @@ contains
    ! The number of reflections
       self :: IN
       res :: INT
+
       res = size(self)
+
    end
 
 
@@ -1956,6 +1958,7 @@ contains
       stdout.text("Statistics based on free structure factors:")
       stdout.flush
 
+      stdout.show("# of reflections,    N_r     =", .n_refl)
       stdout.show("Free R_sigma(F)              =", .F_r_sigma)
       stdout.show("Free R(F)                    =", .F_r_factor)
       stdout.show("Free Rw(F)                   =", .F_weighted_r_factor)

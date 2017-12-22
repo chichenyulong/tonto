@@ -2686,16 +2686,21 @@ contains
 
       if (.crystal.xray_data.associated AND .scf_kind.includes("xray")) then
 
-         .crystal.put_F_statistics
+         .crystal.xray_data.put_F_statistics
 
          if (.crystal.r_free_percentage>0 AND .crystal.xray_r_free_data.associated) &
             .crystal.xray_r_free_data.put_F_free_stats
+
+         ! Hack - write to stderr for Erna
+         stderr.put(.crystal.xray_data.chi2)
+         stderr.put(.crystal.xray_r_free_data.reflections.F_chi2)
+         stderr.flush
 
       end
 
       if (.crystal.pnd_data.associated AND .scf_kind.includes("pnd")) then
 
-         .crystal.put_F_statistics
+         .crystal.pnd_data.put_F_statistics
 
          if (.crystal.r_free_percentage>0 AND .crystal.pnd_r_free_data.associated) &
             .crystal.pnd_r_free_data.put_F_free_stats

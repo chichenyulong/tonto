@@ -15,7 +15,6 @@
 ! Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ! Boston, MA  02111-1307, USA.
 !
-! $Id: run_vec{real}.foo 2676 2005-02-17 14:33:58Z dylan $
 
 program run_VEC{REAL}
 
@@ -26,85 +25,64 @@ program run_VEC{REAL}
    arcsin,fret,tol,ftol :: REAL
    algorithm :: STR
    v :: VEC{REAL}*
+   ind,keep :: VEC{INT}*
+   n, m, w :: INT
+   percentage :: REAL
 
-   tonto.initialize
+   TONTO_CREATE
+
+   stderr.create_stderr
+   stderr.open_for("write")
 
    stdout.create_stdout
-   stdout.open
+   stdout.open_for("write")
+
    stdin.create_stdin
-   stdin.open
+   stdin.open_for("read")
 
-   stdin.read_ptr(v)
+ ! stdout.text("Read in v from stdin")
+ ! stdin.read_ptr(v)
 
-   stdout.text("v:")
-   stdout.put(v,"column")
+   read (*,*) n
+   read (*,*) percentage
 
-   stdout.text("sqrt v:")
-   stdout.put(sqrt(v),"column")
+!  v.create(n)
+!  ind.create(n)
 
-   stdout.show(" mean  =",v.mean)
-   stdout.show(" sigma =",v.standard_deviation)
-   stdout.show(" variance =",v.variance)
+   call random_number(v)
 
-!    stdout.flush
-!    stdout.text("Minimise the function (x-1)^2 + (y-1)^2 + 1 using the")
-!    stdout.text("Powell method")
-!    stdout.flush
-!    stdout.text("This function is defined in the TEST module")
-!    stdout.flush
-! 
-!    tol = TOL(7)
-!    ftol = TOL(7)
-!    p = [ 0.1, 0.1
-!    directions(1,1) = 1
-!    directions(2,1) = 1
-!    directions(1,2) = 1
-!    directions(2,2) =-1
-! 
-!    stdout.flush
-!    stdout.show("Start point   =",p)
-!    stdout.flush
-!    stdout.text("Initial directions (as columns):")
-!    stdout.put(directions)
-! 
-!    stdout.flush
-!    stdout.text("Minimise the function ...")
-! 
-!    arcsin.minimise_powell(p,directions,fret,tol,ftol)
-! 
-!    stdout.flush
-!    stdout.text("Answer:")
-!    stdout.show("Minimum point =",p)
-!    stdout.show("Minimum value =",fret)
-! 
-!    stdout.flush
-!    stdout.text("Now minimise the same functions using the FR")
-!    stdout.text("(Fletcher-Reeves) method. This requires the ")
-!    stdout.text("the derivative of the function as well.")
-!    stdout.flush
-! 
-!    p = [ 0.1, 0.1
-!    algorithm = "Fletcher-Reeves"
-!    arcsin.minimise_FRPR(darcsin,p,fret,tol,ftol,algorithm)
-! 
-!    stdout.flush
-!    stdout.text("Answer:")
-!    stdout.show("Minimum point =",p)
-!    stdout.show("Minimum value =",fret)
-! 
-!    stdout.flush
-!    stdout.text("Now minimise the same functions using the BFGS")
-!    stdout.text("(Broyden-Fletcher-Goldfarb-Shanno) method. This also")
-!    stdout.text("requires the derivative of the function")
-!    stdout.flush
-! 
-! 
-!    p = [ 0.1, 0.1
-!    arcsin.minimise_BFGS(darcsin,p,fret,tol,ftol)
-! 
-!    stdout.flush
-!    stdout.text("Answer:")
-!    stdout.show("Minimum point =",p)
-!    stdout.show("Minimum value =",fret)
+!  stdout.text("v:")
+!  stdout.put(v)
+
+!  v.quick_sort(ind)
+!  stdout.text("sorted ind?")
+!  stdout.put(ind)
+
+!  stdout.text("sorted v?")
+!  stdout.put(v(ind))
+   w = n.ceiling_of(percentage)
+   m = n.ceiling_of_ratio(w)
+   stdout.show("m=", m)
+   ind.create(m)
+   ind.to_binned_random_indices(n, percentage)
+
+   stdout.text("ind")
+   stdout.put(ind)
+
+   m = n - ind.dim
+   keep.create(m)
+   keep.prune_from_sequence_up_to(n,ind)
+
+   stdout.text("*not* ind:")
+   stdout.put(keep)
+   
+
+   ! Clean-up files
+   TEXTFILE:destroy(stdout)
+   TEXTFILE:destroy(stdin)
+   TEXTFILE:destroy(stderr)
+
+   ! Clean-up tonto system
+   TONTO_DESTROY
 
 end

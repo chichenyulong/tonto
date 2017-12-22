@@ -305,6 +305,18 @@ contains
    ! return "self(indices)" is sorted. NOTE: self is *not* sorted.
    end
 
+   quick_sort_new ::: get_from(VEC{OBJECT}), recursive
+   ! Sort array "self" from smallest to largest
+   end
+
+   quick_sort_indices(indices) ::: get_from(VEC{OBJECT}), PURE
+   ! Sort "indices" so that "self(indices)" goes smallest to largest
+   end
+
+   quick_sort_helper(indices, left_end, right_end) ::: get_from(VEC{OBJECT}), recursive, private, PURE
+   ! Sort "indices" so that "self(indices)" goes smallest to largest
+   end
+
    reverse_order ::: get_from(VEC{INTRINSIC}), pure
    ! Reverse the order of the elements of self
    end

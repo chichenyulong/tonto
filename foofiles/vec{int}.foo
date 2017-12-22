@@ -202,6 +202,39 @@ contains
    ! The order of the elements is unchanged.
    end
 
+   prune_from_sequence_up_to(n,values) ::: leaky, PURE
+   ! Removes from a sequence of values [1 ... n], the "values" which
+   ! contain no repetitions.
+      self :: PTR
+      n :: INT, IN
+      values :: VEC{INT}, IN
+
+   ENSURE(NOT values.has_repetitions,"values has repetitions!")
+   ENSURE((n-values.dim)>0,"n is too small!")
+
+      m, i, j :: INT
+
+      ! Size of self
+      m = n - values.dim
+
+      ! Make self
+      j = 0
+      self.create(m)
+
+      do i = 1,n
+
+         ! Skip if i is in values
+         if (any(values==i)) cycle
+
+         ! Add the new value to self
+         j = j + 1
+         self(j) = i
+
+      end
+
+   
+   end
+
 ! ====================
 ! Comparison functions
 ! ====================
@@ -620,6 +653,29 @@ contains
    ! in atomic units or generic units.
    end
 
+! ==========================
+! Random integers in a range
+! ==========================
+
+   to_random_numbers_between(minimum,maximum)
+   ! Set "self" to be a random number between "minimum" and "maximum".
+    self :: OUT
+    minimum, maximum :: INT, IN
+
+    n :: INT 
+    harvest :: VEC{REAL}@
+
+    n = .dim
+    
+    ! Randoms in [0,1]
+    allocate(harvest(n))
+    call random_number(harvest)
+
+    ! Reset range
+    self(:) = nint( harvest(:)*(maximum-minimum) + minimum )
+
+   end 
+
 ! ======================
 ! Binning and histograms
 ! ======================
@@ -663,6 +719,43 @@ contains
 
       end
 
+   end
+
+   to_binned_random_indices(n,percentage) ::: leaky
+   ! Set "self" to binned random indices, where "n" is the
+   ! number of indices and we select a certain "percentage"
+   ! of them to be in sequential bins.
+      self :: PTR
+      n :: INT, IN
+      percentage :: REAL, IN
+
+      n_bins, width, start, finish, i, r :: INT
+    
+      ! This is the width of a bin
+      ! and also the size of self
+      n_bins = n.ceiling_of(percentage)   
+
+      self.create(n_bins)
+
+      width = n.ceiling_of_ratio(n_bins)
+   
+      i = 0
+      self = 0      
+
+      do start = 1, n, width
+
+         ! End of bin
+         finish = start + width - 1
+         
+         ! Random number in the current bin
+         r.to_random_number_between(start,finish)
+
+         ! Store the random index
+         i = i + 1
+         self(i) = r
+
+      end do
+   
    end
 
 ! ==========

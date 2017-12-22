@@ -1777,6 +1777,7 @@ contains
 
    put_scf_banner_and_options
    ! Put out the SCF banner and options
+
    ENSURE(.scfdata.associated,            "no scfdata")
    ENSURE(.scfdata.iteration==0,       "iteration is not 0!")
    ENSURE(.scfdata.lambda_iteration==0,"lambda_iteration is not 0!")
