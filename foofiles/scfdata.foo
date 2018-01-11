@@ -2693,9 +2693,19 @@ contains
             .crystal.xray_r_free_data.put_F_free_stats
 
          ! Hack - write to stderr for Erna
+         stderr.put(.lambda)
+         stderr.put(.energy)
+         stderr.put(.fit_value)
          stderr.put(.crystal.xray_data.chi2)
-         if (.crystal.xray_r_free_data.created) &
-            stderr.put(.crystal.xray_r_free_data.reflections.F_chi2)
+         stderr.put(.crystal.xray_data.reflections.F_r_factor)
+         stderr.put(.crystal.xray_data.reflections.F_weighted_r_factor)
+
+         if (.crystal.xray_r_free_data.created) then
+         stderr.put(.crystal.xray_r_free_data.reflections.F_chi2)
+         stderr.put(.crystal.xray_r_free_data.reflections.F_r_factor)
+         stderr.put(.crystal.xray_r_free_data.reflections.F_weighted_r_factor)
+         end
+
          stderr.flush
 
       end
