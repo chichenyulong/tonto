@@ -363,7 +363,7 @@ contains
            .xray_r_free_data.create_copy(.xray_data)
            .xray_r_free_data.reflections.destroy
            .set_r_free_reflections(.xray_data.reflections,.xray_r_free_data.reflections)
-           .assign_xray ! Dangerous for pnd
+           .assign_xray        ! Dangerous for pnd
         end
 
       end
@@ -377,7 +377,7 @@ contains
            .pnd_r_free_data.create_copy(.xray_data)
            .pnd_r_free_data.reflections.destroy
            .set_r_free_reflections(.pnd_data.reflections,.pnd_r_free_data.reflections)
-           .assign_pnd ! Dangerous for xray
+           .assign_pnd        ! Dangerous for xray
         end
 
       end
@@ -442,42 +442,33 @@ contains
    ! Assign data to the xray_data
       self :: INOUT
 
-   ENSURE(.xray_data.associated, "No X-ray reflection data")
-
-      nullify(.data)
-      .data => .xray_data
+      if (.xray_data.associated) .data => .xray_data
 
    end
 
    assign_xray_r_free
    ! Assign data to the xray_r_free_data
+   ! WARNING: use assign_xray after you are finished with this!
       self :: INOUT
 
-   ENSURE(.xray_r_free_data.associated, "No X-ray R-free reflection data")
-
-      nullify(.data)
-      .data => .xray_r_free_data
+      if (.xray_r_free_data.associated) .data => .xray_r_free_data
 
    end
 
    assign_pnd
    ! Assign data to the pnd_data
+      self :: INOUT
 
-   ENSURE(.pnd_data.associated, "No PND reflection data")
-
-      nullify(.data)
-      .data => .pnd_data
+      if (.pnd_data.associated) .data => .pnd_data
 
    end
 
    assign_pnd_r_free
    ! Assign data to the pnd_r_free_data
+   ! WARNING: use assign_xray after you are finished with this!
       self :: INOUT
 
-   ENSURE(.pnd_r_free_data.associated, "No PND R-free PND reflection data")
-
-      nullify(.data)
-      .data => .pnd_r_free_data
+      if (.pnd_r_free_data.associated) .data => .pnd_r_free_data
 
    end
 

@@ -1652,16 +1652,18 @@ contains
       ! Get Fock matrix
       .:make_fock_matrix
 
+      ! Reset scfdata counters & crystal
+      .scfdata.reset
+      .scfdata.set_crystal(.crystal)
+
       ! Make structure factors?
       if (.scfdata.fitting) then
          .crystal.data.set_XCW(TRUE) ! add one to n_param
          .:make_constraint_data
+         .scfdata.set_penalty        ! make chi2
       end
 
       ! Reset all SCF data (except DFT parts)
-      .scfdata.reset
-      .scfdata.set_crystal(.crystal)
-      if (.scfdata.fitting) .scfdata.set_penalty
       .:update_scfdata_energies
 
       ! Add constraint to F?
@@ -1835,7 +1837,9 @@ contains
    put_scf_results
    ! Put out the SCF results
    ENSURE(.scfdata.associated,"no scfdata")
+
       .scfdata.put_results
+
    end
 
    archive_scf_results

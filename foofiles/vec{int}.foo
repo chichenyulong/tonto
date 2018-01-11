@@ -729,30 +729,44 @@ contains
       n :: INT, IN
       percentage :: REAL, IN
 
-      n_bins, width, start, finish, i, r :: INT
+   ENSURE(n>0,"n is non-positive")
+   ENSURE(percentage >0,"percentage is non-positive")
+   ENSURE(percentage<=100,"percentage is too large")
+
+      n_bins, width :: INT
+      i, f, l, r :: INT
     
       ! This is the width of a bin
       ! and also the size of self
-      n_bins = n.ceiling_of(percentage)   
+      n_bins = ceiling(n * percentage * 0.01)   
 
       self.create(n_bins)
-
-      width = n.ceiling_of_ratio(n_bins)
-   
-      i = 0
       self = 0      
 
-      do start = 1, n, width
+      ! This is the bin width
+      width = ceiling(real(n)/real(n_bins))
+      DIE_IF(width==1,"width of bin is 1")
+      DIE_IF(width>=n,"width of bin is larger than # of elements")
+   
+      i = 0
+      f = 1
+      l = width
 
-         ! End of bin
-         finish = start + width - 1
+      do 
          
          ! Random number in the current bin
-         r.to_random_number_between(start,finish)
+         r.to_random_number_between(f,l)
 
          ! Store the random index
          i = i + 1
          self(i) = r
+
+         ! Next bin
+         f = f + width
+         l = min(l + width,n)
+
+         ! Finished?
+         if (l==n) exit
 
       end do
    

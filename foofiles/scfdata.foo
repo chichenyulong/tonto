@@ -290,6 +290,7 @@ contains
 
    set_crystal(crystal)
    ! Set the crystal
+      self :: INOUT
       crystal :: CRYSTAL*
 
       ! Set crystal and penalty
@@ -309,25 +310,25 @@ contains
 
       select case (.scf_kind)
 
-         case ("xray_rhf","xray_uhf","xray_gchf")
-            ENSURE(.crystal.xray_data.associated,"No diffraction data")
-            .penalty = .crystal.xray_data.chi2
+      case ("xray_rhf","xray_uhf","xray_gchf")
+         ENSURE(.crystal.xray_data.associated,"No diffraction data")
+         .penalty = .crystal.xray_data.chi2
 
-         case ("xray_rks","xray_uks")
-            ENSURE(.crystal.xray_data.associated,"No diffraction data")
-            .penalty = .crystal.xray_data.chi2
+      case ("xray_rks","xray_uks")
+         ENSURE(.crystal.xray_data.associated,"No diffraction data")
+         .penalty = .crystal.xray_data.chi2
 
-         case ("pnd_uhf","pnd_uks")
-            ENSURE(.crystal.pnd_data.associated,"No diffraction data")
-            .penalty = .crystal.pnd_data.chi2
+      case ("pnd_uhf","pnd_uks")
+         ENSURE(.crystal.pnd_data.associated,"No diffraction data")
+         .penalty = .crystal.pnd_data.chi2
 
-         case ("xray_pnd_uhf","xray_pnd_uks")
-            ENSURE(.crystal.pnd_data.associated,"No PND diffraction data")
-            ENSURE(.crystal.xray_data.associated,"No X-ray diffraction data")
-            .penalty = log(.crystal.xray_data.F_chi2*.crystal.pnd_data.F_chi2)
+      case ("xray_pnd_uhf","xray_pnd_uks")
+         ENSURE(.crystal.pnd_data.associated,"No PND diffraction data")
+         ENSURE(.crystal.xray_data.associated,"No X-ray diffraction data")
+         .penalty = log(.crystal.xray_data.F_chi2*.crystal.pnd_data.F_chi2)
 
-         case default
-            DIE("this is not a constrained scf")
+      case default
+         DIE("this is not a constrained scf")
 
       end
 
@@ -2693,7 +2694,8 @@ contains
 
          ! Hack - write to stderr for Erna
          stderr.put(.crystal.xray_data.chi2)
-         stderr.put(.crystal.xray_r_free_data.reflections.F_chi2)
+         if (.crystal.xray_r_free_data.created) &
+            stderr.put(.crystal.xray_r_free_data.reflections.F_chi2)
          stderr.flush
 
       end
