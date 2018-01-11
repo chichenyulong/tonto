@@ -424,6 +424,11 @@ contains
       free.to_binned_random_indices(n,percentage)
       keep.prune_from_sequence_up_to(n,free)
 
+  stdout.text("Indices of the free reflections:")
+  stdout.put(free)
+  stdout.text("Indices of the kept reflections:")
+  stdout.put(keep)
+
       ! Set free_data
       free_data.create(free.dim)
       free_data = data(free)

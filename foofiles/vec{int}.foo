@@ -749,10 +749,14 @@ contains
       DIE_IF(width>=n,"width of bin is larger than # of elements")
    
       i = 0
-      f = 1
-      l = width
+      f = 1 - width
+      l = 0
 
       do 
+
+         ! Next bin
+         f = f + width
+         l = min(l + width,n)
          
          ! Random number in the current bin
          r.to_random_number_between(f,l)
@@ -760,10 +764,6 @@ contains
          ! Store the random index
          i = i + 1
          self(i) = r
-
-         ! Next bin
-         f = f + width
-         l = min(l + width,n)
 
          ! Finished?
          if (l==n) exit

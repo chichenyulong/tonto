@@ -1304,6 +1304,9 @@ contains
          .:make_X_structure_factors_p
       end
 
+      ! Put back
+      .crystal.assign_xray
+
    end
 
    make_X_structure_factors_p ::: private
