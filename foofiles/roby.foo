@@ -2325,7 +2325,7 @@ contains
 
          a     = group(g)
          n_bf  = .atom(a).basis.n_bf
-         n_occ = .atom(a).no_of_occupied_NAOs(eps)
+         n_occ = .atom(a).no_of_occupied_NAOs(eps,oc)
 
          if (oc) then
             f = 1

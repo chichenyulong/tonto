@@ -5799,17 +5799,20 @@ contains
 
    ENSURE(.NAO_occupations.associated,"no NAO occupations")
 
+      n_occ :: INT
       oc :: BIN
 
       oc = TRUE
       if (present(occ)) oc = occ
 
+      n_occ = .NAO_occupations.no_of_vals_larger_than(tol=tol)
+
       if (oc) then
          ! Occupied
-         res = .NAO_occupations.no_of_vals_larger_than(tol=tol)
+         res = n_occ
       else
          ! Unoccupied
-         res = .NAO_occupations.dim - .NAO_occupations.no_of_vals_larger_than(tol=tol)
+         res = .NAO_occupations.dim - n_occ
       end
 
    end
