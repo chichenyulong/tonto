@@ -161,7 +161,7 @@ contains
       .initial_density             = "core" ! This shouldn't be changed; else atom SCF goes forever
       .initial_mos                 = "--using density--"
       .initial_Us                  = " "
-      .use_default_guess_options   = TRUE
+      .use_default_guess_options   = FALSE
 
       ! SCF convergence
       .convergence                 = SCFDATA_CONVERGENCE             ! TOL(4)
@@ -1107,15 +1107,15 @@ contains
       .relativity_kind.to_lower_case
 
       select case (.relativity_kind)
-         case ("iotc");
-         case ("douglas-kroll-hess");
-         case ("dkh");
-         case ("douglas-kroll-hess-2");
-         case ("dkh-2");
-         case ("none");
-         case ("pauli");
-         case ("zora");
-         case default;   UNKNOWN(.relativity_kind)
+      case ("iotc");
+      case ("douglas-kroll-hess");
+      case ("dkh");
+      case ("douglas-kroll-hess-2");
+      case ("dkh-2");
+      case ("none");
+      case ("pauli");
+      case ("zora");
+      case default;   UNKNOWN(.relativity_kind)
       end
 
       .set_pauli_terms_off

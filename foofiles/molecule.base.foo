@@ -541,6 +541,7 @@ contains
 
    set_defaults ::: leaky
    ! Set up a default molecule
+      self :: INOUT
 
       .name                = "unknown"
       .charge              = 0
@@ -594,7 +595,9 @@ contains
 
    set_scf_guess_defaults_from(scfdata) ::: leaky
    ! Set scf  data options for a guess-type SCF defaults
+      self :: INOUT
       scfdata :: SCFDATA*
+
 
       ! Set the SCF defaults (leaky)
       if (scfdata.disassociated) then
@@ -602,7 +605,6 @@ contains
          .scfdata.set_output(FALSE)
       else if (scfdata.use_default_guess_options) then
          .:set_scf_defaults
-         .scfdata.set_output(FALSE)
       else
          .:set_scf_defaults(scfdata) ! leaky
       end
@@ -625,40 +627,45 @@ contains
 
    set_scf_defaults(scfdata) ::: leaky
    ! Set up scf defaults for molecule
+      self :: INOUT
       scfdata :: SCFDATA*, optional
 
-      if (.scfdata.disassociated) then; .scfdata.create
-      else;                         .scfdata.set_defaults
-      end
+      ! Make sure .scfdata is there ...
+      if (.scfdata.disassociated) .scfdata.create
 
-      ! Restricted?
-      if (.spin_multiplicity==1) .scfdata.set_scf_kind("rhf")
-      if (.spin_multiplicity/=1) .scfdata.set_scf_kind("uhf")
+      if (NOT present(scfdata)) then
 
-      if (present(scfdata)) then
+         ! Restricted?
+         if (.spin_multiplicity==1) .scfdata.set_scf_kind("rhf")
+         if (.spin_multiplicity/=1) .scfdata.set_scf_kind("uhf")
+
+      else
 
          ! Set defaults from scfdata
          .scfdata = scfdata
+
+         ! No cluster charges (?)
          nullify(.scfdata.cluster)
          nullify(.scfdata.cluster_charges)
          nullify(.scfdata.cluster_charge_positions)
 
          if (.scfdata.scf_kind/=" ") then
 
-            ! Process scfkind , make sure it is sensible
-            ! Always use restricted
             if (.scfdata.is_DFT_calculation) then
+           
+               ! DFT
                if (.spin_multiplicity==1) .scfdata.set_scf_kind("rks")
                if (.spin_multiplicity/=1) then
                 ! DIE("cannot yet do ROKS (for, e.g. atomic SCF)")
                   .scfdata.set_scf_kind("uks")
                end
+           
             else
+           
+               ! Restricted?
                if (.spin_multiplicity==1) .scfdata.set_scf_kind("rhf")
-               if (.spin_multiplicity/=1) then
-                  .scfdata.set_scf_kind("uhf")
-               !  .scfdata.set_using_diis(FALSE)
-               end
+               if (.spin_multiplicity/=1) .scfdata.set_scf_kind("uhf")
+           
             end
 
          end

@@ -10,19 +10,31 @@
 
    put
 
+   write_archive molecular_orbitals
+
+   scfdata= {
+      kind=            rks
+      dft_exchange_functional= becke88
+      dft_correlation_functional= lyp
+
+      ! WARNING : need this option
+      ! for correct atom projectors
+      initial_density= promolecule
+
+      convergence= 0.00001
+      diis= { convergence_tolerance= 0.00001 }
+
+      output= NO
+      output_results= YES
+   }
+
+   scf
+
    ! Roby population analysis
    robydata= {
-
       kind= atom_bond_analysis
-
-      atom_list= { 1 ... 17 }
-
       output_theta_info= NO
-
       use_NAOs= YES
-    ! analyze_all_atom_pairs= TRUE
-    ! covalent_cutoff = 89 degree
-
    }
 
    roby_analysis
