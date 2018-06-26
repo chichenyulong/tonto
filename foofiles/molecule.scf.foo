@@ -6556,7 +6556,7 @@ contains
       .molecular_orbitals.destroy
       .molecular_orbitals.create(.n_bf,"general")
 
-      ! Get restricted core and overlap matrices (leaky)
+      ! Get general core and overlap matrices (leaky)
       .:make_g_core_matrix
       .INTS:make_overlap_matrix
 
@@ -6640,19 +6640,36 @@ contains
 
    DIE_IF(NOT fock_matrix.is_symmetric,"fock_matrix not symmetric!  WTF?!")
 
-      F,R :: MAT{REAL}* DEFAULT_NULL
+      F,Fa,Fb,R,S :: MAT{REAL}* DEFAULT_NULL
 
       F.create(2*.n_bf,2*.n_bf)
       R.create(2*.n_bf,2*.n_bf)
+      Fa.create(.n_bf,.n_bf)
+      Fb.create(.n_bf,.n_bf)
+      S.create(.n_bf,.n_bf)
 
       !  Get S^{-1/2 }
-      .INTS:make_r_overlap_inverse_sqrt(R)
+      .INTS:make_r_overlap_inverse_sqrt(S)
+      R = ZERO
+      R.alpha_alpha_set_to(S)
+        R.beta_beta_set_to(S)
+      S.destroy
 
       !  H~ = S^-1/2 H S^-1/2
       fock_matrix.change_basis_to(F,R)
+      Fa = F(:.n_bf,:.n_bf)
+      Fb = F(.n_bf+1:,.n_bf+1:)
 
       ! Remove linear dependence
-      if (.scfdata.associated) .BASE:shift_dependence_from_r(F)
+      if (.scfdata.associated) .BASE:shift_dependence_from_r(Fa)
+      if (.scfdata.associated) .BASE:shift_dependence_from_r(Fb)
+      
+      F = ZERO
+      F.alpha_alpha_set_to(Fa)
+        F.beta_beta_set_to(Fb)
+      
+      Fb.destroy
+      Fa.destroy
 
       !  Solve for c~
       F.solve_symmetric_eigenproblem(MO_energies,MO)
@@ -7114,24 +7131,24 @@ contains
       S,R :: MAT{REAL}*
       H :: MAT{REAL}*
 
-      !R.create(2*.n_bf,2*.n_bf)
-      S.create(2*.n_bf,2*.n_bf)
+      R.create(2*.n_bf,2*.n_bf)
+      S.create(.n_bf,.n_bf)
 
       ! S = S^-1/2, R = big inverse S
       .INTS:make_r_overlap_inverse_sqrt(S)
 
       ! R = big inverse S
-      !R = ZERO
-      !R.alpha_alpha_set_to(S)
-      !R.beta_beta_set_to(S)
-      !S.destroy
+      R = ZERO
+      R.alpha_alpha_set_to(S)
+      R.beta_beta_set_to(S)
+      S.destroy
 
       ! H = Fock matrix
       H.create(2*.n_bf,2*.n_bf)
       H = fock_matrix
 
       ! H = S^-1/2 F S^-1/2
-      H.change_basis_using(S)
+      H.change_basis_using(R)
       
       if(.scfdata.use_ELMO) .BASE:zero_ELMO_g_mx(H)
 
@@ -7140,9 +7157,9 @@ contains
 
       !  c  = S^-1/2 c~
       if(.scfdata.use_ELMO) then
-         .BASE:zero_ELMO_g_mx(S)
+         .BASE:zero_ELMO_g_mx(R)
       end
-      H.to_product_of(S,MO)
+      H.to_product_of(R,MO)
       MO = H
 
       stdout.text("MO_energies:")
@@ -7161,7 +7178,7 @@ contains
 
       ! Clean
       H.destroy
-      S.destroy
+      R.destroy
 
    end
 
@@ -7214,12 +7231,12 @@ contains
    ! procedure, and an associated .density_matrix.
 
    ENSURE(.scfdata.associated,"no scfdata")
-   ENSURE(.scfdata.spinorbital_kind=="generasl","need an initial fock matrix")
+   ENSURE(.scfdata.spinorbital_kind=="general","need an initial fock matrix")
    ENSURE(.fock_matrix.is_associated_with_genre("general"),"need a general initial fock matrix")
 
       e, SMOE :: VEC{REAL}*
       MO,F,H,D, S,SS,SMO,SH :: MAT{REAL}*
-      a,n,n_e, fmo,lmo, fa,la,fb,lb :: INT
+      a,n,n_e,fmo,lmo,fa,la,fb,lb :: INT
 
       ! Clean
       .molecular_orbitals.destroy
@@ -7313,6 +7330,22 @@ contains
       stdout.put(e)
       stdout.text("MO:")
       stdout.put(MO)
+
+      n_e = e(1)
+      n = 1
+
+      !shrinks the MO's to an appropriate size
+      do while (MO.dim2 > .n_e) 
+         do a = 1,MO.dim2
+            if (e(a) > n_e) then
+                n_e = e(a)
+                n = a
+            end if
+         end do
+         MO(:,n:MO.dim2-1) = MO(:,n+1:)
+         MO.shrink_columns(MO.dim2-1) 
+      end do
+         
 
       ! Get back to AO basis
       H.to_product_of(S,MO)
@@ -8810,10 +8843,9 @@ contains
 
       ! Make the overlap matrix
       O.create(F.dim1,F.dim1)
-      !O = ZERO
-      !O.alpha_alpha_set_to(S)
-      !O.beta_beta_set_to(S)
-      O = S
+      O = ZERO
+      O.alpha_alpha_set_to(S)
+      O.beta_beta_set_to(S)
 
       ! D x S
       W.to_product_of(D,O)
