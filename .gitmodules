@@ -1,3 +1,6 @@
 [submodule "external/sbf"]
 	path = external/sbf
 	url = https://github.com/peterspackman/sbf
+[submodule "external/openblas"]
+	path = external/openblas
+	url = https://github.com/xianyi/openblas
