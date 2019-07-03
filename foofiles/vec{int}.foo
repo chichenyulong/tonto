@@ -125,6 +125,11 @@ contains
    ! Appends the scalar "value" onto the end of allocatable "self".
    end
 
+   append_only_if_unique(value) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   ! Expands self by 1, and appends the single scalar "value" onto the
+   ! end, but only if the "value" is unique
+   end
+
    prepend(v) ::: get_from(VEC{OBJECT}), leaky, pure
    ! Prepend vector "v" to allocatable "self".
    end
@@ -317,6 +322,11 @@ contains
    ! unique_element_for a given non-unique element in the list.
    end
 
+   make_unique_element_maps(unique_element,unique_element_for) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   ! Make a map of (allocatable) unique_element's, and the inverse map
+   ! unique_element_for a given non-unique element in the list.
+   end
+
 ! ================
 ! Sorting routines
 ! ================
@@ -493,6 +503,47 @@ contains
    ! Set "self" to a seqience from "first" up to "last" with "step"
    ! spacing if present, or spacing 1 if not.
       self :: PTR
+      first :: INT, IN
+      last :: INT, IN
+      step :: INT, optional, IN
+
+      i,n,s,val :: INT
+
+      ! Step
+      s = 1
+      if (present(step)) s = step
+
+      ! Sequence length
+      n = (last - first)/s
+      if (n<0) then; n = 0
+      else;          n = n + 1
+      end
+
+      ! The sequence
+      allocate(self(n))
+
+      i   = 0
+      val = first
+
+      ! Make it
+      do 
+
+         if (val>last) exit
+
+         i = i + 1
+
+         self(i) = val
+
+         val = val + s
+
+      end
+
+   end
+
+   to_sequence(first,last,step) ::: leaky, pure
+   ! Set "self" to a seqience from "first" up to "last" with "step"
+   ! spacing if present, or spacing 1 if not.
+      self :: allocatable, OUT
       first :: INT, IN
       last :: INT, IN
       step :: INT, optional, IN

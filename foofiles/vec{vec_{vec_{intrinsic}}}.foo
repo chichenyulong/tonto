@@ -29,51 +29,94 @@ virtual module VEC{VEC_{VEC_{INTRINSIC}}}
 
 contains
 
-!  =================
-!  Memory allocation
-!  =================
+!  ==========
+!  Allocation
+!  ==========
 
    create(dim) ::: leaky, PURE
-   ! Create space for object
-      self :: PTR
+   ! Allocate vector with dimension "dim"
+      self :: allocatable, OUT
       dim :: INT, IN
 
+   ENSURE(dim>=0, "array dimension is -ve, dim = "//trim(INT:to_str(dim)))
+
+#ifdef USE_PRECONDITIONS
       status :: INT
+#endif
 
-      nullify(self)
-
-      allocate(self(dim),STAT=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
+#ifdef USE_PRECONDITIONS
+      allocate(self(dim),stat=status)
+      ENSURE(status==0,"error in allocating memory")
+      if (status/=0) stop
+#else
+      allocate(self(dim))
+#endif
 
    end
 
    create(dim,dimv) ::: leaky, PURE
-   ! Create space for a vector of vectors
-      self :: PTR
+   ! Allocate a vector of vectors with primary dimension "dim" and
+   ! secondary dimension "dimv"
+      self :: allocatable, OUT
       dim,dimv :: INT, IN
 
-      status :: INT
-
-      nullify(self)
-
-      allocate(self(dim),STAT=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-      .nullify_ptr_part
+      .create(dim)
       .create_vec(dimv)
 
    end
 
+   create(dim,bounds2) ::: leaky, PURE
+   ! Allocate a vector of vectors with non-standard secondary "bounds2"
+      self :: allocatable, OUT
+      dim :: INT, IN
+      bounds2 :: VEC{INT}(2), IN
+
+      .create(dim)
+      .create_vec(bounds2)
+
+   end
+
+   create(bounds1) ::: leaky, PURE
+   ! Allocate a vector of vectors with non-standard primary "bounds1"
+      self :: allocatable, OUT
+      bounds1 :: VEC{INT}(2), IN
+
+#ifdef USE_PRECONDITIONS
+      status :: INT
+#endif
+
+#ifdef USE_PRECONDITIONS
+      allocate(self(bounds1(1):bounds1(2)),STAT=status)
+      ENSURE(status==0,"error in deallocating memory")
+      if (status/=0) stop
+#else
+      allocate(self(bounds1(1):bounds1(2)))
+#endif
+
+   end
+
+   destroy ::: leaky, PURE
+   ! Deallocate the vector
+      self :: allocatable, OUT
+
+#ifdef USE_PRECONDITIONS
+      status :: INT
+#endif
+
+      if (.deallocated) return
+
+#ifdef USE_PRECONDITIONS
+      deallocate(self,stat=status)
+      ENSURE(status==0,"error in deallocating memory")
+      if (status/=0) stop
+#else
+      deallocate(self)
+#endif
+
+   end
+
    create_vec(dimv) ::: leaky, PURE
-   ! Allocate the pointer parts
+   ! Allocate the array part
       self :: INOUT
       dimv :: INT, IN
 
@@ -85,76 +128,34 @@ contains
 
    end
 
-   nullify_ptr_part ::: pure
-   ! Nullify the pointer parts
+   create_vec(bounds) ::: leaky, PURE
+   ! Allocate the array part
       self :: INOUT
-
-      s :: INT
-
-      do s = 1,size(self)
-         nullify(self(s).element)
-      end
-
-   end
-
-   destroy ::: leaky, PURE
-   ! Destroy space for object
-      self :: PTR
-
-      status :: INT
-
-      if (.disassociated) return
-
-      .destroy_ptr_part
-
-      deallocate(self,stat=status)
-
-      ENSURE(status==0,"error in deallocating memory")
-      status = status
-      status = 0
-
-   end
-
-   destroy_ptr_part ::: PURE
-   ! Destroy the pointer parts
-      self :: INOUT
-
-      s :: INT
-
-      do s = 1,size(self)
-         self(s).element.destroy
-      end
-
-   end
-
-!  ====
-!  Copy
-!  ====
-
-   create_copy(vec) ::: leaky, PURE
-   ! Create a replica copy of "vec".
-      self :: PTR
-      vec :: VEC{VEC_{VEC_{INTRINSIC}}}, IN
-
-      .create(vec.dim)
-      .copy(vec)
-
-   end
-
-   copy(v) ::: leaky, PURE
-   ! Make a copy of "v".
-      self :: INOUT
-      v :: VEC{VEC_{VEC_{INTRINSIC}}}, IN
-
-   ENSURE(.dim==v.dim,"v has incompatible size")
+      bounds :: VEC{INT}(2), IN
 
       i :: INT
 
-      .nullify_ptr_part
+      do i = 1,.dim
+         self(i).element.create(bounds)
+      end
 
-      do i = 1,v.dim
-         if (v(i).element.disassociated) cycle
-         self(i).element.create_copy(v(i).element)
+   end
+
+!  ==================
+!  Size-of operations
+!  ==================
+
+   max_element_dim result (res) ::: pure
+   ! Return the maximum element dimension
+      self :: IN
+      res :: INT
+
+      s :: INT
+
+      res = 0
+
+      do s = 1,.dim
+         res = max(res,self(s).element.dim)
       end
 
    end

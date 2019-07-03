@@ -74,7 +74,7 @@ module GAUSSIAN_DATA
    index_p1 :: MAT{INT}*, public  DEFAULT_NULL
 
    ! The binomial coefficients, plus 1, for reverse HRR
-   binomial_p1 :: VEC{VEC_{INT}}*, public  DEFAULT_NULL
+   binomial_p1 :: VEC{VEC_{INT}}@, public
 
    ! List of arrays used for the reduced multiplication scheme (RMS)
    rms_indices :: MAT{RMS_INDICES}*, public  DEFAULT_NULL
@@ -84,7 +84,7 @@ module GAUSSIAN_DATA
    rms2_indices :: MAT{RMS2_INDICES}*, public  DEFAULT_NULL
 
    ! Array of spherical harmonic coefficients
-   spherical_harmonics_for :: VEC{MAT_{REAL}}*, public   DEFAULT_NULL
+   spherical_harmonics_for :: VEC{MAT_{REAL}}@, public
 
 contains
 
@@ -722,7 +722,7 @@ contains
    ! Set the binomial coefficients (plus 1) using Pascal's triangle.
    ! In this version one is added to all indices to avoid indexing from 0.
       l_max :: INT, IN
-      binomial_p1 :: VEC{VEC_{INT}}*
+      binomial_p1 :: VEC{VEC_{INT}}@, OUT
 
    ENSURE(l_max>=0,"l_max must be non-negative")
 
@@ -804,7 +804,7 @@ contains
    ! where "c" is the lexical index of the cartesian gaussian and "M" is the
    ! spherical component index, as defined in the book by Helgaker, Olsen, and
    ! Simons, p.218. NOTE: sph is created.
-      sph :: VEC{MAT_{REAL}}*
+      sph :: VEC{MAT_{REAL}}@
 
    ENSURE(l_max_saved>=0,"l_max_saved must be non-negative")
 
@@ -1017,6 +1017,32 @@ contains
 
    end
 
+
+   gaussian_xyz_matrices(R) result (res) ::: selfless, PURE
+   ! Return representation matrices for the s, p, d, f, and g (l = 0
+   ! ... 4) xyz cartesian gaussian shell components from a single p
+   ! xyz representation matrix "ptr".
+      R :: MAT{REAL}, IN
+      res :: VEC{MAT_{REAL}}@
+   
+   ENSURE(R.is_square,"R matrix is not square")
+   ENSURE(R.dim2==3,"wrong size, R")
+
+      res.create(0,4)
+      res(0).element.create(1,1)
+      res(1).element.create(3,3)
+      res(2).element.create(6,6)
+      res(3).element.create(10,10)
+      res(4).element.create(15,15)
+
+      ! Now assign the transformation matrices
+      res(0).element = ONE
+      res(1).element = R
+      res(2).element = ::d_xyz_rep_matrix_for(R)
+      res(3).element = ::f_xyz_rep_matrix_for(R)
+      res(4).element = ::g_xyz_rep_matrix_for(R)
+
+   end
 
    d_xyz_rep_matrix_for(R) result (dtr) ::: selfless, PURE
    ! Return the representation matrix for a d-type xyz product found

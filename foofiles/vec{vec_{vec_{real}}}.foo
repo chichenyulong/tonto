@@ -29,39 +29,44 @@ module VEC{VEC_{VEC_{REAL}}}
 
 contains
 
+!  ==========
+!  Allocation
+!  ==========
+
    create(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create space for object
+   ! Allocate vector with dimension "dim"
+   end
+
+   create(dim,dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with primary dimension "dim" and
+   ! secondary dimension "dimv"
+   end
+
+   create(dim,bounds2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard secondary "bounds2"
+   end
+
+   create(bounds1) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard primary "bounds1"
    end
 
    destroy ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Destroy space for object
+   ! Deallocate the vector
    end
 
-   nullify_ptr_part ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), pure
-   ! Nullify the pointer parts
+   create_vec(dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate the array part
    end
 
-   destroy_ptr_part ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), PURE
-   ! Destroy the pointer parts
+   create_vec(bounds) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate the array part
    end
 
-!  ====
-!  Copy
-!  ====
+!  =======
+!  Inquiry
+!  =======
 
-   create_copy(vec) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(v) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), leaky
-   ! Make a copy of "v".
-   end
-
-!  ======
-!  Sizing
-!  ======
-
-   max_element_dim result (res) ::: get_from(VEC{VEC_{INTRINSIC}})
+   max_element_dim result (res) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), pure
    ! Return the maximum element dimension
    end
 

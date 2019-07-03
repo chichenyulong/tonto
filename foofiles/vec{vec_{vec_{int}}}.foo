@@ -33,47 +33,40 @@ contains
 !  Allocation
 !  ==========
 
-   create(dim) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), PURE
-   ! Create space for object
+   create(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate vector with dimension "dim"
    end
 
-   create(dim,dimv) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), leaky, PURE
-   ! Create space for a vector of vectors
+   create(dim,dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with primary dimension "dim" and
+   ! secondary dimension "dimv"
    end
 
-   create_vec(dimv) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), leaky, PURE
-   ! Allocate the pointer parts
+   create(dim,bounds2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard secondary "bounds2"
    end
 
-   destroy ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), PURE
-   ! Destroy space for object
+   create(bounds1) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard primary "bounds1"
    end
 
-   nullify_ptr_part ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), pure
-   ! Nullify the pointer parts
+   destroy ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Deallocate the vector
    end
 
-   destroy_ptr_part ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), PURE
-   ! Destroy the pointer parts
+   create_vec(dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate the array part
    end
 
-!  ====
-!  Copy
-!  ====
-
-   create_copy(vec) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), leaky
-   ! Create a replica copy of "vec".
-   end
-
-   copy(v) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), leaky
-   ! Make a copy of "v".
+   create_vec(bounds) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate the array part
    end
 
 !  =======
 !  Inquiry
 !  =======
 
-   max_element_dim result (res) ::: get_from(VEC{VEC_{INTRINSIC}})
+   max_element_dim result (res) ::: get_from(VEC{VEC_{VEC_{INTRINSIC}}}), pure
    ! Return the maximum element dimension
    end
 

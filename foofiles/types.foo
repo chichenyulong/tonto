@@ -33,31 +33,32 @@ module TYPES
 
    type VEC_{BIN}
 
-     element :: VEC{BIN}* DEFAULT_NULL
+     element :: VEC{BIN}@
      ! Encapsulated type
 
    end
 
    type VEC_{INT}
 
-     element :: VEC{INT}* DEFAULT_NULL
+     element :: VEC{INT}@ 
      ! Encapsulated type
 
    end
 
    type VEC_{STR}
 
-     element :: VEC{STR}* DEFAULT_NULL
+     element :: VEC{STR}@ 
      ! Encapsulated type
 
    end
 
    type VEC_{REAL}
 
-     element :: VEC{REAL}* DEFAULT_NULL
+     element :: VEC{REAL}@ 
      ! Encapsulated vec type
 
    end
+
 
    array type VEC{VEC_{BIN}}
 
@@ -83,23 +84,6 @@ module TYPES
 
    end
 
-   array type MAT{VEC_{INT}}
-
-     ! A matrix of VEC_{INT} objects
-
-   end
-
-   array type MAT{VEC_{REAL}}
-
-     ! A matrix of VEC_{REAL} objects
-
-   end
-
-   array type MAT3{VEC_{BIN}}
-
-     ! A 3D matrix of VEC_{BIN} objects
-
-   end
 
    array type MAT3{VEC_{INT}}
 
@@ -107,25 +91,21 @@ module TYPES
 
    end
 
-   array type MAT3{VEC_{REAL}}
-
-     ! A 3D matrix of VEC_{REAL} objects
-
-   end
 
    type VEC_{VEC_{INT}}
 
-     element :: VEC{VEC_{INT}}* DEFAULT_NULL
+     element :: VEC{VEC_{INT}}@
      ! Encapsulated encapsulated vector
 
    end
 
    type VEC_{VEC_{REAL}}
 
-     element :: VEC{VEC_{REAL}}* DEFAULT_NULL
+     element :: VEC{VEC_{REAL}}@ 
      ! Encapsulated encapsulated vector
 
    end
+
 
    array type VEC{VEC_{VEC_{INT}}}
 
@@ -139,23 +119,11 @@ module TYPES
 
    end
 
-   type MAT_{INT}
-
-     element :: MAT{INT}* DEFAULT_NULL
-     ! Encapsulated mat type
-
-   end
 
    type MAT_{REAL}
 
-     element :: MAT{REAL}* DEFAULT_NULL
+     element :: MAT{REAL}@
      ! Encapsulated mat type
-
-   end
-
-   array type VEC{MAT_{INT}}
-
-     ! A 1-D array of MAT_{INT} objects
 
    end
 
@@ -165,11 +133,6 @@ module TYPES
 
    end
 
-   array type MAT{MAT_{REAL}}
-
-     ! A matrix of MAT_{REAL} objects
-
-   end
 
    type MAT3_{REAL}
 
@@ -181,19 +144,6 @@ module TYPES
    array type VEC{MAT3_{REAL}}
 
      ! A 1-D array of MAT3_{REAL} objects
-
-   end
-
-   type MAT4_{REAL}
-
-     element :: MAT4{REAL}* DEFAULT_NULL
-     ! Encapsulated mat4 type
-
-   end
-
-   array type VEC{MAT4_{REAL}}
-
-     ! A 1-D array of MAT4_{REAL} objects
 
    end
 
@@ -911,28 +861,25 @@ module TYPES
      ! Put a list as columns, one-per-line
      ! NOTE: this can only be set when the list is the last column.
 
-     values_created :: BIN  DEFAULT(FALSE)
-     ! Set true if the column was created
-
-     b_values :: VEC{BIN}*  DEFAULT_NULL
+     b_values :: VEC{BIN}@
      ! Binary column values
 
-     i_values :: VEC{INT}*  DEFAULT_NULL
+     i_values :: VEC{INT}@
      ! Integer column values
 
-     r_values :: VEC{REAL}*  DEFAULT_NULL
+     r_values :: VEC{REAL}@
      ! Real column values
 
-     e_values :: VEC{REAL}*  DEFAULT_NULL
+     e_values :: VEC{REAL}@
      ! Real column *error* values
 
-     s_values :: VEC{STR}*  DEFAULT_NULL
+     s_values :: VEC{STR}@
      ! String column values
 
-     iv_values :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     iv_values :: VEC{VEC_{INT}}@
      ! Integer list column values
 
-     sv_values :: VEC{VEC_{STR}}*  DEFAULT_NULL
+     sv_values :: VEC{VEC_{STR}}@
      ! String list column values
 
    end
@@ -1244,10 +1191,10 @@ module TYPES
      n_points :: INT  DEFAULT(0)
      ! No. of quadrature points in the direct product quadrature.
 
-     point :: MAT{REAL}*  DEFAULT_NULL
+     point :: MAT{REAL}@
      ! The quadrature points, in the (x,y) plane.
 
-     weight :: VEC{REAL}*  DEFAULT_NULL
+     weight :: VEC{REAL}@
      ! The quadrature weights.
 
    end
@@ -1260,13 +1207,13 @@ module TYPES
      l :: INT  DEFAULT(0)
      ! The angular momentum that this quadrature will integrate up to.
 
-     point :: MAT{REAL}*  DEFAULT_NULL
+     point :: MAT{REAL}@
      ! Coordinates of the quadrature points
 
-     weight :: VEC{REAL}*  DEFAULT_NULL
+     weight :: VEC{REAL}@
      ! The quadrature weights (normalized to unity)
 
-     n_points_per_shell :: VEC{INT}*  DEFAULT_NULL
+     n_points_per_shell :: VEC{INT}@
      ! No of ppoints per shell. This is used to save work when calculating the
      ! atomic grids on each shell.
 
@@ -1290,7 +1237,7 @@ module TYPES
      iteration :: INT  DEFAULT(0)
      ! The iteration count for the AITKEN extrapolation.
 
-     param :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     param :: VEC{VEC_{REAL}}@
      ! List of stored parameter vectors
 
      error_length :: REAL  DEFAULT(1000d0)
@@ -1376,10 +1323,10 @@ module TYPES
      ! vectors, in the case when the DIIS space becomes saturated. The
      ! choices are "worst" item, or "oldest" item.
 
-     param :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     param :: VEC{VEC_{REAL}}@
      ! List of stored parameter vectors
 
-     error :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     error :: VEC{VEC_{REAL}}@
      ! List of stored error vectors
 
      lhs :: MAT{REAL}*  DEFAULT_NULL
@@ -1581,22 +1528,22 @@ module TYPES
      ! below which the DIIS procedure is supposed to start. It should
      ! override the .start_iteration.
 
-     par :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     par :: VEC{VEC_{REAL}}@
      ! List of stored parameter vectors
 
-     par_a :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     par_a :: VEC{VEC_{REAL}}@
      ! List of stored alpha parameter vectors
 
-     par_b :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     par_b :: VEC{VEC_{REAL}}@
      ! List of stored beta parameter vectors
 
-     grd :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     grd :: VEC{VEC_{REAL}}@
      ! List of stored gradient vectors
 
-     grd_a :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     grd_a :: VEC{VEC_{REAL}}@
      ! List of stored alpha gradient vectors
 
-     grd_b :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     grd_b :: VEC{VEC_{REAL}}@
      ! List of stored beta gradient vectors
 
    end
@@ -1686,25 +1633,13 @@ module TYPES
      a0 :: VEC{INT}*  DEFAULT_NULL
      ! list of the indices where any  of nx, ny, nz is zero i.e. complement of n0
 
-!     xy_rms :: VEC{VEC_{INT}}*  DEFAULT_NULL
-!     ! list of the repeated nx and ny indices for use in the reduced
-!     ! multiplication scheme for indices which are non-zero
-
-     xy_rms_n :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     xy_rms_n :: VEC{VEC_{INT}}@ 
      ! list of the repeated nx and ny indices for use in the reduced
      ! multiplication scheme for indices which are non-zero
 
-!     xy_unique_n :: VEC{INT}*  DEFAULT_NULL
-!     ! list of the unique nx and ny indices for use in the reduced
-!     ! multiplication scheme for indices which are non-zero
-
-     xy_rms_a :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     xy_rms_a :: VEC{VEC_{INT}}@
      ! list of the repeated nx and ny indices for use in the reduced
      ! multiplication scheme where at least one index is zero
-
-!     xy_unique_a :: VEC{INT}*  DEFAULT_NULL
-!     ! list of the unique nx and ny indices for use in the reduced
-!     ! multiplication scheme where at least one index is zero
 
      yz0px :: VEC{INT}*  DEFAULT_NULL
      ! px powers for the yz0 indices
@@ -1745,16 +1680,16 @@ module TYPES
      n1pz :: VEC{INT}*  DEFAULT_NULL
      ! Indices and non-zero powers for non-rms terms
 
-     n2 :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     n2 :: VEC{VEC_{INT}}@
      ! Indices and non-zero powers for rms terms
 
-     n2px :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     n2px :: VEC{VEC_{INT}}@
      ! Indices and non-zero powers for rms terms
 
-     n2py :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     n2py :: VEC{VEC_{INT}}@
      ! Indices and non-zero powers for rms terms
 
-     n2pz :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     n2pz :: VEC{VEC_{INT}}@
      ! Indices and non-zero powers for rms terms
 
    end
@@ -2813,7 +2748,7 @@ module TYPES
      n_atoms :: INT   DEFAULT(0)
      ! The number of atoms in the group
 
-     atom_index :: VEC{INT}*  DEFAULT_NULL
+     atom_index :: VEC{INT}@
      ! The list of atom indices in the group
      ! Non-zero value indicates user set this value.
 
@@ -2919,21 +2854,21 @@ module TYPES
      ! If associated, used to generate the atom basis function (and
      ! nabla) grids for gaussian DFT calculations. *Pointer copied*.
 
-     atom_zeta :: VEC{REAL}*  DEFAULT_NULL
+     atom_zeta :: VEC{REAL}@
      ! List of scaling factors used in the transformation to the radial
      ! integration interval.
 
-     atom_min_distance :: VEC{REAL}*, private  DEFAULT_NULL
+     atom_min_distance :: VEC{REAL}@, private
      ! For every atom, the minimum distance to the nearest atom.
 
      n_unique_atoms :: INT, private
      ! No. of atoms of unique kind. An atom is the same as another if it has the
      ! same nuclear charge.
 
-     unique_atom :: VEC{INT}*, private  DEFAULT_NULL
+     unique_atom :: VEC{INT}@, private
      ! unique_atom(k) is the index of the "k"-th unique atom.
 
-     unique_atom_for :: VEC{INT}*, private  DEFAULT_NULL
+     unique_atom_for :: VEC{INT}@, private 
      ! unique_atom_for(a) is the index of the unique atom equivalent to "a".
 
      basis_function_cutoff :: REAL  DEFAULT(BECKE_GRID_BASIS_FUNCTION_CUTOFF)
@@ -2982,11 +2917,6 @@ module TYPES
      ! It can be "none", "treutler_ahlrichs", or "sg-1". This variable sets the
      ! .reduce_core_angular_grid and .reduce_H_angular_grid switches.
 
-    ! reduce_core_angular_grid :: BIN  DEFAULT(BECKE_GRID_REDUCE_CORE_ANGULAR_GRID)
-    ! ! If set TRUE the order of the angular grid near the core of the atom is
-    ! ! reduced to make smaller meshes. So far the scheme of Treutler and Ahlrichs
-    ! ! is used.
-
      reduce_H_angular_grid :: BIN  DEFAULT(BECKE_GRID_REDUCE_H_ANGULAR_GRID)
      ! If set TRUE the order of the angular grid for Hydrogen and Helium are
      ! reduced to .l_H_angular_grid.
@@ -3003,7 +2933,7 @@ module TYPES
      ! The Stratmann-Scuseria "a" parameter, used in defining their piecewise
      ! partition function. See CPL 257 p. 213 (1996).
 
-     atom_n1_SS :: VEC{INT}*, private  DEFAULT_NULL
+     atom_n1_SS :: VEC{INT}@, private
      ! The number of unit-weight SS grid weights, for every atom
 
      partition_scheme :: STR  DEFAULT(BECKE_GRID_PARTITION_SCHEME)
@@ -3025,32 +2955,32 @@ module TYPES
      finalized :: BIN  DEFAULT(FALSE)
      ! Set to true if the grid has been "set" using set_grid_data
 
-     n_points_for_row :: VEC{INT}*, private  DEFAULT_NULL
+     n_points_for_row :: VEC{INT}@, private
      ! The number of points for a given row of the periodic table, for the
      ! current grid settings.
 
-     radial_grid :: VEC{QUADRATURE}*  DEFAULT_NULL
+     radial_grid :: VEC{QUADRATURE}@
      ! The radial quadrature points, one for every row of the periodic table.
 
-     lebedev_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_grid :: LEBEDEV@
      ! The angular quadrature points. We use a Lebedev grid.
 
-     lebedev_H_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_H_grid :: LEBEDEV@
      ! The angular quadrature points for the Hydrogen atom.
 
-     lebedev_L3_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L3_grid :: LEBEDEV@
      ! Angular quadrature points for L=3, used close to the atom.
 
-     lebedev_L5_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L5_grid :: LEBEDEV@
      ! Angular quadrature points for L=5, used close to the atom.
 
-     lebedev_L7_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L7_grid :: LEBEDEV@
      ! Angular quadrature points for L=7, used close to the atom.
 
-     lebedev_L9_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L9_grid :: LEBEDEV@
      ! Angular quadrature points for L=9, used close to the atom.
 
-     lebedev_L11_grid :: LEBEDEV*  DEFAULT_NULL
+     lebedev_L11_grid :: LEBEDEV@
      ! Angular quadrature points for L=11, used close to the atom.
 
      n_unscaled_points :: INT DEFAULT(0)
@@ -3067,21 +2997,21 @@ module TYPES
      n_points :: INT DEFAULT(0)
      ! No. of points in quadrature grid for the whole molecule.
 
-     atom_points :: VEC{MAT_{REAL}}*  DEFAULT_NULL
+     atom_points :: VEC{MAT_{REAL}}@
      ! The complete list of grid points for the unique atoms
      ! assuming the atom is centered at the origin
 
-     atom_weights :: VEC{VEC_{REAL}}*  DEFAULT_NULL
+     atom_weights :: VEC{VEC_{REAL}}@
      ! The complete list of grid weights for the unique atoms in
      ! .atom_Z.
 
-     atom_grid0 :: VEC{MAT_{REAL}}*  DEFAULT_NULL
+     atom_grid0 :: VEC{MAT_{REAL}}@ 
      ! List of atomic density grids for the unique atoms
 
-     atom_grid1 :: VEC{MAT3_{REAL}}*  DEFAULT_NULL
+     atom_grid1 :: VEC{MAT3_{REAL}}@
      ! List of atomic gradient density grids for the unique atoms
 
-     weight_is_0 :: VEC{BIN}*  DEFAULT_NULL
+     weight_is_0 :: VEC{BIN}@
      ! Set to TRUE if the weight for a particular point is zero. Used
      ! to eliminate grid points from product grids.
 
@@ -3366,7 +3296,7 @@ module TYPES
      ! The structure factor information. NOTE: this can stand for either X-ray or
      ! PND reflections depending on the case.
 
-     hkl_range :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     hkl_range :: VEC{VEC_{INT}}@
      ! The range of the Miller indices (h k l)
 
      ! =================
@@ -3678,10 +3608,10 @@ module TYPES
      ! Fit output tables
      ! =================
 
-     fit_table :: VEC{TABLE_COLUMN}*  DEFAULT_NULL
+     fit_table :: VEC{TABLE_COLUMN}@
      ! The current fit table
 
-     ref_table :: VEC{TABLE_COLUMN}*  DEFAULT_NULL
+     ref_table :: VEC{TABLE_COLUMN}@
      ! The current refinement table
 
      ! ==================
@@ -3988,7 +3918,7 @@ module TYPES
      ! The list of unique (asymmetric unit) atoms in the
      ! unit_cell_geometry above
 
-     unique_uc_atom_offset :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     unique_uc_atom_offset :: VEC{VEC_{INT}}@
      ! The list of (h1 h2 h3) offsets which need to be applied to the
      ! ".asymmetric_unit_geometry" to get the corresponding unit cell
      ! atom in the ".unit_cell_geometry".
@@ -4135,7 +4065,7 @@ module TYPES
      ! however this array is for the atoms in the QM fragment.
      ! For structure factor calcs based on the asymmetric unit.
 
-     frag_atom_stabilizer :: VEC{VEC_{INT}}* DEFAULT_NULL
+     frag_atom_stabilizer :: VEC{VEC_{INT}}@
      ! The list of indices of seitz symop's which stabilize
      ! a given atoms position. See above.
 
@@ -4144,7 +4074,7 @@ module TYPES
      ! itself by the spacegroup i.e. the "site symmetry factor". 
      ! For structure factor calcs based on the asymmetric unit.
 
-     asym_atom_stabilizer :: VEC{VEC_{INT}}* DEFAULT_NULL
+     asym_atom_stabilizer :: VEC{VEC_{INT}}@
      ! The list of indices of seitz symop's which stabilize
      ! a given atoms position. See above.
 
@@ -4152,7 +4082,7 @@ module TYPES
      ! Unit cell connection table
      ! ==========================
 
-     unit_cell_connection :: VEC{VEC_{VEC_{INT}}}*  DEFAULT_NULL
+     unit_cell_connection :: VEC{VEC_{VEC_{INT}}}@
      ! List of which unit cell atoms are connected to which other unit
      ! cell atoms, and in what cell e.g. "connection(i).element(k)"
      ! represents the "k"-th atom connected to atom "i" in the
@@ -4161,7 +4091,7 @@ module TYPES
      ! connected atom, and the last element being the index of the
      ! actual unit cell atom connected to unit cell atom "i".
 
-     uc_vdw_connection :: VEC{VEC_{VEC_{INT}}}*  DEFAULT_NULL
+     uc_vdw_connection :: VEC{VEC_{VEC_{INT}}}@
      ! As above, for vdw connections.
 
      unit_cell_mol_for_atom :: VEC{INT}*  DEFAULT_NULL
@@ -4321,7 +4251,7 @@ module TYPES
      molecule_for_atom :: VEC{INT}*  DEFAULT_NULL
      ! An integer which tells which molecule the cluster atoms belongs to.
 
-     molecule :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     molecule :: VEC{VEC_{INT}}@
      ! The list of atom indices corresponding to each molecule
 
      molecule_centroid :: MAT{REAL}*  DEFAULT_NULL
@@ -4342,7 +4272,7 @@ module TYPES
      ! non-unique molecule mi. See above.
      ! NOT CURRENTLY USED
 
-     atom_connection :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     atom_connection :: VEC{VEC_{INT}}@
      ! atom_connection(i)[:] are those atoms which are connected to atom "i".
 
      unit_cell_atoms_to_suppress :: VEC{INT}* DEFAULT_NULL
@@ -4458,7 +4388,7 @@ module TYPES
      molecule_for_atom :: VEC{INT}*  DEFAULT_NULL
      ! An integer which tells which molecule the cluster atoms belongs to.
 
-     molecule :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     molecule :: VEC{VEC_{INT}}@
      ! The list of atom indices corresponding to each molecule
 
      molecule_centroid :: MAT{REAL}*  DEFAULT_NULL
@@ -4479,7 +4409,7 @@ module TYPES
      ! non-unique molecule mi. See above.
      ! NOT CURRENTLY USED
 
-     atom_connection :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     atom_connection :: VEC{VEC_{INT}}@
      ! atom_connection(i)[:] are those atoms which are connected to atom "i".
 
      info_made :: BIN  DEFAULT(FALSE)
@@ -4536,12 +4466,12 @@ module TYPES
      ! No. of initial modes (starting from the first) to use in
      ! projection
 
-     equality_constraints :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     equality_constraints :: VEC{VEC_{INT}}@
      ! A list of parameter indices which are to be made equal
      ! Indices should be ordered least to greatest. These are
      ! normally applied to mode indices and Grueneisen's.
 
-     decoupled_parameters :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     decoupled_parameters :: VEC{VEC_{INT}}@
      ! A list of parameters indices which are decoupled
      ! from the others
 
@@ -4620,15 +4550,15 @@ module TYPES
      unit_cell_sigma :: VEC{UNIT_CELL}*
      ! The list of unit cell errors at the different temperatures
 
-     ADP :: VEC{MAT_{REAL}}* DEFAULT_NULL
+     ADP :: VEC{MAT_{REAL}}@
      ! A list of the X-ray ADP's at the different temperatures
      ! n_T x 6 in size
 
-     ADP_cov :: VEC{MAT_{REAL}}*  DEFAULT_NULL
+     ADP_cov :: VEC{MAT_{REAL}}@
      ! For every temperature, the covariance matrix between
      ! the ADP's. Must be extracted from full covariance matrix.
 
-     ADP_wt :: VEC{MAT_{REAL}}*  DEFAULT_NULL
+     ADP_wt :: VEC{MAT_{REAL}}@
      ! For every temperature, the weights to use in the least squares.
      ! Normally the inverse of the covariance matrix between ADP's.
 
@@ -5297,7 +5227,7 @@ module TYPES
      ! represented by three integers which move in an anticlockwise direction when
      ! viewed from the outside.
 
-     neighbour :: VEC{VEC_{INT}}*  DEFAULT_NULL
+     neighbour :: VEC{VEC_{INT}}@
      ! The linked list of neighbour vertices for each vertex.
 
      n_cap :: INT  DEFAULT(0)
@@ -6040,10 +5970,10 @@ module TYPES
      ! SCF iteration table
      ! ===================
 
-     table_info :: VEC{VEC_{STR}}*
+     table_info :: VEC{VEC_{STR}}@
      ! A list of list of informational margin notes
 
-     table :: VEC{TABLE_COLUMN}*  DEFAULT_NULL
+     table :: VEC{TABLE_COLUMN}@
      ! The SCF iteration table
 
      ! ================================
@@ -6069,16 +5999,16 @@ module TYPES
      ! The indices of a list of roby atoms to be used in some way
      ! for population analysis
 
-     atom_group :: VEC{VEC_{INT}}* DEFAULT_NULL
+     atom_group :: VEC{VEC_{INT}}@
      ! The indices of the roby atoms defining different spaces
 
-     atom_a :: VEC{INT}* DEFAULT_NULL
+     atom_a :: VEC{INT}@
      ! The indices of the atoms defining space V_A
 
-     atom_b :: VEC{INT}* DEFAULT_NULL
+     atom_b :: VEC{INT}@
      ! The indices of the atoms defining space V_B
 
-     atom_ab :: VEC{INT}* DEFAULT_NULL
+     atom_ab :: VEC{INT}@
      ! The indices of the roby atoms defining spaces V_A and V_B
 
      ! =======
@@ -6347,186 +6277,6 @@ module TYPES
 
    end
 
-
-!  ========
-!  Geminals
-!  ========
-
-   type GEMINAL_MF_SPECTRUM
-
-     name :: STR
-     ! Name of the associated molecule
-
-     nuclear_electric_dipole :: VEC{REAL}(3)
-     ! Nuclear electric dipole moment for the associated molecule
-
-     nuclear_repulsion_energy :: REAL
-     ! Nuclear repulsion energy for the associated molecule
-
-     n_geminals :: INT
-     ! The total number of geminal functions
-
-     i_geminals :: INT
-     ! The number of geminal contraction being updated
-
-     n_bf :: INT
-     ! The number of one-particle basis functions
-
-     n_bas :: INT
-     ! The number of basis geminal functions for the particular contraction
-     ! considered
-
-     n_dependent :: INT
-     ! The number of quasi linearly dependent geminal functions
-     ! for the particular contraction considered
-
-     bra :: VEC{MAT_{REAL}}*
-     ! The array of contracted wavefunctions in the bra.
-     ! The first component is the function of the contraction considered.
-     ! The (n_geminals - 1) other components are the ground state wave functions
-     ! of the other contractions
-
-     ket :: VEC{MAT_{REAL}}*
-     ! The array of contracted wavefunctions in the ket
-     ! The first component is the function of the contraction considered.
-     ! The (n_geminals - 1) other components are the ground state wave functions
-     ! of the other contractions
-
-     ! special_bra :: VEC{VEC_{INT}}*
-     ! This bra contains only the indices of one geminal product basis function.
-
-     special_ket :: VEC{VEC_{INT}}*
-     ! This ket contains only the indices of one product basis function.
-
-     contraction_wfs :: VEC{MAT_{REAL}}*
-     ! The array of geminal wavefunctions of the particular contraction considered
-
-     contraction_energies :: VEC{REAL}*
-     ! The array of geminal energies of the particular contraction considered
-
-     ! two_orthogonality :: BIN
-     ! flag for two orthogonality used to simplify matrix element
-     ! calculation
-
-     tol :: REAL
-     ! tolerance used in the tests to cutoff branches in the recursions
-     ! when calculating matrix elements
-
-     ld_tol :: REAL
-     ! tolerance for quasi linear dependence in the MF scalar product
-     ! geometry
-
-     ig_tol :: REAL
-     ! tolerance for being considered an internal geminal of a geminal
-     ! product
-
-   end
-
-   type GEMINAL_MF_SCHEME
-
-   spectrum :: GEMINAL_MF_SPECTRUM*
-   ! spectrum of one contraction for a given step in the contraction scheme
-
-   max_iterations :: INT
-   ! Maximum allowed iterations including step 0
-   ! default is 1001
-
-   n_iterations :: INT
-   ! No of iterations performed so far
-
-   n_orbitals :: INT
-   ! number of molecular orbitals retained for constructing geminals,
-   ! possibly reduced with respect to the size of the atomic orbitals
-   ! default is the number of the atomic orbitals
-
-   tolerance_scheme :: VEC{INT}*
-   ! The array of integers determining the tolerance (10^-n) used in the tests
-   ! to cutoff branches in the recursions when calculating matrix elements
-   ! it should increase with the step number and ultimately the tolerance should
-   ! be less than the convergence threshold.
-   ! default is 10
-
-   ld_tol_scheme :: VEC{REAL}*
-   ! The array of tolerance for quasi linear dependence in the MF scalar product
-   ! geometry for the steps of the MF scheme
-   ! default is LINEAR_DEPENDENCE_TOL
-
-   ig_tol_scheme :: VEC{REAL}*
-   ! The array of tolerance for being considered an internal geminal of a geminal
-   ! product in MF steps
-   ! default is INTERNAL_GEMINAL_TOL
-
-   truncation_scheme :: VEC{REAL}*
-   ! The array of variable determining the energies above which we
-   ! truncate
-
-   do_triplet_energies :: VEC{BIN}*
-   ! array of flags to control diagonalisation of geminal triplet matrices
-
-   do_electric_dipole :: VEC{BIN}*
-   ! array of flags to control the calculation of the electric dipole
-   ! moment
-
-   convergence_threshold :: REAL
-   ! threshold for the convergence of the MF scheme
-
-   add_core :: BIN
-   ! flag to add the contribution of the one-electron term of the
-   ! Hamiltonian to the electronic repulsion integrals.
-   ! default is true
-
-   use_brillouin :: BIN
-   ! flag to diagonalise only the double excitated geminal matrix at step 0
-   ! default is false
-
-   make_integrals :: BIN
-   ! flag to calculate and write an <ij|kl> file in an archive
-   ! default is true, set false if there is already one to be used
-
-   make_singlet_extremals :: BIN
-   ! flag to calculate and write the geminals that diagonalize the <ij|kl>
-   ! default is false
-
-   readin_mos :: BIN
-   ! flag to readin molecular orbitals to be used when making an <ij|kl> file
-   ! default is false, meaning that canonical mo's are to be used
-
-   ! readin_gems :: BIN
-   ! flag to readin geminals coefficients to make guess geminals for
-   ! instance.
-   ! default is false, meaning that guess geminals built over
-   ! canonical mo's are used
-
-   readin_scheme :: BIN
-   ! flag to readin arrays of parameters possibly different for each
-   ! GMFCI steps, these parameters are, in order, ld_tol(i_step),
-   ! ig_tol(i_step),tolerance_scheme(i_step),do_triplet(i_step),
-   ! truncation_scheme(i_step)
-   ! default is false, meaning that the same parameters will be used
-   ! for all the steps
-
-   guess_type :: STR
-   ! character string describing the type of guess geminals to be used
-   ! valid options are hf, agp, random, readin.
-   ! Default is hf.
-
-   starting_group :: INT
-   ! Number of the active group to start with at step 1
-   ! if 0 (default) the group with second lowest ground state energy is used
-
-   orthogonality_type :: STR
-   ! character string describing the type of orthogonality to be enforced
-   ! between the active geminals and the spectators
-   ! valid options are one_orthogonality, sf_two_orthogonality,
-   ! sp_two_orthogonality, default is no orthogonality constraint
-
-   print_hamiltonian :: BIN
-   ! flag to print hamiltonian
-   ! default is false
-
-   end
-
-
 !  ========
 !  Molecule
 !  ========
@@ -6573,7 +6323,7 @@ module TYPES
      atom :: VEC{ATOM}* DEFAULT_NULL
      ! List of atoms in molecule
 
-     atoms_bonded_to_atom :: VEC{VEC_{INT}}* DEFAULT_NULL
+     atoms_bonded_to_atom :: VEC{VEC_{INT}}@
      ! List of atom connections
 
      atom_info_made :: BIN  DEFAULT(FALSE)
@@ -6640,14 +6390,14 @@ module TYPES
      ! Becke grid and related info
      ! ===========================
 
-     becke_grid :: BECKE_GRID* DEFAULT_NULL
+     becke_grid :: BECKE_GRID@
      ! Becke DFT integration grid data
 
      overlapping_atoms :: VEC{BIN}* DEFAULT_NULL
      ! List of atom-pairs (in lower triangular form) which have significant
      ! overlap. Used in linear scaling DFT calculations.
 
-     overlapping_atoms_for_atom :: VEC{VEC_{INT}}* DEFAULT_NULL
+     overlapping_atoms_for_atom :: VEC{VEC_{INT}}@
      ! List of atoms which have significant overlap with another
 
      ! ==================================
@@ -6768,16 +6518,6 @@ module TYPES
      localiser :: MO_LOCALISER*
      ! An MO localiser object
 
-     ! ========
-     ! Geminals
-     ! ========
-
-     geminal_mf_spectrum :: GEMINAL_MF_SPECTRUM*
-     ! The geminal mean field spectrum stuff ...
-
-     geminal_mf_scheme :: GEMINAL_MF_SCHEME*
-     ! The geminal mean field scheme stuff ...
-
      ! =================
      ! Integral matrices
      ! =================
@@ -6889,15 +6629,15 @@ module TYPES
      nucleus_model :: STR  DEFAULT("point")
      ! What kind of nucleus to use
 
-     ! ====================
+     ! =========================
      ! Connection table variable
-     ! ====================
+     ! =========================
 
      elmo_connection_table :: MAT{INT}* DEFAULT_NULL
 
-     ! ====================
+     ! =================
      ! Atomic multipoles
-     ! ====================
+     ! =================
 
      charges :: VEC{REAL}*
      dipoles, quadrupoles, octupoles :: MAT{REAL}*
@@ -6914,552 +6654,6 @@ module TYPES
 !  ====
 !  XTAL
 !  ====
-
-   type XTAL
-
-     name :: STR  DEFAULT("unknown")
-     ! Name of the crystal, used for generating file names.
-
-     CIF_chemical_formula :: STR  DEFAULT("?")
-     ! The chemical formula, as found in a CIF file.
-
-     cif :: CIF* DEFAULT_NULL
-     ! Crystallographic Information file (CIF) object
-
-     pointgroup :: POINTGROUP* DEFAULT_NULL
-     ! Pointgroup symmetry of the molecule
-
-     spacegroup :: SPACEGROUP
-     ! The crystal spacegroup
-
-     unit_cell :: UNIT_CELL
-     ! The crystal unit cell
-
-     ! =========
-     ! Atom info
-     ! =========
-
-     n_atom :: INT  DEFAULT(0)
-     ! No of atoms
-
-     atom :: VEC{ATOM}* DEFAULT_NULL
-     ! List of atoms in molecule
-
-     atoms_bonded_to_atom :: VEC{VEC_{INT}}* DEFAULT_NULL
-     ! List of atom connections
-
-     atom_info_made :: BIN  DEFAULT(FALSE)
-     ! Set TRUE if the atom info has been made.
-
-     n_atom_kind :: INT  DEFAULT(0)
-     ! No of atoms of a different kind
-
-     atom_group :: VEC{ATOM_GROUP}* DEFAULT_NULL
-     ! A list of atom groups in the molecule, for group property decomposition
-
-     ! ===================
-     ! Gaussian basis info
-     ! ===================
-
-     basis_name :: STR  DEFAULT(" ")
-     ! A string representing the name of the gaussian basis set class
-     ! to be used for each atom
-
-     n_basis :: INT  DEFAULT(0)
-     ! No of basis sets
-
-     basis_l_max :: INT  DEFAULT(-1)
-     ! The maximum l value for the basis set
-
-     basis :: VEC{BASIS}* DEFAULT_NULL
-     ! List of basis sets used
-
-     use_spherical_basis :: BIN   DEFAULT(FALSE)
-     ! Set true if you want to use spherical harmonic basis set
-     ! NOTE: not done properly yet
-
-     n_bf :: INT  DEFAULT(0)
-     ! Total number of basis functions in the molecular basis set
-
-     n_prim :: INT  DEFAULT(0)
-     ! Total number of primitives in the molecular basis set
-
-     ! =================
-     ! Slater basis info
-     ! =================
-
-     slaterbasis_name :: STR  DEFAULT(" ")
-     ! A string representing the name of the Slater basis set class
-     ! to be used for each atom
-
-     slaterbasis :: VEC{SLATERBASIS}* DEFAULT_NULL
-     ! List of Slater basis sets used
-
-     coppensbasis_name :: STR  DEFAULT(" ")
-     ! A string representing the name of the Coppens basis set class
-     ! to be used for each atom
-
-     coppensbasis :: VEC{COPPENSBASIS}* DEFAULT_NULL
-     ! List of coppens basis sets used
-
-     basis_info_made :: BIN  DEFAULT(FALSE)
-     ! Set TRUE if the gaussian basis set info has been made.
-
-     ! ===========================
-     ! Becke grid and related info
-     ! ===========================
-
-     becke_grid :: BECKE_GRID* DEFAULT_NULL
-     ! Becke DFT integration grid data
-
-     overlapping_atoms :: VEC{BIN}* DEFAULT_NULL
-     ! List of atom-pairs (in lower triangular form) which have significant
-     ! overlap. Used in linear scaling DFT calculations.
-
-     overlapping_atoms_for_atom :: VEC{VEC_{INT}}* DEFAULT_NULL
-     ! List of atoms which have significant overlap with another
-
-     ! ==================================
-     ! Plot, interpolator and isosurfaces
-     ! ==================================
-
-     plot_grid :: PLOT_GRID* DEFAULT_NULL
-     ! Rectangular grid data, for plots
-
-     use_interpolators :: BIN  DEFAULT(TRUE)
-     ! Set to use interpolators
-
-     interpolator :: INTERPOLATOR*  DEFAULT_NULL
-     ! Template interpolator object used for setting options
-
-     isosurface :: ISOSURFACE* DEFAULT_NULL
-     ! An object used for creating triangluated meshes for isosurface plots.
-
-     ! ===========
-     ! QM fragment
-     ! ===========
-
-     n_fragment_atoms :: INT  DEFAULT(0)
-     ! No. of atoms in the inputted cell fragment, used to calculate
-     ! structure factors, or do wavefunction fitting.
-
-     fragment_atom :: VEC{ATOM}*  DEFAULT_NULL
-     ! The set of fragment atoms. NOTE: this is normally pointer
-     ! copied, except when a cluster object makes a new list.
-     ! See below.
-
-     destroy_fragment_atom :: BIN  DEFAULT(FALSE)
-     ! Set TRUE if the fragment_atoms need to be destroyed
-
-     fragment_geometry :: MAT{REAL}* DEFAULT_NULL
-     ! The geometry for a molecular fragment in the crystal (in
-     ! fractional coordinates) used to calculate structure factors or
-     ! do wavefunction fitting. NOTE: this should not to be confused
-     ! with the "asymmetric_unit_geometry"; it may include symmetry
-     ! non-unique atoms.
-
-     fragment_offset :: VEC{INT}(3)
-     ! The center point of the fragment_geometry, to the nearest unit cell
-
-     ! =====================
-     ! Asymmetric unit atoms
-     ! =====================
-
-     asymmetric_unit_source :: STR  DEFAULT("?")
-     ! Where did the asymmetric unit come from?
-
-     n_asymmetric_unit_atoms :: INT  DEFAULT(0)
-     ! No. of atoms in the asymmetric unit of the unit cell.
-
-     asymmetric_unit_atom :: VEC{ATOM}*  DEFAULT_NULL
-     ! The set of asymmetric unit atoms.
-
-     asymmetric_unit_geometry :: MAT{REAL}* DEFAULT_NULL
-     ! The asymmetric unit geometry. Usually inputted from a CIF file.
-     ! This may or may not be the same as fragment_geometry. It is NOT
-     ! used for structure factor calculations, but for cluster
-     ! generation.
-
-     prune_asymmetric_unit :: BIN  DEFAULT(TRUE)
-     ! Set TRUE if you want to prune the asymmetric unit. Sometimes
-     ! the asymmetric unit may not be asymmetric i.e. it may have
-     ! symmetry-equivalent atoms repeated. This could be because of an
-     ! input or CIF file error, or it could be genuinely correct
-     ! because the repeated atom corresponds to a disordered position.
-
-     ! ===============
-     ! Unit cell atoms
-     ! ===============
-
-     n_unit_cell_atoms :: INT  DEFAULT(0)
-     ! Total no. of unit cell atoms.
-
-     unit_cell_atom :: VEC{ATOM}*  DEFAULT_NULL
-     ! The set of unit cell atoms. Needed for dispersion correction.
-
-     unit_cell_geometry :: MAT{REAL}*  DEFAULT_NULL
-     ! The full unit cell geometry, in the crystal coordinate system,
-     ! generated from the asymmetric_unit_geometry.
-
-     unique_unit_cell_atom :: VEC{INT}*  DEFAULT_NULL
-     ! The list of unique (asymmetric unit) atoms in the
-     ! unit_cell_geometry above
-
-     unique_uc_atom_offset :: VEC{VEC_{INT}}*  DEFAULT_NULL
-     ! The list of (h1 h2 h3) offsets which need to be applied to the
-     ! ".asymmetric_unit_geometry" to get the corresponding unit cell
-     ! atom in the ".unit_cell_geometry".
-
-     is_asym_unit_cell_atom :: VEC{BIN}*  DEFAULT_NULL
-     ! Is TRUE if the the atom index corresponds to an asymmetric unit
-     ! atom in unit_cell_geometry
-
-     ! ========================================================
-     ! Arrays relating fragment, unit cell, and asymmetric cell
-     ! ========================================================
-
-     same_atom_tol :: REAL  DEFAULT(CRYSTAL_SAME_ATOM_TOL)
-     ! Tolerance to compare if two atom coordinates are the same
-     ! in fractional coordinates
-
-     unit_cell_tol :: REAL  DEFAULT(CRYSTAL_UNIT_CELL_TOL)
-     ! Tolerance to compare if fractional position is close enough to
-     ! integer to be made into an integer.
-
-     fragment_info_made :: BIN  DEFAULT(FALSE)
-     ! Set TRUE if the fragment related information has been made
-
-     asym_atom_for_unit_cell_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".asym_atom_for_unit_cell_atom(u)" is the index of the unique
-     ! unit cell atom (in ".asymmetric_unit_geometry") which generates
-     ! ".unit_cell_geometry(:,u)".
-
-     asym_symop_for_unit_cell_atom :: VEC{INT}* DEFAULT_NULL
-     ! "asym_symop_for_unit_cell_atom(u)" is the index of any
-     ! spacegroup symmetry operation that generates atom position
-     ! "unit_cell_geometry(:,u)" from the atom with index
-     ! ".asym_atom_for_unit_cell_atom(u)" (and with position in
-     ! ".asymmetric_unit_geometry").
-
-     asym_shift_for_unit_cell_atom :: MAT{INT}* DEFAULT_NULL
-     ! "asym_shift_for_unit_cell_atom(u)" is the shift that was
-     ! applied to get position "unit_cell_geometry(:,u)" after it was
-     ! got from position of atom ".asym_atom_for_unit_cell_atom(u)"
-     ! with the symop ".asym_symop_for_unit_cell_atom(u)" to get it
-     ! into the unit cell.
-
-     frag_atom_for_unit_cell_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".frag_atom_for_unit_cell_atom(u)" is the index of the
-     ! fragment atom (in ".fragment_geometry") which is equivalent to
-     ! ".unit_cell_geometry(:,u)" *by cell translation*.  The index may
-     ! be zero i.e. there is no fragment atom for unit cell atom u.
-
-     frag_parent_for_cell_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".frag_parent_for_unit_cell_atom(u)" is the index of the
-     ! fragment atom in ".fragment_geometry" which is equivalent to
-     ! .unit_cell_geometry(:,u) *by any crystal symop*. It may have 
-     ! zero elements if the fragment does not enhcompass the whole
-     ! unit cell. Compare with ".frag_atom_for_unit_cell_atom".
-
-     unit_cell_atom_for_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".unit_cell_atom_for_frag_atom(f)" is the index of the unit
-     ! cell atom in ".unit_cell_geometry" which is equivalent to
-     ! ".fragment_geometry(:,f)".  *by cell translation*. It is the
-     ! =inverse= of the array above.
-
-     unit_cell_shft_for_frag_atom :: MAT{INT}* DEFAULT_NULL
-     ! ".unit_cell_shft_for_frag_atom(f)" is the shift for position
-     ! ".fragment_geometry(:,f)" needed to make it the same as unit
-     ! cell atom in ".unit_cell_atom_for_frag_atom(f)" above.
-
-     frag_atom_for_asym_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".frag_atom_for_asym_atom(a)" is the index of the fragment
-     ! atom (in ".fragment_geometry") which is generated from the
-     ! asymmetric unit atom position ".asymmeric_unit_geometry(:,a)"
-     ! *by any crystal symop*.  This index may be zero meaning that
-     ! there is no fragment atom for asymmetric atom "a".
-
-     asym_atom_for_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".asym_atom_for_frag_atom(f)" is the index of the asymmetric
-     ! atom (in ".asymmetric_unit_geometry") which is equivalent to
-     ! ".fragment_geometry(:,f)" *by any crystal symop*.  This array
-     ! is used to extract the atom list of the asymmetric unit from a
-     ! given fragment for cluster generation. This is the =inverse=
-     ! of the array above.
-
-     n_unique_frag_atoms :: INT  DEFAULT(0)
-     ! No. of unique fragment atoms.
-
-     unique_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! The list of unique fragment atoms, determined as the first
-     ! atom in the fragment which is generated by a particular
-     ! asymmetric unit atom.
-
-     unique_atom_for_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".unique_atom_for_frag_atom(f)" is the index of the
-     ! symmetry-unique atom position in ".fragment_geometry" which
-     ! generates ".fragment_geometry(:,f)" by the symop with index
-     ! .unique_symop_for_frag_atom(u) *except for a possible
-     ! translational shift*.  The unique atom is determined as the
-     ! first atom in the ".fragment_geometry" which is generated by a
-     ! particular asymmetric unit atom.
-
-     unique_symop_for_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".unique_symop_for_frag_atom(f)" is the index of the symop
-     ! which generates ".fragment_geometry(:,f)" from
-     ! ".unique_atom_for_frag_atom(f)" *except for a possible
-     ! translational shift*.  The symop corresponds to the first atom
-     ! in the ".fragment_geometry" which is generated by a particular
-     ! asymmetric unit atom. WARNING: UNTESTED.
-
-     asym_symop_for_frag_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".asym_symop_for_frag_atom(f)" is the index of the symop which
-     ! maps an asymmetric_unit_atom into the unit cell atom which is
-     ! equivalent to fragment atom "f" *by translation*. See below.
-
-     asym_shift_for_frag_atom :: MAT{REAL}* DEFAULT_NULL
-     ! "asym_shift_for_frag_atom(f)" is the shift required to map an
-     ! asymmetric_unit_atom into the fragment atom after applying the
-     ! 3x3 seitz operator with index ".asym_symop_for_frag_atom(f)".
-
-     ! ==================
-     ! Repetition factors
-     ! ==================
-
-     Z :: REAL  DEFAULT(ZERO)
-     ! The Z factor for the molecular cell fragment in the unit cell
-
-     use_manual_repetition_factors :: BIN  DEFAULT(FALSE)
-     ! If this is set TRUE, then the user should manually enter the
-     ! desired repetition factors. For experts only!
-
-     repetition_factor :: VEC{REAL}* DEFAULT_NULL
-     ! For each atom, the number of times a *whole QM fragment* is
-     ! mapped into itself by the spacegroup. Used in non-HAR structure
-     ! factor calcs. These can be reset manually.
-
-     asym_atom_sym_factor :: VEC{REAL}* DEFAULT_NULL
-     ! The number of times an asymmetric unit atom is mapped into
-     ! itself by the spacegroup i.e. the site symmetry factor. For
-     ! HAR-based structure factor calcs.
-
-     asym_atom_stabilizer :: VEC{VEC_{INT}}* DEFAULT_NULL
-     ! The partition factors for asymmetric_unit_geometry. For
-     ! structure factor calcs based on the asymmetric unit.
-
-     ! ==========================
-     ! Unit cell connection table
-     ! ==========================
-
-     unit_cell_connection :: VEC{VEC_{VEC_{INT}}}*  DEFAULT_NULL
-     ! List of which unit cell atoms are connected to which other unit
-     ! cell atoms, and in what cell e.g. "connection(i).element(k)"
-     ! represents the "k"-th atom connected to atom "i" in the
-     ! ".crystal.unit_cell_geometry", and it is comprised of a
-     ! 4-vector, the first three elements being the cell of the "k"-th
-     ! connected atom, and the last element being the index of the
-     ! actual unit cell atom connected to unit cell atom "i".
-
-     uc_vdw_connection :: VEC{VEC_{VEC_{INT}}}*  DEFAULT_NULL
-     ! As above, for vdw connections.
-
-     unit_cell_mol_for_atom :: VEC{INT}*  DEFAULT_NULL
-     ! "unit_cell_mol_for_atom(i)" is the index of the molecule to
-     ! which a particular unit cell atom "i" belongs. See comments for
-     ! "unit_cell_mol".
-
-     n_unit_cell_mols :: INT   DEFAULT(0)
-     ! The number of molecules in the unit cell. Fragments of
-     ! molecules are counted as separate molecules.
-
-     ! ===============
-     ! Stablizer group
-     ! ===============
-
-     n_stabilizer_symops :: INT  DEFAULT(0)
-     ! No. of symops needed to make the unit_cell_geometry from
-     ! fragment_geometry
-
-     stabilizer_symop :: VEC{INT}* DEFAULT_NULL
-     ! Indices of the symops in the spacegroup seitz list which map
-     ! .fragment_geometry into itself.
-
-     str :: MAT3{REAL}* DEFAULT_NULL
-     ! Representation matrices for s-type gaussian functions of the
-     ! stabilizer symops.
-
-     ptr :: MAT3{REAL}* DEFAULT_NULL
-     ! Representation matrices for p-type gaussian functions of the
-     ! stabilizer symops.
-
-     dtr :: MAT3{REAL}* DEFAULT_NULL
-     ! Representation matrices for d-type gaussian functions of the
-     ! stabilizer symops.
-
-     ftr :: MAT3{REAL}* DEFAULT_NULL
-     ! Representation matrices for f-type gaussian functions of the
-     ! stabilizer symops.
-
-     gtr :: MAT3{REAL}* DEFAULT_NULL
-     ! Representation matrices for g-type gaussian functions of the
-     ! stabilizer symops.
-
-     ! ================
-     ! Diffraction data
-     ! ================
-
-     data_kind :: STR  DEFAULT("?")
-     ! Kind of diffraction experiment used.
-
-     data :: DIFFRACTION_DATA* DEFAULT_NULL
-     ! The structure factor and fitting data. NOTE: this can stand for
-     ! either X-ray or PND data depending on the case.
-
-     xray_data :: DIFFRACTION_DATA* DEFAULT_NULL
-     ! The X-ray structure factor and fitting data
-
-     pnd_data :: DIFFRACTION_DATA* DEFAULT_NULL
-     ! The PND scalar structure factor and fitting data
-
-     r_free_percentage :: INT  DEFAULT(0)
-     ! A percentage which tells how much of the data is to be reserved
-     ! and not fitted in the model
-
-     xray_r_free_data :: DIFFRACTION_DATA*  DEFAULT_NULL
-     ! This is the excluded X-ray data used to calculate R free
-
-     pnd_r_free_data :: DIFFRACTION_DATA*  DEFAULT_NULL
-     ! This is the excluded PND data used to calculate R free
-
-     finalize :: BIN  DEFAULT(TRUE)
-     ! Finalize/update non-cluster crystal data
-
-     ! ===============
-     ! Cluster-related
-     ! ===============
-
-     radius :: REAL, readonly  DEFAULT(CLUSTER_RADIUS)
-     ! The radius of the cluster. This number determines the maximum
-     ! acceptable distance between an atom in fragment_geometry and
-     ! any atom in the crystal lattice. It defines the size of the
-     ! cluster in the case that "generation_method" component (see
-     ! below) takes the value "within_radius".
-
-     atom_density_cutoff :: REAL  DEFAULT(CLUSTER_ATOM_DENSITY_CUTOFF)
-     ! This number is used to define a cluster radius (see above). The
-     ! radius is defined from it, as the *largest* distance from any
-     ! atom in the asymmetric_cell_atom list where the atomic electron
-     ! density becomes smaller than this number. It requires that
-     ! slater or coppens bases are defined in asymmetric_unit_atom's, 
-     ! and it requires that the generation method be set to
-     ! "for_hirshfeld_surface". It is primarily used for clusters
-     ! generated from a fragment which will correctly produce the
-     ! Hirshfeld surface.
-
-     generation_method :: STR  DEFAULT(CLUSTER_GENERATION_METHOD)
-     ! This option tell how to make the cluster: whether to add atoms
-     ! within a certain distance (radius) of the starting fragment,
-     ! whether to make a cluster specifically for generating a
-     ! hirshfeld surface, whether to just make the unit cell, or the
-     ! unit cell and the starting fragment.
-
-     defragment :: BIN  DEFAULT(CLUSTER_DEFRAGMENT)
-     ! If TRUE, the cluster ends are defragmented, i.e. any atoms
-     ! which are "bonded" at the ends of the cluster are included into
-     ! the cluster. This oisn't a good idea for network covalent
-     ! solids or zeolites: the defragmentation will end when all
-     ! bonded entites with the 3x3 cube of units cells near the origin
-     ! have been constructed.
-
-     n_atoms :: INT
-     ! The number of atoms in the cluster
-
-     geometry :: MAT{REAL}* DEFAULT_NULL
-     ! The (3 x .n_atoms) sized array of cluster atom positions, in
-     ! fractional coordiantes
-
-     unit_cell_offset :: VEC{REAL}(3)  DEFAULT(ZERO)
-     ! Unit cell offset to use when generating an offset unit cell.
-
-     h_min :: VEC{INT}(3), private
-     ! The minimum values of the cells to search over in a within_radius cluster
-
-     h_max :: VEC{INT}(3), private
-     ! The maximum values of the cells to search over in a within_radius cluster
-
-     n_shift :: INT  DEFAULT(0)
-     ! The number of distinct translational shifts used to generate the atoms in
-     ! the cluster.
-
-     shift :: MAT{INT}* DEFAULT_NULL
-     ! The (3 x .n_shift) sized list of translational shifts used to generate the
-     ! cluster from the crystal unit cell atoms. See ".shift_for_atom".
-     ! NOT CURRENTLY USED
-
-     shift_for_atom :: VEC{INT}* DEFAULT_NULL
-     ! ".shift_for_atom(a)" is the index of the translational shift in array
-     ! ".shift", that shift being added to the position of the crystal unit cell
-     ! atom whose index is given by ".occupation_list(a)/1000" in order to
-     ! generate the cluster atom "a" whose position is given by ".geometry(a)".
-     ! NOT CURRENTLY USED
-
-     is_fragment_atom :: VEC{BIN}* DEFAULT_NULL
-     ! is_fragment_atom(a) is TRUE if .geometry(:,a) is the position of a fragment
-     ! atom, i.e. if "a" is the index of a fragm,ent atom.
-
-     occupation_list :: VEC{INT}*  DEFAULT_NULL
-     ! The list of atoms in the cluster which are occupied. This is a coded
-     ! integer representing the triple of integers (h1,h2,h3), the cell where the
-     ! atom resides, as well as the integer index i for the unit cell atom. The
-     ! cell integers are limited to be in the range [-4,4] and at most 10^6 atoms
-     ! in the cluster.
-
-     ! =========
-     ! Molecules
-     ! =========
-
-     mol :: VEC{MOLECULE}*  DEFAULT_NULL
-     ! A list of molecules associated with the QM fragment.
-     ! This only get's made after defragmenting.
-
-     n_molecules :: INT   DEFAULT(0)
-     ! The number of molecules in the cluster
-
-     molecule_for_atom :: VEC{INT}*  DEFAULT_NULL
-     ! An integer which tells which molecule the cluster atoms belongs to.
-
-     molecule :: VEC{VEC_{INT}}*  DEFAULT_NULL
-     ! The list of atom indices corresponding to each molecule
-
-     molecule_centroid :: MAT{REAL}*  DEFAULT_NULL
-     ! The list of molecule centroids in fractionals
-     ! NOT CURRENTLY USED
-
-     n_unique_molecules :: INT  DEFAULT(0)
-     ! The number of unique molecules in a defragmented cluster
-
-     unique_molecule_for :: VEC{INT}*  DEFAULT_NULL
-     ! The unique molecules; unique_molecule_for(mi) is the molecule
-     ! earlier in the list which is symmetry equivalent by the symop
-     ! given in unique_symcode_for.
-     ! NOT CURRENTLY USED
-
-     unique_symcode_for :: VEC{INT}*  DEFAULT_NULL
-     ! The list of symops which maps unique_molecule_for(mi) to the
-     ! non-unique molecule mi. See above.
-     ! NOT CURRENTLY USED
-
-     atom_connection :: VEC{VEC_{INT}}*  DEFAULT_NULL
-     ! atom_connection(i)[:] are those atoms which are connected to atom "i".
-
-     unit_cell_atoms_to_suppress :: VEC{INT}* DEFAULT_NULL
-     ! A list of indices into unit cell geometry. Used
-     ! to suppress those atoms in cluster generation.
-
-     info_made :: BIN  DEFAULT(FALSE)
-     ! Set to true if the routine make_info has been called
-
-   end
 
    type PAIR_ENERGY
 

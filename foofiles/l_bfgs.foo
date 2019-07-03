@@ -33,29 +33,11 @@ contains
 ! =================
 
    create ::: get_from(OBJECT), leaky, PURE
-   ! Create an object
+   ! Allocate an object
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
-   ! Destroy an object
-   end
-
-   nullify_ptr_part ::: pure
-   ! Nullify the pointer parts of self
-      self :: INOUT
-
-      nullify(.par)
-      nullify(.grd)
-
-   end
-
-   destroy_ptr_part ::: leaky, PURE
-   ! Destroy the pointer parts of self
-      self :: INOUT
-
-      .par.destroy
-      .grd.destroy
-
+   ! Deallocate "self"
    end
 
 !  ===========
@@ -75,9 +57,6 @@ contains
       .convergence_tolerance = DIIS_CONVERGENCE_TOLERANCE
       .start_tolerance       = DIIS_START_TOLERANCE
 
-      ! Clean up (leaky)
-      .destroy_ptr_part
-
    end
 
    reset_iteration_defaults ::: leaky
@@ -85,9 +64,6 @@ contains
       self :: INOUT
 
       .iteration  = -1 ! The first time called it is iteration 0
-
-      ! Clean up old stuff (leaky)
-      .destroy_ptr_part
 
    end
 

@@ -33,35 +33,37 @@ contains
 !  ==========
 
    create(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create space for object
+   ! Allocate vector with dimension "dim"
    end
 
    create(dim,dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create space for a vector of vectors
+   ! Allocate a vector of vectors with primary dimension "dim" and
+   ! secondary dimension "dimv"
    end
 
-   create(dim,bounds) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create space for a vector of vectors
+   create(dim,bounds2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard secondary "bounds2"
    end
 
-   create_vec(dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Allocate the pointer parts
+   create(bounds1) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard primary "bounds1"
    end
 
-   create_vec(bounds) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Allocate the pointer parts
+   create(bounds1,bounds2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard primary "bounds1"
+   ! and secondary "bounds2"
    end
 
    destroy ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Destroy space for object
+   ! Deallocate the vector
    end
 
-   nullify_ptr_part ::: get_from(VEC{VEC_{INTRINSIC}}), pure
-   ! Nullify the pointer parts
+   create_vec(dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate the array part
    end
 
-   destroy_ptr_part ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Destroy the pointer parts
+   create_vec(bounds) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate the array part
    end
 
 !  ==================
@@ -80,45 +82,51 @@ contains
    ! Return the maximum element dimension
    end
 
-!  ====
-!  Copy
-!  ====
-
-   create_copy(vec) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create a replica copy of "vec".
-   end
-
-   copy(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Make a copy of "v".
-   end
-
 !  =======================
 !  Shrinking and expansion
 !  =======================
 
    shrink(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Shrinks self to dimension "dim". Contents are retained.
+   ! Shrink allocatable "self" to dimension "dim" from the end.
+   ! Contents are retained. 
    end
 
    expand(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Expands self to dimension "dim". Contents are retained.
-   ! NOTE: pointer assignment is used to retain contents.
-   ! NOTE: Elements which are added are nullified.
+   ! Expand allocatable "self" to dimension "dim" from the end. 
    end
 
-   append(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Expands self to the required dimension, and append the contents
-   ! of encapsulated vector "v". 
+   append(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Append the contents of vector "v" to allocatable "self".
    end
 
-   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Expands self to the required dimension, and append the single
-   ! "value" onto the end of self.
+   append(v1,v2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Appends vectors "v1" and "v2" to allocatable "self".
+   end
+
+   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Appends the scalar "value" onto the end of allocatable "self".
+   end
+
+   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Extend self and append the vector "value" as the element part.
    end
 
    append_listed_to(res,list) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
    ! Append together (i.e. concatenate) the vectors in self whose
    ! indices are listed in "list".
+   end
+
+   prepend(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Prepend vector "v" to allocatable "self".
+   end
+
+   prepend(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Prepend a single "value" to allocatable "self".
+   end
+
+   prune_element(k) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Removes the element at position "k" from allocatable "self".
+   ! Elements after that position are moved downward.
    end
 
 end

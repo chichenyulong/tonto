@@ -137,76 +137,84 @@ contains
 !  Get methods
 !  ===========
 
-   get_weights_and_t2_roots(X,only_weight)
+   get_weights_and_t2_roots(X,only_weight) ::: PURE
    ! Return the weights and t2 roots
       self :: INOUT
       X :: REAL, IN
       only_weight :: BIN, IN, optional
+
    ENSURE(X>=ZERO,"Rys X must be positive")
+
       rr :: REAL
       i :: INT
+
       select case (.n_roots)
-       case (1)
-         if (NOT present(only_weight)) then; .get_weights1_t2(X)
-         else if (only_weight) then;         .get_only_weight(X)
-         else;                               .get_weights1_t2(X)
-         end
-       case (2)
-         .get_weights2_t2(X)
-       case (3)
-         .get_weights3_t2(X)
-       case (4)
-         .get_weights4(X)
-         rr = .root(1);   .root(1)=rr/(rr+ONE)
-         rr = .root(2);   .root(2)=rr/(rr+ONE)
-         rr = .root(3);   .root(3)=rr/(rr+ONE)
-         rr = .root(4);   .root(4)=rr/(rr+ONE)
-       case (5)
-         .get_weights5(X)
-         rr = .root(1);   .root(1)=rr/(rr+ONE)
-         rr = .root(2);   .root(2)=rr/(rr+ONE)
-         rr = .root(3);   .root(3)=rr/(rr+ONE)
-         rr = .root(4);   .root(4)=rr/(rr+ONE)
-         rr = .root(5);   .root(5)=rr/(rr+ONE)
-       case default
-         .get_weights6(X)
-         do i=1,.n_roots
-           rr = .root(i)
-           .root(i) = rr/(rr+ONE)
-         end
+      case (1)
+        if (NOT present(only_weight)) then; .get_weights1_t2(X)
+        else if (only_weight) then;         .get_only_weight(X)
+        else;                               .get_weights1_t2(X)
+        end
+      case (2)
+        .get_weights2_t2(X)
+      case (3)
+        .get_weights3_t2(X)
+      case (4)
+        .get_weights4(X)
+        rr = .root(1);   .root(1)=rr/(rr+ONE)
+        rr = .root(2);   .root(2)=rr/(rr+ONE)
+        rr = .root(3);   .root(3)=rr/(rr+ONE)
+        rr = .root(4);   .root(4)=rr/(rr+ONE)
+      case (5)
+        .get_weights5(X)
+        rr = .root(1);   .root(1)=rr/(rr+ONE)
+        rr = .root(2);   .root(2)=rr/(rr+ONE)
+        rr = .root(3);   .root(3)=rr/(rr+ONE)
+        rr = .root(4);   .root(4)=rr/(rr+ONE)
+        rr = .root(5);   .root(5)=rr/(rr+ONE)
+      case default
+        .get_weights6(X)
+        do i=1,.n_roots
+          rr = .root(i)
+          .root(i) = rr/(rr+ONE)
+        end
       end
+
    end
 
-   get_weights_and_u_roots(X,only_weight)
+   get_weights_and_u_roots(X,only_weight) ::: PURE
    ! Return the weights and U roots
       self :: INOUT
       X :: REAL, IN
-      only_weight :: BIN, IN, optional
+      only_weight :: BIN, optional, IN
+
    ENSURE(X>=ZERO,"Rys X must be positive")
+
       select case (.n_roots)
-       case (1)
-         if (NOT present(only_weight)) then; .get_weights1(X)
-         else if (only_weight) then;         .get_only_weight(X)
-         else;                               .get_weights1(X)
-         end
-       case (2)
-         .get_weights2(X)
-       case (3)
-         .get_weights3(X)
-       case (4)
-         .get_weights4(X)
-       case (5)
-         .get_weights5(X)
-       case default
-         .get_weights6(X)
+      case (1)
+        if (NOT present(only_weight)) then; .get_weights1(X)
+        else if (only_weight) then;         .get_only_weight(X)
+        else;                               .get_weights1(X)
+        end
+      case (2)
+        .get_weights2(X)
+      case (3)
+        .get_weights3(X)
+      case (4)
+        .get_weights4(X)
+      case (5)
+        .get_weights5(X)
+      case default
+        .get_weights6(X)
       end
+
    end
 
-   get_only_weight(x) ::: pure, private
+   get_only_weight(x) ::: pure, private, PURE
    ! For when we only want the weight and not the root, in
    ! the case where we have one root. Useful for ssss integrals.
       self :: INOUT
       x :: REAL, IN
+
       y,e,f :: REAL
       if (x < 3.0d-07) then
        .weight(1) = ONE - x*THIRD
@@ -252,12 +260,14 @@ contains
       else
        .weight(1)=sqrt_pie4/sqrt(x)
       end
+
    end
 
-   get_weights1(x) ::: pure, private
+   get_weights1(x) ::: pure, private, PURE
    ! For when have one root.
       self :: INOUT
       x :: REAL, IN
+
       y,e,f,w1 :: REAL
 
       if (x < 5.0d0) then
@@ -327,10 +337,11 @@ contains
       end
    end
 
-   get_weights1_t2(x) ::: pure, private
+   get_weights1_t2(x) ::: pure, private, PURE
    ! For when have one root.
       self :: INOUT
       x :: REAL, IN
+
       y,e,f,w1 :: REAL
 
       if (x < 3.0d-07) then
@@ -386,10 +397,11 @@ contains
       end
    end
 
-   get_weights2(x) ::: pure, private
+   get_weights2(x) ::: pure, private, PURE
    ! For two roots
       self :: INOUT
       x :: REAL, IN
+
       y,e,f,r2,r1,w1,w2 :: REAL
 
       if (x < 3.0d-07) then
@@ -552,10 +564,11 @@ contains
       end
    end
 
-   get_weights2_t2(x) ::: pure, private
+   get_weights2_t2(x) ::: pure, private, PURE
    ! For two roots
       self :: INOUT
       x :: REAL, IN
+
       y,e,f,r2,r1,w1,w2 :: REAL
 
       if (x < 3.0d-07) then
@@ -694,10 +707,11 @@ contains
       end
    end
 
-   get_weights3(x) ::: pure, private
+   get_weights3(x) ::: pure, private, PURE
    ! For when have three roots.
       self :: INOUT
       x :: REAL, IN
+
       y,e, f1, f2, a1, a2, t1, t2, t3 :: REAL
 
       if (x < 5.0d0) then
@@ -948,11 +962,13 @@ contains
       end
    end
 
-   get_weights3_t2(x) ::: pure, private
+   get_weights3_t2(x) ::: pure, private, PURE
    ! For when have three roots.
       self :: INOUT
       x :: REAL, IN
+
       r1,r2,r3,w1,y,e, f1, f2, a1, a2, t1, t2, t3 :: REAL
+
       w1 = ZERO; r1 = ZERO; r2 = ZERO; r3 = ZERO;
 
       if (x < 3.0d-07) then
@@ -1160,10 +1176,11 @@ contains
       end
    end
 
-   get_weights4(x) ::: pure, private
+   get_weights4(x) ::: pure, private, PURE
    ! For four roots
       self :: INOUT
       x :: REAL, IN
+
       y,e :: REAL
 
       if (x < 3.0d-07) then
@@ -1507,10 +1524,11 @@ contains
       end
    end
 
-   get_weights5(x) ::: pure, private
+   get_weights5(x) ::: pure, private, PURE
    ! For five roots.
       self :: INOUT
       x :: REAL, IN
+
       y,xx, e :: REAL
 
       if (x < 3.0d-07) then
@@ -1990,10 +2008,11 @@ contains
       end
    end
 
-   get_weights6(x) ::: private
+   get_weights6(x) ::: private, PURE
    ! For 6 or more roots.
       self :: INOUT
       x :: REAL, IN
+
       c,s :: REAL, dimension(.n_roots+1,.n_roots+1)
       rr,ww :: REAL, dimension(.n_roots,.n_roots)
       ff :: REAL, dimension(2*.n_roots+1)
@@ -2071,12 +2090,13 @@ contains
 
    end
 
-   rysfun(x,n,ff) ::: pure, private
+   rysfun(x,n,ff) ::: pure, private, PURE
    !
       self :: INOUT
       x :: REAL, IN
       n :: INT, IN
       ff :: VEC{REAL}, OUT
+
       esave, tmax, tol, xx, fac, facmin, term, sumem :: REAL
       a, e, s, t :: REAL
       i, m :: INT
@@ -2161,12 +2181,13 @@ contains
       end
    end
 
-   rysnod(a,rt,k) ::: private
+   rysnod(a,rt,k) ::: private, PURE
    !
       self :: INOUT
       a :: VEC{REAL}, IN
       rt :: VEC{REAL}, INOUT
       k :: INT, IN
+
       p1,p2,p3,p4,p5,p6,r1,r2,r3,r4,r5,r6,r :: REAL
       dr, tol, prod :: REAL
       k1, i, m :: INT
@@ -2186,7 +2207,7 @@ contains
          p2=p2*r2+a(k1-i)
        end
        prod=p1*p2
-       DIE_IF(prod >= ZERO,"Rys root not found")
+       ENSURE(prod < ZERO,"Rys root not found")
        r5=r1
        p5=p1
        r6=r2
@@ -2233,12 +2254,13 @@ contains
       end
    end
 
-   ryssmt(c,s,n) ::: private
+   ryssmt(c,s,n) ::: private, PURE
    !
       self :: INOUT
       c :: MAT{REAL}, OUT
       s :: MAT{REAL}, IN
       n :: INT, IN
+
       i,j,k,kmax :: INT
       v,y :: REAL, dimension(n)
       dot, fac :: REAL
@@ -2270,7 +2292,7 @@ contains
            fac=fac-dot*dot
          end
        end
-       DIE_IF(fac < ZERO, "Tried to square root a negative number")
+       ENSURE(fac >= ZERO, "Tried to square root a negative number")
        if (fac /= ZERO) then
          fac=ONE/sqrt(fac)
        else

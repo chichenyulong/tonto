@@ -29,68 +29,56 @@ module MAT3{VEC_{INT}}
 
 contains
 
-   create(dim1,dim2,dim3) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create object with desired dimensions, ".element" part nullfied.
+!  ==========
+!  Allocation
+!  ==========
+
+   create(dim1,dim2,dim3) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a matrix with the given dimensions
    end
 
-   create(dim) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create the object with the desired dimensions "dim"
+   create(dim) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a matrix with the given dimensions
    end
 
-   create(dim1,dim2,dim3,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create object with desired dimensions, ".element" part size "dimv".
+   create(dim1,dim2,dim3,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a matrix with the given dimensions
    end
 
-   create(dim1,dim2,dim3,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create object with desired dimensions, ".element" part with bounds "dimv".
+   create(dim1,dim2,dim3,bounds2) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   ! Allocate a matrix with the given dimensions and "bounds2".
    end
 
-   create(dim,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create object with desired dimensions, ".element" part size "dimv".
-   end
-
-   create(dim,dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create object with desired dimensions, ".element" part with bounds "dimv".
-   end
-
-   create_vec(dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   create_vec(dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky, PURE
    ! Allocate only the the ".element" pointer parts with size "dimv".
    end
 
-   create_vec(dimv) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Allocate only the ".element" pointer parts with bounds "dimv".
+   create_vec(bounds2) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
+   ! Allocate only the the ".element" part bounds "bounds2".
    end
 
-   create_copy(v) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Create a copy of "v"
+   destroy ::: get_from(OBJECT), get_from(MAT3{VEC_{INTRINSIC}}), leaky, PURE
+   ! Deallocate "self"
    end
 
-   copy(v) ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Make a copy of "v"
+!  ===============
+!  Size operations
+!  ===============
+
+   is_same_shape_as(b) result (res) ::: get_from(MAT3{VEC_{INTRINSIC}}), PURE
+   ! Returns TRUE if the matrix "b" has the same shape as self
    end
 
-   destroy ::: get_from(MAT3{VEC_{INTRINSIC}}), leaky
-   ! Destroy the object
-   end
+!  ==============
+!  Set operations
+!  ==============
 
-   nullify_ptr_part ::: get_from(MAT3{VEC_{INTRINSIC}})
-   ! Nullify the "element" pointer parts
-   end
-
-   destroy_ptr_part ::: get_from(MAT3{VEC_{INTRINSIC}})
-   ! Destroy the ".element" pointer parts of an ivecvec
-   end
-
-   set_to(v) ::: get_from(MAT3{VEC_{INTRINSIC}})
+   set_to(v) ::: get_from(MAT3{VEC_{INTRINSIC}}), PURE
    ! Set self to "v". Up to you to make sure they are compatible!
    end
 
-   zero ::: get_from(MAT3{VEC_{INTRINSIC}})
+   zero ::: get_from(MAT3{VEC_{INTRINSIC}}), PURE
    ! Zero all elements
-   end
-
-   is_same_shape_as(b) result (res) ::: get_from(MAT3{INTRINSIC})
-   ! Returns TRUE if the matrix "b" has the same shape as self
    end
 
 end

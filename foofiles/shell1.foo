@@ -155,12 +155,12 @@ contains
 
    end
 
-   set(object) ::: get_from(OBJECT)
-   ! Set the object. Pointer parts are assigned not copied.
+   set(object) ::: get_from(SHELL), leaky, PURE
+   ! Set the object.
    end
 
-   set(shell,pos)
-   ! Set a shell1 object. Pointer parts are assigned not copied.
+   set(shell,pos) ::: PURE
+   ! Set a shell1 object. 
       self :: INOUT
       shell :: SHELL, optional, IN
       pos :: VEC{REAL}, optional, IN
@@ -174,10 +174,10 @@ contains
          .first_gaussian = shell.first_gaussian
          .last_gaussian  = shell.last_gaussian
          .n_cc           = shell.n_cc
-         .exponent      => shell.exponent
-         .contraction   => shell.contraction
-         .contraction_s => shell.contraction_s
-         .contraction_p => shell.contraction_p
+         .exponent.create_copy(shell.exponent)
+         .contraction.create_copy(shell.contraction)
+         .contraction_s.create_copy(shell.contraction_s)
+         .contraction_p.create_copy(shell.contraction_p)
       end
 
       if (present(pos)) .position = pos
@@ -3518,8 +3518,9 @@ contains
 
    put
    ! Put the shell information to "stdout" 
+      self :: IN
 
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
       ! Title
       stdout.flush

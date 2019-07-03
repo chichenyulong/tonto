@@ -522,9 +522,12 @@ contains
 
    put_smiles_invariom_labels
    ! Analyze the SCF energy into MO contributions
+      self :: INOUT
+
    ENSURE(.atom.associated,"no atoms")
+
       labels :: VEC{STR}*
-      invariom_kind :: VEC{VEC_{INT}}*
+      invariom_kind :: VEC{VEC_{INT}}@
       n_kind,n_elem,n_dash,k,l :: INT
 
       ! Get the invariom labels
@@ -583,9 +586,11 @@ contains
 
    put_invariom_labels
    ! Analyze the SCF energy into MO contributions
+
    ENSURE(.atom.associated,"no atoms")
+
       labels :: VEC{STR}*
-      invariom_kind :: VEC{VEC_{INT}}*
+      invariom_kind :: VEC{VEC_{INT}}@
 
       n_kind,n_elem,n_dash,k,l :: INT
 
@@ -724,7 +729,7 @@ contains
    ENSURE(.n_atom_kind>0,"no atom kinds")
 
       interpolator :: VEC{INTERPOLATOR}*
-      rho_av :: VEC{VEC_{REAL}}*
+      rho_av :: VEC{VEC_{REAL}}@
       max_eps,eps,eps_a :: REAL
       max_l, a,iteration :: INT
 
@@ -865,7 +870,7 @@ contains
       pos :: VEC{REAL}(3)
       old,r :: REAL
       n_pts,n,i :: INT
-      lebedev :: LEBEDEV*
+      lebedev :: LEBEDEV@
 
       ! Set the spherical grid
       lebedev.create
@@ -959,7 +964,7 @@ contains
    ENSURE(.use_interpolators,"must be using interpolators")
 
       interpolator :: VEC{INTERPOLATOR}*
-      rho_av :: VEC{VEC_{REAL}}*
+      rho_av :: VEC{VEC_{REAL}}@
       eps,eps_a :: REAL
       a,l_max,iteration :: INT
 
@@ -1080,7 +1085,7 @@ contains
       pos :: VEC{REAL}(3)
       old,r :: REAL
       n_pts,n,i :: INT
-      lebedev :: LEBEDEV*
+      lebedev :: LEBEDEV@
 
       ! Set the spherical grid
       lebedev.create
@@ -1173,8 +1178,8 @@ contains
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
 
-      bond :: VEC{VEC_{INT}}*
-      bond_charge :: VEC{VEC_{REAL}}*
+      bond :: VEC{VEC_{INT}}@
+      bond_charge :: VEC{VEC_{REAL}}@
       label :: STR
       a,b,c :: INT
       has_bond :: BIN
@@ -1199,7 +1204,7 @@ contains
          label = trim(.atom(a).label) // "(" // trim(a.to_str) // ")"
          stdout.put(label)
 
-         has_bond = bond(a).element.associated
+         has_bond = bond(a).element.allocated
          if (has_bond) has_bond = bond(a).element.dim>0
 
          if (NOT has_bond) then
@@ -1233,15 +1238,15 @@ contains
    make_BDA_charges(bond,bond_charge) ::: leaky
    ! make the bond density atom charges.
       self :: INOUT
-      bond :: VEC{VEC_{INT}}*
-      bond_charge :: VEC{VEC_{REAL}}*
+      bond :: VEC{VEC_{INT}}@
+      bond_charge :: VEC{VEC_{REAL}}@
 
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
 
-      pt :: MAT{REAL}*
-      wt,rho_aba,def_density_grid :: VEC{REAL}*
-      bond_density_atom :: VEC{INT}*
+      pt :: MAT{REAL}@
+      wt,rho_aba,def_density_grid :: VEC{REAL}@
+      bond_density_atom :: VEC{INT}@
       n_pt,a,b :: INT
       val :: REAL
 
@@ -1323,14 +1328,14 @@ contains
    ENSURE(.atom.associated,"no atom list")
    ENSURE(.molecular_orbitals.associated, "no MO's")
    ENSURE(.molecular_orbitals.restricted.associated, "no restricted MO's")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
    ENSURE(H.is_square,"H is not square")
    ENSURE(G.dim==H.dim1,"G and H are inconsistent")
 
-      Wa_cd :: MAT3{REAL}*
-      pt,Wa_c :: MAT{REAL}*
-      wt,Wa,G_grid,K_grid,Ga :: VEC{REAL}*
+      Wa_cd :: MAT3{REAL}@
+      pt,Wa_c :: MAT{REAL}@
+      wt,Wa,G_grid,K_grid,Ga :: VEC{REAL}@
       delta2 :: REAL
       a,c,d,n_pt :: INT
 

@@ -40,7 +40,7 @@ contains
       n_s,n_n,i,n_sections :: INT
       lg,bin,W :: VEC{REAL}*
       C :: VEC{INT}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
       if (.overlap_matrix.associated) return
 
@@ -148,13 +148,14 @@ contains
          stdout.flush
 
          ! Clean
-         table.clear_columns
+         table.destroy
          C.destroy
          bin.destroy
          lg.destroy
 
       end
       end
+
       .BASE:put_debug(.overlap_matrix,"make_overlap_matrix: overlap_matrix")
 
    end
@@ -292,28 +293,6 @@ contains
       .BASE:put_debug(T,"make_kinetic_energy_mx: T")
 
    end
-
-!  =============================
-!  Kinetic and overlap integrals
-!  =============================
-
-!   make_kinetic_overlap(T,S)
-!   ! Calculate the kinetic energy matrix "T" and overlap integral matrix "S"
-!     T,S :: MAT{REAL}
-!   ENSURE(.basis_info_made, "no basis info")
-!   ENSURE(.atom.associated,  "no atom list")
-!     q,fa,la,fb,lb :: INT
-!     sh :: SHELL2
-!     do q=1,.n_shell_pairs
-!       .BASE:get_precomputed_shell_pair(sh,q,fa,la,fb,lb)
-!       sh.get_kei(T(fa:la,fb:lb), S(fa:la,fb:lb))
-!       sh.destroy_ptr_part
-!     end
-!     S.symmetric_reflect
-!     T.symmetric_reflect
-!     .BASE:put_debug(S,"overlap matrix")
-!     .BASE:put_debug(T,"kinetic matrix")
-!   end
 
 !  ===========================
 !  Nuclear attracton integrals
@@ -1253,25 +1232,27 @@ contains
    make_1e_ZORA_matrices(T,Zx,Zy,Zz)
    ! Calculate the one-electron ZORA spin orbit matrices numerically.
    ! This includes the relativitically modified kinetic energy integrals.
-      T, Zx,Zy,Zz :: MAT{REAL}
+      self :: INOUT
+      T, Zx,Zy,Zz :: MAT{REAL}, OUT
+
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.overlapping_atoms.associated,"no overlapping_atoms")
+
       ZORA  :: MAT4{REAL}*
       a1,b1 :: MAT3{REAL}*
-      pt    :: MAT{REAL}*
-      wt,V0 :: VEC{REAL}*
-      atom1 :: VEC{INT}(1), target
-      atom2 :: VEC{INT}(2), target
-      atoms :: VEC{INT}*
+      pt    :: MAT{REAL}@
+      wt,V0 :: VEC{REAL}@
+      atoms :: VEC{INT}@
       q,atom_a,atom_b,n_pt,fa,la,na,fb,lb,nb,k,l,a,b,aa,bb,ma,mb :: INT
       same_atoms :: BIN
 
       ZORA.create(.n_bf,.n_bf,3,3)
 
       ! Make the lower half of the ZORA spin orbit integrals
-      nullify(a1); nullify(b1)
+      nullify(a1)
+      nullify(b1)
 
       do q = 1,.BASE:no_of_atom_pairs
 
@@ -1280,8 +1261,8 @@ contains
          .BASE:get_atom_pair_indices(q,atom_a,atom_b,fa,la,na,fb,lb,nb)
 
          same_atoms = atom_a==atom_b
-         if (same_atoms) then; atom1 = [atom_a];        atoms => atom1
-         else;                 atom2 = [atom_a,atom_b]; atoms => atom2
+         if (same_atoms) then; atoms = [atom_a]
+         else;                 atoms = [atom_a,atom_b]
          end
 
          ! Make the grid points and weights
@@ -1292,7 +1273,9 @@ contains
          .:ZORA_potential(V0,pt)
          .becke_grid.make_bf_grids(a1,b1,ma,mb,pt,atoms)
          V0 = wt*V0
-         wt.destroy; pt.destroy
+         wt.destroy
+         pt.destroy
+
          do k = 1,3
          do l = 1,3
          do a = 1,na
@@ -1338,21 +1321,22 @@ contains
 
    make_ENA_matrix(Z)
    ! Calculate the one-electron electron nuclear attraction matrix numerically.
-      Z :: MAT{REAL}
+      self :: INOUT
+      Z :: MAT{REAL}, OUT
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
 
-      pt,a0,b0 :: MAT{REAL}*
-      wt,V0 :: VEC{REAL}*
-      atom1 :: VEC{INT}(1), target
-      atom2 :: VEC{INT}(2), target
-      atoms :: VEC{INT}*
+      a0,b0 :: MAT{REAL}*
+      pt :: MAT{REAL}@
+      wt,V0 :: VEC{REAL}@
+      atoms :: VEC{INT}@
       q,atom_a,atom_b,n_pt,fa,la,na,fb,lb,nb,a,b,aa,bb,ma,mb :: INT
       same_atoms :: BIN
 
-      nullify(a0); nullify(b0)
+      nullify(a0)
+      nullify(b0)
 
       do q = 1,.BASE:no_of_atom_pairs
 
@@ -1361,8 +1345,8 @@ contains
          .BASE:get_atom_pair_indices(q,atom_a,atom_b,fa,la,na,fb,lb,nb)
 
          same_atoms = atom_a==atom_b
-         if (same_atoms) then; atom1 = [atom_a];        atoms => atom1
-         else;                 atom2 = [atom_a,atom_b]; atoms => atom2
+         if (same_atoms) then; atoms = [atom_a]
+         else;                 atoms = [atom_a,atom_b]
          end
 
          ! Make the grid points and weights
@@ -1375,7 +1359,8 @@ contains
          .becke_grid.make_bf_grids(a0,b0,ma,mb,pt,atoms)
          V0 = wt*V0
 
-         wt.destroy; pt.destroy
+         wt.destroy
+         pt.destroy
 
          do a = 1,na
          do b = 1,nb

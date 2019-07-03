@@ -4372,13 +4372,13 @@ contains
 !  Fast memory-intensive electron density (?)
 !  ==========================================
 
-   make_fast_ED_grid_r(rho,pt,DM) ::: leaky
+   make_fast_ED_grid_r(rho,pt,DM) ::: leaky, PURE
    ! Get the electron density grid "rho" of a list of 3D points "pt".
    ! Set "spin_density" to TRUE if you want those.
       self :: IN
-      rho  :: VEC{REAL}
-      pt   :: MAT{REAL}
-      DM   :: MAT{REAL}
+      rho  :: VEC{REAL}, OUT
+      pt   :: MAT{REAL}, IN
+      DM   :: MAT{REAL}, IN
 
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
@@ -4388,13 +4388,12 @@ contains
    ENSURE(DM.dim1==.n_bf,"DM is not square")
 
       ra :: VEC{REAL}(3)
-      xa,ya,za,a2, ga,gb :: VEC{REAL}*
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
-      grida,gridb :: MAT{REAL}*
-      sha :: SHELL1
-      bf_skip :: VEC{VEC_{BIN}}*
-      bf_grid :: VEC{MAT_{REAL}}*
+      xa,ya,za,a2, ga,gb :: VEC{REAL}@
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipa0,skipab, skipa,skipb :: VEC{BIN}@
+      grida,gridb :: MAT{REAL}@
+      bf_skip :: VEC{VEC_{BIN}}@
+      bf_grid :: VEC{MAT_{REAL}}@
       cutoff, Dab, fac, val :: REAL
       n_pt,n_keep :: INT
       c,ca,cb :: INT
@@ -4403,6 +4402,7 @@ contains
       sa,fa,la,na, as :: INT
       sb,fb,lb,nb :: INT
       a,b,i,j,n,p :: INT
+      sha :: SHELL1
 
       ! Basis function cutoff
       ! Hard-coded! Make it an option ...
@@ -4426,7 +4426,7 @@ contains
       parallel do c = 1,.atom.dim
 
          ! Overlapping atoms
-         overlapping_atom => .overlapping_atoms_for_atom(c).element
+         overlapping_atom = .overlapping_atoms_for_atom(c).element
 
          ! Basis function grid and skip list
          ! Only for the shells overlapping atom "c"
@@ -4455,7 +4455,7 @@ contains
                as = .basis_shell_for_shell(sa)
 
                ! Set shell "sa"
-               sha = .precomputed_basis_shellpair(as,1).a
+               sha.set(.precomputed_basis_shellpair(as,1).a)
                sha.position = ra
 
                ! Make shell "sa" skip list
@@ -4469,7 +4469,7 @@ contains
                end
 
                ! Assign the "sa" skipa list
-               bf_skip(sa).element => skipa
+               bf_skip(sa).element = skipa
 
                ! Make the "sa" basis function grida
                grida.create(n_keep,na)
@@ -4477,7 +4477,7 @@ contains
 
                ! Store the "sa" basis function grida
                ! This saves calculation but is a memory hog.
-               bf_grid(sa).element => grida
+               bf_grid(sa).element = grida
 
                ! Loop c-overlapping atoms b
                do cb = 1,ca
@@ -4490,7 +4490,7 @@ contains
                   do sb = fsb,min(lsb,sa)
 
                      ! No significant points ... save time!
-                     if (bf_skip(sb).element.disassociated) cycle
+                     if (bf_skip(sb).element.deallocated) cycle
 
                      ! Shell b limits
                      fb = .first_basis_fn_for_shell(sb)
@@ -4498,8 +4498,8 @@ contains
                      nb = lb - fb + 1
 
                      ! Set the "sb" basis function grid
-                     skipb => bf_skip(sb).element
-                     gridb => bf_grid(sb).element
+                     skipb = bf_skip(sb).element
+                     gridb = bf_grid(sb).element
 
                      ! How many points in common? Save time?
                      skipab(1:n_pt) = skipa OR skipb
@@ -4515,8 +4515,8 @@ contains
                      if (na*nb==1) then ! s.s product
 
                         ! Add density contribution to rho
-                        ga => grida(:,1)
-                        gb => gridb(:,1)
+                        ga = grida(:,1)
+                        gb = gridb(:,1)
                         Dab = fac*DM(fa,fb)
                         i = 0; j = 0
                         do n = 1,n_pt
@@ -4548,9 +4548,9 @@ contains
 
                         ! Add density contribution to rho
                         do a = 1,na
-                           ga => grida(:,a)
+                           ga = grida(:,a)
                            do b = 1,nb
-                              gb  => gridb(:,b)
+                              gb  = gridb(:,b)
                               Dab = fac*DM(fa+a-1,fb+b-1)
                               do p = 1,n_keep
                                  i = pi(p)
@@ -4571,6 +4571,9 @@ contains
 
                   end
                end
+
+               sha.destroy_ptr_part
+
             end
          end
 
@@ -4624,32 +4627,32 @@ contains
 
       select case (relativity)
 
-         case ("douglas-kroll-hess","dkh")
-            select case (okind)
-               case ("restricted");       .:make_DKH_density_grid(density_grid,pt)
-               case ("unrestricted");     .:make_DKH_density_grid(density_grid,pt,sgn)
-               case ("general_complex");  .:make_DKH_density_grid(density_grid,pt)
-               case default; WARN("Unimplemented orbital kind! Sorry :(")
-            end
+      case ("douglas-kroll-hess","dkh")
+         select case (okind)
+         case ("restricted");       .:make_DKH_density_grid(density_grid,pt)
+         case ("unrestricted");     .:make_DKH_density_grid(density_grid,pt,sgn)
+         case ("general_complex");  .:make_DKH_density_grid(density_grid,pt)
+         case default; WARN("Unimplemented orbital kind! Sorry :(")
+         end
 
-         case ("iotc")
-            select case (okind)
-               case ("restricted");       .:make_IOTC_density_grid(density_grid,pt)
-               case ("unrestricted");     .:make_IOTC_density_grid(density_grid,pt,sgn)
-               case ("general_complex");  .:make_IOTC_density_grid(density_grid,pt)
-               case default; WARN("Unimplemented orbital kind! Sorry :(")
-            end
+      case ("iotc")
+         select case (okind)
+         case ("restricted");       .:make_IOTC_density_grid(density_grid,pt)
+         case ("unrestricted");     .:make_IOTC_density_grid(density_grid,pt,sgn)
+         case ("general_complex");  .:make_IOTC_density_grid(density_grid,pt)
+         case default; WARN("Unimplemented orbital kind! Sorry :(")
+         end
 
-         case ("none")
-            select case (okind)
-               case ("restricted");       .:make_density_grid_r(density_grid,pt)
-               case ("unrestricted");     .:make_density_grid_u(density_grid,pt,sgn)
-               case ("general");          .:make_density_grid_g(density_grid,pt,sgn)
-               case ("general_complex");  .:make_density_grid_gc(density_grid,pt,sgn)
-               case default;   DIE("unimplemented")
-            end
+      case ("none")
+         select case (okind)
+         case ("restricted");       .:make_density_grid_r(density_grid,pt)
+         case ("unrestricted");     .:make_density_grid_u(density_grid,pt,sgn)
+         case ("general");          .:make_density_grid_g(density_grid,pt,sgn)
+         case ("general_complex");  .:make_density_grid_gc(density_grid,pt,sgn)
+         case default;   DIE("unimplemented")
+         end
 
-         case default; DIE("unimplemented")
+      case default; DIE("unimplemented")
 
       end
 
@@ -4658,7 +4661,7 @@ contains
    make_density_grid(p_a,p_b,pt)
    ! Make the alpha and beta density grids, "p_a" and "p_b" respectively, from
    ! the unrestricted natural orbitals.
-      p_a,p_b :: VEC{REAL}
+      p_a,p_b :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
 
    ENSURE(.natural_orbitals.associated, "no natural orbitals")
@@ -4751,9 +4754,10 @@ contains
    ! density or spin density is to be calculated: sgn=1 means sum the alpha and
    ! beta densities to form the total density, sgn=-1 means to subtract, forming
    ! the Sz spin density.
-      density_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-      sgn :: INT, IN, optional
+      self :: IN
+      density_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      sgn :: INT, optional, IN
 
    ENSURE(pt.dim2==3,  "wrong dimension for points array")
    ENSURE(.natural_orbitals.is_associated_with_genre("unrestricted"), "no unrestricted NO's")
@@ -4795,12 +4799,15 @@ contains
    ! Make the "spin density_grid" for the supplied points "pt" from
    ! general complex natural orbitals.
    ! Kramers unrestricted algorithm
-      density_grid :: VEC{REAL}
-      pt,KP :: MAT{REAL}
+      self :: IN
+      density_grid :: VEC{REAL}, OUT
+      pt,KP :: MAT{REAL}, IN
+
     ENSURE(pt.dim2==3,  "incorrect dimension for points array")
     ENSURE(.natural_orbitals.is_associated_with_genre("unrestricted"), "no natural orbitals")
     ENSURE(.occupation_numbers.alpha.associated, "no alpha occupation numbers")
     ENSURE(.occupation_numbers.beta.associated, "no beta occupation numbers")
+      
       ga,gb,ggg :: VEC{REAL}*
       na,nb,i,j :: INT
       ona,onb :: REAL
@@ -4838,8 +4845,9 @@ contains
    make_density_grid_c(density_grid,pt)
    ! Make the "density_grid" for the supplied points "pt" from restricted
    ! complex natural orbitals.
-      density_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      density_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3,  "incorrect dimension for points array")
    ENSURE(.natural_orbitals.is_associated_with_genre("restricted_complex"), "no natural orbitals")
@@ -4864,7 +4872,7 @@ contains
 
    end
 
-   make_density_grid_g(density_grid,pt,sgn)
+   make_density_grid_g(density_grid,pt,sgn) 
    ! Make the "density_grid" for the supplied points "pt" from restricted
    ! natural orbitals.
       self :: IN
@@ -4907,9 +4915,10 @@ contains
    make_density_grid_gc(density_grid,pt,sgn)
    ! Make the "density_grid" for the supplied points "pt" from restricted
    ! complex natural orbitals.
-      density_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-      sgn :: INT, optional
+      self :: IN
+      density_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      sgn :: INT, optional, IN
 
    ENSURE(pt.dim2==3,  "incorrect dimension for points array")
    ENSURE(.natural_orbitals.is_associated_with_genre("general_complex"), "no natural orbitals")
@@ -4946,8 +4955,9 @@ contains
    make_nc_density_grid_gc(density_grid,pt)
    ! Make the noncollinear spin density_grid for the supplied points "pt" from
    ! general complex natural orbitals.
-      density_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      density_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3,  "incorrect dimension for points array")
    ENSURE(.natural_orbitals.is_associated_with_genre("general_complex"), "no natural orbitals")
@@ -4991,12 +5001,15 @@ contains
    ! Make the "spin density_grid" for the supplied points "pt" from
    ! general complex natural orbitals.
    ! Kramers unrestricted algorithm
-      density_grid :: VEC{REAL}
-      pt :: MAT{REAL}
-      KP :: MAT{CPX}
+      self :: IN
+      density_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
+      KP :: MAT{CPX}, IN
+
    ENSURE(pt.dim2==3,  "incorrect dimension for points array")
    ENSURE(.natural_orbitals.is_associated_with_genre("general_complex"), "no natural orbitals")
    ENSURE(.occupation_numbers.is_associated_with_genre("general"), "no occupation numbers")
+
       gdi,gui,gdj,guj,ggg,gtemp :: VEC{CPX}*
       n_occ,i,j :: INT
       oni,onj :: REAL
@@ -5046,8 +5059,8 @@ contains
       self :: IN
       density_grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-      NO  :: MAT{REAL}
-      occ :: VEC{REAL}
+      NO  :: MAT{REAL}, IN
+      occ :: VEC{REAL}, IN
 
    ENSURE(pt.dim2==3,"wrong dimension for points array")
    ENSURE(density_grid.dim==pt.dim1,"inconsistent number of points")
@@ -5626,9 +5639,9 @@ contains
    ! the density_grid will be filled with the values of density
    ! given by the coordinates in the pt matrix
     density_grid :: VEC{REAL} , OUT
-    pt :: MAT{REAL} , IN
-    D :: MAT{CPX} , IN
-    ax :: INT, optional
+    pt :: MAT{REAL}, IN
+    D :: MAT{CPX}, IN
+    ax :: INT, optional, IN
 
     n_gcm,n_pt,nx :: INT
     n,i,j :: INT
@@ -5898,23 +5911,24 @@ contains
    ! skipping as many points as possible. This routine will probably
    ! have to be batched over *spatially localised* points to reduce
    ! memory requirements.
+      self :: IN
       N0 :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-      D  :: MAT{REAL}, target, IN
+      D  :: MAT{REAL}, IN
 
    ENSURE(N0.dim==pt.dim1,"N0 and pt: incompatible sizes")
    ENSURE(3     ==pt.dim2,"pt: wrong dim2")
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
 
-      bf_lgval :: VEC{VEC_{INT}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      bf_lgval :: VEC{VEC_{INT}}@
+      bf_grid0 :: VEC{MAT_{REAL}}@
       ra :: VEC{REAL}(3)
-      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
-      overlapping_atom, lga,lgb, sp :: VEC{INT}*
-      grida0,gridb0, DD :: MAT{REAL}*
+      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
+      overlapping_atom, lga,lgb, sp :: VEC{INT}@
+      grida0,gridb0, DD :: MAT{REAL}@
       sha :: SHELL1
       Dab, fac,val, ga,gb :: REAL
       atom_o,cutoff,n_pt,n_keep, bs, p,n  :: INT
@@ -5952,7 +5966,7 @@ contains
          ra = .atom(atom_a).position
 
          ! Loop overlapping atom_b
-         overlapping_atom => .overlapping_atoms_for_atom(atom_a).element
+         overlapping_atom = .overlapping_atoms_for_atom(atom_a).element
          do atom_o = 1,overlapping_atom.dim
 
             atom_b = overlapping_atom(atom_o)
@@ -5979,8 +5993,8 @@ contains
                sha.make_grid(grida0,n_pt,xa,ya,za,a2,lga)
 
                ! Save the values
-               bf_grid0(sa).element => grida0
-               bf_lgval(sa).element => lga
+               bf_grid0(sa).element = grida0
+               bf_lgval(sa).element = lga
 
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
@@ -5990,8 +6004,8 @@ contains
                   nb = lb - fb + 1
 
                   ! Get the "sb" basis function grid
-                  lgb    => bf_lgval(sb).element
-                  gridb0 => bf_grid0(sb).element
+                  lgb    = bf_lgval(sb).element
+                  gridb0 = bf_grid0(sb).element
 
                   ! How many points in common?
                   n_keep = count(lga+lgb>=cutoff)
@@ -6005,12 +6019,12 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  DD => D(fa:la,fb:lb)
+                  DD = D(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      Dab = fac*DD(1,1)
                      do p = 1,n_keep
                         n = sp(p)
@@ -6024,9 +6038,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            Dab = fac*DD(a,b)
                            do p = 1,n_keep
                               n = sp(p)
@@ -6062,25 +6076,26 @@ contains
    ! skipping as points as possible. This routine will probably have
    ! to be batched over *spatially localised* points to reduce memory
    ! requirements.
+      self :: IN
       N0 :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
-      D  :: MAT3{REAL}, target, IN
+      D  :: MAT3{REAL}, IN
 
    ENSURE(N0.dim1==pt.dim1,"N0 and pt: incompatible sizes")
    ENSURE(N0.dim2== D.dim3,"N0 and D: incompatible sizes")
    ENSURE(3     ==pt.dim2,"pt: wrong dim2")
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
-      bf_lgval :: VEC{VEC_{INT}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      bf_lgval :: VEC{VEC_{INT}}@
+      bf_grid0 :: VEC{MAT_{REAL}}@
       ra :: VEC{REAL}(3)
-      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
-      overlapping_atom, lga,lgb, sp :: VEC{INT}*
-      grida0,gridb0 :: MAT{REAL}*
-      DD :: MAT3{REAL}*
+      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
+      overlapping_atom, lga,lgb, sp :: VEC{INT}@
+      grida0,gridb0 :: MAT{REAL}@
+      DD :: MAT3{REAL}@
       sha :: SHELL1
       Dab, fac,val, ga,gb :: REAL
       atom_o,cutoff,n_pt,n_keep, bs, p,n, q,n_dens :: INT
@@ -6121,7 +6136,7 @@ contains
          ra = .atom(atom_a).position
 
          ! Loop overlapping atom_b
-         overlapping_atom => .overlapping_atoms_for_atom(atom_a).element
+         overlapping_atom = .overlapping_atoms_for_atom(atom_a).element
          do atom_o = 1,overlapping_atom.dim
 
             atom_b = overlapping_atom(atom_o)
@@ -6148,15 +6163,8 @@ contains
                sha.make_grid(grida0,n_pt,xa,ya,za,a2,lga)
 
                ! Save the values
-               bf_grid0(sa).element => grida0
-               bf_lgval(sa).element => lga
-
-             ! if (.BASE:debugging("make_rho_grid:sa")) then
-             !    stdout.text("grid0:")
-             !    stdout.put(grida0,auto_width=TRUE)
-             !    stdout.text("lga:")
-             !    stdout.put(lga,by_column=TRUE,auto_width=TRUE)
-             ! end
+               bf_grid0(sa).element = grida0
+               bf_lgval(sa).element = lga
 
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
@@ -6166,8 +6174,8 @@ contains
                   nb = lb - fb + 1
 
                   ! Get the "sb" basis function grid
-                  gridb0 => bf_grid0(sb).element
-                  lgb    => bf_lgval(sb).element
+                  gridb0 = bf_grid0(sb).element
+                  lgb    = bf_lgval(sb).element
 
                   ! How many points in common?
                   n_keep = count((lga+lgb)>=cutoff)
@@ -6176,23 +6184,17 @@ contains
                   ! Make significant points
                   sp(1:n_keep) = pack([(n,n=1,n_pt)],mask=(lga+lgb)>=cutoff)
 
-                ! if (.BASE:debugging("make_rho_grid:sb")) then
-                !    stdout.show("n_keep =",n_keep)
-                !    stdout.text("sp:")
-                !    stdout.put(sp(1:n_keep),by_column=TRUE,auto_width=TRUE)
-                ! end
-
                   ! Factor
                   fac = TWO
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  DD => D(fa:la,fb:lb,:)
+                  DD = D(fa:la,fb:lb,:)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      do q = 1,n_dens
                         Dab = fac*DD(1,1,q)
                         do p = 1,n_keep
@@ -6208,9 +6210,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            do q = 1,n_dens
                               Dab = fac*DD(a,b,q)
                               do p = 1,n_keep
@@ -6240,11 +6242,6 @@ contains
       xa.destroy
       bf_grid0.destroy
       bf_lgval.destroy
-
-      if (.BASE:debugging("make_rho_grid:n0")) then
-         stdout.text("N0:")
-         stdout.put(N0,auto_width=TRUE)
-      end
 
    end
 
@@ -6291,17 +6288,17 @@ contains
       self :: IN
       N0 :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-      D  :: MAT{REAL}, target, IN
+      D  :: MAT{REAL}, IN
 
    ENSURE(N0.dim==pt.dim1,"N0 and pt: incompatible sizes")
    ENSURE(3     ==pt.dim2,"pt: wrong dim2")
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated,"no becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
-      bf_lgval :: VEC{VEC_{INT}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      bf_lgval :: VEC{VEC_{INT}}@
+      bf_grid0 :: VEC{MAT_{REAL}}@
       ra,rb,pc,pa,pb :: VEC{REAL}(3)
       xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
       overlapping_atom, lga,lgb, sp :: VEC{INT}*
@@ -6345,7 +6342,7 @@ contains
          ra = .atom(atom_a).position
 
          ! Loop overlapping atom_b
-         overlapping_atom => .overlapping_atoms_for_atom(atom_a).element
+         overlapping_atom = .overlapping_atoms_for_atom(atom_a).element
          do atom_o = 1,overlapping_atom.dim
 
             atom_b = overlapping_atom(atom_o)
@@ -6377,8 +6374,8 @@ contains
                sha.make_grid(grida0,n_pt,xa,ya,za,a2,lga)
 
                ! Save the values
-               bf_grid0(sa).element => grida0
-               bf_lgval(sa).element => lga
+               bf_grid0(sa).element = grida0
+               bf_lgval(sa).element = lga
 
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
@@ -6399,8 +6396,8 @@ contains
                   if (pb.norm<pc.norm) cycle
 
                   ! Get the "sb" basis function grid
-                  lgb    => bf_lgval(sb).element
-                  gridb0 => bf_grid0(sb).element
+                  lgb    = bf_lgval(sb).element
+                  gridb0 = bf_grid0(sb).element
 
                   ! How many points in common?
                   n_keep = count(lga+lgb>=cutoff)
@@ -6414,12 +6411,12 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  DD => D(fa:la,fb:lb)
+                  DD = D(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      Dab = fac*DD(1,1)
                      do p = 1,n_keep
                         n = sp(p)
@@ -6433,9 +6430,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            Dab = fac*DD(a,b)
                            do p = 1,n_keep
                               n = sp(p)
@@ -6472,41 +6469,42 @@ contains
 !  Hirshfeld grids
 !  ===============
 
-   make_Hirshfeld_rho_grid(N0,pt,wt,c,D) ::: leaky
+   make_Hirshfeld_rho_grid(N0,pt,wt,c,D) ::: leaky, PURE
    ! Make the density "N0" on the Becke grid ("pt","wt") for atom
    ! "c" given AO density matrix "D". Density "N0" weighted by the
    ! grid weights and by the Hirshfeld partition weight for atom "c".
-      N0 :: VEC{REAL}*
-      pt :: MAT{REAL}*
-      wt :: VEC{REAL}*
+      self :: IN
+      N0 :: VEC{REAL}@, OUT
+      pt :: MAT{REAL}@, OUT
+      wt :: VEC{REAL}@, OUT
       c  :: INT, IN
-      D  :: MAT{REAL}, target, IN
+      D  :: MAT{REAL}, IN
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
    ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
 
-      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
+      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
       ra :: VEC{REAL}(3)
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridb0,gridc0, DD :: MAT{REAL}*
-      sha :: SHELL1
-      bf_skip :: VEC{VEC_{BIN}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipa0,skipab, skipa,skipb :: VEC{BIN}@
+      grida0,gridb0,gridc0, DD :: MAT{REAL}@
+      bf_skip :: VEC{VEC_{BIN}}@
+      bf_grid0 :: VEC{MAT_{REAL}}@
       cutoff, Dab, fac,val, ga,gb :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa,fba, ob,fsb,lsb :: INT
       sa,fa,la,na,ba, sb,fb,lb,nb, a,b,i,j,p,n :: INT
+      sha :: SHELL1
 
       ! Get the Becke grid for atom "c"
       .becke_grid.make_grid(pt,wt,gridc0,c)
       n_pt = pt.dim1
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Make stockholder weight function "Wc" for atom "c"
       ! If using interpolatators, then overlapping_atoms
@@ -6557,7 +6555,7 @@ contains
             ba = .basis_shell_for_shell(sa)
 
             ! Set shell "sa"
-            sha = .precomputed_basis_shellpair(ba,1).a
+            sha.set(.precomputed_basis_shellpair(ba,1).a)
             sha.position = ra
 
             ! Make shell "sa" skipa list
@@ -6571,7 +6569,7 @@ contains
             end
 
             ! Assign the "sa" skipa list
-            bf_skip(sa).element => skipa
+            bf_skip(sa).element = skipa
 
             ! Make/copy the "sa" basis function grida0
             ! This must be copied since skipa could be TRUE
@@ -6588,7 +6586,7 @@ contains
             else
                sha.make_skip_grid(grida0,n_keep,xa,ya,za,a2,skipa,n_pt)
             end
-            bf_grid0(sa).element => grida0
+            bf_grid0(sa).element = grida0
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -6600,15 +6598,15 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grid0(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_grid0(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -6620,12 +6618,12 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  DD => D(fa:la,fb:lb)
+                  DD = D(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      Dab = fac*DD(1,1)
                      i = 0; j = 0
                      do n = 1,n_pt
@@ -6659,9 +6657,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            Dab = fac*DD(a,b)
                            do p = 1,n_keep
                               i = pi(p)
@@ -6684,6 +6682,9 @@ contains
 
                end ! -- loops sa,sb
             end
+
+            sha.destroy_ptr_part
+
          end       ! -- lops ca,cb
       end
 
@@ -6709,11 +6710,12 @@ contains
 
    set_up_becke_grid ::: leaky
    ! Set up the Becke grids and overlapping atoms
+      self :: INOUT
 
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom list")
 
-      if (.becke_grid.disassociated) .becke_grid.create
+      if (.becke_grid.deallocated) .becke_grid.create
 
       ! ALWAYS Set up integration grid
       ! (in case of new positions) (leaky)
@@ -6724,38 +6726,39 @@ contains
 
    end
 
-   make_rho_becke_atom_grid(N0,pt,wt,bf_skip,bf_grid0,c,D) ::: leaky
+   make_rho_becke_atom_grid(N0,pt,wt,bf_skip,bf_grid0,c,D) ::: leaky, PURE
    ! Make the density "N0" on the Becke grid ("pt","wt") for atom
    ! "c" given AO density matrix "D". Also return the "bf_skip" arrays
    ! and the "bf_grid0" array used for evaluating the rho (or other
    ! density functionals) on the grid.
-      N0 :: VEC{REAL}*
-      pt :: MAT{REAL}*
-      wt :: VEC{REAL}*
-      bf_skip :: VEC{VEC_{BIN}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      self :: IN
+      N0 :: VEC{REAL}@, OUT
+      pt :: MAT{REAL}@, OUT
+      wt :: VEC{REAL}@, OUT
+      bf_skip :: VEC{VEC_{BIN}}@, OUT
+      bf_grid0 :: VEC{MAT_{REAL}}@, OUT
       c  :: INT, IN
-      D  :: MAT{REAL}, target, IN
+      D  :: MAT{REAL}, IN
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
    ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
 
-      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
+      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
       ra :: VEC{REAL}(3)
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridb0,gridc0, DD :: MAT{REAL}*
-      sha :: SHELL1
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipa0,skipab, skipa,skipb :: VEC{BIN}@
+      grida0,gridb0,gridc0, DD :: MAT{REAL}@
       cutoff, Dab, fac,val, ga,gb :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa,fba, ob,fsb,lsb :: INT
       sa,fa,la,na,ba, sb,fb,lb,nb, a,b,i,j,p,n :: INT
+      sha :: SHELL1
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Get the Becke grid for atom "c"
       .becke_grid.make_SS_grid(pt,wt,gridc0,c,overlapping_atom)
@@ -6801,7 +6804,7 @@ contains
             ba = .basis_shell_for_shell(sa)
 
             ! Set shell "sa"
-            sha = .precomputed_basis_shellpair(ba,1).a
+            sha.set(.precomputed_basis_shellpair(ba,1).a)
             sha.position = ra
 
             ! Make shell "sa" skipa list
@@ -6815,7 +6818,7 @@ contains
             end
 
             ! Assign the "sa" skipa list
-            bf_skip(sa).element => skipa
+            bf_skip(sa).element = skipa
 
             ! Make/copy the "sa" basis function grida0
             ! This must be copied since skipa could be TRUE
@@ -6832,7 +6835,7 @@ contains
             else
                sha.make_skip_grid(grida0,n_keep,xa,ya,za,a2,skipa,n_pt)
             end
-            bf_grid0(sa).element => grida0
+            bf_grid0(sa).element = grida0
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -6844,15 +6847,15 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grid0(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_grid0(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -6864,12 +6867,12 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  DD => D(fa:la,fb:lb)
+                  DD = D(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      Dab = fac*DD(1,1)
                      i = 0; j = 0
                      do n = 1,n_pt
@@ -6901,9 +6904,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            Dab = fac*DD(a,b)
                            do p = 1,n_keep
                               i = pi(p)
@@ -6926,11 +6929,15 @@ contains
 
                end ! -- loops sa,sb
             end
+
+            sha.destroy_ptr_part
+
          end       ! -- lops ca,cb
       end
 
       ! Clean up
-      skipab.destroy; skipa0.destroy
+      skipab.destroy
+      skipa0.destroy
       a2.destroy
       za.destroy
       ya.destroy
@@ -6939,45 +6946,46 @@ contains
 
    end
 
-   make_rho_becke_atom_grid(N0,Nx,Ny,Nz,pt,wt,bf_skip,bf_grid0,bf_gridx,bf_gridy,bf_gridz,c,D) ::: leaky
+   make_rho_becke_atom_grid(N0,Nx,Ny,Nz,pt,wt,bf_skip,bf_grid0,bf_gridx,bf_gridy,bf_gridz,c,D) ::: leaky, PURE
    ! Make the density "N0" and its derivatives "Nx", "Ny", "Nz", on
    ! the Becke grid ("pt","wt") for atom "c" given AO density matrix
    ! "D". Also return the "bf_skip" array, and the basis function and
    ! basis function derivative arrays "bf_grid0", "bf_gridx",
    ! "bf_gridy", "bf_gridz" used for evaluating the density
    ! functionals on the grid.
-      N0,Nx,Ny,Nz :: VEC{REAL}*
-      pt :: MAT{REAL}*
-      wt :: VEC{REAL}*
-      bf_skip :: VEC{VEC_{BIN}}*
-      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}*
+      self :: IN
+      N0,Nx,Ny,Nz :: VEC{REAL}@, OUT
+      pt :: MAT{REAL}@, OUT
+      wt :: VEC{REAL}@, OUT
+      bf_skip :: VEC{VEC_{BIN}}@, OUT
+      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}@, OUT
       c  :: INT, IN
-      D  :: MAT{REAL}, target, IN
+      D  :: MAT{REAL}, IN
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
-      xa,ya,za,a2 :: VEC{REAL}*
-      ga0,gax,gay,gaz :: VEC{REAL}*
-      gb0,gbx,gby,gbz :: VEC{REAL}*
+      xa,ya,za,a2 :: VEC{REAL}@
+      ga0,gax,gay,gaz :: VEC{REAL}@
+      gb0,gbx,gby,gbz :: VEC{REAL}@
       ra :: VEC{REAL}(3)
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipa0,skipab, skipa,skipb :: VEC{BIN}@
       DD :: MAT{REAL}*
-      grida0,gridax,griday,gridaz :: MAT{REAL}*
-      gridb0,gridbx,gridby,gridbz :: MAT{REAL}*
-      gridc0,gridcx,gridcy,gridcz :: MAT{REAL}*
-      sha :: SHELL1
+      grida0,gridax,griday,gridaz :: MAT{REAL}@
+      gridb0,gridbx,gridby,gridbz :: MAT{REAL}@
+      gridc0,gridcx,gridcy,gridcz :: MAT{REAL}@
       cutoff, Dab, fac, ga,gb :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa,fba,offset, ob,fsb,lsb :: INT
       sa,fa,la,na,ba, sb,fb,lb,nb, a,b,i,j,p,n :: INT
+      sha :: SHELL1
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Get the Becke grid for atom "c"
       .becke_grid.make_SS_grid(pt,wt,gridc0,gridcx,gridcy,gridcz,c,overlapping_atom)
@@ -7028,7 +7036,7 @@ contains
             ba = .basis_shell_for_shell(sa)
 
             ! Set shell "sa"
-            sha = .precomputed_basis_shellpair(ba,1).a
+            sha.set(.precomputed_basis_shellpair(ba,1).a)
             sha.position = ra
 
             ! Make shell "sa" skipa list
@@ -7042,7 +7050,7 @@ contains
             end
 
             ! Assign the "sa" skipa list
-            bf_skip(sa).element => skipa
+            bf_skip(sa).element = skipa
 
             ! Make/copy the "sa" basis function grida0
             ! This must be copied since skipa could be TRUE
@@ -7066,10 +7074,10 @@ contains
             else
                sha.make_skip_nabla_grid(gridax,griday,gridaz,grida0,n_keep,xa,ya,za,a2,skipa,n_pt)
             end
-            bf_grid0(sa).element => grida0
-            bf_gridx(sa).element => gridax
-            bf_gridy(sa).element => griday
-            bf_gridz(sa).element => gridaz
+            bf_grid0(sa).element = grida0
+            bf_gridx(sa).element = gridax
+            bf_gridy(sa).element = griday
+            bf_gridz(sa).element = gridaz
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -7081,18 +7089,18 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grid0(sb).element
-                  gridbx => bf_gridx(sb).element
-                  gridby => bf_gridy(sb).element
-                  gridbz => bf_gridz(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_grid0(sb).element
+                  gridbx = bf_gridx(sb).element
+                  gridby = bf_gridy(sb).element
+                  gridbz = bf_gridz(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -7104,14 +7112,18 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  DD => D(fa:la,fb:lb)
+                  DD = D(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
-                     gax => gridax(:,1); gay => griday(:,1); gaz => gridaz(:,1)
-                     gbx => gridbx(:,1); gby => gridby(:,1); gbz => gridbz(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
+                     gax = gridax(:,1)
+                     gay = griday(:,1)
+                     gaz = gridaz(:,1)
+                     gbx = gridbx(:,1)
+                     gby = gridby(:,1)
+                     gbz = gridbz(:,1)
                      Dab = fac*DD(1,1)
                      i = 0; j = 0
                      do n = 1,n_pt
@@ -7147,11 +7159,15 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
-                        gax => gridax(:,a); gay => griday(:,a); gaz => gridaz(:,a)
+                        ga0 = grida0(:,a)
+                        gax = gridax(:,a)
+                        gay = griday(:,a)
+                        gaz = gridaz(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
-                           gbx => gridbx(:,b); gby => gridby(:,b); gbz => gridbz(:,b)
+                           gb0 = gridb0(:,b)
+                           gbx = gridbx(:,b)
+                           gby = gridby(:,b)
+                           gbz = gridbz(:,b)
                            Dab = fac*DD(a,b)
                            do p = 1,n_keep
                               i = pi(p)
@@ -7176,6 +7192,9 @@ contains
 
                end ! -- loops sa,sb
             end
+
+            sha.destroy_ptr_part
+
          end       ! -- lops ca,cb
       end
 
@@ -7193,37 +7212,38 @@ contains
 
    end
 
-   make_rho_becke_atom_grid(N0a,N0b,pt,wt,bf_skip,bf_grid0,c,Da,Db) ::: leaky
+   make_rho_becke_atom_grid(N0a,N0b,pt,wt,bf_skip,bf_grid0,c,Da,Db) ::: leaky, PURE
    ! Make the alpha and beta densities "N0a", "N0b" on the Becke grid
    ! ("pt","wt") for atom "c" given AO density matrices "Da", "Db".
    ! Also return the "bf_skip" arrays and the "bf_grid0" array used
    ! for evaluating the density (or density functionals) on the grid.
-      N0a,N0b :: VEC{REAL}*
-      pt :: MAT{REAL}*
-      wt :: VEC{REAL}*
-      bf_skip :: VEC{VEC_{BIN}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      self :: IN
+      N0a,N0b :: VEC{REAL}@, OUT
+      pt :: MAT{REAL}@, OUT
+      wt :: VEC{REAL}@, OUT
+      bf_skip :: VEC{VEC_{BIN}}@, OUT
+      bf_grid0 :: VEC{MAT_{REAL}}@, OUT
       c  :: INT, IN
-      Da,Db  :: MAT{REAL}, target, IN
+      Da,Db  :: MAT{REAL}, IN
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
-      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
+      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
       ra :: VEC{REAL}(3)
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridb0,gridc0, DDa,DDb :: MAT{REAL}*
-      sha :: SHELL1
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipa0,skipab, skipa,skipb :: VEC{BIN}@
+      grida0,gridb0,gridc0, DDa,DDb :: MAT{REAL}@
       cutoff, Da_ab,Db_ab, fac, ga,gb,gab :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa,fba, ob,fsb,lsb :: INT
       sa,fa,la,na,ba, sb,fb,lb,nb, a,b,i,j,p,n :: INT
+      sha :: SHELL1
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Get the Becke grid for atom "c"
       .becke_grid.make_SS_grid(pt,wt,gridc0,c,overlapping_atom)
@@ -7269,7 +7289,7 @@ contains
             ba = .basis_shell_for_shell(sa)
 
             ! Set shell "sa"
-            sha = .precomputed_basis_shellpair(ba,1).a
+            sha.set(.precomputed_basis_shellpair(ba,1).a)
             sha.position = ra
 
             ! Make shell "sa" skipa list
@@ -7283,7 +7303,7 @@ contains
             end
 
             ! Assign the "sa" skipa list
-            bf_skip(sa).element => skipa
+            bf_skip(sa).element = skipa
 
             ! Make/copy the "sa" basis function grida0
             ! This must be copied since skipa could be TRUE
@@ -7300,7 +7320,7 @@ contains
             else
                sha.make_skip_grid(grida0,n_keep,xa,ya,za,a2,skipa,n_pt)
             end
-            bf_grid0(sa).element => grida0
+            bf_grid0(sa).element = grida0
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -7312,15 +7332,15 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grid0(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_grid0(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -7332,13 +7352,13 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  DDa => Da(fa:la,fb:lb)
-                  DDb => Db(fa:la,fb:lb)
+                  DDa = Da(fa:la,fb:lb)
+                  DDb = Db(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      Da_ab = fac*DDa(1,1)
                      Db_ab = fac*DDb(1,1)
                      i = 0; j = 0
@@ -7374,9 +7394,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            Da_ab = fac*DDa(a,b)
                            Db_ab = fac*DDb(a,b)
                            do p = 1,n_keep
@@ -7401,11 +7421,15 @@ contains
 
                end ! -- loops sa,sb
             end
+
+            sha.destroy_ptr_part
+
          end       ! -- lops ca,cb
       end
 
       ! Clean up
-      skipab.destroy; skipa0.destroy
+      skipab.destroy
+      skipa0.destroy
       a2.destroy
       za.destroy
       ya.destroy
@@ -7414,46 +7438,47 @@ contains
 
    end
 
-   make_rho_becke_atom_grid(N0a,N0b,Nxa,Nya,Nza,Nxb,Nyb,Nzb,pt,wt,bf_skip,bf_gr0,bf_grx,bf_gry,bf_grz,c,Da,Db) ::: leaky
+   make_rho_becke_atom_grid(N0a,N0b,Nxa,Nya,Nza,Nxb,Nyb,Nzb,pt,wt,bf_skip,bf_gr0,bf_grx,bf_gry,bf_grz,c,Da,Db) ::: leaky, PURE
    ! Make the densities "N0a", "N0b" and their alpha/beta derivatives
    ! "Nxa", "Nya", "Nza", "Nxb", "Nyb", "Nzb", on the Becke grid
    ! ("pt","wt") for atom "c" given AO density matrices "Da", "Db".
    ! Also return the "bf_skip" array, and the basis function and basis
    ! function derivative arrays "bf_gr0", "bf_grx", "bf_gry",
    ! "bf_grz" for evaluating the density functionals on the grid.
-      N0a,N0b :: VEC{REAL}*
-      Nxa,Nya,Nza :: VEC{REAL}*
-      Nxb,Nyb,Nzb :: VEC{REAL}*
-      pt :: MAT{REAL}*
-      wt :: VEC{REAL}*
-      bf_skip :: VEC{VEC_{BIN}}*
-      bf_gr0,bf_grx,bf_gry,bf_grz :: VEC{MAT_{REAL}}*
+      self :: IN
+      N0a,N0b :: VEC{REAL}@, OUT
+      Nxa,Nya,Nza :: VEC{REAL}@, OUT
+      Nxb,Nyb,Nzb :: VEC{REAL}@, OUT
+      pt :: MAT{REAL}@, OUT
+      wt :: VEC{REAL}@, OUT
+      bf_skip :: VEC{VEC_{BIN}}@, OUT
+      bf_gr0,bf_grx,bf_gry,bf_grz :: VEC{MAT_{REAL}}@, OUT
       c  :: INT, IN
-      Da,Db :: MAT{REAL}, target, IN
+      Da,Db :: MAT{REAL}, IN
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
-      xa,ya,za,a2 :: VEC{REAL}*
-      ga0,gax,gay,gaz :: VEC{REAL}*
-      gb0,gbx,gby,gbz :: VEC{REAL}*
+      xa,ya,za,a2 :: VEC{REAL}@
+      ga0,gax,gay,gaz :: VEC{REAL}@
+      gb0,gbx,gby,gbz :: VEC{REAL}@
       ra :: VEC{REAL}(3)
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipa0,skipab, skipa,skipb :: VEC{BIN}@
       DDa,DDb :: MAT{REAL}*
-      grida0,gridax,griday,gridaz :: MAT{REAL}*
-      gridb0,gridbx,gridby,gridbz :: MAT{REAL}*
-      gridc0,gridcx,gridcy,gridcz :: MAT{REAL}*
-      sha :: SHELL1
+      grida0,gridax,griday,gridaz :: MAT{REAL}@
+      gridb0,gridbx,gridby,gridbz :: MAT{REAL}@
+      gridc0,gridcx,gridcy,gridcz :: MAT{REAL}@
       cutoff, Da_ab,Db_ab, fac, ga,gb,gab,gx,gy,gz :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa,fba,offset, ob,fsb,lsb :: INT
       sa,fa,la,na,ba, sb,fb,lb,nb, a,b,i,j,p,n :: INT
+      sha :: SHELL1
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Get the Becke grid for atom "c"
       .becke_grid.make_SS_grid(pt,wt,gridc0,gridcx,gridcy,gridcz,c,overlapping_atom)
@@ -7504,7 +7529,7 @@ contains
             ba = .basis_shell_for_shell(sa)
 
             ! Set shell "sa"
-            sha = .precomputed_basis_shellpair(ba,1).a
+            sha.set(.precomputed_basis_shellpair(ba,1).a)
             sha.position = ra
 
             ! Make shell "sa" skipa list
@@ -7518,7 +7543,7 @@ contains
             end
 
             ! Assign the "sa" skipa list
-            bf_skip(sa).element => skipa
+            bf_skip(sa).element = skipa
 
             ! Make/copy the "sa" basis function grida0
             ! This must be copied since skipa could be TRUE
@@ -7542,10 +7567,10 @@ contains
             else
                sha.make_skip_nabla_grid(gridax,griday,gridaz,grida0,n_keep,xa,ya,za,a2,skipa,n_pt)
             end
-            bf_gr0(sa).element => grida0
-            bf_grx(sa).element => gridax
-            bf_gry(sa).element => griday
-            bf_grz(sa).element => gridaz
+            bf_gr0(sa).element = grida0
+            bf_grx(sa).element = gridax
+            bf_gry(sa).element = griday
+            bf_grz(sa).element = gridaz
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -7557,18 +7582,18 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_gr0(sb).element
-                  gridbx => bf_grx(sb).element
-                  gridby => bf_gry(sb).element
-                  gridbz => bf_grz(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_gr0(sb).element
+                  gridbx = bf_grx(sb).element
+                  gridby = bf_gry(sb).element
+                  gridbz = bf_grz(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -7580,15 +7605,19 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  DDa => Da(fa:la,fb:lb)
-                  DDb => Db(fa:la,fb:lb)
+                  DDa = Da(fa:la,fb:lb)
+                  DDb = Db(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
-                     gax => gridax(:,1); gay => griday(:,1); gaz => gridaz(:,1)
-                     gbx => gridbx(:,1); gby => gridby(:,1); gbz => gridbz(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
+                     gax = gridax(:,1)
+                     gay = griday(:,1)
+                     gaz = gridaz(:,1)
+                     gbx = gridbx(:,1)
+                     gby = gridby(:,1)
+                     gbz = gridbz(:,1)
                      Da_ab = fac*DDa(1,1)
                      Db_ab = fac*DDb(1,1)
                      i = 0; j = 0
@@ -7631,11 +7660,15 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
-                        gax => gridax(:,a); gay => griday(:,a); gaz => gridaz(:,a)
+                        ga0 = grida0(:,a)
+                        gax = gridax(:,a)
+                        gay = griday(:,a)
+                        gaz = gridaz(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
-                           gbx => gridbx(:,b); gby => gridby(:,b); gbz => gridbz(:,b)
+                           gb0 = gridb0(:,b)
+                           gbx = gridbx(:,b)
+                           gby = gridby(:,b)
+                           gbz = gridbz(:,b)
                            Da_ab = fac*DDa(a,b)
                            Db_ab = fac*DDb(a,b)
                            do p = 1,n_keep
@@ -7669,6 +7702,9 @@ contains
 
                end ! -- loops sa,sb
             end
+
+            sha.destroy_ptr_part
+
          end       ! -- lops ca,cb
       end
 
@@ -7855,9 +7891,9 @@ contains
    ENSURE(.plot_grid.associated, "no grid")
    ENSURE(.atom.associated, "no atoms")
 
-      pos :: MAT{REAL}*
-      valid :: VEC{INT}*
-      bonds :: VEC{VEC_{INT}}*
+      pos :: MAT{REAL}@
+      valid :: VEC{INT}@
+      bonds :: VEC{VEC_{INT}}@
       arch :: ARCHIVE
       title,fmt :: STR
       fac,z_range :: REAL
@@ -7920,9 +7956,6 @@ contains
 
          if (.plot_grid.n_z==1) then
             arch.set(title,name,format="mathematica")
-            nullify(pos)
-            nullify(valid)
-            nullify(bonds)
             z_range = ONE
             .plot_grid.get_rotoranged_atom_positions(pos,z_range,valid)
             .atom(valid).make_connection_table(bonds)
@@ -7995,9 +8028,6 @@ contains
 
             if (.plot_grid.n_z==1) then
                arch.set(title,name,format="mathematica")
-               nullify(pos)
-               nullify(valid)
-               nullify(bonds)
                z_range = ONE
                .plot_grid.get_rotoranged_atom_positions(pos,z_range,valid)
                .atom(valid).make_connection_table(bonds)
@@ -8596,7 +8626,7 @@ contains
       self :: INOUT
       density_grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
-      bond_density_atom :: VEC{INT}*
+      bond_density_atom :: VEC{INT}, IN
       def_density_grid :: VEC{REAL}, IN
 
    ENSURE(.atom.associated,"no atoms")
@@ -8696,98 +8726,6 @@ contains
       rho.destroy
 
    end
-
-!   make_def_bond_density_grid(density_grid,pt,bond_density_atom,def_density_grid)
-!   ! Make the bond deformation "density_grid" for the points "pt".
-!   ! If there are two atoms in .plot_grid.bond_atom then the whole
-!   ! bond density is made; if there are three then the third atom
-!     self :: IN
-!     density_grid :: VEC{REAL}, OUT
-!     pt :: MAT{REAL}, IN
-!     bond_density_atom :: VEC{INT}*
-!     def_density_grid :: VEC{REAL}, IN
-!
-!   ENSURE(.atom.associated,"no atoms")
-!
-!     n_atoms,n_pt,a,b,c,n :: INT
-!     x,y,z :: REAL
-!     r_ab :: VEC{REAL}(3)
-!     rho_pr,rho_a,rho_b :: VEC{REAL}*
-!
-!     ! No of bond density atoms
-!     n_atoms = bond_density_atom.dim
-!
-!     ! No of grid points
-!     n_pt = density_grid.dim
-!
-!     ! Create space for pair density
-!     rho_pr.create(n_pt)
-!
-!     ! Get the atom pair density for whole molecule
-!     rho_pr = ZERO
-!     do a = 2,.n_atom
-!     do b = 1,a-1
-!        if (NOT .atom.bonded(a,b)) cycle
-!        r_ab = HALF*(.atom(a).position + .atom(b).position)
-!        do n = 1,n_pt
-!           x  = pt(n,1) - r_ab(1)
-!           y  = pt(n,2) - r_ab(2)
-!           z  = pt(n,3) - r_ab(3)
-!           rho_pr(n) = rho_pr(n) + exp(-(x*x + y*y + z*z))
-!        end
-!     end
-!     end
-!
-!     ! Indices of bonded pair
-!     a = bond_density_atom(1)
-!     b = bond_density_atom(2)
-!
-!     ! Make the deformation bond pair density
-!     r_ab = HALF*(.atom(a).position + .atom(b).position)
-!     do n = 1,n_pt
-!        if (rho_pr(n)>epsilon(ONE)) then
-!           x  = pt(n,1) - r_ab(1)
-!           y  = pt(n,2) - r_ab(2)
-!           z  = pt(n,3) - r_ab(3)
-!           density_grid(n) = def_density_grid(n)*exp(-(x*x+y*y+z*z))/rho_pr(n)
-!        else
-!           density_grid(n) = ZERO
-!        end
-!     end
-!
-!     ! Make the atom contribution === if required
-!     if (n_atoms==3) then
-!
-!        rho_a.create(n_pt)
-!        rho_b.create(n_pt)
-!
-!        .atom(a).make_density_grid(rho_a,pt)
-!        .atom(b).make_density_grid(rho_b,pt)
-!
-!        rho_pr = rho_a + rho_b
-!
-!        c = bond_density_atom(3)
-!        if (c==a) then
-!           where (rho_pr>epsilon(ONE)); density_grid = (rho_a/rho_pr)*density_grid
-!           elsewhere;                   density_grid = ZERO
-!           end
-!        else if (c==b) then
-!           where (rho_pr>epsilon(ONE)); density_grid = (rho_b/rho_pr)*density_grid
-!           elsewhere;                   density_grid = ZERO
-!           end
-!        else
-!           DIE("atom is not one of those in the bond")
-!        end
-!
-!        rho_b.destroy
-!        rho_a.destroy
-!
-!     end
-!
-!     ! Clean up
-!     rho_pr.destroy
-!
-!   end
 
    deformation_bond_density_grid(g,pt) ::: selfless
    ! Work out the deformation bond density grid "g" for the points "pt".
@@ -11077,6 +11015,7 @@ contains
    ! Make the multipole ESP grid (off diagonal) using the exact for
    ! the one center terms potential "grid" on a series of grid points
    ! "pt" using AO density matrix "P"
+      self :: INOUT
       grid :: VEC{REAL}, INOUT
       pt :: MAT{REAL}, IN
       P :: MAT{REAL}, IN
@@ -11084,43 +11023,17 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      VD :: VEC{MAT3_{REAL}}*
+      VD :: VEC{MAT3_{REAL}}@
       Vab :: MAT{REAL}@
       Pba :: MAT{REAL}@
       P_max,tol, Va,Vb :: REAL
       n_pt,q,a,b,fa,fb,la,lb,na,nb,k :: INT
       atom_a,atom_b :: INT
       sh :: SHELL2
-    ! pole0 :: VEC{REAL}*
-    ! pole2,pole4,pole8 :: MAT{REAL}*
-    ! V :: VEC{REAL}(4)
-    ! T :: T_TENSOR
 
       n_pt = pt.dim1
 
       grid = ZERO
-
-      ! Make atomic multipoles
-    ! pole0.create(.n_atom)
-    ! pole2.create(.n_atom, 3)
-    ! pole4.create(.n_atom, 6)
-    ! pole8.create(.n_atom, 10)
-
-    ! .BASE:make_atomic_multipoles(pole0,pole2,pole4,pole8,oc=TRUE)
-
-    ! ! Make mutipole potential
-    ! do q = 1, .n_atom
-    ! do k = 1, n_pt
-    !    T.create_fast(.atom(q).position, pt(k,:))
-    !    V = T.electrostatic_potential(pole0(q),pole2(q,:),pole4(q,:),pole8(q,:))
-    !    grid(k) = grid(k) - sum(V)
-    ! end do
-    ! end do
-
-    ! pole8.destroy
-    ! pole4.destroy
-    ! pole2.destroy
-    ! pole0.destroy
 
       ! Diagonal blocks for schwarz test
       .:make_diagonal_block_V_ints(VD,pt)
@@ -11178,7 +11091,8 @@ contains
    ! Make "V" the diagonal block nuclear attraction integrals 
    ! (a| |r_k - r|^-1 |a) over a shell q, a in q, for each 
    ! point r_k = "pt(k,1:3)".
-      V :: VEC{MAT3_{REAL}}*, OUT
+      self :: INOUT
+      V :: VEC{MAT3_{REAL}}@, OUT
       pt :: MAT{REAL}, IN
 
    ENSURE(3==pt.dim2,"wrong dim2, pt")
@@ -11463,9 +11377,9 @@ contains
    ENSURE(.atom_group.associated,"no atom group information")
    ENSURE(.isosurface.associated,"no isosurface")
 
-      list :: VEC{VEC_{INT}}*
-      ESP :: VEC{REAL}*
-      ptg :: MAT{REAL}*
+      list :: VEC{VEC_{INT}}@
+      ESP :: VEC{REAL}@
+      ptg :: MAT{REAL}@
       mol :: MOLECULE*
       g :: INT
 
@@ -11478,28 +11392,25 @@ contains
       ! Loop over non-central molecules
       do g = 2,.atom_group.dim
 
-      ! DEBUG !!!!!!!!!!!!!!!!!
-      stdout.show("length of list "//trim(g.to_str),size(list(g).element))
-
          if (list(g).element.dim==0) cycle
 
          ! Get the fragment g patch
-         ptg.create_copy(pt(list(g).element,:))
+         ptg = pt(list(g).element,:)
 
          ! Make ESP on patch g for molecule m
-         allocate(ESP(list(g).element.dim))
+         ESP.create(list(g).element.dim)
          mol => .atom_group(g).mol
          mol.:make_electric_potential_grid(ESP,ptg)
          grid(list(g)[:]) = ESP
 
          ! Clean
-         deallocate(ESP)
+         ESP.destroy
          ptg.destroy
 
       end
 
       ! Central molecule ESP; use all points pt
-      allocate(ESP(pt.dim))
+      ESP.create(pt.dim)
       mol => .atom_group(1).mol
       mol.:make_electric_potential_grid(ESP,pt)
 
@@ -11507,7 +11418,7 @@ contains
       grid = grid*ESP
 
       ! Clean
-      deallocate(ESP)
+      ESP.destroy
       list.destroy
 
    end
@@ -11637,9 +11548,9 @@ contains
    ENSURE(.atom_group.associated,"no atom group information")
    ENSURE(.isosurface.associated,"no isosurface")
 
-      list :: VEC{VEC_{INT}}*
-      E1,E2 :: MAT{REAL}*
-      ptg :: MAT{REAL}*
+      list :: VEC{VEC_{INT}}@
+      E1,E2 :: MAT{REAL}@
+      ptg :: MAT{REAL}@
       mol :: MOLECULE*
       g,n_pt :: INT
 
@@ -11649,29 +11560,29 @@ contains
       .isosurface.make_pts_list_for_group(list)
 
       ! E fields for surrounding molecules
-      allocate(E2(n_pt,3))
+      E2.create(n_pt,3)
       E2 = ZERO
 
       ! Loop over non-central molecules
       do g = 2,.atom_group.dim
 
          ! Get the fragment g patch
-         ptg.create_copy(pt(:,list(g).element))
+         ptg = pt(:,list(g).element)
 
          ! Make ESP on patch g for molecule m
-         allocate(E1(list(g).element.dim,3))
+         E1.create(list(g).element.dim,3)
          mol => .atom_group(g).mol
          mol.:make_E_field_grid(E1,ptg)
          E2(list(g)[:],:) = E1
 
          ! Clean
-         deallocate(E1)
+         E1.destroy
          ptg.destroy
 
       end
 
       ! Central molecule E-field; use all points pt
-      allocate(E1(n_pt,3))
+      E1.create(n_pt,3)
       mol => .atom_group(1).mol
       mol.:make_E_field_grid(E1,pt)
 
@@ -11679,8 +11590,8 @@ contains
       grid = E1(:,1)*E2(:,1) + E1(:,2)*E2(:,2) + E1(:,3)*E2(:,3)
 
       ! Clean
-      deallocate(E1)
-      deallocate(E2)
+      E1.destroy
+      E2.destroy
       list.destroy
 
    end
@@ -12350,15 +12261,15 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
 
-      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}*
+      xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
       ra :: VEC{REAL}(3)
-      pi,pj,pn :: VEC{INT}*
-      skipa0,skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridb0 :: MAT{REAL}*
+      pi,pj,pn :: VEC{INT}@
+      skipa0,skipab, skipa,skipb :: VEC{BIN}@
+      grida0,gridb0 :: MAT{REAL}@
       DD :: MAT{REAL}@
       sha :: SHELL1*
-      bf_skip :: VEC{VEC_{BIN}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      bf_skip :: VEC{VEC_{BIN}}@
+      bf_grid0 :: VEC{MAT_{REAL}}@
       cutoff, Dab, fac,val, ga,gb :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
       sa,fa,la,na,ba, sb,fb,lb,nb, a,b,i,j,p,n :: INT
@@ -12417,13 +12328,13 @@ contains
             end
 
             ! Assign the "sa" skipa list
-            bf_skip(sa).element => skipa
+            bf_skip(sa).element = skipa
 
             ! Make/copy the "sa" basis function grida0
             ! This must be copied since skipa could be TRUE
             grida0.create(n_keep,na)
             sha.make_skip_grid(grida0,n_keep,xa,ya,za,a2,skipa,n_pt)
-            bf_grid0(sa).element => grida0
+            bf_grid0(sa).element = grida0
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -12435,15 +12346,15 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grid0(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_grid0(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -12459,8 +12370,8 @@ contains
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      Dab = fac*DD(1,1)
                      i = 0
                      j = 0
@@ -12497,9 +12408,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            Dab = fac*DD(a,b)
                            do p = 1,n_keep
                               i = pi(p)

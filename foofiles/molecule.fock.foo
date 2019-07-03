@@ -40,8 +40,9 @@ contains
    ! NOTE: If you set core=TRUE then for ROHF, both types of core
    !       matrix should exist. See initialize_scf. If possible, use
    !       the SCF:make_fock_matrix routine.
+      self :: INOUT
       P,F :: OPMATRIX*
-      core,r12,xc :: BIN, optional
+      core,r12,xc :: BIN, optional, IN
 
    ENSURE(.scfdata.associated,"no scfdata")
    ENSURE(P.associated,"no density matrix")
@@ -58,53 +59,42 @@ contains
 
       select case (.scfdata.scf_kind)
 
-        case ("rhf","xray_rhf","embedded_rhf")
+      case ("rhf","xray_rhf","embedded_rhf")
+         .:make_r_fock(P,F,direct,core,r12)
 
-           .:make_r_fock(P,F,direct,core,r12)
+      case ("rks","xray_rks")
+         .:make_r_KS_fock(P,F,direct,core,r12,xc)
 
-        case ("rks","xray_rks")
+      case ("uks","xray_uks","pnd_uks","xray_pnd_uks")
+         .:make_u_KS_fock(P,F,core,r12,xc)
 
-           .:make_r_KS_fock(P,F,direct,core,r12,xc)
+      case ("rohf")
+         .:make_ro_fock(P,F,direct,core,r12)
 
-        case ("uks","xray_uks","pnd_uks","xray_pnd_uks")
+      case ("uhf","xray_uhf","pnd_uhf","xray_pnd_uhf")
+         .:make_u_fock(P,F,direct,core,r12)
 
-           .:make_u_KS_fock(P,F,core,r12,xc)
+      case ("gchf","xray_gchf")
+         .:make_gc_fock(P,F,direct,core,r12)
+         .:add_gc_so_fock(P,F)
 
-        case ("rohf")
-
-           .:make_ro_fock(P,F,direct,core,r12)
-
-        case ("uhf","xray_uhf","pnd_uhf","xray_pnd_uhf")
-
-           .:make_u_fock(P,F,direct,core,r12)
-
-        case ("gchf","xray_gchf")
-
-           .:make_gc_fock(P,F,direct,core,r12)
-           .:add_gc_so_fock(P,F)
-
-        case ("ghf", "no_ghf")
-           
-           .:make_g_fock(P,F,core,r12)
-        
-        case default
-
-           DIE("unknown SCF kind, "//trim(.scfdata.scf_kind))
+      case ("ghf", "no_ghf")
+         .:make_g_fock(P,F,core,r12)
+      
+      case default
+         DIE("unknown SCF kind, "//trim(.scfdata.scf_kind))
 
       end
 
    end
 
-   add_core_hamiltonian(F)
+   add_core_hamiltonian(F) ::: PURE
    ! Add the core hamiltonain to "F"
-      F :: OPMATRIX
-
-      .BASE:put_debug(F,"add_core_hamiltonian: F, before")
+      self :: IN
+      F :: OPMATRIX, INOUT
 
       ! Add
       F.plus(.core_matrix)
-
-      .BASE:put_debug(F,"add_core_hamiltonian: F, after")
 
    end
 
@@ -113,7 +103,8 @@ contains
    ! If present and TRUE , "direct" means calculate integrals on the fly
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
-      direct,core,r12 :: BIN, optional
+      self :: INOUT
+      direct,core,r12 :: BIN, optional, IN
       P,F :: OPMATRIX*
 
    ENSURE(P.associated,"no density matrix")
@@ -188,7 +179,8 @@ contains
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
    ! If present and FALSE, "xc"  removes the exchange correlation part
-      direct,core,r12,xc :: BIN, optional
+      self :: INOUT
+      direct,core,r12,xc :: BIN, optional, IN
       P,F :: OPMATRIX*
 
    ENSURE(P.associated,"no density matrix")
@@ -275,8 +267,9 @@ contains
    ! If present and TRUE , "direct" means calculate integrals on the fly
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
+      self :: INOUT
       P,F :: OPMATRIX*
-      direct,core,r12 :: BIN, optional
+      direct,core,r12 :: BIN, optional, IN
 
    ENSURE(P.associated,"no density matrix")
    ENSURE(F.associated,"no fock matrix")
@@ -335,7 +328,8 @@ contains
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
    ! If present and FALSE, "xc"   removes the exchange correlation
-      core,r12,xc :: BIN, optional
+      self :: INOUT
+      core,r12,xc :: BIN, optional, IN
       P,F :: OPMATRIX*
 
    ENSURE(P.associated,"no density matrix")
@@ -401,8 +395,9 @@ contains
    ! If present and TRUE , "direct" means calculate integrals on the fly
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
+      self :: INOUT
       F,P :: OPMATRIX*
-      direct,core,r12 :: BIN, optional
+      direct,core,r12 :: BIN, optional, IN
 
       Fr,Fa,Fb,W :: MAT{REAL}*
 
@@ -514,7 +509,8 @@ contains
    ! If present and TRUE , "direct" means calculate integrals on the fly
    ! If present and FALSE, "core" removes the core matrix contribution
    ! If present and FALSE, "r12"  removes the two electron contribution
-      direct,core,r12 :: BIN, optional
+      self :: INOUT
+      direct,core,r12 :: BIN, optional, IN
       P,F :: OPMATRIX*
 
    ENSURE(P.associated,"no density matrix")
@@ -586,8 +582,9 @@ contains
    add_gc_so_fock(P,F,direct) ::: leaky
    ! Make the general complex two electron spin orbit contribution to the Fock
    ! matrix.
+      self :: INOUT
       P,F :: OPMATRIX*
-      direct :: BIN, optional
+      direct :: BIN, optional, IN
 
    ENSURE(P.associated,"no density matrix")
    ENSURE(F.associated,"no fock matrix")
@@ -691,6 +688,7 @@ contains
    make_r_JK_direct(J,K,P)
    ! Make the real coulomb matrix "J" and exchange matrix "K" matrix from a
    ! symmetric density matrix "P" directly.
+      self :: INOUT
       J,K :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
@@ -737,7 +735,7 @@ contains
 
             cd_same = atom_c==atom_d
 
-            skip = ::schwarz_inequality_test(cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
+            ::schwarz_inequality_test(skip,cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
             if (skip) cycle
 
             factor = ONE
@@ -816,13 +814,14 @@ contains
    ! Make the restricted real coulomb matrix "J" from a symmetric
    ! density matrix "P" directly. This uses the J matrix engine, but
    ! it can be easily disabled.
+      self :: INOUT
       J,K :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
    ENSURE(NOT .use_spherical_basis,"not implemented")
    ENSURE(.precomputed_basis_shellpair.associated,"no precomputed shell pair information")
 
-      PP,JJ :: VEC{VEC_{REAL}}*
+      PP,JJ :: VEC{VEC_{REAL}}@, target
       max_P,Jab,Jcd,Pab,Pcd :: VEC{REAL}*
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld :: INT
@@ -958,6 +957,7 @@ contains
    make_r_J_direct(J,P)
    ! Make the real coulomb matrix "J" matrix from a
    ! symmetric density matrix "P" directly.
+      self :: INOUT
       J :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
@@ -1003,7 +1003,7 @@ contains
 
             cd_same = atom_c==atom_d
 
-            skip = ::schwarz_inequality_test(cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
+            ::schwarz_inequality_test(skip,cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
             if (skip) cycle
 
             factor = ONE
@@ -1093,7 +1093,7 @@ contains
    ENSURE(NOT .use_spherical_basis,"not implemented")
    ENSURE(.precomputed_basis_shellpair.associated,"no precomputed shell pair information")
 
-      PP,JJ :: VEC{VEC_{REAL}}*
+      PP,JJ :: VEC{VEC_{REAL}}@, target
       max_P,Jab,Jcd,Pab,Pcd :: VEC{REAL}*
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld :: INT
@@ -1204,10 +1204,11 @@ contains
    make_r_K_direct(K,P)
    ! Make the real exchange matrix "K" from a symmetric density matrix "P"
    ! directly.
+      self :: INOUT
       K :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
-      I,max_P :: VEC{REAL}*
+      I,max_P :: VEC{REAL}@
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld,na,nb,nc,nd :: INT
       atom_a,atom_b,atom_c,atom_d,a,b,c,d,abcd :: INT
@@ -1319,6 +1320,7 @@ contains
    make_r_JK_disk(J,K,P)
    ! Make the real coulomb matrix "J" and exchange matrix "K" matrix from a
    ! symmetric density matrix "P" from disk integral archive "eri_integrals"
+      self :: IN
       J,K :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
@@ -1395,6 +1397,7 @@ contains
    make_r_J_disk(J,P)
    ! Make the real coulomb matrix "J" from a
    ! symmetric density matrix "P" from disk integral archive "eri_integrals"
+      self :: IN
       J :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
@@ -1461,6 +1464,7 @@ contains
    make_r_K_disk(K,P)
    ! Make the real exchange matrix "K" from a symmetric density matrix "P" from
    ! disk integral archive "eri_integrals"
+      self :: IN
       K :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
@@ -1528,6 +1532,7 @@ contains
    make_r_J_nosym(J,P)
    ! Make the only the real coulomb matrix "J" from the
    ! density matrix "P" which has no permutational symmetry.
+      self :: INOUT
       J :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
@@ -1573,7 +1578,7 @@ contains
 
             cd_same = atom_c==atom_d
 
-            skip = ::schwarz_inequality_test(cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
+            ::schwarz_inequality_test(skip,cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
             if (skip) cycle
 
             if (aa==bb) then; factor = HALF      ! coincidence factors
@@ -1640,6 +1645,7 @@ contains
    make_r_JK_nosym(J,K,P)
    ! Make the real coulomb matrix "J" and exchange matrix "K" matrix from the
    ! density matrix "P" which has no permutational symmetry.
+      self :: INOUT
       J,K :: MAT{REAL}, OUT
       P :: MAT{REAL}, IN
 
@@ -1686,7 +1692,7 @@ contains
 
             cd_same = atom_c==atom_d
 
-            skip = ::schwarz_inequality_test(cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
+            ::schwarz_inequality_test(skip,cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
             if (skip) cycle
 
             if (aa==bb) then; factor = HALF      ! coincidence factors
@@ -1762,6 +1768,7 @@ contains
    ! Make the unrestricted coulomb matrices "J" and unrestricted
    ! exchange matrix "K" matrix from density matrix "P".
    ! This does not use th JK matrix engine
+      self :: INOUT
       J,K,P :: OPMATRIX*
 
    ENSURE(J.is_associated_with_genre("unrestricted"),"unrestricted J not created")
@@ -1807,7 +1814,7 @@ contains
             cd_same = atom_c==atom_d
 
             ! (ab|cd)) < sqrt(ab|ab) * sqrt(cd|cd) test.
-            skip = ::schwarz_inequality_test(cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
+            ::schwarz_inequality_test(skip,cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
             if (skip) cycle
 
             ! Evaluate the integral coincidence factor
@@ -1893,6 +1900,7 @@ contains
    make_JK_engine(J,K,P)
    ! Make the real coulomb matrix "J" from a symmetric density matrix "P"
    ! directly. This uses the J matrix engine, but it can be easily disabled.
+      self :: INOUT
       J,K,P :: OPMATRIX*
 
    ENSURE(J.spinorbital_kind == K.spinorbital_kind, "J and K have different spinorbital kinds")
@@ -1941,6 +1949,7 @@ contains
    make_u_JK_engine(J,K,P)
    ! Make the real coulomb matrix "J" from a symmetric density matrix "P"
    ! directly. This uses the J matrix engine, but it can be easily disabled.
+      self :: INOUT
       J,K,P :: OPMATRIX*
 
    ENSURE(.precomputed_basis_shellpair.associated,"no precomputed shell pair information")
@@ -1948,7 +1957,7 @@ contains
    ENSURE(K.is_associated_with_genre("unrestricted"),"unrestricted K not created")
    ENSURE(P.is_associated_with_genre("unrestricted"),"unrestricted P not created")
 
-      PA,PB,JA,JB :: VEC{VEC_{REAL}}*
+      PA,PB,JA,JB :: VEC{VEC_{REAL}}@, target
       max_P,JAab,JBab,JAcd,JBcd,PAab,PBab,PAcd,PBcd :: VEC{REAL}*
       sh4s,sh4n :: SHELL1QUARTET
       ab,cd,aa,bb,cc,dd,fa,fb,fc,fd,la,lb,lc,ld :: INT
@@ -2093,6 +2102,7 @@ contains
    make_u_JK_disk(J,Ka,Kb,P,Pa,Pb)
    ! Make the real coulomb matrices "J" and exchange matrices "Ka" and "Kb"
    ! matrix from a symmetric density matrices "P", "Pa", and "Pb" directly.
+      self :: IN
       J,Ka,Kb :: MAT{REAL}, OUT
       P,Pa,Pb :: MAT{REAL}, IN
 
@@ -2225,7 +2235,7 @@ contains
 
             cd_same = atom_c==atom_d
 
-            skip = ::schwarz_inequality_test(cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
+            ::schwarz_inequality_test(skip,cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
             if (skip) cycle
 
             factor = ONE                             ! Evaluate the integrals
@@ -2313,6 +2323,7 @@ contains
    ! Make the general complex matrices "J" and exchange matrices
    ! "Ka", "Kb" and "Kba" from a density matrices "P", "Pa", "Pb" and "Pba"
    ! directly from the integrals.
+      self :: INOUT
       J :: MAT{REAL}, OUT
       Ka,Kb,Kba,Pa,Pb,Pba :: MAT{CPX}, OUT
       P :: MAT{REAL}, IN
@@ -2359,7 +2370,7 @@ contains
 
             cd_same = atom_c==atom_d
 
-            skip = ::schwarz_inequality_test(cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
+            ::schwarz_inequality_test(skip,cutoff,ab,cd,aa,bb,cc,dd,max_P,.max_I)
             if (skip) cycle
 
             factor = ONE                             ! Evaluate the integrals
@@ -2445,6 +2456,7 @@ contains
    make_gc_JK_disk(J,Ka,Kb,Kba,P,Pa,Pb,Pba)
    ! Make the real coulomb matrices "J" and exchange matrices "Ka" and "Kb"
    ! matrix from a symmetric density matrices "P", "Pa", and "Pb" directly.
+      self :: INOUT
       J :: MAT{REAL}, OUT
       Ka,Kb,Kba,Pa,Pb,Pba :: MAT{CPX}, OUT
       P :: MAT{REAL}, IN
@@ -2481,8 +2493,7 @@ contains
 
          .BASE:get_shell_quartet_indices(q,fa,la,fb,lb,fc,lc,fd,ld)
 
-       ! I.create(fa,la,fb,lb,fc,lc,fd,ld)
-         allocate(I(fa:la,fb:lb,fc:lc,fd:ld))
+         I.create(fa,la,fb,lb,fc,lc,fd,ld)
 
          eri_archive.Bfile.read(I)
 
@@ -2514,8 +2525,7 @@ contains
          end
          end
 
-       ! I.destroy
-         deallocate(I)
+         I.destroy
 
       end
 
@@ -2538,6 +2548,7 @@ contains
    make_gc_so_JK_direct(JS,KS,JO,KO,P)
    ! Make the general complex spin orbit Classical and Exchange matrices.
    ! Make them directly from integrals on the fly.
+      self :: INOUT
       JS,KS,JO,KO :: MAT5{CPX}, OUT
       P :: MAT4{CPX}, IN
 
@@ -2654,6 +2665,7 @@ contains
    make_gc_so_JK_disk(JS,KS,JO,KO,P,component)
    ! Make the general complex spin orbit Classical and Exchange matrices
    ! for a particular "component", either "x", "y" or "z".
+      self :: INOUT
       JS,KS,JO,KO :: MAT4{CPX}, OUT
       P :: MAT4{CPX}, IN
       component :: STR(len=1), IN
@@ -2766,17 +2778,18 @@ contains
 !  Schwarz tests
 !  =============
 
-   schwarz_inequality_test(cutoff,ab,cd,a,b,c,d,P_max,I_max) result(skip) ::: selfless
+   schwarz_inequality_test(skip,cutoff,ab,cd,a,b,c,d,P_max,I_max) ::: selfless, PURE
    ! Return "skip", a logical variable which is TRUE if the maximum contribution
    ! to the restricted Fock matrix (based on the schwarz inequality test) from a
    ! shell of ERI integrals (ab|cd) with shell pair indices "ab" and "cd" is
    ! smaller than a preset "cutoff". "P_max" is the maximum density matrix
    ! elements for each shell pair "ab", and "I_max(ab)" is maximum value of the
    ! square root of the integral (ab|ab) for the shell pair with index "ab".
-      skip :: BIN
-      cutoff :: REAL
-      ab,cd, a,b,c,d :: INT
-      P_max,I_max :: VEC{REAL}
+      skip :: BIN, OUT
+      self :: IN
+      cutoff :: REAL, IN
+      ab,cd, a,b,c,d :: INT, OUT
+      P_max,I_max :: VEC{REAL}, IN
 
       Pmax :: REAL
       ac,ad,bc,bd,k,l,m,n :: INT
@@ -2805,15 +2818,16 @@ contains
 
    end
 
-   schwarz_test(skip_J,skip_K,cutoff,JP_cut,KP_cut,ab,cd,a,b,c,d,P_max,I_max) ::: selfless, private
+   schwarz_test(skip_J,skip_K,cutoff,JP_cut,KP_cut,ab,cd,a,b,c,d,P_max,I_max) ::: selfless, private, PURE
    ! contribution to the J and K matrices (based on the schwarz inequality test)
    ! from a shell of ERI integrals (ab|cd) with shell pair indices "ab" and "cd"
    ! is smaller than a preset "cutoff". "P_max(ab)" is the maximum density
    ! matrix elements for each shell pair "ab", and "I_max(ab)" is maximum value
    ! of the square root of the integral (ab|ab) for the shell pair with index "ab".
+      self :: IN
       skip_J,skip_K :: BIN, OUT
       cutoff,JP_cut,KP_cut :: REAL, IN
-      ab,cd, a,b,c,d :: INT, IN
+      ab,cd, a,b,c,d :: INT, OUT
       P_max,I_max :: VEC{REAL}, IN
 
       JP_max,KP_max :: REAL
@@ -2842,13 +2856,14 @@ contains
 
    end
 
-   schwarz_J_test(skip_J,cutoff,ab,cd,P_max,I_max) ::: selfless, private
+   schwarz_J_test(skip_J,cutoff,ab,cd,P_max,I_max) ::: selfless, private, PURE
    ! Return "skip_J" which is set TRUE if the maximum contribution to the J
    ! matrix (based on the schwarz inequality test) from a shell of ERI integrals
    ! (ab|cd) with shell pair indices "ab" and "cd" is smaller than a preset
    ! "cutoff". "P_max(ab)" is the maximum density matrix elements for each shell
    ! pair "ab", and "I_max(ab)" is maximum value of the square root of the
    ! integral (ab|ab) for the shell pair with index "ab".
+      self :: IN
       skip_J :: BIN, OUT
       cutoff :: REAL, IN
       ab,cd :: INT, IN
@@ -2865,13 +2880,14 @@ contains
 
    end
 
-   schwarz_K_test(skip_K,cutoff,ab,cd,a,b,c,d,P_max,I_max) ::: selfless, private
+   schwarz_K_test(skip_K,cutoff,ab,cd,a,b,c,d,P_max,I_max) ::: selfless, private, PURE
    ! Return "skip_K", logical variables are TRUE if the maximum
    ! contribution to the K matrices (based on the schwarz inequality test)
    ! from a shell of ERI integrals (ab|cd) with shell pair indices "ab" and "cd"
    ! is smaller than a preset "cutoff". "P_max(ab)" is the maximum density
    ! matrix elements for each shell pair "ab", and "I_max(ab)" is maximum value
    ! of the square root of the integral (ab|ab) for the shell pair with index "ab".
+      self :: IN
       skip_K :: BIN, OUT
       cutoff :: REAL, IN
       ab,cd, a,b,c,d :: INT, IN
@@ -2898,11 +2914,12 @@ contains
 
    end
 
-   make_max_density_elements(P_max,P)
+   make_max_density_elements(P_max,P) ::: PURE
    ! Make "P_max", the maximum of the (a,b) density elements of "P" over each
    ! shell pair, for use in the schwarz test.
-      P_max :: VEC{REAL}
-      P :: MAT{REAL}
+      self :: IN
+      P_max :: VEC{REAL}, OUT
+      P :: MAT{REAL}, IN
 
    ENSURE(size(P_max)==.n_shell_pairs,"wrong size, P_max")
    ENSURE(P.is_square,"wrong shape, P")
@@ -2929,11 +2946,12 @@ contains
 
    end
 
-   make_max_density_elements(P_max,Pa,Pb)
+   make_max_density_elements(P_max,Pa,Pb) ::: PURE
    ! Make "P_max", the maximum of the (a,b) density elements of "Pa"
    ! and "Pb" over each shell pair, for use in the schwarz test.
-      P_max :: VEC{REAL}
-      Pa,Pb :: MAT{REAL}
+      self :: IN
+      P_max :: VEC{REAL}, OUT
+      Pa,Pb :: MAT{REAL}, IN
 
    ENSURE(size(P_max)==.n_shell_pairs,"wrong size, P_max")
    ENSURE(Pa.is_square,"wrong shape, Pa")
@@ -2973,6 +2991,7 @@ contains
 
    make_max_abab_integrals(I_max)
    ! Make "I_max", the square root of the maximum of the (ab|ab) ERI integrals.
+      self :: IN
       I_max :: VEC{REAL}, OUT
 
    ENSURE(size(I_max)==.n_shell_pairs,"wrong size, I_max")
@@ -3012,7 +3031,8 @@ contains
    make_max_abab_so_integrals(I_max)
    ! Make "I_max", the square root of the maximum of the all (ab|ab) spin orbit
    ! integrals.
-      I_max :: VEC{REAL}
+      self :: IN
+      I_max :: VEC{REAL}, OUT
 
    ENSURE(size(I_max)==.n_shell_pairs,"wrong size, I_max")
 
@@ -3054,10 +3074,11 @@ contains
 
    end
 
-   make_max_S_integrals(S_max)
+   make_max_S_integrals(S_max) ::: PURE
    ! Make "S_max", the maximum of the overlap integrals between basis
    ! functions in all pairs of shells.
-      S_max :: VEC{REAL}
+      self :: IN
+      S_max :: VEC{REAL}, OUT
 
    ENSURE(S_max.dim==.n_shell_pairs,"wrong size, S_max")
 
@@ -3079,8 +3100,9 @@ contains
    ! transfer relation) to matrix "P" to produce the shell pair vector
    ! "PV" which has to be multipled by the (es|fs) source integrals to
    ! give the J-matrix.
-      P :: MAT{REAL}
-      PV :: VEC{VEC_{REAL}}*
+      self :: INOUT
+      P :: MAT{REAL}, IN
+      PV :: VEC{VEC_{REAL}}@, target, OUT
 
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom info")
@@ -3088,7 +3110,7 @@ contains
       R :: VEC{REAL}(3)
       R1,R2,R3,T1,T2,T3,fx,fy,fz,P_ab :: REAL
       Rx,Ry,Rz,ab :: VEC{REAL}*
-      ax,ay,az,bx,by,bz,binx,biny,binz :: VEC{INT}*
+      ax,ay,az,bx,by,bz,binx,biny,binz :: VEC{INT}@
       q,fa,la,na,fb,lb,nb,atom_a,atom_b,aa,bb,af,al,bf,bl,f :: INT
       i,k,a,b,x,y,z,xa,ya,za,xb,yb,zb,xx,yy,zz :: INT
       new_atom_pair,same_atoms,a_gt_b,a_lt_b :: BIN
@@ -3144,14 +3166,14 @@ contains
          else                                                  ! General case
 
             ab = ZERO
-            af =  GAUSSIAN_DATA:n_comp_up_to(sh.a.l-1) + 1; al = af + sh.a.n_comp - 1
-            bf =  GAUSSIAN_DATA:n_comp_up_to(sh.b.l-1) + 1; bl = bf + sh.b.n_comp - 1
-            ax => GAUSSIAN_DATA::nx(af:al)
-            ay => GAUSSIAN_DATA::ny(af:al)
-            az => GAUSSIAN_DATA::nz(af:al)
-            bx => GAUSSIAN_DATA::nx(bf:bl)
-            by => GAUSSIAN_DATA::ny(bf:bl)
-            bz => GAUSSIAN_DATA::nz(bf:bl)
+            af = GAUSSIAN_DATA:n_comp_up_to(sh.a.l-1) + 1; al = af + sh.a.n_comp - 1
+            bf = GAUSSIAN_DATA:n_comp_up_to(sh.b.l-1) + 1; bl = bf + sh.b.n_comp - 1
+            ax = GAUSSIAN_DATA::nx(af:al)
+            ay = GAUSSIAN_DATA::ny(af:al)
+            az = GAUSSIAN_DATA::nz(af:al)
+            bx = GAUSSIAN_DATA::nx(bf:bl)
+            by = GAUSSIAN_DATA::ny(bf:bl)
+            bz = GAUSSIAN_DATA::nz(bf:bl)
             af = af - 1
             bf = bf - 1
             fa = fa - 1
@@ -3221,9 +3243,9 @@ contains
 
                   do b = 1,sh.b.n_comp
                      xb = bx(b); yb = by(b); zb = bz(b)
-                     binx => GAUSSIAN_DATA::binomial_p1(xb)%element
-                     biny => GAUSSIAN_DATA::binomial_p1(yb)%element
-                     binz => GAUSSIAN_DATA::binomial_p1(zb)%element
+                     binx = GAUSSIAN_DATA::binomial_p1(xb)%element
+                     biny = GAUSSIAN_DATA::binomial_p1(yb)%element
+                     binz = GAUSSIAN_DATA::binomial_p1(zb)%element
                      do a = 1,sh.a.n_comp
                         P_ab = P(fa+a,fb+b)
                         xa = ax(a); ya = ay(a); za = az(a)
@@ -3249,9 +3271,9 @@ contains
                   k = 0
                   do b = 1,sh.b.n_comp
                      xb = bx(b); yb = by(b); zb = bz(b)
-                     binx => GAUSSIAN_DATA::binomial_p1(xb)%element
-                     biny => GAUSSIAN_DATA::binomial_p1(yb)%element
-                     binz => GAUSSIAN_DATA::binomial_p1(zb)%element
+                     binx = GAUSSIAN_DATA::binomial_p1(xb)%element
+                     biny = GAUSSIAN_DATA::binomial_p1(yb)%element
+                     binz = GAUSSIAN_DATA::binomial_p1(zb)%element
                      do a = 1,sh.a.n_comp
                         k = k + 1
                         P_ab = P(fa+a,fb+b)
@@ -3295,9 +3317,9 @@ contains
 
                   do a = 1,sh.a.n_comp
                      xa = ax(a); ya = ay(a); za = az(a)
-                     binx => GAUSSIAN_DATA::binomial_p1(xa)%element
-                     biny => GAUSSIAN_DATA::binomial_p1(ya)%element
-                     binz => GAUSSIAN_DATA::binomial_p1(za)%element
+                     binx = GAUSSIAN_DATA::binomial_p1(xa)%element
+                     biny = GAUSSIAN_DATA::binomial_p1(ya)%element
+                     binz = GAUSSIAN_DATA::binomial_p1(za)%element
                      do b = 1,sh.b.n_comp
                         P_ab = P(fa+a,fb+b)
                         xb = bx(b); yb = by(b); zb = bz(b)
@@ -3325,9 +3347,9 @@ contains
                      xb = bx(b); yb = by(b); zb = bz(b)
                      do a = 1,sh.a.n_comp
                         xa = ax(a); ya = ay(a); za = az(a)
-                        binx => GAUSSIAN_DATA::binomial_p1(xa)%element
-                        biny => GAUSSIAN_DATA::binomial_p1(ya)%element
-                        binz => GAUSSIAN_DATA::binomial_p1(za)%element
+                        binx = GAUSSIAN_DATA::binomial_p1(xa)%element
+                        biny = GAUSSIAN_DATA::binomial_p1(ya)%element
+                        binz = GAUSSIAN_DATA::binomial_p1(za)%element
                         k = k + 1
                         P_ab = P(fa+a,fb+b)
                         do x = 1,xa
@@ -3367,7 +3389,8 @@ contains
    ! relation) to shellpair vector "JJ" to produce the matrix "J".
    ! This is a post-processing operation to shift momentum from
    ! center a -> b.
-      JJ :: VEC{VEC_{REAL}}
+      self :: IN
+      JJ :: VEC{VEC_{REAL}}, target, IN
       J :: MAT{REAL}
 
    ENSURE(.basis_info_made,"no basis info")
@@ -3401,7 +3424,9 @@ contains
    ! Create space for the transfer vector "JJ". It is a shellpair vector of
    ! flattened es-type componenets from which ab components can be formed by the
    ! transfer relation.
-      JJ :: VEC{VEC_{REAL}}*
+      self :: INOUT
+      JJ :: VEC{VEC_{REAL}}@, OUT
+
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.atom.associated,"no atom info")
 
@@ -3587,6 +3612,7 @@ contains
 
    add_XC_matrix_KS(K) ::: leaky
    ! Add the DFT exchange correlation matrix to "K".
+      self :: IN
       K :: OPMATRIX*
 
    ENSURE(.scfdata.associated,"no scfdata")
@@ -3599,20 +3625,22 @@ contains
       ! Now add the contribution
       select case (.scfdata.scf_kind)
 
-         case ("rks","xray_rks")
-            .:add_XC_matrix_r_KS(K.restricted)
+      case ("rks","xray_rks")
+         .:add_XC_matrix_r_KS(K.restricted)
 
-         case ("uks","xray_uks","pnd_uks","xray_pnd_uks")
-            .:add_XC_matrix_u_KS(K.alpha, K.beta)
+      case ("uks","xray_uks","pnd_uks","xray_pnd_uks")
+         .:add_XC_matrix_u_KS(K.alpha, K.beta)
 
-         case default
-            DIE("unknown DFT SCF kind, "//trim(.scfdata.scf_kind))
+      case default
+         DIE("unknown DFT SCF kind, "//trim(.scfdata.scf_kind))
+
       end
 
    end
 
-   add_XC_matrix_r_KS(K)
+   add_XC_matrix_r_KS(K) 
    ! Calculate the exchange correlation matrix numerically.
+      self :: IN
       K :: MAT{REAL}, INOUT
 
    ENSURE(.scfdata.associated,"no scfdata")
@@ -3622,20 +3650,11 @@ contains
 
       if (.scfdata.using_GGA_functional) then
 
-       ! if (.BASE:debugging("use_add_GGA_XC_matrix_old")) then
-       !    .:add_GGA_XC_matrix_old(K,E)
-       ! else
-            .:add_GGA_XC_matrix(K,E)
-       ! end
-
+         .:add_GGA_XC_matrix(K,E)
 
       else
 
-       ! if (.BASE:debugging("use_add_LDA_XC_matrix_old")) then
-       !    .:add_LDA_XC_matrix_old(K,E)
-       ! else
-            .:add_LDA_XC_matrix(K,E)
-       ! end
+         .:add_LDA_XC_matrix(K,E)
 
       end
 
@@ -3645,25 +3664,18 @@ contains
 
    add_XC_matrix_u_KS(Ka,Kb)
    ! Calculate the exchange correlation matrix numerically.
+      self :: IN
       Ka,Kb :: MAT{REAL}, INOUT
 
       E,Ea,Eb :: REAL
 
       if (NOT .scfdata.using_GGA_functional) then
 
-       ! if (.BASE:debugging("use_add_LDA_XC_matrix_old")) then
-       !    .:add_LDA_XC_matrix_old(Ka,Kb,E,Ea,Eb)
-       ! else
-            .:add_LDA_XC_matrix(Ka,Kb,E,Ea,Eb)
-       ! end
+         .:add_LDA_XC_matrix(Ka,Kb,E,Ea,Eb)
 
       else
 
-       ! if (.BASE:debugging("use_add_GGA_XC_matrix_old")) then
-       !    .:add_GGA_XC_matrix_old(Ka,Kb,E,Ea,Eb)
-       ! else
-            .:add_GGA_XC_matrix(Ka,Kb,E,Ea,Eb)
-       ! end
+         .:add_GGA_XC_matrix(Ka,Kb,E,Ea,Eb)
 
       end
 
@@ -3678,18 +3690,19 @@ contains
    add_LDA_XC_matrix(K,E) ::: leaky
    ! Add the exchange and correlation matrices to K. This routine supports
    ! local functional only, either exchange or correlation.
-      K :: MAT{REAL}
-      E :: REAL
+      self :: IN
+      K :: MAT{REAL}, INOUT
+      E :: REAL, OUT
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
 
-      wt, N0,V0,E0 :: VEC{REAL}*
-      V,D, pt  :: MAT{REAL}*
-      bf_skip  :: VEC{VEC_{BIN}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      wt, N0,V0,E0 :: VEC{REAL}@
+      V,D, pt  :: MAT{REAL}@
+      bf_skip  :: VEC{VEC_{BIN}}@
+      bf_grid0 :: VEC{MAT_{REAL}}@
       n_pt, c  :: INT
 
       ! Main temporaries
@@ -3697,7 +3710,7 @@ contains
       V.create(.n_bf,.n_bf); V = ZERO
 
       ! Make the AO density matrix
-      D => .density_matrix.restricted
+      D = .density_matrix.restricted
 
       ! Loop over integration atoms "c"
       do c = 1,.n_atom
@@ -3753,8 +3766,9 @@ contains
    ! is the (partition-weighted) XC energy density of the grid.
    ! "bf_skip" and "bf_grid0 are basis function grids.  "D" is the
    ! density matrix.  This routine supports local functional only.
-      V :: MAT{REAL}, target
-      E :: REAL
+      self :: IN
+      V :: MAT{REAL}, INOUT
+      E :: REAL, INOUT
       V0,E0 :: VEC{REAL}, IN
       bf_skip :: VEC{VEC_{BIN}}, IN
       bf_grid0 :: VEC{MAT_{REAL}}, IN
@@ -3765,14 +3779,14 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated, "no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
 
-      ga0,gb0 :: VEC{REAL}*
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipab, skipa,skipb :: VEC{BIN}*
-      VV,DD :: MAT{REAL}*
-      grida0,gridb0 :: MAT{REAL}*
+      ga0,gb0 :: VEC{REAL}@
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipab, skipa,skipb :: VEC{BIN}@
+      VV,DD :: MAT{REAL}@
+      grida0,gridb0 :: MAT{REAL}@
       Dab, fac,val,wal, ga,gb,gab :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, a,b,p,i,j,n :: INT
@@ -3782,7 +3796,7 @@ contains
       skipab.create(n_pt)
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Loop c-overlapping atoms "oa"
       do ca = 1,overlapping_atom.dim
@@ -3794,15 +3808,15 @@ contains
          ! Loop shells on atom a
          do sa = fsa,lsa
 
-            if (bf_skip(sa).element.disassociated) cycle
+            if (bf_skip(sa).element.deallocated) cycle
 
             fa = .first_basis_fn_for_shell(sa)
             la =  .last_basis_fn_for_shell(sa)
             na = la - fa + 1
 
             ! Set the "sb" basis function grid
-            skipa  => bf_skip(sa).element
-            grida0 => bf_grid0(sa).element
+            skipa  = bf_skip(sa).element
+            grida0 = bf_grid0(sa).element
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -3814,15 +3828,15 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grid0(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_grid0(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -3834,13 +3848,13 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  VV => V(fa:la,fb:lb)
-                  DD => D(fa:la,fb:lb)
+                  VV = V(fa:la,fb:lb)
+                  DD = D(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      Dab = fac*DD(1,1)
                      i = 0; j = 0
                      val = ZERO
@@ -3879,9 +3893,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            Dab = fac*DD(a,b)
                            val = ZERO
                            wal = ZERO
@@ -3917,111 +3931,6 @@ contains
 
    end
 
-!   add_LDA_XC_matrix_old(K,E)
-!   ! Add the exchange and correlation matrices to K. This routine supports
-!   ! local functional only, either exchange or correlation.
-!      K :: MAT{REAL}
-!      E :: REAL
-!
-!   ENSURE(.basis_info_made, "no basis info")
-!   ENSURE(.atom.associated,  "no atom list")
-!   ENSURE(.becke_grid.associated, "need to specify becke_grid for DFT integrations")
-!
-!      pt,a0,b0,V,W :: MAT{REAL}*
-!      wt,rho0,V0,E0,ab0 :: VEC{REAL}*
-!      q,a,b,aa,bb,fa,la,na,fb,lb,nb,n_pt, ma,mb :: INT
-!      atom_a,atom_b :: INT
-!      same_atoms :: BIN
-!      atom1 :: VEC{INT}(1), target
-!      atom2 :: VEC{INT}(2), target
-!      atoms :: VEC{INT}*
-!      V_ab :: REAL
-!
-!      W.create(.n_bf,.n_bf)
-!      V.create(.n_bf,.n_bf)                     ! Use temporary V for parallelisation
-!      V = ZERO
-!
-!      nullify(a0)
-!      nullify(b0)
-!
-!      do q = 1,.BASE:no_of_atom_pairs
-!
-!         if (NOT .overlapping_atoms(q)) cycle
-!
-!         .BASE:get_atom_pair_indices(q,atom_a,atom_b,fa,la,na,fb,lb,nb)
-!
-!         same_atoms = atom_a==atom_b
-!         if (same_atoms) then; atom1 = [atom_a];        atoms => atom1
-!         else;                 atom2 = [atom_a,atom_b]; atoms => atom2
-!         end
-!
-!         ! Make the grid points and weights
-!         ! Keep the weight_is_0 array
-!         .becke_grid.make_grid(pt,wt,atoms,compress=TRUE,weight_is_0=TRUE)
-!
-!         ! The energy density &
-!         ! local potential grids
-!         n_pt = pt.dim1
-!         V0.create(n_pt)
-!         E0.create(n_pt)
-!         ab0.create(n_pt)
-!         .becke_grid.make_bf_grids(a0,b0,ma,mb,pt,atoms)
-!
-!         ! The density grids
-!         rho0.create(n_pt)
-!         .GRID:make_density_grid_r_B(rho0,pt,atoms,a0,b0)
-!
-!         ! Evaluation the XC potentials
-!         .:new_set_r_XC_potentials(V0,rho0)
-!         .:new_set_r_XC_energy_density(E0,rho0)
-!         rho0.destroy
-!
-!         V0 = wt*V0
-!         E0 = wt*E0
-!
-!         wt.destroy
-!         pt.destroy
-!
-!         ! Make the exchange correlation matrix
-!         do a = 1,na
-!         do b = 1,nb
-!            ab0 = a0(:,a)*b0(:,b)
-!            V_ab = VEC{REAL}:sum_elements(V0*ab0)
-!            aa = fa + a
-!            bb = fb + b
-!            V(aa,bb) = V_ab
-!            ! Make the DFT energy correction matrix
-!            W(aa,bb) = -HALF*V_ab + VEC{REAL}:sum_elements(E0*ab0)
-!         end
-!         end
-!
-!         ab0.destroy
-!         E0.destroy
-!         V0.destroy
-!         if (same_atoms) then
-!            a0.destroy
-!            nullify(b0)
-!         else
-!            b0.destroy
-!            a0.destroy
-!         end
-!
-!      end
-!
-!      ! Debug
-!      .BASE:put_debug(V,"add_LDA_XC_matrix: V")
-!      .BASE:put_debug(W,"add_LDA_XC_matrix: W")
-!
-!      K = K + V
-!      V.destroy
-!      K.symmetric_reflect
-!
-!      W.symmetric_reflect
-!      E = W.trace_product_with(.density_matrix.restricted)
-!      W.destroy
-!
-!   end
-
 ! GGA
 
    add_GGA_XC_matrix(K,E) ::: leaky
@@ -4035,10 +3944,10 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
 
-      wt, N0,Nx,Ny,Nz, V0,Vx,Vy,Vz, E0 :: VEC{REAL}*
-      V,D, pt  :: MAT{REAL}*
-      bf_skip  :: VEC{VEC_{BIN}}*
-      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}*
+      wt, N0,Nx,Ny,Nz, V0,Vx,Vy,Vz, E0 :: VEC{REAL}@
+      V,D, pt  :: MAT{REAL}@
+      bf_skip  :: VEC{VEC_{BIN}}@
+      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}@
       n_pt, c  :: INT
 
       ! Main temporaries
@@ -4046,7 +3955,7 @@ contains
       V.create(.n_bf,.n_bf); V = ZERO
 
       ! Make the AO density matrix
-      D => .density_matrix.restricted
+      D = .density_matrix.restricted
 
       ! Loop over integration atoms "c"
       do c = 1,.n_atom
@@ -4126,8 +4035,9 @@ contains
    ! "bf_grd0", "bf_grdx", "bf_grdy", "bf_grdz" are basis function
    ! grids and their derivatives.  "D" is the density matrix.  This
    ! routine supports non-local functionals.
-      V :: MAT{REAL}, target
-      E :: REAL
+      self :: IN
+      V :: MAT{REAL}, INOUT
+      E :: REAL, INOUT
       V0,Vx,Vy,Vz,E0 :: VEC{REAL}, IN
       bf_skip :: VEC{VEC_{BIN}}, IN
       bf_grd0,bf_grdx,bf_grdy,bf_grdz :: VEC{MAT_{REAL}}, IN
@@ -4138,17 +4048,17 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated, "no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
    ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms_for_atom")
 
-      ga0,gax,gay,gaz :: VEC{REAL}*
-      gb0,gbx,gby,gbz :: VEC{REAL}*
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridax,griday,gridaz :: MAT{REAL}*
-      gridb0,gridbx,gridby,gridbz :: MAT{REAL}*
-      VV,DD :: MAT{REAL}*
+      ga0,gax,gay,gaz :: VEC{REAL}@
+      gb0,gbx,gby,gbz :: VEC{REAL}@
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipab, skipa,skipb :: VEC{BIN}@
+      grida0,gridax,griday,gridaz :: MAT{REAL}@
+      gridb0,gridbx,gridby,gridbz :: MAT{REAL}@
+      VV,DD :: MAT{REAL}@
       Dab, fac,val,wal, ga,gb,gab :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, a,b,p,i,j,n :: INT
@@ -4158,7 +4068,7 @@ contains
       skipab.create(n_pt)
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Loop c-overlapping atoms "oa"
       do ca = 1,overlapping_atom.dim
@@ -4170,18 +4080,18 @@ contains
          ! Loop shells on atom a
          do sa = fsa,lsa
 
-            if (bf_skip(sa).element.disassociated) cycle
+            if (bf_skip(sa).element.deallocated) cycle
 
             fa = .first_basis_fn_for_shell(sa)
             la =  .last_basis_fn_for_shell(sa)
             na = la - fa + 1
 
             ! Set the "sb" basis function grid
-            skipa  => bf_skip(sa).element
-            grida0 => bf_grd0(sa).element
-            gridax => bf_grdx(sa).element
-            griday => bf_grdy(sa).element
-            gridaz => bf_grdz(sa).element
+            skipa  = bf_skip(sa).element
+            grida0 = bf_grd0(sa).element
+            gridax = bf_grdx(sa).element
+            griday = bf_grdy(sa).element
+            gridaz = bf_grdz(sa).element
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -4193,18 +4103,18 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grd0(sb).element
-                  gridbx => bf_grdx(sb).element
-                  gridby => bf_grdy(sb).element
-                  gridbz => bf_grdz(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_grd0(sb).element
+                  gridbx = bf_grdx(sb).element
+                  gridby = bf_grdy(sb).element
+                  gridbz = bf_grdz(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -4216,15 +4126,19 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  VV => V(fa:la,fb:lb)
-                  DD => D(fa:la,fb:lb)
+                  VV = V(fa:la,fb:lb)
+                  DD = D(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
-                     gax => gridax(:,1); gay => griday(:,1); gaz => gridaz(:,1)
-                     gbx => gridbx(:,1); gby => gridby(:,1); gbz => gridbz(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
+                     gax = gridax(:,1)
+                     gay = griday(:,1)
+                     gaz = gridaz(:,1)
+                     gbx = gridbx(:,1)
+                     gby = gridby(:,1)
+                     gbz = gridbz(:,1)
                      Dab = fac*DD(1,1)
                      i = 0; j = 0
                      val = ZERO
@@ -4266,11 +4180,15 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
-                        gax => gridax(:,a); gay => griday(:,a); gaz => gridaz(:,a)
+                        ga0 = grida0(:,a)
+                        gax = gridax(:,a)
+                        gay = griday(:,a)
+                        gaz = gridaz(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
-                           gbx => gridbx(:,b); gby => gridby(:,b); gbz => gridbz(:,b)
+                           gb0 = gridb0(:,b)
+                           gbx = gridbx(:,b)
+                           gby = gridby(:,b)
+                           gbz = gridbz(:,b)
                            Dab = fac*DD(a,b)
                            val = ZERO
                            wal = ZERO
@@ -4309,131 +4227,6 @@ contains
 
    end
 
-!   add_GGA_XC_matrix_old(K,E)
-!   ! Add the exchange and correlation matrices to K. This routine
-!   ! supports non-local functionals, either exchange or correlation.
-!      K :: MAT{REAL}
-!      E :: REAL
-!
-!   ENSURE(.basis_info_made, "no basis info")
-!   ENSURE(.atom.associated,  "no atom list")
-!   ENSURE(.becke_grid.associated, "need to specify becke_grid for DFT integrations")
-!
-!      a1,b1 :: MAT3{REAL}*
-!      pt,rho1,V1,a0,b0,V :: MAT{REAL}*
-!      wt,rho0,V0,E0,ab0 :: VEC{REAL}*
-!      q,a,b,aa,bb,fa,la,na,fb,lb,nb,n_pt, ma,mb,n_occ :: INT
-!      atom_a,atom_b,i :: INT
-!      same_atoms :: BIN
-!      atom1 :: VEC{INT}(1), target
-!      atom2 :: VEC{INT}(2), target
-!      atoms :: VEC{INT}*
-!      V_ab,E_ab,fac :: REAL
-!
-!      ! No. of occupied NO's
-!      n_occ = .occupation_numbers.no_of_occupied("restricted")
-!
-!      ! Basis function grids and gradients
-!      nullify(a0); nullify(a1)
-!      nullify(b0); nullify(b1)
-!
-!      ! The exchange correlation matrix
-!      V.create(.n_bf,.n_bf)
-!
-!      ! The exchange correlation energy
-!      E = ZERO
-!
-!      do q = 1,.BASE:no_of_atom_pairs
-!
-!         if (NOT .overlapping_atoms(q)) cycle
-!
-!         .BASE:get_atom_pair_indices(q,atom_a,atom_b,fa,la,na,fb,lb,nb)
-!
-!         ! Which "atoms" to be integrated?
-!         same_atoms = atom_a==atom_b
-!         if (same_atoms) then; atom1 = [atom_a];        atoms => atom1; fac = ONE
-!         else;                 atom2 = [atom_a,atom_b]; atoms => atom2; fac = TWO
-!         end
-!
-!         ! Make pair integration grid. Keep the weight_is_0 array
-!         .becke_grid.make_grid(pt,wt,atoms,compress=TRUE,weight_is_0=TRUE)
-!
-!         ! Local/non-local potential grids, energy densities
-!         n_pt = pt.dim1
-!         V0.create(n_pt); V1.create(n_pt,3)
-!         E0.create(n_pt)
-!         ab0.create(n_pt) ! temporary
-!
-!         ! Make the atomic basis function grids a0, b0, etc.
-!         ! Uses the becke_grid.weight_is_0_array
-!         .becke_grid.make_bf_grids(a0,a1,b0,b1,ma,mb,pt,atoms)
-!
-!         ! Make the density/nabla density grids. Re-use a0, b0 grids
-!         rho0.create(n_pt)
-!         rho1.create(n_pt,3)
-!         .GRID:make_nabla_density_grid_r_B( &
-!            rho1,rho0,pt, &
-!            atoms,a1,a0,b1,b0,ma,mb,n_occ, &
-!            .becke_grid.basis_function_cutoff)
-!
-!         ! Evaluate XC potentials and energy density.
-!         V0 = ZERO
-!         V1 = ZERO
-!         .:new_set_r_XC_potentials(V0,rho0 &
-!            ,V1(:,1),V1(:,2),V1(:,3) &
-!            ,rho1(:,1),rho1(:,2),rho1(:,3)) ! Evaluation the XC potentials
-!         .:new_set_r_XC_energy_density(E0,rho0 &
-!            ,rho1(:,1),rho1(:,2),rho1(:,3)) ! Evaluation the XC potentials
-!
-!         rho1.destroy
-!         rho0.destroy
-!
-!         ! Incorporate weights into XC potential
-!         V0 = wt*V0
-!         E0 = wt*E0
-!         forall (i=1:3) V1(:,i) = wt*V1(:,i)
-!
-!         wt.destroy
-!         pt.destroy
-!
-!         ! Make V, the exchange correlation matrix
-!         ! Make E, the exchange correlation energy
-!         do a = 1,na
-!         do b = 1,nb
-!            ab0 = a0(:,a)*b0(:,b)
-!            V_ab = VEC{REAL}:sum_elements(V0*ab0) &
-!                 + VEC{REAL}:sum_elements(V1(:,1)*(a1(:,a,1)*b0(:,b)+a0(:,a)*b1(:,b,1))) &
-!                 + VEC{REAL}:sum_elements(V1(:,2)*(a1(:,a,2)*b0(:,b)+a0(:,a)*b1(:,b,2))) &
-!                 + VEC{REAL}:sum_elements(V1(:,3)*(a1(:,a,3)*b0(:,b)+a0(:,a)*b1(:,b,3)))
-!            E_ab = VEC{REAL}:sum_elements(E0*ab0)
-!            aa = fa + a
-!            bb = fb + b
-!            V(aa,bb) = V_ab
-!            E = E + fac*E_ab*.density_matrix.restricted(aa,bb)
-!         end
-!         end
-!         ab0.destroy; E0.destroy
-!         V1.destroy; V0.destroy
-!
-!         ! Clean up
-!         if (same_atoms) then
-!            a1.destroy; a0.destroy
-!            nullify(b1); nullify(b0)
-!         else
-!            b1.destroy; b0.destroy
-!            a1.destroy; a0.destroy
-!         end
-!
-!      end
-!
-!      ! Add the contribution to "K" matrix
-!      V.symmetric_reflect
-!      K = K + V
-!      E = E - HALF*.density_matrix.restricted.trace_product_with(V)
-!      V.destroy
-!
-!   end
-
 ! Set functional
 
    new_set_r_XC_energy_density(E,N0,Nx,Ny,Nz)
@@ -4444,7 +4237,7 @@ contains
       Nx,Ny,Nz :: VEC{REAL}, IN, optional
 
    ENSURE(.scfdata.associated,"no scfdata")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
 
       exch,corr :: STR
       add :: DFT_FUNCTIONAL
@@ -4479,7 +4272,7 @@ contains
       Nx,Ny,Nz :: VEC{REAL}, IN, optional
 
    ENSURE(.scfdata.associated,"no scfdata")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
 
       exch,corr :: STR
       add :: DFT_FUNCTIONAL
@@ -4526,10 +4319,10 @@ contains
    ENSURE(.density_matrix.alpha.associated,"no alpha density matrix")
    ENSURE(.density_matrix.beta.associated,"no alpha density matrix")
 
-      wt, N0a,N0b,V0a,V0b,E0 :: VEC{REAL}*
-      Va,Vb,Da,Db, pt  :: MAT{REAL}*
-      bf_skip  :: VEC{VEC_{BIN}}*
-      bf_grid0 :: VEC{MAT_{REAL}}*
+      wt, N0a,N0b,V0a,V0b,E0 :: VEC{REAL}@
+      Va,Vb,Da,Db, pt  :: MAT{REAL}@
+      bf_skip  :: VEC{VEC_{BIN}}@
+      bf_grid0 :: VEC{MAT_{REAL}}@
       n_pt, c  :: INT
 
       ! Main temporaries
@@ -4538,8 +4331,8 @@ contains
       Vb.create(.n_bf,.n_bf); Vb = ZERO
 
       ! Set the AO density matrices
-      Da => .density_matrix.alpha
-      Db => .density_matrix.beta
+      Da = .density_matrix.alpha
+      Db = .density_matrix.beta
 
       ! Loop over integration atoms "c"
       do c = 1,.n_atom
@@ -4619,15 +4412,15 @@ contains
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated, "no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
    ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms_for_atom")
 
-      ga0,gb0 :: VEC{REAL}*
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipab, skipa,skipb :: VEC{BIN}*
-      VVa,VVb,DDa,DDb :: MAT{REAL}*
-      grida0,gridb0 :: MAT{REAL}*
+      ga0,gb0 :: VEC{REAL}@
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipab, skipa,skipb :: VEC{BIN}@
+      VVa,VVb,DDa,DDb :: MAT{REAL}@
+      grida0,gridb0 :: MAT{REAL}@
       Da_ab,Db_ab, fac,vala,valb,wal, ga,gb,gab :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
       sa,fa,la,na, sb,fb,lb,nb, a,b,p,i,j,n :: INT
@@ -4637,7 +4430,7 @@ contains
       skipab.create(n_pt)
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Loop c-overlapping atoms "oa"
       do ca = 1,overlapping_atom.dim
@@ -4649,15 +4442,15 @@ contains
          ! Loop shells on atom a
          do sa = fsa,lsa
 
-            if (bf_skip(sa).element.disassociated) cycle
+            if (bf_skip(sa).element.deallocated) cycle
 
             fa = .first_basis_fn_for_shell(sa)
             la =  .last_basis_fn_for_shell(sa)
             na = la - fa + 1
 
             ! Set the "sb" basis function grid
-            skipa  => bf_skip(sa).element
-            grida0 => bf_grid0(sa).element
+            skipa  = bf_skip(sa).element
+            grida0 = bf_grid0(sa).element
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -4669,15 +4462,15 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_grid0(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_grid0(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -4689,15 +4482,15 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  VVa => Va(fa:la,fb:lb)
-                  VVb => Vb(fa:la,fb:lb)
-                  DDa => Da(fa:la,fb:lb)
-                  DDb => Db(fa:la,fb:lb)
+                  VVa = Va(fa:la,fb:lb)
+                  VVb = Vb(fa:la,fb:lb)
+                  DDa = Da(fa:la,fb:lb)
+                  DDb = Db(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
                      Da_ab = fac*DDa(1,1)
                      Db_ab = fac*DDb(1,1)
                      i = 0; j = 0
@@ -4740,9 +4533,9 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
+                        ga0 = grida0(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
+                           gb0 = gridb0(:,b)
                            Da_ab = fac*DDa(a,b)
                            Db_ab = fac*DDb(a,b)
                            vala = ZERO; valb = ZERO
@@ -4782,133 +4575,6 @@ contains
 
    end
 
-!   add_LDA_XC_matrix_old(Ka,Kb,E,Ea,Eb)
-!   ! Add the exchange and correlation matrices to K. This routine supports
-!   ! local functional only, either exchange or correlation.
-!      Ka,Kb :: MAT{REAL}
-!      E,Ea,Eb :: REAL
-!
-!   ENSURE(.basis_info_made, "no basis info")
-!   ENSURE(.atom.associated,  "no atom list")
-!   ENSURE(.becke_grid.associated, "need to specify becke_grid for DFT integrations")
-!
-!      pt,a0,b0,Vb,Va,W :: MAT{REAL}*
-!      wt,rho0a,rho0b,V0a,V0b,E0,ab0 :: VEC{REAL}*
-!      q,a,b,aa,bb,fa,la,na,fb,lb,nb,n_pt,ma,mb :: INT
-!      atom_a,atom_b :: INT
-!      same_atoms :: BIN
-!      atom1 :: VEC{INT}(1), target
-!      atom2 :: VEC{INT}(2), target
-!      atoms :: VEC{INT}*
-!      Va_ab,Vb_ab,E_ab,Da_ab,Db_ab,fac :: REAL
-!
-!      W.create(.n_bf,.n_bf)
-!      Va.create(.n_bf,.n_bf)                    ! Use temporary V for parallelisation
-!      Vb.create(.n_bf,.n_bf)
-!      nullify(a0); nullify(b0)
-!
-!    ! E = ZERO
-!      Ea = ZERO
-!      Eb = ZERO
-!
-!      do q = 1,.BASE:no_of_atom_pairs
-!
-!         if (NOT .overlapping_atoms(q)) cycle
-!
-!         .BASE:get_atom_pair_indices(q,atom_a,atom_b,fa,la,na,fb,lb,nb)
-!
-!         same_atoms = atom_a==atom_b
-!         if (same_atoms) then; atom1 = [atom_a];        atoms => atom1; fac = ONE
-!         else;                 atom2 = [atom_a,atom_b]; atoms => atom2; fac = TWO
-!         end
-!
-!         ! Make the grid points and weights
-!         ! Keep the weight_is_0 array
-!       ! .becke_grid.make_grid(pt,wt,atoms,compress=FALSE)
-!       ! .becke_grid.make_grid(pt,wt,atoms,compress=TRUE,weight_is_0=FALSE)
-!         .becke_grid.make_grid(pt,wt,atoms,compress=TRUE,weight_is_0=TRUE)
-!
-!         n_pt = pt.dim1
-!
-!         ! The energy density &
-!         ! Local potential grids
-!         V0a.create(n_pt)
-!         V0b.create(n_pt)
-!         E0.create(n_pt)
-!         ab0.create(n_pt)
-!         .becke_grid.make_bf_grids(a0,b0,ma,mb,pt,atoms)
-!
-!         ! The density grids
-!         ! re-use a0, b0 grids
-!         rho0a.create(n_pt)
-!         rho0b.create(n_pt)
-!         .GRID:make_density_grid_u_B(rho0a,rho0b,pt,atoms,a0,b0)
-!
-!         ! Evaluation the XC potentials
-!         .:new_set_u_XC_potentials(V0a,V0b,rho0a,rho0b)
-!         .:new_set_u_XC_energy_density(E0,rho0a,rho0b)
-!
-!         rho0b.destroy; rho0a.destroy
-!
-!         V0a = wt*V0a
-!         V0b = wt*V0b
-!         E0  = wt*E0
-!
-!         wt.destroy
-!         pt.destroy
-!
-!         ! Make the exchange correlation matrix
-!         do a = 1,na
-!         do b = 1,nb
-!            ab0 = a0(:,a)*b0(:,b)
-!            Va_ab = VEC{REAL}:sum_elements(V0a*ab0)
-!            Vb_ab = VEC{REAL}:sum_elements(V0b*ab0)
-!            E_ab  = fac*VEC{REAL}:sum_elements(E0 *ab0)
-!            aa = fa + a
-!            bb = fb + b
-!            Va(aa,bb) = Va_ab
-!            Vb(aa,bb) = Vb_ab
-!            ! Make the DFT energy correction matrix
-!          ! W(aa,bb)  = -HALF*(Va_ab+Vb_ab) + VEC{REAL}:sum_elements(E0*ab0)
-!          ! W(aa,bb)  = VEC{REAL}:sum_elements(E0*ab0)  ! Make the DFT energy correction matrix
-!            Da_ab = .density_matrix.alpha(aa,bb)
-!            Db_ab = .density_matrix.beta(aa,bb)
-!          ! E  = E  + fac*E_ab*(Da_ab+Db_ab)
-!            Ea = Ea + E_ab*Da_ab
-!            Eb = Eb + E_ab*Db_ab
-!         end
-!         end
-!
-!         ab0.destroy
-!         E0.destroy
-!         V0b.destroy
-!         V0a.destroy
-!
-!         if (same_atoms) then
-!            a0.destroy
-!            nullify(b0)
-!         else
-!            b0.destroy
-!            a0.destroy
-!         end
-!
-!      end
-!
-!      Va.symmetric_reflect
-!      Vb.symmetric_reflect
-!
-!      Ka = Ka + Va
-!      Kb = Kb + Vb
-!      Ea = Ea - HALF*.density_matrix.alpha.trace_product_with(Va)
-!      Eb = Eb - HALF*.density_matrix.beta.trace_product_with(Vb)
-!      E  = Ea + Eb
-!
-!      Vb.destroy
-!      Va.destroy
-!      W.destroy
-!
-!   end
-
 ! GGA
 
    add_GGA_XC_matrix(Ka,Kb,E,Ea,Eb) ::: leaky
@@ -4924,12 +4590,12 @@ contains
    ENSURE(.density_matrix.alpha.associated,"no alpha density matrix")
    ENSURE(.density_matrix.beta.associated,"no alpha density matrix")
 
-      wt, E0 :: VEC{REAL}*
-      N0a,Nxa,Nya,Nza, V0a,Vxa,Vya,Vza :: VEC{REAL}*
-      N0b,Nxb,Nyb,Nzb, V0b,Vxb,Vyb,Vzb :: VEC{REAL}*
-      Va,Vb,Da,Db, pt  :: MAT{REAL}*
-      bf_skip  :: VEC{VEC_{BIN}}*
-      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}*
+      wt, E0 :: VEC{REAL}@
+      N0a,Nxa,Nya,Nza, V0a,Vxa,Vya,Vza :: VEC{REAL}@
+      N0b,Nxb,Nyb,Nzb, V0b,Vxb,Vyb,Vzb :: VEC{REAL}@
+      Va,Vb,Da,Db, pt  :: MAT{REAL}@
+      bf_skip  :: VEC{VEC_{BIN}}@
+      bf_grid0,bf_gridx,bf_gridy,bf_gridz :: VEC{MAT_{REAL}}@
       n_pt, c  :: INT
 
       ! Main temporaries
@@ -4938,8 +4604,8 @@ contains
       Vb.create(.n_bf,.n_bf); Vb = ZERO
 
       ! Make the AO density matrices
-      Da => .density_matrix.alpha
-      Db => .density_matrix.beta
+      Da = .density_matrix.alpha
+      Db = .density_matrix.beta
 
       ! Loop over integration atoms "c"
       do c = 1,.n_atom
@@ -5032,7 +4698,7 @@ contains
 
    end
 
-   add_GGA_XC_matrix(Va,Vb,Ea,Eb,V0a,V0b,Vxa,Vya,Vza,Vxb,Vyb,Vzb,E0,bf_skip,bf_gr0,bf_grx,bf_gry,bf_grz,c,Da,Db)
+   add_GGA_XC_matrix(Va,Vb,Ea,Eb,V0a,V0b,Vxa,Vya,Vza,Vxb,Vyb,Vzb,E0,bf_skip,bf_gr0,bf_grx,bf_gry,bf_grz,c,Da,Db) ::: PURE
    ! Add XC potential matrix elements to "Va", "Vb", the XC energy
    ! corrections to "Ea", "Eb". "V0a", "V0b", "Vxa" ... "Vzb" are the
    ! XC potential densities and their derivatives on the becke grid
@@ -5042,28 +4708,29 @@ contains
    ! and "bf_gr0" ... "bf_grz" are basis function (derivative)
    ! grids.  "Da", "Db" are the density matrices.  This routine
    ! supports non-local functionals.
-      Va,Vb :: MAT{REAL}, target
-      Ea,Eb :: REAL
+      self :: IN
+      Va,Vb :: MAT{REAL}, INOUT
+      Ea,Eb :: REAL, OUT
       V0a,V0b, E0 :: VEC{REAL}, IN
       Vxa,Vya,Vza :: VEC{REAL}, IN
       Vxb,Vyb,Vzb :: VEC{REAL}, IN
       bf_skip :: VEC{VEC_{BIN}}, IN
       bf_gr0,bf_grx,bf_gry,bf_grz :: VEC{MAT_{REAL}}, IN
       c :: INT, IN
-      Da,Db :: MAT{REAL}, target, IN
+      Da,Db :: MAT{REAL}, IN
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.becke_grid.associated, "no becke_grid")
+   ENSURE(.becke_grid.allocated, "no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
    ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms_for_atom")
 
-      ga0,gax,gay,gaz :: VEC{REAL}*
-      gb0,gbx,gby,gbz :: VEC{REAL}*
-      overlapping_atom, pi,pj,pn :: VEC{INT}*
-      skipab, skipa,skipb :: VEC{BIN}*
-      grida0,gridax,griday,gridaz :: MAT{REAL}*
-      gridb0,gridbx,gridby,gridbz :: MAT{REAL}*
+      ga0,gax,gay,gaz :: VEC{REAL}@
+      gb0,gbx,gby,gbz :: VEC{REAL}@
+      overlapping_atom, pi,pj,pn :: VEC{INT}@
+      skipab, skipa,skipb :: VEC{BIN}@
+      grida0,gridax,griday,gridaz :: MAT{REAL}@
+      gridb0,gridbx,gridby,gridbz :: MAT{REAL}@
       VVa,VVb,DDa,DDb :: MAT{REAL}*
       Da_ab,Db_ab, fac,vala,valb,wal, ga,gb,gab,gx,gy,gz :: REAL
       n_pt,n_keep, ca,cb, oa,fsa,lsa, ob,fsb,lsb :: INT
@@ -5074,7 +4741,7 @@ contains
       skipab.create(n_pt)
 
       ! Overlapping atoms
-      overlapping_atom => .overlapping_atoms_for_atom(c).element
+      overlapping_atom = .overlapping_atoms_for_atom(c).element
 
       ! Loop c-overlapping atoms "oa"
       do ca = 1,overlapping_atom.dim
@@ -5086,18 +4753,18 @@ contains
          ! Loop shells on atom a
          do sa = fsa,lsa
 
-            if (bf_skip(sa).element.disassociated) cycle
+            if (bf_skip(sa).element.deallocated) cycle
 
             fa = .first_basis_fn_for_shell(sa)
             la =  .last_basis_fn_for_shell(sa)
             na = la - fa + 1
 
             ! Set the "sb" basis function grid
-            skipa  => bf_skip(sa).element
-            grida0 => bf_gr0(sa).element
-            gridax => bf_grx(sa).element
-            griday => bf_gry(sa).element
-            gridaz => bf_grz(sa).element
+            skipa  = bf_skip(sa).element
+            grida0 = bf_gr0(sa).element
+            gridax = bf_grx(sa).element
+            griday = bf_gry(sa).element
+            gridaz = bf_grz(sa).element
 
             ! Loop c-overlapping atoms b
             do cb = 1,ca
@@ -5109,18 +4776,18 @@ contains
                ! Loop shells on atom b
                do sb = fsb,min(lsb,sa)
 
-                  if (bf_skip(sb).element.disassociated) cycle
+                  if (bf_skip(sb).element.deallocated) cycle
 
                   fb = .first_basis_fn_for_shell(sb)
                   lb = .last_basis_fn_for_shell(sb)
                   nb = lb - fb + 1
 
                   ! Set the "sb" basis function grid
-                  skipb  => bf_skip(sb).element
-                  gridb0 => bf_gr0(sb).element
-                  gridbx => bf_grx(sb).element
-                  gridby => bf_gry(sb).element
-                  gridbz => bf_grz(sb).element
+                  skipb  = bf_skip(sb).element
+                  gridb0 = bf_gr0(sb).element
+                  gridbx = bf_grx(sb).element
+                  gridby = bf_gry(sb).element
+                  gridbz = bf_grz(sb).element
 
                   ! How many points in common?
                   skipab(1:n_pt) = skipa OR skipb
@@ -5132,21 +4799,26 @@ contains
                   if (sa==sb) fac = ONE
 
                   ! Density block
-                  VVa => Va(fa:la,fb:lb)
-                  VVb => Vb(fa:la,fb:lb)
-                  DDa => Da(fa:la,fb:lb)
-                  DDb => Db(fa:la,fb:lb)
+                  VVa = Va(fa:la,fb:lb)
+                  VVb = Vb(fa:la,fb:lb)
+                  DDa = Da(fa:la,fb:lb)
+                  DDb = Db(fa:la,fb:lb)
 
                   if (na*nb==1) then
 
-                     ga0 => grida0(:,1)
-                     gb0 => gridb0(:,1)
-                     gax => gridax(:,1); gay => griday(:,1); gaz => gridaz(:,1)
-                     gbx => gridbx(:,1); gby => gridby(:,1); gbz => gridbz(:,1)
+                     ga0 = grida0(:,1)
+                     gb0 = gridb0(:,1)
+                     gax = gridax(:,1)
+                     gay = griday(:,1)
+                     gaz = gridaz(:,1)
+                     gbx = gridbx(:,1)
+                     gby = gridby(:,1)
+                     gbz = gridbz(:,1)
                      Da_ab = fac*DDa(1,1)
                      Db_ab = fac*DDb(1,1)
                      i = 0; j = 0
-                     vala = ZERO; valb = ZERO
+                     vala = ZERO
+                     valb = ZERO
                      wal = ZERO
                      do n = 1,n_pt
                         if (NOT skipa(n)) i = i + 1
@@ -5188,14 +4860,19 @@ contains
 
                      ! Add density contribution to rho
                      do a = 1,na
-                        ga0 => grida0(:,a)
-                        gax => gridax(:,a); gay => griday(:,a); gaz => gridaz(:,a)
+                        ga0 = grida0(:,a)
+                        gax = gridax(:,a)
+                        gay = griday(:,a)
+                        gaz = gridaz(:,a)
                         do b = 1,nb
-                           gb0 => gridb0(:,b)
-                           gbx => gridbx(:,b); gby => gridby(:,b); gbz => gridbz(:,b)
+                           gb0 = gridb0(:,b)
+                           gbx = gridbx(:,b)
+                           gby = gridby(:,b)
+                           gbz = gridbz(:,b)
                            Da_ab = fac*DDa(a,b)
                            Db_ab = fac*DDb(a,b)
-                           vala = ZERO; valb = ZERO
+                           vala = ZERO
+                           valb = ZERO
                            wal = ZERO
                            do p = 1,n_keep
                               i = pi(p)
@@ -5230,146 +4907,7 @@ contains
          end       ! -- lops ca,cb
       end
 
-      ! Clean up
-      skipab.destroy
-
    end
-
-!   add_GGA_XC_matrix_old(Ka,Kb,E,Ea,Eb)
-!   ! Add the exchange and correlation matrices to K. This routine supports
-!   ! local functional only, either exchange or correlation.
-!      Ka,Kb :: MAT{REAL}
-!      E,Ea,Eb :: REAL
-!
-!   ENSURE(.basis_info_made, "no basis info")
-!   ENSURE(.atom.associated,  "no atom list")
-!   ENSURE(.becke_grid.associated, "need to specify becke_grid for DFT integrations")
-!
-!      a1,b1 :: MAT3{REAL}*
-!      pt,rho1a,rho1b,a0,b0,V1a,V1b,Vb,Va :: MAT{REAL}*
-!      wt,rho0a,rho0b,V0a,V0b,E0,ab0 :: VEC{REAL}*
-!      q,a,b,aa,bb,fa,la,na,fb,lb,nb,n_pt, ma,mb :: INT
-!      atom_a,atom_b,i :: INT
-!      same_atoms :: BIN
-!      atom1 :: VEC{INT}(1), target
-!      atom2 :: VEC{INT}(2), target
-!      atoms :: VEC{INT}*
-!      Va_ab,Vb_ab,E_ab,Da_ab,Db_ab,fac :: REAL
-!
-!      ! Use temporary V for parallelisation
-!      Va.create(.n_bf,.n_bf)
-!      Vb.create(.n_bf,.n_bf)
-!      nullify(a0); nullify(b0)
-!
-!    ! E  = ZERO
-!      Ea = ZERO
-!      Eb = ZERO
-!
-!      do q = 1,.BASE:no_of_atom_pairs
-!
-!         if (NOT .overlapping_atoms(q)) cycle
-!
-!         .BASE:get_atom_pair_indices(q,atom_a,atom_b,fa,la,na,fb,lb,nb)
-!
-!         same_atoms = atom_a==atom_b
-!         if (same_atoms) then; atom1 = [atom_a];        atoms => atom1; fac = ONE
-!         else;                 atom2 = [atom_a,atom_b]; atoms => atom2; fac = TWO
-!         end
-!
-!         ! Make the grid points and weights
-!         ! Keep the weight_is_0 array
-!         .becke_grid.make_grid(pt,wt,atoms,compress=TRUE,weight_is_0=TRUE)
-!
-!         ! Local potential grids
-!         ! & non-local potential grids
-!         n_pt = pt.dim1
-!         V0a.create(n_pt); V0b.create(n_pt)
-!         V1a.create(n_pt,3); V1b.create(n_pt,3)
-!         E0.create(n_pt)
-!         ab0.create(n_pt)
-!         .becke_grid.make_bf_grids(a0,a1,b0,b1,ma,mb,pt,atoms)
-!
-!         ! The density grids
-!         rho0a.create(n_pt); rho0b.create(n_pt)
-!         rho1a.create(n_pt,3); rho1b.create(n_pt,3)
-!         .GRID:make_nabla_density_grid_u_A( &
-!             rho1a,rho1b,rho0a,rho0b,pt,atoms, &
-!             a1,a0,b1,b0,.becke_grid.rho_cutoff) ! re-use a0, b0 grids
-!
-!         ! Evaluation the XC potentials
-!         .:new_set_u_XC_potentials(V0a,V0b,rho0a,rho0b &
-!            ,V1a(:,1),V1a(:,2),V1a(:,3),V1b(:,1),V1b(:,2),V1b(:,3) &
-!            ,rho1a(:,1),rho1a(:,2),rho1a(:,3),rho1b(:,1),rho1b(:,2),rho1b(:,3))
-!         .:new_set_u_XC_energy_density(E0 &
-!            ,rho0a,rho0b &
-!            ,rho1a(:,1),rho1a(:,2),rho1a(:,3),rho1b(:,1),rho1b(:,2),rho1b(:,3))
-!
-!         rho1b.destroy; rho1a.destroy
-!         rho0b.destroy; rho0a.destroy
-!
-!         V0a = wt*V0a
-!         V0b = wt*V0b
-!         E0  = wt*E0
-!         forall (i=1:3)
-!            V1a(:,i) = wt*V1a(:,i)
-!            V1b(:,i) = wt*V1b(:,i)
-!         end
-!
-!         wt.destroy
-!         pt.destroy
-!
-!         ! Make the exchange correlation matrix
-!         do a = 1,na
-!         do b = 1,nb
-!            ab0 = a0(:,a)*b0(:,b)
-!            Va_ab = VEC{REAL}:sum_elements(V0a*ab0)
-!            Vb_ab = VEC{REAL}:sum_elements(V0b*ab0)
-!            E_ab  = fac*VEC{REAL}:sum_elements(E0 *ab0)
-!            ! Make the DFT energy correction matrix
-!            do i = 1,3
-!               ab0 = a1(:,a,i)*b0(:,b) + a0(:,a)*b1(:,b,i)
-!               Va_ab = Va_ab + VEC{REAL}:sum_elements(V1a(:,i)*ab0)
-!               Vb_ab = Vb_ab + VEC{REAL}:sum_elements(V1b(:,i)*ab0)
-!            end
-!            aa = fa + a
-!            bb = fb + b
-!            Va(aa,bb) = Va_ab
-!            Vb(aa,bb) = Vb_ab
-!            Da_ab = .density_matrix.alpha(aa,bb)
-!            Db_ab = .density_matrix.beta(aa,bb)
-!          ! E  = E  + fac*E_ab*(Da_ab+Db_ab)
-!            Ea = Ea + E_ab*Da_ab
-!            Eb = Eb + E_ab*Db_ab
-!         end
-!         end
-!
-!         ab0.destroy; E0.destroy
-!         V1b.destroy; V1a.destroy
-!         V0b.destroy; V0a.destroy
-!         if (same_atoms) then
-!            a1.destroy; a0.destroy
-!            nullify(b1); nullify(b0)
-!         else
-!            b1.destroy; b0.destroy
-!            a1.destroy; a0.destroy
-!         end
-!
-!      end
-!
-!      Va.symmetric_reflect
-!      Vb.symmetric_reflect
-!
-!      Ka = Ka + Va
-!      Kb = Kb + Vb
-!      Ea = Ea - HALF*.density_matrix.alpha.trace_product_with(Va)
-!      Eb = Eb - HALF* .density_matrix.beta.trace_product_with(Vb)
-!      E  = Ea + Eb
-!    ! E = E - HALF*.density_matrix.alpha.trace_product_with(Va) &
-!    !       - HALF* .density_matrix.beta.trace_product_with(Vb)
-!
-!      Vb.destroy; Va.destroy
-!
-!   end
 
 ! Set functional
 
@@ -5717,6 +5255,7 @@ contains
    ! to for each component i to "SOi_archive". The shell quartet index for
    ! these integrals are put in "ind_archive". Note that index coincidence
    ! factors are included.
+      self :: INOUT
       SOx_archive,SOy_archive,SOz_archive,ind_archive :: ARCHIVE
 
    ENSURE(NOT .use_spherical_basis,"not implemented")
@@ -6605,8 +6144,8 @@ contains
      Pb = .molecular_orbitals.beta
 
      vaa=ZERO; vab=ZERO; vbb=ZERO
-    .:make_ERI_integrals(vaa)
-    vab=vaa; vbb=vaa
+     .:make_ERI_integrals(vaa)
+     vab=vaa; vbb=vaa
 
       do a = 1,.n_bf
         do b = 1,a-1

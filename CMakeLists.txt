@@ -148,8 +148,6 @@ set(FOO_SRC
     ${FOO_DIR}/gaussian2.foo
     ${FOO_DIR}/gaussian4.foo
     ${FOO_DIR}/gaussian_data.foo
-    ${FOO_DIR}/geminal_mf_scheme.foo
-    ${FOO_DIR}/geminal_mf_spectrum.foo
     ${FOO_DIR}/int.foo
     ${FOO_DIR}/interpolator.foo
     ${FOO_DIR}/intrinsic.foo
@@ -169,10 +167,8 @@ set(FOO_SRC
     ${FOO_DIR}/mat3{intrinsic}.foo
     ${FOO_DIR}/mat3{int}.foo
     ${FOO_DIR}/mat3{real}.foo
-    ${FOO_DIR}/mat3{vec_{bin}}.foo
     ${FOO_DIR}/mat3{vec_{intrinsic}}.foo
     ${FOO_DIR}/mat3{vec_{int}}.foo
-    ${FOO_DIR}/mat3{vec_{real}}.foo
     ${FOO_DIR}/mat4{cpx}.foo
     ${FOO_DIR}/mat4{intrinsic}.foo
     ${FOO_DIR}/mat4{int}.foo
@@ -201,7 +197,6 @@ set(FOO_SRC
     ${FOO_DIR}/molecule.cp.foo
     ${FOO_DIR}/molecule.nomo.foo
     ${FOO_DIR}/molecule.fock.foo
-    ${FOO_DIR}/molecule.gem.foo
     ${FOO_DIR}/molecule.grid.foo
     ${FOO_DIR}/molecule.ints.foo
     ${FOO_DIR}/molecule.main.foo
@@ -315,8 +310,6 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/gaussian2.F90
     ${CMAKE_CURRENT_BINARY_DIR}/gaussian4.F90
     ${CMAKE_CURRENT_BINARY_DIR}/gaussian_data.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/geminal_mf_scheme.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/geminal_mf_spectrum.F90
     ${CMAKE_CURRENT_BINARY_DIR}/int.F90
     ${CMAKE_CURRENT_BINARY_DIR}/interpolator.F90
     ${CMAKE_CURRENT_BINARY_DIR}/irrep.F90
@@ -349,7 +342,6 @@ set(FORTRAN_SRC
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.cp.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.nomo.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.fock.F90
-    ${CMAKE_CURRENT_BINARY_DIR}/molecule.gem.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.grid.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.ints.F90
     ${CMAKE_CURRENT_BINARY_DIR}/molecule.main.F90

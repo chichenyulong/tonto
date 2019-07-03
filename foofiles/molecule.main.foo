@@ -124,7 +124,6 @@ contains
       basis :: BASIS
       coppensbasis :: COPPENSBASIS
       coppensorbital :: COPPENSORBITAL
-    ! geminal :: GEMINAL_MF_SPECTRUM
       reflection :: REFLECTION
       shell :: SHELL
       slaterbasis :: SLATERBASIS
@@ -141,7 +140,6 @@ contains
       basis.clear_keys
       coppensbasis.clear_keys
       coppensorbital.clear_keys
-    ! geminal.clear_keys
       reflection.clear_keys
       shell.clear_keys
       slaterbasis.clear_keys
@@ -259,9 +257,6 @@ contains
       case ("get_x_laplacian_grid          "); .GRID:get_x_laplacian_grid
       case ("get_x_structure_factors_pce   "); .XTAL:get_x_structure_factors_pce
       case ("get_x_structure_factors_test  "); .XTAL:get_x_structure_factors_test
-      case ("geminal_mf_scheme_data=       "); .GEM:read_geminal_mf_scheme
-      case ("geminal_mf_scheme             "); .GEM:do_geminal_mf_scheme
-      case ("geminal_mf_scheme_restart     "); .GEM:restart_geminal_mf_scheme
 
       case ("har_refinement                "); .TAD:HAR_refinement
 
@@ -368,7 +363,6 @@ contains
       case ("put_fitting_plots             "); .:crystal.put_fitting_plots ! <--
       case ("put_fock_matrix               "); .BASE:put_fock_matrix
       case ("put_g_tensor_information      "); .MISC:put_g_tensor_information
-      case ("put_geminal_mf_scheme         "); .:geminal_mf_scheme.put
       case ("put_group_12_energies         "); .PROP:put_group_12_energies
       case ("put_group_12_multipole_energy "); .PROP:put_group_12_multipole_energies
       case ("put_group_12_spackman1986_ener"); .PROP:put_group_12_Spackman1986_energies
@@ -434,7 +428,6 @@ contains
 
       case ("read_archive                  "); .BASE:read_archive
       case ("read_ascii_archive            "); .BASE:read_ascii_archive
-      case ("read_pcc_density_matrix       "); .MISC:read_pcc_density_matrix
       case ("read_g09_fchk_file            "); .BASE:read_g09_FChk_file
       case ("read_gaussian_fchk_file       "); .BASE:read_g09_FChk_file
       case ("read_molden_file              "); .BASE:read_molden_MOs
@@ -623,10 +616,11 @@ contains
 
    read_becke_grid ::: leaky
    ! Read in the Becke integration grid data
+      self :: INOUT
 
    ENSURE(.atom.associated,"input atom information before becke_grid information")
 
-      if (.becke_grid.disassociated) .becke_grid.create
+      if (.becke_grid.deallocated) .becke_grid.create
 
       ! Leaky
       .becke_grid.set_atom_info(.atom)
@@ -1005,7 +999,8 @@ contains
       .BASE:rotate_by(R)
 
       ! Remake the Becke grid (leaky)
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom)
+      if (.becke_grid.allocated) &
+         .becke_grid.set_grid_data(.atom)
 
    end
 
@@ -1049,7 +1044,8 @@ contains
       .BASE:rotate_by(R)
 
       ! Remake the Becke grid (leaky)
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom)
+      if (.becke_grid.allocated) &
+         .becke_grid.set_grid_data(.atom)
 
    end
 

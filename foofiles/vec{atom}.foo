@@ -28,10 +28,7 @@ module VEC{ATOM}
    implicit none
 
    ! Atom connection table
-   connections_for :: VEC{VEC_{INT}}*, private DEFAULT_NULL
-
-   ! Atom group connection table, to save work
- ! group_connections_for :: VEC{VEC_{INT}}*, private DEFAULT_NULL
+   connections_for :: VEC{VEC_{INT}}@, private
 
 contains
 
@@ -357,7 +354,7 @@ contains
    ! Set the unique tags.
       self :: INOUT
 
-      Z_list :: VEC{VEC_{INT}}*
+      Z_list :: VEC{VEC_{INT}}@
       a,k,n,nk :: INT
 
       ! Get the atom Z list
@@ -5313,18 +5310,22 @@ contains
 !  Moments, fields, field gradients
 !  ================================
 
-   nuclear_dipole_moment result (res)
+   nuclear_dipole_moment result (res) ::: PURE
    ! Return the dipole moment obtained from the atomic numbers.
    ! Dummy nuclear charges are not included
+      self :: IN
       res :: VEC{REAL}(3)
+      
       a :: INT
+
       res = ZERO
       do a = 1,.dim
          res = res + self(a).atomic_number*self(a).position
       end
+
    end
 
-   nuclear_quadrupole_moment result (res)
+   nuclear_quadrupole_moment result (res) ::: PURE
    ! Return the quadrupole moment obtained from the nuclear charges
    ! as a vector, in the order: xx, yy, zz, xy, xz, yz
    ! Dummy nuclear charges are not included
@@ -5347,13 +5348,16 @@ contains
 
    end
 
-   nuclear_octupole_moment result (res)
+   nuclear_octupole_moment result (res) ::: PURE
    ! Return the octupole moment obtained from the nuclear charges as a vector,
    ! in the order: xxx, yyy, zzz, xxy, xxz, yyx, yyz, zzx, zzy, xyz
    ! Dummy nuclear charges are not included
+      self :: IN
       res :: VEC{REAL}(10)
+
       Z :: REAL
       a :: INT
+
       res = ZERO
       do a = 1,.dim
          Z = self(a).atomic_number
@@ -5368,16 +5372,20 @@ contains
          res(9)  = res(9)  + Z * self(a).position(3) * self(a).position(3) * self(a).position(2)
          res(10) = res(10) + Z * self(a).position(1) * self(a).position(2) * self(a).position(3)
       end
+
    end
 
-   nuclear_E_field_at_positions(pos) result (res)
+   nuclear_E_field_at_positions(pos) result (res) ::: PURE
    ! Return the nuclear contribution to the electric fields
    ! at the nuclei as a (3 x .dim) array
+      self :: IN
       pos :: MAT{REAL}, IN
       res :: MAT{REAL}(3,pos.dim2)
+
       Z,r :: REAL
       a,b :: INT
       ab :: VEC{REAL}(3)
+
       res = ZERO
 
       do a = 1,pos.dim2
@@ -5388,15 +5396,19 @@ contains
             res(:,a) = res(:,a) + Z*ab/(r*r*r)
          end
       end
+
    end
 
-   nuclear_E_field_at_nuclei result (res)
+   nuclear_E_field_at_nuclei result (res) ::: PURE
    ! Return the nuclear contribution to the electric fields
    ! at the nuclei as a (3 x .dim) array
+      self :: IN
       res :: MAT{REAL}(3,size(self))
+
       Z,r :: REAL
       a,b :: INT
       ab :: VEC{REAL}(3)
+
       res = ZERO
       do a = 1,.dim
          do b = 1,.dim
@@ -5407,15 +5419,18 @@ contains
             res(:,a) = res(:,a) + Z*ab/(r*r*r)
          end
       end
+
    end
 
-   nuclear_EFG_at_nuclei result (res)
+   nuclear_EFG_at_nuclei result (res) ::: PURE
    ! Return the nuclear contribution to the electric fields gradient
    ! (EFG) at the nuclei as a (6 x .dim) array
+      self :: IN
       res :: MAT{REAL}(6,size(self))
       Z,r,r3,r5 :: REAL
       a,b :: INT
       ab :: VEC{REAL}(3)
+
       res = ZERO
       do a = 1,.dim
          do b = 1,.dim
@@ -5433,6 +5448,7 @@ contains
             res(6,a) = res(6,a) - Z * (THREE*ab(2)*ab(3)/r5)
          end
       end
+
    end
 
 !  ========================
@@ -5456,7 +5472,7 @@ contains
    ! Make the atom Z list ... Z_list(k).element(c) is the c-th atom of
    ! the same atomic number (atomic numbers in decreasing order).
       self :: IN
-      Z_list :: VEC{VEC_{INT}}*
+      Z_list :: VEC{VEC_{INT}}@, OUT
 
       n_kind, n,k,Z_n :: INT
       Z,unique_Z :: VEC{INT}*
@@ -5608,7 +5624,7 @@ contains
    ! molecule.
       self :: INOUT
 
-      atoms_bonded_to_atom :: VEC{VEC_{INT}}*
+      atoms_bonded_to_atom :: VEC{VEC_{INT}}@
       group_for :: VEC{INT}*
       a,b,c,n, ga,gb :: INT
 
@@ -5666,7 +5682,8 @@ contains
    ! their indices as a atom_group of integers. The result is a
    ! "atom_group" of atom_group of integers. NOTE that "atom_group" is
    ! created.
-      atom_group :: VEC{VEC_{INT}}*
+      self :: IN
+      atom_group :: VEC{VEC_{INT}}@
 
       n_group,g,n,i :: INT
       group_indices :: VEC{INT}*
@@ -6498,7 +6515,7 @@ contains
    ! Print the indices of the protein backbone atoms.
       list :: VEC{INT}*
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
 
       N,Cp0,Ca,Cb,Cp,N1,Ot,Ct :: INT
@@ -6519,7 +6536,9 @@ contains
 
    find_protein_backbone
    ! Return the of indices of the N terminal atoms.
-      backbone :: VEC{VEC_{INT}}*
+      self :: IN
+
+      backbone :: VEC{VEC_{INT}}@
 
       .make_connection_table(skip_hydrogen=TRUE)
       .find_protein_backbone(backbone)
@@ -6531,9 +6550,10 @@ contains
 
    find_protein_backbone(backbone) ::: leaky
    ! Return the "backbone" of atom indices in each protein backbone.
-      backbone :: VEC{VEC_{INT}}*
+      self :: IN
+      backbone :: VEC{VEC_{INT}}@, OUT
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
 
       terminal :: VEC{INT}*
@@ -6573,84 +6593,6 @@ contains
 
    end
 
-!   find_protein_backbone_from_N(N,C,found,Ca,Cc,N1,Ot)
-!   ! Given the index "N" of a nitrogen atom and possibly the index "C"
-!   ! of a connected carbon atom, return "found" as TRUE if that
-!   ! nitrogen atom is part of a protein backbone. Also return the
-!   ! index "Ca" of the C-alpha carbon, the index "Cc" of the C-carboxy
-!   ! carbon, and either "N1" the next nitrogen in the backbone, or
-!   ! "Ot" the terminal oxygen in the backbone. This assumes a
-!   ! connection table has been made.
-!     N,C :: INT, IN
-!     found :: BIN, OUT
-!     Ca,Cc,N1,Ot :: INT, OUT
-!
-!   ENSURE(connections_for.associated,"no connection table")
-!   ENSURE(connections_for.dim==.dim,"wrong size connection table")
-!   ENSURE(N>0 AND N<=.dim,"N index out of range")
-!   ENSURE(self(N).atomic_number==7,"N is not the index of a nitrogen atom")
-!   ENSURE(C>=0 AND C<=.dim,"C index out of range")
-!
-!     nn,na,ia,nc,ic,O2,X :: INT
-!
-!     ! Set defaults
-!     found = FALSE
-!     Ca = 0; Cc = 0; N1 = 0; Ot = 0
-!
-!     ! Check if C is bonded to N
-!     if (C>0) then
-!        DIE_IF(NOT self(N).is_bonded_to(self(C)),"N is not bonded to C")
-!     end
-!
-!     ! # of connections for N
-!     nn = connections_for(N).element.dim
-!
-!     ! A backbone N must have 1 connection and can't have
-!     ! more than 2 connections
-!     if (nn<=0) return
-!     if (nn >2) return
-!
-!     ! Get the index of C-alpha atom
-!     Ca = connections_for(N)[1]
-!     if (Ca==C) then
-!        DIE_IF(nn<2,"not enough connections to N = "//trim(N.to_str))
-!        Ca = connections_for(N)[2]
-!     end
-!
-!     ! C-alpha must be a carbon
-!     if (self(Ca).atomic_number/=6) return
-!
-!     ! # of  connections for C-alpha
-!     na = connections_for(Ca).element.dim
-!
-!     ! C-alpha must have 2 connections (GLY) or 3 connections
-!     if (na/=3 AND na/=2) return
-!
-!     ! Now find C-carboxy carbon
-!     do ia = 1,na
-!        Cc = connections_for(Ca)[ia]          ! Index of C-carboxy
-!        if (Cc==N) cycle                      ! Cc can't be the first N
-!        if (self(Cc).atomic_number/=6) cycle  ! Cc must be a carbon
-!        nc = connections_for(Cc).element.dim
-!        if (nc/=3) cycle                      ! C-carboxy must have 3 connections
-!        O2 = 0                                ! It must have a =O
-!        N1 = 0                                ! It must have a -N, or
-!        Ot = 0                                ! It must have a terminal -OH
-!        do ic = 1,nc
-!           X = connections_for(Cc)[ic]
-!           if (X==Ca) cycle
-!           if (self(X).atomic_number==7) N1 = X
-!           if (self(X).atomic_number==8) then
-!              if (Ot==0) then; O2 = X
-!              else;            Ot = X
-!              end
-!           end
-!        end
-!        found = O2/=0 AND (N1/=0 OR Ot/=0)
-!        if (found) exit
-!     end
-!   end
-
 
    is_protein_backbone_N(N,Cp0,Ca,Cb,Cp,N1,Ot,Ct,N_terminal,try) result (res)
    ! Return TRUE if "N" is the index of a nitrogen atom in the
@@ -6668,7 +6610,7 @@ contains
       try :: BIN, optional
       res :: BIN
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
    ENSURE(N>0 AND N<=.dim,"N index out of range")
    ENSURE(self(N).atomic_number==7,"N is not the index of a nitrogen atom")
@@ -6756,7 +6698,7 @@ contains
       Cb,Cp,O1,N1,Ot,Ct :: INT, OUT
       res :: BIN
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
    ENSURE(N>0 AND N<=.dim,"N index out of range")
    ENSURE(Ca>=0 AND Ca<=.dim,"Ca index out of range")
@@ -6933,7 +6875,7 @@ contains
       O,Ca,N1 :: INT, OUT
       res :: BIN
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
    ENSURE(Cp>=0 AND Cp<=.dim,"Cp index out of range")
    ENSURE( N>=0 AND  N<=.dim," N index out of range")
@@ -6981,7 +6923,7 @@ contains
       O,Ca,N1 :: INT, OUT
       res :: BIN
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
    ENSURE(Cp>=0 AND Cp<=.dim,"Cp index out of range")
    ENSURE( N>=0 AND  N<=.dim," N index out of range")
@@ -7015,7 +6957,7 @@ contains
       O1,O2 :: INT, OUT
       res :: BIN
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
    ENSURE(Cp>=0 AND Cp<=.dim,"Cp index out of range")
    ENSURE(Ca>=0 AND Ca<=.dim,"Ca index out of range")
@@ -7038,7 +6980,7 @@ contains
       O1,C :: INT, OUT
       res :: BIN
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
    ENSURE(Cp>=0 AND Cp<=.dim,"Cp index out of range")
    ENSURE(Ca>=0 AND Ca<=.dim,"Ca index out of range")
@@ -7061,7 +7003,7 @@ contains
       O1,N1 :: INT, OUT
       res :: BIN
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
    ENSURE(connections_for.dim==.dim,"wrong size connection table")
    ENSURE(Cp>=0 AND Cp<=.dim,"C index out of range")
 
@@ -7078,7 +7020,7 @@ contains
       self :: IN
       res :: BIN
 
-      res = connections_for.associated
+      res = connections_for.allocated
 
    end
 
@@ -7092,7 +7034,7 @@ contains
 
       r :: REAL
 
-      if (connections_for.associated) return
+      if (connections_for.allocated) return
 
       r = 0.5d0
       r.convert_from("angstrom")
@@ -7106,7 +7048,7 @@ contains
    ! "skip_hydrogen" is present and TRUE, connections are not made to
    ! any hydrogen atom.
       self :: IN
-      connections_for :: VEC{VEC_{INT}}*
+      connections_for :: VEC{VEC_{INT}}@, OUT
       skip_hydrogen :: BIN, optional, IN
       skip_self     :: BIN, optional, IN
 
@@ -7157,120 +7099,24 @@ contains
 
    end
 
-   assign_connection_table(connections) ::: leaky, selfless
-   ! Assign the atom connection connection_table to "connections".
-      connections :: VEC{VEC_{INT}}*
+   set_connection_table(connections) ::: leaky, selfless
+   ! Set the atom connection connection_table to "connections".
+      connections :: VEC{VEC_{INT}}@
 
-   ENSURE(connections.associated,"no connection table")
+   ENSURE(connections.allocated,"no connection table")
 
-      connections_for => connections
-
-   end
-
-   nullify_connection_table ::: leaky, selfless
-   ! Clean the "connection_for" atom connection table
-
-   ENSURE(connections_for.associated,"no connection table")
-
-      nullify(connections_for)
+      connections_for = connections
 
    end
 
    destroy_connection_table ::: leaky, selfless
    ! Clean the "connection_for" atom connection table
 
-   ENSURE(connections_for.associated,"no connection table")
+   ENSURE(connections_for.allocated,"no connection table")
 
       connections_for.destroy
 
    end
-
-
-!   has_group_connection_table result (res) ::: selfless, pure
-!   ! Returns TRUE if the connection table connections_for is made.
-!      self :: IN
-!      res :: BIN
-!
-!      res = group_connections_for.associated
-!
-!   end
-!
-!   make_group_connection_table ::: leaky
-!   ! Make the atom group connection table "connections_for". 
-!      self :: IN
-!
-!      r :: REAL
-!
-!      if (group_connections_for.associated) return
-!
-!      r = 0.5d0
-!      r.convert_from("angstrom")
-!      ATOM:set_atom_bonded_range_factor(r)
-!      .make_group_connection_table(group_connections_for)
-!
-!   end
-!
-!   make_group_connection_table(connections_for,skip_self) ::: leaky, PURE
-!   ! Make the atom group connection table "connections_for".
-!      self :: IN
-!      connections_for :: VEC{VEC_{INT}}*
-!      skip_self     :: BIN, optional, IN
-!
-!      n_group, i,j,k :: INT
-!      skip_s :: BIN
-!
-!      ! Skip atom itself in the connections?
-!      skip_s = TRUE
-!      if (present(skip_self)) skip_s = skip_self
-!
-!      ! No. of groups
-!      n_group =  .no_of_groups
-!
-!      ! Create connection table
-!      connections_for.create(n_group,0)
-!
-!      ! Loop all groups "i"
-!      do i = 1,n_group
-!
-!        ! If skipping atom "i" look at next atom
-!        if (skip_s) then; k = i + 1
-!        else;             k = i
-!        end
-!
-!        ! Loop possible connected atoms "k"
-!        do j = k,n_group
-!
-!           ! Add connected atom?
-!           if (.bonded_groups(i,j) OR j==i) then
-!              connections_for(i).element.append(j)
-!              connections_for(j).element.append(i)
-!           end
-!
-!        end
-!
-!      end
-!
-!   end
-!
-!   assign_group_connection_table(connections) ::: selfless
-!   ! Assign the group connection table "group_connections_for" to
-!   ! "connections".
-!      connections :: VEC{VEC_{INT}}*
-!
-!   ENSURE(connections.associated,"no connection table")
-!
-!      group_connections_for => connections
-!
-!   end
-!
-!   destroy_group_connection_table ::: leaky, selfless
-!   ! Clean the "group_connections_for" connection table
-!
-!   ENSURE(group_connections_for.associated,"no connection table")
-!
-!      group_connections_for.destroy
-!
-!   end
 
 !  =====================
 !  Atom connection tests
@@ -7780,7 +7626,7 @@ contains
    ! Return the "backbone" of atom indices in each protein backbone.
       self :: IN
 
-      backbone :: VEC{VEC_{INT}}*
+      backbone :: VEC{VEC_{INT}}@
       terminal :: VEC{INT}*
       N_terminal :: BIN
       i, N,Cp0,Ca,Cb,Cp,N1,Ot,Ct :: INT
@@ -7826,84 +7672,6 @@ contains
       connections_for.destroy
 
    end
-
-!   find_protein_backbone_from_N(N,C,found,Ca,Cc,N1,Ot)
-!   ! Given the index "N" of a nitrogen atom and possibly the index "C"
-!   ! of a connected carbon atom, return "found" as TRUE if that
-!   ! nitrogen atom is part of a protein backbone. Also return the
-!   ! index "Ca" of the C-alpha carbon, the index "Cc" of the C-carboxy
-!   ! carbon, and either "N1" the next nitrogen in the backbone, or
-!   ! "Ot" the terminal oxygen in the backbone. This assumes a
-!   ! connection table has been made.
-!     N,C :: INT, IN
-!     found :: BIN, OUT
-!     Ca,Cc,N1,Ot :: INT, OUT
-!
-!   ENSURE(connections_for.associated,"no connection table")
-!   ENSURE(connections_for.dim==.dim,"wrong size connection table")
-!   ENSURE(N>0 AND N<=.dim,"N index out of range")
-!   ENSURE(self(N).atomic_number==7,"N is not the index of a nitrogen atom")
-!   ENSURE(C>=0 AND C<=.dim,"C index out of range")
-!
-!     nn,na,ia,nc,ic,O2,X :: INT
-!
-!     ! Set defaults
-!     found = FALSE
-!     Ca = 0; Cc = 0; N1 = 0; Ot = 0
-!
-!     ! Check if C is bonded to N
-!     if (C>0) then
-!        DIE_IF(NOT self(N).is_bonded_to(self(C)),"N is not bonded to C")
-!     end
-!
-!     ! # of connections for N
-!     nn = connections_for(N).element.dim
-!
-!     ! A backbone N must have 1 connection and can't have
-!     ! more than 2 connections
-!     if (nn<=0) return
-!     if (nn >2) return
-!
-!     ! Get the index of C-alpha atom
-!     Ca = connections_for(N)[1]
-!     if (Ca==C) then
-!        DIE_IF(nn<2,"not enough connections to N = "//trim(N.to_str))
-!        Ca = connections_for(N)[2]
-!     end
-!
-!     ! C-alpha must be a carbon
-!     if (self(Ca).atomic_number/=6) return
-!
-!     ! # of  connections for C-alpha
-!     na = connections_for(Ca).element.dim
-!
-!     ! C-alpha must have 2 connections (GLY) or 3 connections
-!     if (na/=3 AND na/=2) return
-!
-!     ! Now find C-carboxy carbon
-!     do ia = 1,na
-!        Cc = connections_for(Ca)[ia]          ! Index of C-carboxy
-!        if (Cc==N) cycle                      ! Cc can't be the first N
-!        if (self(Cc).atomic_number/=6) cycle  ! Cc must be a carbon
-!        nc = connections_for(Cc).element.dim
-!        if (nc/=3) cycle                      ! C-carboxy must have 3 connections
-!        O2 = 0                                ! It must have a =O
-!        N1 = 0                                ! It must have a -N, or
-!        Ot = 0                                ! It must have a terminal -OH
-!        do ic = 1,nc
-!           X = connections_for(Cc)[ic]
-!           if (X==Ca) cycle
-!           if (self(X).atomic_number==7) N1 = X
-!           if (self(X).atomic_number==8) then
-!              if (Ot==0) then; O2 = X
-!              else;            Ot = X
-!              end
-!           end
-!        end
-!        found = O2/=0 AND (N1/=0 OR Ot/=0)
-!        if (found) exit
-!     end
-!   end
 
    protein_side_chain_3_code(Ca,Cb) result (res)
    ! Returns the 3 letter code for a side chain connected at carbon
@@ -10703,7 +10471,7 @@ contains
       xyz,err :: MAT{REAL}*
       Z  :: VEC{REAL}*
       lab,ID :: VEC{STR}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       la,lb,ka,kb :: INT
       cartesian,header,has_unique_labels :: BIN
 
@@ -10864,7 +10632,7 @@ contains
       Z,occ  :: VEC{REAL}*
       lab,ID :: VEC{STR}*
       grp :: VEC{INT}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       la,lb,ka,kb :: INT
       cartesian,header,has_unique_labels :: BIN
 
@@ -11029,7 +10797,7 @@ contains
       Z,occ  :: VEC{REAL}*
       lab,ID :: VEC{STR}*
       grp :: VEC{INT}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       la,lb,ka,kb :: INT
       cartesian,header,has_unique_labels :: BIN
 
@@ -11544,7 +11312,7 @@ contains
       self :: IN
 
       lab,ID :: VEC{STR}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       Z,kd,mg,dg :: VEC{INT}*
       un :: VEC{BIN}*
       la,lb,ka,kb :: INT
@@ -11696,7 +11464,7 @@ contains
       U,dU :: MAT{REAL}*
       is_flat,is_npd :: VEC{BIN}*
       ratio :: VEC{REAL}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       fac :: REAL
       i :: INT
       cartesian,header :: BIN
@@ -11821,7 +11589,7 @@ contains
       Uc :: VEC{STR}*
       ID :: VEC{STR}*
       list :: VEC{INT}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       fac,sfac :: REAL
       i,n :: INT
 
@@ -11890,7 +11658,6 @@ contains
       table.put
 
       ! Clean
-      table.clear_columns
       table.destroy
       dU.destroy
       U.destroy
@@ -11908,7 +11675,7 @@ contains
       Uc :: VEC{STR}*
       ID :: VEC{STR}*
       list :: VEC{INT}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       fac,sfac :: REAL
       i,n :: INT
 
@@ -11977,7 +11744,6 @@ contains
       table.put
 
       ! Clean
-      table.clear_columns
       table.destroy
       dU.destroy
       U.destroy
@@ -12036,7 +11802,7 @@ contains
       ID :: VEC{STR}*
       fr,fi :: VEC{REAL}*
       ulist :: VEC{INT}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       n_kind :: INT
 
       ! Unique atom list
@@ -12101,8 +11867,8 @@ contains
 
    ENSURE(self(1).pos_axis_system=="cartesian","axis system must be cartesian")
 
-      table :: VEC{TABLE_COLUMN}*
-      Z_list :: VEC{VEC_{INT}}*
+      table :: VEC{TABLE_COLUMN}@
+      Z_list :: VEC{VEC_{INT}}@
       no_of_bonds, n_kind,k1,k2,n_bonds :: INT
       symbols,labels :: MAT{STR}*
       dash,dsh1 :: VEC{STR}*
@@ -12262,8 +12028,8 @@ contains
 
    ENSURE(self(1).pos_axis_system=="cartesian","axis system must be cartesian")
 
-      table :: VEC{TABLE_COLUMN}*
-      Z_list :: VEC{VEC_{INT}}*
+      table :: VEC{TABLE_COLUMN}@
+      Z_list :: VEC{VEC_{INT}}@
       no_of_bonds, n_kind,k1,k2,n_bonds :: INT
       symbols,labels :: MAT{STR}*
       dash,dsh1 :: VEC{STR}*
@@ -12421,7 +12187,6 @@ contains
       table.put_footer(label_rows=FALSE)
 
       ! Clean
-      table.clear_columns
       table.destroy
       Z_list.destroy
 
@@ -12620,8 +12385,8 @@ contains
 
    ENSURE(self(1).pos_axis_system=="cartesian","axis system must be cartesian")
 
-      table :: VEC{TABLE_COLUMN}*
-      Z_list :: VEC{VEC_{INT}}*
+      table :: VEC{TABLE_COLUMN}@
+      Z_list :: VEC{VEC_{INT}}@
       no_of_angles, n_kind,k1,k2,k3,n_angles,w :: INT
       symbols,labels :: MAT{STR}*
       dash,dsh1 :: VEC{STR}*
@@ -12812,8 +12577,8 @@ contains
 
    ENSURE(self(1).pos_axis_system=="cartesian","axis system must be cartesian")
 
-      table :: VEC{TABLE_COLUMN}*
-      Z_list :: VEC{VEC_{INT}}*
+      table :: VEC{TABLE_COLUMN}@
+      Z_list :: VEC{VEC_{INT}}@
       no_of_angles, n_kind,k1,k2,k3,n_angles,w :: INT
       symbols,labels :: MAT{STR}*
       dash,dsh1 :: VEC{STR}*
@@ -13231,8 +12996,8 @@ contains
 
    ENSURE(self(1).pos_axis_system=="cartesian","axis system must be cartesian")
 
-      table :: VEC{TABLE_COLUMN}*
-      Z_list :: VEC{VEC_{INT}}*
+      table :: VEC{TABLE_COLUMN}@
+      Z_list :: VEC{VEC_{INT}}@
       no_of_torsions, n_kind,k1,k2,k3,k4,n_angles,w :: INT
       symbols,labels :: MAT{STR}*
       dash,dsh1 :: VEC{STR}*
@@ -13458,8 +13223,8 @@ contains
 
    ENSURE(self(1).pos_axis_system=="cartesian","axis system must be cartesian")
 
-      table :: VEC{TABLE_COLUMN}*
-      Z_list :: VEC{VEC_{INT}}*
+      table :: VEC{TABLE_COLUMN}@
+      Z_list :: VEC{VEC_{INT}}@
       no_of_torsions, n_kind,k1,k2,k3,k4,n_angles,w :: INT
       symbols,labels :: MAT{STR}*
       dash,dsh1 :: VEC{STR}*
@@ -13700,6 +13465,7 @@ contains
    get_bonded_torsions(quad,angle,Z_list,k1,k2,k3,k4) ::: leaky, private
    ! Get the bonded-atom "quad"ruples, and the "angles" between them.
    ! The quadruple has "Z_list" groups of "k1" ... "k4", respectively.
+      self :: IN
       quad :: MAT{INT}*
       angle :: VEC{REAL}*
       Z_list :: VEC{VEC_{INT}}, IN
@@ -13785,6 +13551,7 @@ contains
    get_bonded_torsions(quad,angle,esds,Z_list,k1,k2,k3,k4,covariance) ::: leaky, private
    ! Get the bonded-atom "quad"ruples, and the "angles" between them.
    ! The quadruple has "Z_list" groups of "k1" ... "k4", respectively.
+      self :: IN
       quad :: MAT{INT}*
       angle,esds :: VEC{REAL}*
       Z_list :: VEC{VEC_{INT}}, IN
@@ -14256,7 +14023,7 @@ contains
    ENSURE(.has_groups,"no atom group information")
 
       n,i :: INT
-      list :: VEC{VEC_{INT}}*
+      list :: VEC{VEC_{INT}}@
 
       .make_atom_group_list(list)
 
@@ -14374,7 +14141,7 @@ contains
       grp :: VEC{INT}*
       xyz,err :: MAT{REAL}*
       fac,fac2 :: REAL
-      tabl1,tabl2 :: VEC{TABLE_COLUMN}*
+      tabl1,tabl2 :: VEC{TABLE_COLUMN}@
 
       ! Unit conversion
       fac  = ANGSTROM_PER_BOHR
@@ -14484,7 +14251,7 @@ contains
       grp :: VEC{INT}*
       xyz,err :: MAT{REAL}*
       fac,fac2 :: REAL
-      tabl1,tabl2 :: VEC{TABLE_COLUMN}*
+      tabl1,tabl2 :: VEC{TABLE_COLUMN}@
 
       ! Unit conversion
       fac  = ANGSTROM_PER_BOHR
@@ -14592,7 +14359,7 @@ contains
       grp :: VEC{INT}*
       xyz :: MAT{REAL}*
       err :: MAT{REAL}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       fac,fac2 :: REAL
 
       ! Table column data
@@ -14676,8 +14443,8 @@ contains
       grp :: VEC{INT}*
       xyz,err :: MAT{REAL}*
       fac,fac2 :: REAL
-      tabl1 :: VEC{TABLE_COLUMN}*
-      tabl2 :: VEC{TABLE_COLUMN}*
+      tabl1 :: VEC{TABLE_COLUMN}@
+      tabl2 :: VEC{TABLE_COLUMN}@
 
       ! Unit conversion
       fac  = ANGSTROM_PER_BOHR
@@ -14837,7 +14604,7 @@ contains
       list :: VEC{INT}@
       ID,blnk :: VEC{STR}*
       ADPv,ADPe :: MAT{REAL}*
-      tabl1,tabl2 :: VEC{TABLE_COLUMN}*
+      tabl1,tabl2 :: VEC{TABLE_COLUMN}@
       lab :: STR
       fac :: REAL
       i,dim :: INT
@@ -14952,8 +14719,8 @@ contains
       list :: VEC{INT}@
       ID,blnk :: VEC{STR}*
       ADPv,ADPe :: MAT{REAL}*
-      tabl1 :: VEC{TABLE_COLUMN}*
-      tabl2 :: VEC{TABLE_COLUMN}*
+      tabl1 :: VEC{TABLE_COLUMN}@
+      tabl2 :: VEC{TABLE_COLUMN}@
       lab :: STR
       fac :: REAL
       i,dim :: INT
@@ -16058,8 +15825,8 @@ contains
 
    ENSURE(self(1).pos_axis_system=="cartesian","axis system must be cartesian")
 
-      table :: VEC{TABLE_COLUMN}*
-      Z_list :: VEC{VEC_{INT}}*
+      table :: VEC{TABLE_COLUMN}@
+      Z_list :: VEC{VEC_{INT}}@
       n_kind,k1,k2,n_bonds :: INT
       labels :: MAT{STR}*
       dash,dsh1 :: VEC{STR}*
@@ -16161,7 +15928,6 @@ contains
 
 
       ! Clean
-      table.clear_columns
       table.destroy
       Z_list.destroy
 
@@ -16175,8 +15941,8 @@ contains
 
    ENSURE(self(1).pos_axis_system=="cartesian","axis system must be cartesian")
 
-      table :: VEC{TABLE_COLUMN}*
-      Z_list :: VEC{VEC_{INT}}*
+      table :: VEC{TABLE_COLUMN}@
+      Z_list :: VEC{VEC_{INT}}@
       n_kind,k1,k2,k3,n_angles :: INT
       symbols   :: MAT{STR}*
       dash,dsh1 :: VEC{STR}*
@@ -16450,7 +16216,7 @@ contains
    ENSURE(.has_all_gaussian_bases,"no gaussian bases")
    ENSURE(orb.dim2==.no_of_basis_functions,"wrong dim2, orb: "//trim(INT:to_str(orb.dim2)))
 
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       labels :: VEC{STR}*
       is_pair :: BIN
       c :: INT

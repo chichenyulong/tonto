@@ -50,8 +50,6 @@ contains
       nullify(.cluster)
       nullify(.cluster_charges)
       nullify(.cluster_charge_positions)
-      nullify(.table_info)
-      nullify(.table)
 
    end
 
@@ -79,8 +77,10 @@ contains
    ! Create a copy of the "scfdata" object
       self :: PTR
       scfdata :: SCFDATA
+
       .create
       .copy(scfdata)
+
    end
 
    copy(scfdata) ::: leaky
@@ -103,9 +103,6 @@ contains
          .cluster_charges.create_copy(scfdata.cluster_charges)
       if (scfdata.cluster_charge_positions.associated) &
          .cluster_charge_positions.create_copy(scfdata.cluster_charge_positions)
-
-      if (scfdata.table_info.associated) .table_info.create_copy(scfdata.table_info)
-      if (scfdata.table.associated)      .table.create_copy(scfdata.table)
 
    end
 
@@ -336,6 +333,7 @@ contains
 
    set_table ::: leaky
    ! Set up the SCF table
+      self :: INOUT
 
       ! Initialize save margin note data
       .table_info.destroy
@@ -398,6 +396,7 @@ contains
 
    set_CP_table ::: leaky
    ! Set up the CP table
+      self :: INOUT
 
       ! Initialize save margin note data
       .table_info.destroy
@@ -425,6 +424,7 @@ contains
 
    set_margin_info(n_notes)
    ! Set the margin information "info" for the SCF iterations
+      self :: INOUT
       n_notes :: INT, optional, OUT
 
       n,i,s :: INT
@@ -546,6 +546,7 @@ contains
    reset
    ! Reset SCF energy and iteration data , but don't change
    ! nuclear_repulsion_energy, convergence, direct, or max_it options
+      self :: INOUT
 
       ! Stored total energy/Lagrangian
       .energy        = ZERO
@@ -575,6 +576,7 @@ contains
 
    reset_for_next_lambda ::: leaky
    ! Reset a few things for the next constrained-scf lambda iteration:
+      self :: INOUT
 
       ! Reset iteration & margin info
       .iteration = -1
@@ -2417,6 +2419,7 @@ contains
 
    put_banner
    ! Prints out the nuclear energy and initial guess energy.
+      self :: IN
 
       if (NOT .output) return
 
@@ -2430,6 +2433,8 @@ contains
 
    put_options
    ! Prints out a summary of what options are stored in the scfdata object.
+      self :: IN
+
       q :: VEC{REAL}(3)
 
       if (NOT .output) return
@@ -2610,6 +2615,7 @@ contains
 
    put_table_head
    ! Prints out the SCF iteration banner (and related options)
+      self :: IN
 
    ENSURE(.table.associated,"no table created")
 
@@ -2629,7 +2635,8 @@ contains
    ! Print out the results for the current iteration.
    ! If converged, print out footer as well.
    ! NOTE: must have called put_table_head before!
-      flush :: BIN, optional
+      self :: INOUT
+      flush :: BIN, optional, IN
 
       if (NOT .output) return
 
@@ -2640,21 +2647,21 @@ contains
 
          ! Set table body (leaky)
          if (NOT .fitting) then
-            .table(1).create_values([.iteration])
-            .table(2).create_values([.energy])
-            .table(3).create_values([.delta])
-            .table(4).create_values([.diis_error])
-            .table(5).create_values(.table_info)
+            .table(1).set_values([.iteration])
+            .table(2).set_values([.energy])
+            .table(3).set_values([.delta])
+            .table(4).set_values([.diis_error])
+            .table(5).set_values(.table_info)
             .table(5).force_width(0)
          else
-            .table(1).create_values([.iteration])
-            .table(2).create_values([.lambda])
-            .table(3).create_values([.penalty])
-            .table(4).create_values([.energy])
-            .table(5).create_values([.fit_value])
-            .table(6).create_values([.fit_value-.old_fit_value])
-            .table(7).create_values([.diis_error])
-            .table(8).create_values(.table_info)
+            .table(1).set_values([.iteration])
+            .table(2).set_values([.lambda])
+            .table(3).set_values([.penalty])
+            .table(4).set_values([.energy])
+            .table(5).set_values([.fit_value])
+            .table(6).set_values([.fit_value-.old_fit_value])
+            .table(7).set_values([.diis_error])
+            .table(8).set_values(.table_info)
             .table(8).force_width(0)
          end
 
@@ -2686,6 +2693,7 @@ contains
 
    put_results
    ! Prints out the results
+      self :: IN
 
       if (NOT .output_results) return
 
@@ -2704,6 +2712,7 @@ contains
 
    put_initial_guess_energies
    ! Prints out initial guess energies
+      self :: IN
 
       if (NOT .output) return
 
@@ -2719,6 +2728,7 @@ contains
    put_energies
    ! Prints out the table foot for an SCF calculation, after convergence
    ! or not as the case may be
+      self :: IN
 
       wid :: INT
 
@@ -2749,6 +2759,7 @@ contains
 
    put_crystal_fit_info
    ! Prints out the crystal structure factor statistics.
+      self :: IN
 
       if (NOT .output_results) return
 
@@ -2787,6 +2798,7 @@ contains
    put_crystal_footer
    ! Prints out the crystal structure factor statistics
    ! In the footer of a completed lambda calculation.
+      self :: IN
 
       if (NOT .output) return
 
@@ -2885,7 +2897,8 @@ contains
    ! Print out the CP results for the current iteration.
    ! If converged, print out footer as well.
    ! NOTE: must have called put_CP_table_head before!
-      flush :: BIN, optional
+      self :: INOUT
+      flush :: BIN, optional, IN
 
       if (NOT .output) return
 
@@ -2896,10 +2909,10 @@ contains
 
          ! Set table body (leaky)
          if (NOT .fitting) then
-            .table(1).create_values([.iteration])
-            .table(2).create_values([.delta])
-            .table(3).create_values([.diis_error])
-            .table(4).create_values(.table_info)
+            .table(1).set_values([.iteration])
+            .table(2).set_values([.delta])
+            .table(3).set_values([.diis_error])
+            .table(4).set_values(.table_info)
             .table(4).force_width(0)
          end
 

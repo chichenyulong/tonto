@@ -23143,7 +23143,7 @@ contains
    ! Put out the atom information to file "stdout"
       self :: IN
 
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
       stdout.text("==========================================")
@@ -23171,9 +23171,7 @@ contains
 
       table.put(label_rows=FALSE)
 
-      table.clear_columns
       table.destroy
-
 
    end
 

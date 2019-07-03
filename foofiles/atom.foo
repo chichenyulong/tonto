@@ -8237,37 +8237,40 @@ contains
 !  Nabla density grid routines
 !  ===========================
 
-   make_nabla_density_grid(nabla_grid,pts)
+   make_nabla_density_grid(nabla_grid,pts) ::: PURE
    ! Work out nabla of the density, "nabla_grid" on the set of point "pts".
+      self :: IN
       nabla_grid :: MAT{REAL}, OUT
       pts :: MAT{REAL}, IN
 
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not implemented")) then
+
       if (.natural_orbitals.number_kind == "real") then
          .make_nabla_density_grid_r(nabla_grid,pts)
-      else
-         DIE("complex case not yet implemented")
       end
 
    end
 
-   make_nabla_density_grid(nabla_grid,grid,pts)
+   make_nabla_density_grid(nabla_grid,grid,pts) ::: PURE
    ! Work nabla of the density, "nabla_grid", and the density, "grid", evaluated
    ! on the set of points "pts".
+      self :: IN
       nabla_grid :: MAT{REAL}, OUT
       grid :: VEC{REAL}, OUT
       pts :: MAT{REAL}, IN
 
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not implemented")) then
+
       if (.natural_orbitals.number_kind == "real") then
          .make_nabla_density_grid_r(nabla_grid,grid,pts)
-      else
-         DIE("complex case not yet implemented")
       end
 
    end
 
-   make_nabla_density_grid_r(nabla_grid,pts)
+   make_nabla_density_grid_r(nabla_grid,pts) ::: PURE
    ! Work out nabla of the density, "nabla_grid", on the grid "pts" using
    ! ".natural_orbitals" and the ".occupation" number vector.
+      self :: IN
       nabla_grid :: MAT{REAL}, OUT
       pts :: MAT{REAL}, IN
 
@@ -8279,8 +8282,8 @@ contains
    ENSURE(.occupation_numbers.associated, "no occupation numbers")
    ENSURE(.occupation_numbers.is_associated_with_genre("restricted"),"no occupation numbers")
 
-      orb :: VEC{REAL}*
-      nabla_orb :: MAT{REAL}*
+      orb :: VEC{REAL}@
+      nabla_orb :: MAT{REAL}@
       occ :: REAL
       n_occ,n,n_pts :: INT
 
@@ -8292,24 +8295,26 @@ contains
       n_occ = .no_of_occupied_NOs
 
       do n = 1,n_occ
-       .make_nabla_orbital_grid_r(nabla_orb,orb,.natural_orbitals.restricted(:,n), pts)
-       occ = .occupation_numbers.restricted(n)
-       nabla_grid(:,1) = nabla_grid(:,1) + occ*orb(:)*nabla_orb(:,1)
-       nabla_grid(:,2) = nabla_grid(:,2) + occ*orb(:)*nabla_orb(:,2)
-       nabla_grid(:,3) = nabla_grid(:,3) + occ*orb(:)*nabla_orb(:,3)
+
+         .make_nabla_orbital_grid_r(nabla_orb,orb,.natural_orbitals.restricted(:,n), pts)
+         
+         occ = .occupation_numbers.restricted(n)
+         
+         nabla_grid(:,1) = nabla_grid(:,1) + occ*orb(:)*nabla_orb(:,1)
+         nabla_grid(:,2) = nabla_grid(:,2) + occ*orb(:)*nabla_orb(:,2)
+         nabla_grid(:,3) = nabla_grid(:,3) + occ*orb(:)*nabla_orb(:,3)
+
       end
 
       nabla_grid = TWO*nabla_grid
 
-      orb.destroy
-      nabla_orb.destroy
-
    end
 
-   make_nabla_density_grid_r(nabla_grid,grid,pts)
+   make_nabla_density_grid_r(nabla_grid,grid,pts) ::: PURE
    ! Work out nabla of the density, "nabla_grid", and the density grid, "grid",
    ! using the grid "pts" and the ".natural_orbitals" and the ".occupation"
    ! number vector.
+      self :: IN
       nabla_grid :: MAT{REAL}, OUT
       grid :: VEC{REAL}, OUT
       pts :: MAT{REAL}, IN
@@ -8323,8 +8328,8 @@ contains
    ENSURE(.occupation_numbers.associated, "no occupation numbers")
    ENSURE(.occupation_numbers.is_associated_with_genre("restricted"),"no occupation numbers")
 
-      orb :: VEC{REAL}*
-      nabla_orb :: MAT{REAL}*
+      orb :: VEC{REAL}@
+      nabla_orb :: MAT{REAL}@
       occ :: REAL
       n_occ,n,n_pts :: INT
 
@@ -8337,27 +8342,30 @@ contains
       n_occ = .no_of_occupied_NOs
 
       do n = 1,n_occ
-       .make_nabla_orbital_grid_r(nabla_orb,orb,.natural_orbitals.restricted(:,n), pts)
-       occ = .occupation_numbers.restricted(n)
-       nabla_grid(:,1) = nabla_grid(:,1) + occ*orb(:)*nabla_orb(:,1)
-       nabla_grid(:,2) = nabla_grid(:,2) + occ*orb(:)*nabla_orb(:,2)
-       nabla_grid(:,3) = nabla_grid(:,3) + occ*orb(:)*nabla_orb(:,3)
-       grid(:) = grid(:) + occ*orb(:)*orb(:)
+
+         .make_nabla_orbital_grid_r(nabla_orb,orb,.natural_orbitals.restricted(:,n), pts)
+
+         occ = .occupation_numbers.restricted(n)
+
+         nabla_grid(:,1) = nabla_grid(:,1) + occ*orb(:)*nabla_orb(:,1)
+         nabla_grid(:,2) = nabla_grid(:,2) + occ*orb(:)*nabla_orb(:,2)
+         nabla_grid(:,3) = nabla_grid(:,3) + occ*orb(:)*nabla_orb(:,3)
+
+         grid(:) = grid(:) + occ*orb(:)*orb(:)
+
       end
 
       nabla_grid = TWO*nabla_grid
 
-      orb.destroy
-      nabla_orb.destroy
-
    end
 
-   make_nabla_orbital_grid_r(g,h,orb,pt)
+   make_nabla_orbital_grid_r(g,h,orb,pt) ::: PURE
    ! Evaluate the nabla orbital density grid "g" as well as the orbital grid "h"
    ! for *one* AO-basis orbital vector "orb" on a set of grid points "pt"
-      g :: MAT{REAL}
-      h :: VEC{REAL}
-      orb :: VEC{REAL}, IN, target
+      self :: IN
+      g :: MAT{REAL}, OUT
+      h :: VEC{REAL}, OUT
+      orb :: VEC{REAL}, IN
       pt :: MAT{REAL}, IN
 
    ENSURE(.basis.associated,"no basis set")
@@ -8366,11 +8374,11 @@ contains
    ENSURE(g.dim2==3,"grid array has wrong 2nd dimension")
    ENSURE(h.dim==pt.dim1,"grid array has wrong 1st dimension")
 
-      orb_a :: VEC{REAL}*
-      sh :: SHELL1
-      sh_grid :: MAT3{REAL}*
-      sh_grid0 :: MAT{REAL}*
+      orb_a :: VEC{REAL}@
+      sh_grid :: MAT3{REAL}@
+      sh_grid0 :: MAT{REAL}@
       n_shell,n_pt,f,l,a :: INT
+      sh :: SHELL1
 
       n_pt = pt.dim1
       n_shell = .basis.no_of_shells
@@ -8386,17 +8394,17 @@ contains
          f = l + 1
 
          if (sh.is_spherical)then
-           sh_grid.create(n_pt,sh.n_sph,3)
-           sh_grid0.create(n_pt,sh.n_sph)
-           l = f + sh.n_sph - 1
+            sh_grid.create(n_pt,sh.n_sph,3)
+            sh_grid0.create(n_pt,sh.n_sph)
+            l = f + sh.n_sph - 1
          else
-           sh_grid.create(n_pt,sh.n_comp,3)
-           sh_grid0.create(n_pt,sh.n_comp)
-           l = f + sh.n_comp - 1
+            sh_grid.create(n_pt,sh.n_comp,3)
+            sh_grid0.create(n_pt,sh.n_comp)
+            l = f + sh.n_comp - 1
          end if
 
          sh.make_nabla_grid(sh_grid,sh_grid0,pt)
-         orb_a => orb(f:l)
+         orb_a = orb(f:l)
 
          g(:,1).plus_product_of(sh_grid(:,:,1),orb_a)
          g(:,2).plus_product_of(sh_grid(:,:,2),orb_a)
@@ -8406,6 +8414,7 @@ contains
 
          sh_grid0.destroy
          sh_grid.destroy
+         sh.destroy_ptr_part
 
       end
 
@@ -8415,35 +8424,36 @@ contains
 !  Laplacian density routines
 !  ==========================
 
-   make_laplacian_grid(laplacian_grid,pt)
+   make_laplacian_grid(laplacian_grid,pt) ::: PURE
    ! Work out the electron "laplacian_grid" on "pt" using ".natural orbitals"
    ! and  the ".occupation_numbers" vector.
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      laplacian_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not implemented")
    ENSURE(.natural_orbitals.associated, "no natural orbitals")
    ENSURE(.natural_orbitals.has_any_genre, "no natural orbitals")
 
       if (.natural_orbitals.number_kind == "real") then
-        .make_laplacian_grid_r(laplacian_grid,pt)
-      else
-        DIE("code not written yet")
+         .make_laplacian_grid_r(laplacian_grid,pt)
       end
 
    end
 
-   make_laplacian_grid_r(laplacian_grid,pt)
+   make_laplacian_grid_r(laplacian_grid,pt) ::: PURE
    ! Make the "laplacian_grid" for the supplied points "pt" from restricted
    ! real natural orbitals
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      laplacian_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.is_associated_with_genre("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.associated, "no occupation #'s")
 
-      NO :: VEC{REAL}*
-      P,D :: MAT{REAL}*
+      NO :: VEC{REAL}@
+      P,D :: MAT{REAL}@
       n_occ,n,n_pt :: INT
       occ :: REAL
 
@@ -8456,27 +8466,30 @@ contains
       D.create(n_pt,3)
 
       n_occ = .no_of_occupied_NOs
+
       do n = 1,n_occ
-       .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
-       occ = .occupation_numbers.restricted(n)
-       laplacian_grid = laplacian_grid +  occ * (NO*(D(:,1)+D(:,2)+D(:,3)) + (P(:,1)*P(:,1)+P(:,2)*P(:,2)+P(:,3)*P(:,3)))
+
+         .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
+
+         occ = .occupation_numbers.restricted(n)
+
+         laplacian_grid = laplacian_grid &
+                        +  occ * (NO*(D(:,1)+D(:,2)+D(:,3)) + (P(:,1)*P(:,1)+P(:,2)*P(:,2)+P(:,3)*P(:,3)))
+
       end
 
       laplacian_grid = TWO*laplacian_grid
 
-      D.destroy
-      P.destroy
-      NO.destroy
-
    end
 
-   make_laplacian_orbital_grid_r(g,h,i,orb,pt)
+   make_laplacian_orbital_grid_r(g,h,i,orb,pt) ::: PURE
    ! Evaluate the laplacian orbital density grid "g", as well as the nabla
    ! orbital grid "h" and the orbital grid "i" for *one* AO-basis orbital
    ! vector "orb" on a set of grid points "pt"
-      g,h :: MAT{REAL}
-      i :: VEC{REAL}
-      orb :: VEC{REAL}, IN, target
+      self :: IN
+      g,h :: MAT{REAL}, OUT
+      i :: VEC{REAL}, OUT
+      orb :: VEC{REAL}, IN
       pt :: MAT{REAL}, IN
 
    ENSURE(.basis.associated,"no basis set")
@@ -8487,11 +8500,11 @@ contains
    ENSURE(h.dim2==3,        "grid array has wrong 2nd dimension")
    ENSURE(i.dim==pt.dim1,  "grid array has wrong 1st dimension")
 
-      sh :: SHELL1
-      sh_grid,sh_grid1 :: MAT3{REAL}*
-      sh_grid0 :: MAT{REAL}*
-      orb_a :: VEC{REAL}*
+      sh_grid,sh_grid1 :: MAT3{REAL}@
+      sh_grid0 :: MAT{REAL}@
+      orb_a :: VEC{REAL}@
       n_pt,f,l,a,n_shell :: INT
+      sh :: SHELL1
 
       n_pt = pt.dim1
       n_shell = .basis.no_of_shells
@@ -8508,20 +8521,20 @@ contains
          f = l + 1
 
          if (sh.is_spherical)then
-           sh_grid.create(n_pt,sh.n_sph,3)
-           sh_grid1.create(n_pt,sh.n_sph,3)
-           sh_grid0.create(n_pt,sh.n_sph)
-           l = f + sh.n_sph - 1
+            sh_grid.create(n_pt,sh.n_sph,3)
+            sh_grid1.create(n_pt,sh.n_sph,3)
+            sh_grid0.create(n_pt,sh.n_sph)
+            l = f + sh.n_sph - 1
          else
-           sh_grid.create(n_pt,sh.n_comp,3)
-           sh_grid1.create(n_pt,sh.n_comp,3)
-           sh_grid0.create(n_pt,sh.n_comp)
-           l = f + sh.n_comp - 1
+            sh_grid.create(n_pt,sh.n_comp,3)
+            sh_grid1.create(n_pt,sh.n_comp,3)
+            sh_grid0.create(n_pt,sh.n_comp)
+            l = f + sh.n_comp - 1
          end if
 
          sh.make_laplacian_grid(sh_grid,sh_grid1,sh_grid0,pt)
 
-         orb_a => orb(f:l)
+         orb_a = orb(f:l)
 
          g(:,1).plus_product_of(sh_grid(:,:,1),orb_a)
          g(:,2).plus_product_of(sh_grid(:,:,2),orb_a)
@@ -8535,40 +8548,42 @@ contains
          sh_grid0.destroy
          sh_grid1.destroy
          sh_grid.destroy
+         sh.destroy_ptr_part
 
       end
 
    end
 
-   make_rL_grid(laplacian_grid,pt)
+   make_rL_grid(laplacian_grid,pt) ::: PURE
    ! Work out the reduced "laplacian_grid" on "pt" using ".natural orbitals"
    ! and  the ".occupation_numbers" vector.
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      laplacian_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not implemented")
    ENSURE(.natural_orbitals.associated, "no natural orbitals")
    ENSURE(.natural_orbitals.has_any_genre, "no natural orbitals")
 
       if (.natural_orbitals.number_kind == "real") then
-        .make_rL_grid_r(laplacian_grid,pt)
-      else
-        DIE("code not written yet")
+         .make_rL_grid_r(laplacian_grid,pt)
       end
 
    end
 
-   make_rL_grid_r(laplacian_grid,pt)
+   make_rL_grid_r(laplacian_grid,pt) ::: PURE
    ! Make the reduced "laplacian_grid" for the supplied points "pt" from
    ! restricted real natural orbitals
-      laplacian_grid :: VEC{REAL}
-      pt :: MAT{REAL}
+      self :: IN
+      laplacian_grid :: VEC{REAL}, OUT
+      pt :: MAT{REAL}, IN
 
    ENSURE(pt.dim2==3, "wrong dimension for pt array")
    ENSURE(.natural_orbitals.is_associated_with_genre("restricted"), "no restricted NO's")
    ENSURE(.occupation_numbers.restricted.associated, "no occupation #'s")
 
-      rho,NO :: VEC{REAL}*
-      P,D :: MAT{REAL}*
+      rho,NO :: VEC{REAL}@
+      P,D :: MAT{REAL}@
       n_occ,n,n_pt :: INT
       occ :: REAL
 
@@ -8583,11 +8598,17 @@ contains
       n_occ = .no_of_occupied_NOs
 
       do n = 1,n_occ
-       .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
-       occ = .occupation_numbers.restricted(n)
-       laplacian_grid = laplacian_grid +  occ * ( &
-          NO * (D(:,1)+D(:,2)+D(:,3)) + (P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3)))
-       rho = rho + occ*NO*NO
+
+         .make_laplacian_orbital_grid_r(D,P,NO,.natural_orbitals.restricted(:,n), pt)
+
+         occ = .occupation_numbers.restricted(n)
+
+         laplacian_grid = laplacian_grid &
+                        + occ * ( NO *  &
+                          (D(:,1)+D(:,2)+D(:,3)) + (P(:,1)*P(:,1) + P(:,2)*P(:,2) + P(:,3)*P(:,3)))
+
+         rho = rho + occ*NO*NO
+
       end
 
       laplacian_grid = TWO*laplacian_grid/rho
@@ -9221,7 +9242,7 @@ contains
 !  DFT grids for all basis functions
 !  =================================
 
-   make_bf_grid(grid,pt)
+   make_bf_grid(grid,pt) ::: PURE
    ! Make a "grid" on which all the atom basis functions are
    ! evaluated, for the supplied points "pt".
       self :: IN
@@ -9233,8 +9254,8 @@ contains
    ENSURE(grid.dim1==pt.dim1,"incompatible grid and pt arrays")
    ENSURE(grid.dim2==.basis.no_of_basis_functions,"wrong size, grid array")
 
-      sh :: SHELL1
       s,f,l,n_shell :: INT
+      sh :: SHELL1
 
       n_shell = .basis.no_of_shells
 
@@ -9252,11 +9273,13 @@ contains
 
          sh.make_grid(grid(:,f:l),pt)
 
+         sh.destroy_ptr_part
+
       end
 
    end
 
-   make_nabla_bf_grid(nabla_grid,pt)
+   make_nabla_bf_grid(nabla_grid,pt) ::: PURE
    ! Make a "nabla_grid" on which the gradient of all the atom basis
    ! functions are evaluated, for the supplied points "pt".
       self :: IN
@@ -9269,19 +9292,20 @@ contains
    ENSURE(nabla_grid.dim2==.basis.no_of_basis_functions,"wrong size, nabla_grid array")
    ENSURE(nabla_grid.dim3==3,"wrong size, nabla_grid array")
 
-      sh :: SHELL1
       s,n_shell :: INT
+      sh :: SHELL1
 
       n_shell = .basis.no_of_shells
 
       do s = 1,n_shell
          sh.set(.basis.shell(s),.position)
          sh.make_nabla_grid(nabla_grid,pt)
+         sh.destroy_ptr_part
       end
 
    end
 
-   make_nabla_bf_grid(nabla_grid,grid,pt)
+   make_nabla_bf_grid(nabla_grid,grid,pt) ::: PURE
    ! Make a "nabla_grid" on which the gradient of all the atom basis
    ! functions are evaluated, for the supplied points "pt". Also
    ! return "grid", which tabluates the values of all the atom basis
@@ -9299,8 +9323,8 @@ contains
    ENSURE(grid.dim1==pt.dim1,"incompatible grid and pt arrays")
    ENSURE(grid.dim2==.basis.no_of_basis_functions,"wrong size, grid array")
 
-      sh :: SHELL1
       s,f,l,n_shell :: INT
+      sh :: SHELL1
 
       n_shell = .basis.no_of_shells
 
@@ -9309,23 +9333,24 @@ contains
          sh.set(.basis.shell(s),.position)
          f = l + 1
          if (sh.is_spherical)then
-           l = l + sh.n_sph  ! LBXXX
+            l = l + sh.n_sph  ! LBXXX
          else
-           l = l + sh.n_comp
+            l = l + sh.n_comp
          end if
          sh.make_nabla_grid(nabla_grid(:,f:l,1),nabla_grid(:,f:l,2),nabla_grid(:,f:l,3),grid(:,f:l),pt)
+         sh.destroy_ptr_part
       end
 
    end
 
 
-   make_bf_grid(grid0,pt,cutoff)
+   make_bf_grid(grid0,pt,cutoff) ::: PURE
    ! Make a "grid0" on which all the atom basis functions are evaluated, for the
    ! supplied points "pt".
       self :: IN
       grid0 :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.associated,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -9333,8 +9358,8 @@ contains
    ENSURE(grid0.dim2==.basis.no_of_basis_functions,"wrong size, grid0 array")
 
       x,y,z,r2 :: VEC{REAL}*
-      sh :: SHELL1
       n_pt,s,f,l,n_shell :: INT
+      sh :: SHELL1
 
       n_pt = pt.dim1
 
@@ -9357,6 +9382,7 @@ contains
            l = l + sh.n_comp
          end if
          sh.make_grid(grid0(:,f:l),x,y,z,r2,cutoff)
+         sh.destroy_ptr_part
       end
 
       r2.destroy
@@ -9366,13 +9392,13 @@ contains
 
    end
 
-   make_nabla_bf_grid(grid1,pt,cutoff)
+   make_nabla_bf_grid(grid1,pt,cutoff) ::: PURE
    ! Make a nabla grid, "grid1", on which the gradient of all the atom basis
    ! functions are evaluated, for the supplied points "pt".
       self :: IN
       grid1 :: MAT3{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.associated,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -9381,8 +9407,8 @@ contains
    ENSURE(grid1.dim3==3,"wrong size, grid1 array")
 
       x,y,z,r2 :: VEC{REAL}*
-      sh :: SHELL1
       n_pt,s,n_shell :: INT
+      sh :: SHELL1
 
       n_pt = pt.dim1
 
@@ -9398,6 +9424,7 @@ contains
       do s = 1,n_shell
          sh.set(.basis.shell(s),.position)
          sh.make_nabla_grid(grid1,x,y,z,r2,cutoff)
+         sh.destroy_ptr_part
       end
 
       r2.destroy
@@ -9407,7 +9434,7 @@ contains
 
    end
 
-   make_nabla_bf_grid(grid1,grid0,pt,cutoff)
+   make_nabla_bf_grid(grid1,grid0,pt,cutoff) ::: PURE
    ! Make a nabla grid "grid1" on which the gradient of all the atom basis functions
    ! are evaluated, for the supplied points "pt". Also return "grid0", which
    ! tabluates the values of all the atom basis functions on the grid points.
@@ -9415,7 +9442,7 @@ contains
       grid1 :: MAT3{REAL}, OUT
       grid0 :: MAT{REAL}, OUT
       pt :: MAT{REAL}, IN
-      cutoff :: REAL
+      cutoff :: REAL, IN
 
    ENSURE(.basis.associated,"no basis set")
    ENSURE(pt.dim2==3,"wrong dimension for pt array")
@@ -9450,6 +9477,7 @@ contains
            l = l + sh.n_comp
          end if
          sh.make_nabla_grid(grid1(:,f:l,1),grid1(:,f:l,2),grid1(:,f:l,3),grid0(:,f:l),x,y,z,r2,cutoff)
+         sh.destroy_ptr_part
       end
 
       r2.destroy

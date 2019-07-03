@@ -73,7 +73,7 @@ contains
 !  Copy
 !  ====
 
-   create_copy(c) ::: get_from(MAT3{INTRINSIC}), leaky
+   create_copy(c) ::: get_from(MAT3{INTRINSIC}), leaky, PURE
    ! Create a copy of matrix "c"
    end
 

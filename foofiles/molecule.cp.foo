@@ -1084,12 +1084,14 @@ contains
 
    make_scf_atomic_polarisability
    ! Calculate the polarisability using Coupled Perturbed Hartree-Fock theory.
+
    ENSURE(.molecular_orbitals.associated,"no MO's")
    ENSURE(.molecular_orbitals.restricted.associated,"no restricted MO's")
 
       U,D :: MAT3{REAL}*
-      MO,pt,NO :: MAT{REAL}*
-      wt,Wai,rhoi,occ :: VEC{REAL}*
+      MO :: MAT{REAL}*
+      pt,NO :: MAT{REAL}@
+      wt,Wai,rhoi,occ :: VEC{REAL}@
       n_pt,i,a :: INT
       atom_a :: ATOM*
 
@@ -1101,14 +1103,6 @@ contains
       MO => .molecular_orbitals.restricted
       D.create(.n_bf,.n_bf,3)
       .CP:make_perturbed_densities(D,U,MO,.n_a)
-
-      if (.BASE:debugging("make_scf_atomic_polarisability")) then
-         .BASE:put_MOs_and_energies
-         stdout.text("U matrices:")
-         stdout.put(U)
-         stdout.text("Perturbed densities:")
-         stdout.put(D)
-      end
 
       ! Ensure ANO's and becke_grid made (leaky)
       .SCF:make_Hirshfeld_inputs
@@ -1137,16 +1131,6 @@ contains
 
          .BASE:make_r_NOs(NO,occ,D(:,:,i))
          .GRID:make_density_grid_r(rhoi,pt,NO,occ)
-
-         if (.BASE:debugging("make_scf_atomic_polarisability")) then
-            stdout.show("Perturbation   =",i)
-            stdout.text("Perturbed NO occupations:")
-            stdout.put(occ,by_column=TRUE)
-            stdout.text("Perturbed NOs:")
-            stdout.put(NO)
-            stdout.text("Perturbed density:")
-            stdout.put(rhoi,by_column=TRUE)
-         end
 
          rhoi = rhoi*wt
 
@@ -1791,12 +1775,13 @@ contains
 
    make_H_polarisabilities ::: leaky
    ! Make Hirshfeld polarisabilities
+      self :: INOUT
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
 
-      pt,E :: MAT{REAL}*
-      wt,r1,r2,r3 :: VEC{REAL}*
+      pt,E :: MAT{REAL}@
+      wt,r1,r2,r3 :: VEC{REAL}@
       c1,c2,c3 :: REAL
       n_pt,c :: INT
 
@@ -1831,9 +1816,9 @@ contains
          E(:,3) = E(:,3)*wt
 
          ! Integration points
-         r1 => pt(:,1)
-         r2 => pt(:,2)
-         r3 => pt(:,3)
+         r1 = pt(:,1)
+         r2 = pt(:,2)
+         r3 = pt(:,3)
 
          ! Atom c position
          c1 = .atom(c).position(1)
@@ -1879,7 +1864,7 @@ contains
       a1x,a1y,a1z :: VEC{REAL}*
       a2x,a2y,a2z :: VEC{REAL}*
       a3x,a3y,a3z :: VEC{REAL}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
       ! Make and set the atom properties first ...
       .:make_H_polarisabilities

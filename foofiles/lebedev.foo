@@ -84,163 +84,146 @@ module LEBEDEV
 
 contains
 
-! =========================
-! Create and destroy object
-! =========================
+! ==========
+! Allocation
+! ==========
 
-   create ::: get_from(OBJECT), leaky
-   ! Create an object
+   create ::: get_from(OBJECT), leaky, PURE
+   ! Allocate an object
    end
 
-   destroy ::: get_from(OBJECT), leaky
-   ! Destroy an object
+   destroy ::: get_from(OBJECT), leaky, PURE
+   ! Deallocate "self"
    end
 
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
+! ===========
+! Set methods
+! ===========
 
-   copy(l) ::: leaky
-   ! Copy a becke_grid "b"
-      l :: LEBEDEV
-      self = l
-      .nullify_ptr_part
-      if (l.point.associated) .point.create_copy(l.point)
-      if (l.weight.associated) .weight.create_copy(l.weight)
-      if (l.n_points_per_shell.associated) .n_points_per_shell.create_copy(l.n_points_per_shell)
-   end
-
-   nullify_ptr_part
-   ! Nullify the shell parts of self
-      nullify(.point)
-      nullify(.weight)
-      nullify(.n_points_per_shell)
-   end
-
-   destroy_ptr_part  ::: leaky
-   ! Destroy the shell parts of self
-      .point.destroy
-      .weight.destroy
-      .n_points_per_shell.destroy
-   end
-
-   set_defaults
+   set_defaults ::: PURE
    ! Set up a default dftgrid object
+      self :: INOUT
+
       .n_points = 0
       .l = 0
       .n = 0
       .s = 0
+
    end
 
-! =================================================================
-! Set the number of points or desired L quantum number to integrate
-! =================================================================
-
-   set_n_points(n_points) ::: leaky
+   set_n_points(n_points) ::: leaky, PURE
    ! Set the number of points. If it is not one of the allowed number of points,
    ! it *increases* to the nearest number which is allowed.
-      self :: PTR
-      n_points :: INT
-   ENSURE(n_points>=1,"n_points must be greater than 6")
-   ENSURE(n_points<=5810,"n_points must be less than 5810")
+      self :: INOUT
+      n_points :: INT, IN
+
+   ENSURE(n_points.is_in_range([1,131]),"n_points must be between 1 and 5810 inclsive")
+
       select case (n_points)
-         case (1:6);       .ld0006
-         case (7:14);      .ld0014
-         case (15:26);     .ld0026
-         case (27:38);     .ld0038
-         case (39:50);     .ld0050
-         case (51:74);     .ld0074
-         case (75:86);     .ld0086
-         case (87:110);    .ld0110
-         case (111:146);   .ld0146
-         case (147:170);   .ld0170
-         case (171:194);   .ld0194
-         case (195:230);   .ld0230
-         case (231:266);   .ld0266
-         case (267:302);   .ld0302
-         case (303:350);   .ld0350
-         case (351:434);   .ta0434 ! new one here
-         case (435:590);   .ld0590
-         case (591:770);   .ld0770
-         case (771:974);   .ld0974
-         case (975:1202);  .ld1202
-         case (1203:1454); .ld1454
-         case (1455:1730); .ld1730
-         case (1731:2030); .ld2030
-         case (2031:2354); .ld2354
-         case (2355:2702); .ld2702
-         case (2703:3074); .ld3074
-         case (3075:3470); .ld3470
-         case (3471:3890); .ld3890
-         case (3891:4334); .ld4334
-         case (4335:4802); .ld4802
-         case (4803:5294); .ld5294
-         case (5295:5810); .ld5810
-         case default; DIE("n_points must be between 1 and 5810")
+      case (1:6);       .ld0006
+      case (7:14);      .ld0014
+      case (15:26);     .ld0026
+      case (27:38);     .ld0038
+      case (39:50);     .ld0050
+      case (51:74);     .ld0074
+      case (75:86);     .ld0086
+      case (87:110);    .ld0110
+      case (111:146);   .ld0146
+      case (147:170);   .ld0170
+      case (171:194);   .ld0194
+      case (195:230);   .ld0230
+      case (231:266);   .ld0266
+      case (267:302);   .ld0302
+      case (303:350);   .ld0350
+      case (351:434);   .ta0434 ! new one here
+      case (435:590);   .ld0590
+      case (591:770);   .ld0770
+      case (771:974);   .ld0974
+      case (975:1202);  .ld1202
+      case (1203:1454); .ld1454
+      case (1455:1730); .ld1730
+      case (1731:2030); .ld2030
+      case (2031:2354); .ld2354
+      case (2355:2702); .ld2702
+      case (2703:3074); .ld3074
+      case (3075:3470); .ld3470
+      case (3471:3890); .ld3890
+      case (3891:4334); .ld4334
+      case (4335:4802); .ld4802
+      case (4803:5294); .ld5294
+      case (5295:5810); .ld5810
       end
+
    end
 
-   set_l(l) ::: leaky
+   set_l(l) ::: leaky, PURE
    ! Set the angular momentum order "l" to integrate.  If the angular momentum
    ! is not allowed the value of "l" used is the next largest one which is
    ! allowed.
-      self :: PTR
-      l :: INT
+      self :: INOUT
+      l :: INT, IN
+
+   ENSURE(l.is_in_range([1,131]),"l must be between 1 and 131 inclsive")
+
       select case (l)
-         case (1:3);   .ld0006 ! ?
-         case (4:5);   .ld0014 
-         case (6:7);   .ld0026 ! ?
-         case (8:9);   .ld0038
-         case (10:11); .ld0050
-         case (12:13); .ld0074 ! ?
-         case (14:15); .ld0086
-         case (16:17); .ld0110 
-         case (18:19); .ld0146
-         case (20:21); .ld0170 ! ?
-         case (22:23); .ld0194
-         case (24:25); .ld0230
-         case (26:27); .ld0266
-         case (28:29); .ld0302
-         case (30:31); .ld0350 ! ?
-         case (32:35); .ta0434 ! new one here
-         case (36:41); .ld0590
-         case (42:47); .ld0770
-         case (48:53); .ld0974
-         case (54:59); .ld1202
-         case (60:65);   .ld1454 ! ?
-         case (66:71);   .ld1730 ! ?
-         case (72:77);   .ld2030 ! ?
-         case (78:83);   .ld2354 ! ?
-         case (84:89);   .ld2702 ! ?
-         case (90:95);   .ld3074 ! ?
-         case (96:101);  .ld3470 ! ?
-         case (102:107); .ld3890 ! ?
-         case (108:113); .ld4334 ! ?
-         case (114:119); .ld4802 ! ?
-         case (120:125); .ld5294 ! ?
-         case (126:131); .ld5810 ! ?
-         case default; DIE("l must be between 1 and 131")
+      case (1:3);   .ld0006 ! ?
+      case (4:5);   .ld0014 
+      case (6:7);   .ld0026 ! ?
+      case (8:9);   .ld0038
+      case (10:11); .ld0050
+      case (12:13); .ld0074 ! ?
+      case (14:15); .ld0086
+      case (16:17); .ld0110 
+      case (18:19); .ld0146
+      case (20:21); .ld0170 ! ?
+      case (22:23); .ld0194
+      case (24:25); .ld0230
+      case (26:27); .ld0266
+      case (28:29); .ld0302
+      case (30:31); .ld0350 ! ?
+      case (32:35); .ta0434 ! new one here
+      case (36:41); .ld0590
+      case (42:47); .ld0770
+      case (48:53); .ld0974
+      case (54:59); .ld1202
+      case (60:65);   .ld1454 ! ?
+      case (66:71);   .ld1730 ! ?
+      case (72:77);   .ld2030 ! ?
+      case (78:83);   .ld2354 ! ?
+      case (84:89);   .ld2702 ! ?
+      case (90:95);   .ld3074 ! ?
+      case (96:101);  .ld3470 ! ?
+      case (102:107); .ld3890 ! ?
+      case (108:113); .ld4334 ! ?
+      case (114:119); .ld4802 ! ?
+      case (120:125); .ld5294 ! ?
+      case (126:131); .ld5810 ! ?
       end
+
    end
 
-   set(n_points,n_shell) ::: private, leaky
+   set(n_points,n_shell) ::: private, leaky, PURE
    ! Create the number of points, weights, shells
-      self :: PTR
+      self :: OUT
       n_points,n_shell :: INT, IN
+
       .n_points = n_points
+
       .point.create(n_points,3)
       .weight.create(n_points)
       .n_points_per_shell.create(n_shell)
+
       .l = 0
       .n = 0
       .s = 0
+
    end
 
 ! =================================================
 ! The rest concerns defining the points and weights
 ! =================================================
 
-   gen_oh(code,a,b,w) ::: private
+   gen_oh(code,a,b,w) ::: private, PURE
    ! Given a point on a sphere (specified by "a" and "b"), generate all the
    ! equivalent points under oh symmetry, making grid points with weight "w". 
    ! The variable ".n" is increased by the number of different points generated.
@@ -251,199 +234,219 @@ contains
    !    code=4:   (a,a,b) etc, b=sqrt(1-2 a^2)               ( 24 points)
    !    code=5:   (a,b,0) etc, b=sqrt(1-a^2), a input        ( 24 points)
    !    code=6:   (a,b,c) etc, c=sqrt(1-a^2-b^2), a/b input  ( 48 points)
-      code :: INT
-      a,b,w :: REAL
+   ! WARNING: This routine accumulates .n, a, b, and c.
+      self :: INOUT        ! Careful here
+      code :: INT, IN
+      a,b,w :: REAL, INOUT ! Careful here
+
    ENSURE(code.is_in_range([1,6]),"code must be between 1 and 6")
+
       n :: INT
       c :: REAL
-      .s=.s+1
+
+      .s = .s + 1
+
       select case (code)
-         case (1)
-            n=.n
-            .n=.n+6
-            .n_points_per_shell(.s) = 6
-            a=ONE
-            .point(n+ 1,:) = [ a,ZERO,ZERO]; .weight(n+1) = w;    
-            .point(n+ 2,:) = [-a,ZERO,ZERO]; .weight(n+2) = w;    
-            .point(n+ 3,:) = [ZERO, a,ZERO]; .weight(n+3) = w;    
-            .point(n+ 4,:) = [ZERO,-a,ZERO]; .weight(n+4) = w;    
-            .point(n+ 5,:) = [ZERO,ZERO, a]; .weight(n+5) = w;    
-            .point(n+ 6,:) = [ZERO,ZERO,-a]; .weight(n+6) = w;    
-         case (2)
-            n=.n
-            .n=.n+12
-            .n_points_per_shell(.s) = 12
-            a=sqrt(HALF)
-            .point(n+ 1,:) = [ZERO, a, a]; .weight(n+ 1) = w;    
-            .point(n+ 2,:) = [ZERO,-a, a]; .weight(n+ 2) = w;    
-            .point(n+ 3,:) = [ZERO, a,-a]; .weight(n+ 3) = w;    
-            .point(n+ 4,:) = [ZERO,-a,-a]; .weight(n+ 4) = w;    
-            .point(n+ 5,:) = [ a,ZERO, a]; .weight(n+ 5) = w;    
-            .point(n+ 6,:) = [-a,ZERO, a]; .weight(n+ 6) = w;    
-            .point(n+ 7,:) = [ a,ZERO,-a]; .weight(n+ 7) = w;    
-            .point(n+ 8,:) = [-a,ZERO,-a]; .weight(n+ 8) = w;    
-            .point(n+ 9,:) = [ a, a,ZERO]; .weight(n+ 9) = w;    
-            .point(n+10,:) = [-a, a,ZERO]; .weight(n+10) = w;    
-            .point(n+11,:) = [ a,-a,ZERO]; .weight(n+11) = w;    
-            .point(n+12,:) = [-a,-a,ZERO]; .weight(n+12) = w;    
-         case (3)
-            n=.n
-            .n=.n+8
-            .n_points_per_shell(.s) = 8
-            a = sqrt(ONE/THREE)
-            .point(n+ 1,:) = [ a, a, a]; .weight(n+ 1) = w;    
-            .point(n+ 2,:) = [-a, a, a]; .weight(n+ 2) = w;    
-            .point(n+ 3,:) = [ a,-a, a]; .weight(n+ 3) = w;    
-            .point(n+ 4,:) = [-a,-a, a]; .weight(n+ 4) = w;    
-            .point(n+ 5,:) = [ a, a,-a]; .weight(n+ 5) = w;    
-            .point(n+ 6,:) = [-a, a,-a]; .weight(n+ 6) = w;    
-            .point(n+ 7,:) = [ a,-a,-a]; .weight(n+ 7) = w;    
-            .point(n+ 8,:) = [-a,-a,-a]; .weight(n+ 8) = w;    
-         case (4)
-            n=.n
-            .n=.n+24
-            .n_points_per_shell(.s) = 24
-            b = sqrt(ONE - TWO*a*a)
-            .point(n+ 1,:) = [ a, a, b]; .weight(n+ 1) = w;    
-            .point(n+ 2,:) = [-a, a, b]; .weight(n+ 2) = w;    
-            .point(n+ 3,:) = [ a,-a, b]; .weight(n+ 3) = w;    
-            .point(n+ 4,:) = [-a,-a, b]; .weight(n+ 4) = w;    
-            .point(n+ 5,:) = [ a, a,-b]; .weight(n+ 5) = w;    
-            .point(n+ 6,:) = [-a, a,-b]; .weight(n+ 6) = w;    
-            .point(n+ 7,:) = [ a,-a,-b]; .weight(n+ 7) = w;    
-            .point(n+ 8,:) = [-a,-a,-b]; .weight(n+ 8) = w;    
-            .point(n+ 9,:) = [ a, b, a]; .weight(n+ 9) = w;    
-            .point(n+10,:) = [-a, b, a]; .weight(n+10) = w;    
-            .point(n+11,:) = [ a,-b, a]; .weight(n+11) = w;    
-            .point(n+12,:) = [-a,-b, a]; .weight(n+12) = w;    
-            .point(n+13,:) = [ a, b,-a]; .weight(n+13) = w;    
-            .point(n+14,:) = [-a, b,-a]; .weight(n+14) = w;    
-            .point(n+15,:) = [ a,-b,-a]; .weight(n+15) = w;    
-            .point(n+16,:) = [-a,-b,-a]; .weight(n+16) = w;    
-            .point(n+17,:) = [ b, a, a]; .weight(n+17) = w;    
-            .point(n+18,:) = [-b, a, a]; .weight(n+18) = w;    
-            .point(n+19,:) = [ b,-a, a]; .weight(n+19) = w;    
-            .point(n+20,:) = [-b,-a, a]; .weight(n+20) = w;    
-            .point(n+21,:) = [ b, a,-a]; .weight(n+21) = w;    
-            .point(n+22,:) = [-b, a,-a]; .weight(n+22) = w;    
-            .point(n+23,:) = [ b,-a,-a]; .weight(n+23) = w;    
-            .point(n+24,:) = [-b,-a,-a]; .weight(n+24) = w;    
-         case (5)
-            n=.n
-            .n=.n+24
-            .n_points_per_shell(.s) = 24
-            b=sqrt(ONE-a*a)
-            .point(n+ 1,:) = [ a, b,ZERO]; .weight(n+ 1) = w;    
-            .point(n+ 2,:) = [-a, b,ZERO]; .weight(n+ 2) = w;    
-            .point(n+ 3,:) = [ a,-b,ZERO]; .weight(n+ 3) = w;    
-            .point(n+ 4,:) = [-a,-b,ZERO]; .weight(n+ 4) = w;    
-            .point(n+ 5,:) = [ b, a,ZERO]; .weight(n+ 5) = w;    
-            .point(n+ 6,:) = [-b, a,ZERO]; .weight(n+ 6) = w;    
-            .point(n+ 7,:) = [ b,-a,ZERO]; .weight(n+ 7) = w;    
-            .point(n+ 8,:) = [-b,-a,ZERO]; .weight(n+ 8) = w;    
-            .point(n+ 9,:) = [ a,ZERO, b]; .weight(n+ 9) = w;    
-            .point(n+10,:) = [-a,ZERO, b]; .weight(n+10) = w;    
-            .point(n+11,:) = [ a,ZERO,-b]; .weight(n+11) = w;    
-            .point(n+12,:) = [-a,ZERO,-b]; .weight(n+12) = w;    
-            .point(n+13,:) = [ b,ZERO, a]; .weight(n+13) = w;    
-            .point(n+14,:) = [-b,ZERO, a]; .weight(n+14) = w;    
-            .point(n+15,:) = [ b,ZERO,-a]; .weight(n+15) = w;    
-            .point(n+16,:) = [-b,ZERO,-a]; .weight(n+16) = w;    
-            .point(n+17,:) = [ZERO, a, b]; .weight(n+17) = w;    
-            .point(n+18,:) = [ZERO,-a, b]; .weight(n+18) = w;    
-            .point(n+19,:) = [ZERO, a,-b]; .weight(n+19) = w;    
-            .point(n+20,:) = [ZERO,-a,-b]; .weight(n+20) = w;    
-            .point(n+21,:) = [ZERO, b, a]; .weight(n+21) = w;    
-            .point(n+22,:) = [ZERO,-b, a]; .weight(n+22) = w;    
-            .point(n+23,:) = [ZERO, b,-a]; .weight(n+23) = w;    
-            .point(n+24,:) = [ZERO,-b,-a]; .weight(n+24) = w;    
-         case (6)
-            n=.n
-            .n=.n+48
-            .n_points_per_shell(.s) = 48
-            c=sqrt(ONE - a*a - b*b)
-            .point(n+ 1,:) = [ a, b, c]; .weight(n+ 1) = w;    
-            .point(n+ 2,:) = [-a, b, c]; .weight(n+ 2) = w;    
-            .point(n+ 3,:) = [ a,-b, c]; .weight(n+ 3) = w;    
-            .point(n+ 4,:) = [-a,-b, c]; .weight(n+ 4) = w;    
-            .point(n+ 5,:) = [ a, b,-c]; .weight(n+ 5) = w;    
-            .point(n+ 6,:) = [-a, b,-c]; .weight(n+ 6) = w;    
-            .point(n+ 7,:) = [ a,-b,-c]; .weight(n+ 7) = w;    
-            .point(n+ 8,:) = [-a,-b,-c]; .weight(n+ 8) = w;    
-            .point(n+ 9,:) = [ a, c, b]; .weight(n+ 9) = w;    
-            .point(n+10,:) = [-a, c, b]; .weight(n+10) = w;    
-            .point(n+11,:) = [ a,-c, b]; .weight(n+11) = w;    
-            .point(n+12,:) = [-a,-c, b]; .weight(n+12) = w;    
-            .point(n+13,:) = [ a, c,-b]; .weight(n+13) = w;    
-            .point(n+14,:) = [-a, c,-b]; .weight(n+14) = w;    
-            .point(n+15,:) = [ a,-c,-b]; .weight(n+15) = w;    
-            .point(n+16,:) = [-a,-c,-b]; .weight(n+16) = w;    
-            .point(n+17,:) = [ b, a, c]; .weight(n+17) = w;    
-            .point(n+18,:) = [-b, a, c]; .weight(n+18) = w;    
-            .point(n+19,:) = [ b,-a, c]; .weight(n+19) = w;    
-            .point(n+20,:) = [-b,-a, c]; .weight(n+20) = w;    
-            .point(n+21,:) = [ b, a,-c]; .weight(n+21) = w;    
-            .point(n+22,:) = [-b, a,-c]; .weight(n+22) = w;    
-            .point(n+23,:) = [ b,-a,-c]; .weight(n+23) = w;    
-            .point(n+24,:) = [-b,-a,-c]; .weight(n+24) = w;    
-            .point(n+25,:) = [ b, c, a]; .weight(n+25) = w;    
-            .point(n+26,:) = [-b, c, a]; .weight(n+26) = w;    
-            .point(n+27,:) = [ b,-c, a]; .weight(n+27) = w;    
-            .point(n+28,:) = [-b,-c, a]; .weight(n+28) = w;    
-            .point(n+29,:) = [ b, c,-a]; .weight(n+29) = w;    
-            .point(n+30,:) = [-b, c,-a]; .weight(n+30) = w;    
-            .point(n+31,:) = [ b,-c,-a]; .weight(n+31) = w;    
-            .point(n+32,:) = [-b,-c,-a]; .weight(n+32) = w;    
-            .point(n+33,:) = [ c, a, b]; .weight(n+33) = w;    
-            .point(n+34,:) = [-c, a, b]; .weight(n+34) = w;    
-            .point(n+35,:) = [ c,-a, b]; .weight(n+35) = w;    
-            .point(n+36,:) = [-c,-a, b]; .weight(n+36) = w;    
-            .point(n+37,:) = [ c, a,-b]; .weight(n+37) = w;    
-            .point(n+38,:) = [-c, a,-b]; .weight(n+38) = w;    
-            .point(n+39,:) = [ c,-a,-b]; .weight(n+39) = w;    
-            .point(n+40,:) = [-c,-a,-b]; .weight(n+40) = w;    
-            .point(n+41,:) = [ c, b, a]; .weight(n+41) = w;    
-            .point(n+42,:) = [-c, b, a]; .weight(n+42) = w;    
-            .point(n+43,:) = [ c,-b, a]; .weight(n+43) = w;    
-            .point(n+44,:) = [-c,-b, a]; .weight(n+44) = w;    
-            .point(n+45,:) = [ c, b,-a]; .weight(n+45) = w;    
-            .point(n+46,:) = [-c, b,-a]; .weight(n+46) = w;    
-            .point(n+47,:) = [ c,-b,-a]; .weight(n+47) = w;    
-            .point(n+48,:) = [-c,-b,-a]; .weight(n+48) = w;    
-         case default
-            DIE("code must be between 1 and 6")
+
+      case (1)
+         n  = .n
+         .n = .n + 6
+         .n_points_per_shell(.s) = 6
+         a = ONE
+         .point(n+ 1,:) = [ a,ZERO,ZERO]; .weight(n+1) = w;    
+         .point(n+ 2,:) = [-a,ZERO,ZERO]; .weight(n+2) = w;    
+         .point(n+ 3,:) = [ZERO, a,ZERO]; .weight(n+3) = w;    
+         .point(n+ 4,:) = [ZERO,-a,ZERO]; .weight(n+4) = w;    
+         .point(n+ 5,:) = [ZERO,ZERO, a]; .weight(n+5) = w;    
+         .point(n+ 6,:) = [ZERO,ZERO,-a]; .weight(n+6) = w;    
+
+      case (2)
+         n  = .n
+         .n = .n + 12
+         .n_points_per_shell(.s) = 12
+         a = sqrt(HALF)
+         .point(n+ 1,:) = [ZERO, a, a]; .weight(n+ 1) = w;    
+         .point(n+ 2,:) = [ZERO,-a, a]; .weight(n+ 2) = w;    
+         .point(n+ 3,:) = [ZERO, a,-a]; .weight(n+ 3) = w;    
+         .point(n+ 4,:) = [ZERO,-a,-a]; .weight(n+ 4) = w;    
+         .point(n+ 5,:) = [ a,ZERO, a]; .weight(n+ 5) = w;    
+         .point(n+ 6,:) = [-a,ZERO, a]; .weight(n+ 6) = w;    
+         .point(n+ 7,:) = [ a,ZERO,-a]; .weight(n+ 7) = w;    
+         .point(n+ 8,:) = [-a,ZERO,-a]; .weight(n+ 8) = w;    
+         .point(n+ 9,:) = [ a, a,ZERO]; .weight(n+ 9) = w;    
+         .point(n+10,:) = [-a, a,ZERO]; .weight(n+10) = w;    
+         .point(n+11,:) = [ a,-a,ZERO]; .weight(n+11) = w;    
+         .point(n+12,:) = [-a,-a,ZERO]; .weight(n+12) = w;    
+
+      case (3)
+         n  = .n
+         .n = .n + 8
+         .n_points_per_shell(.s) = 8
+         a = sqrt(ONE/THREE)
+         .point(n+ 1,:) = [ a, a, a]; .weight(n+ 1) = w;    
+         .point(n+ 2,:) = [-a, a, a]; .weight(n+ 2) = w;    
+         .point(n+ 3,:) = [ a,-a, a]; .weight(n+ 3) = w;    
+         .point(n+ 4,:) = [-a,-a, a]; .weight(n+ 4) = w;    
+         .point(n+ 5,:) = [ a, a,-a]; .weight(n+ 5) = w;    
+         .point(n+ 6,:) = [-a, a,-a]; .weight(n+ 6) = w;    
+         .point(n+ 7,:) = [ a,-a,-a]; .weight(n+ 7) = w;    
+         .point(n+ 8,:) = [-a,-a,-a]; .weight(n+ 8) = w;    
+
+      case (4)
+         n = .n
+         .n = .n + 24
+         .n_points_per_shell(.s) = 24
+         b = sqrt(ONE - TWO*a*a)
+         .point(n+ 1,:) = [ a, a, b]; .weight(n+ 1) = w;    
+         .point(n+ 2,:) = [-a, a, b]; .weight(n+ 2) = w;    
+         .point(n+ 3,:) = [ a,-a, b]; .weight(n+ 3) = w;    
+         .point(n+ 4,:) = [-a,-a, b]; .weight(n+ 4) = w;    
+         .point(n+ 5,:) = [ a, a,-b]; .weight(n+ 5) = w;    
+         .point(n+ 6,:) = [-a, a,-b]; .weight(n+ 6) = w;    
+         .point(n+ 7,:) = [ a,-a,-b]; .weight(n+ 7) = w;    
+         .point(n+ 8,:) = [-a,-a,-b]; .weight(n+ 8) = w;    
+         .point(n+ 9,:) = [ a, b, a]; .weight(n+ 9) = w;    
+         .point(n+10,:) = [-a, b, a]; .weight(n+10) = w;    
+         .point(n+11,:) = [ a,-b, a]; .weight(n+11) = w;    
+         .point(n+12,:) = [-a,-b, a]; .weight(n+12) = w;    
+         .point(n+13,:) = [ a, b,-a]; .weight(n+13) = w;    
+         .point(n+14,:) = [-a, b,-a]; .weight(n+14) = w;    
+         .point(n+15,:) = [ a,-b,-a]; .weight(n+15) = w;    
+         .point(n+16,:) = [-a,-b,-a]; .weight(n+16) = w;    
+         .point(n+17,:) = [ b, a, a]; .weight(n+17) = w;    
+         .point(n+18,:) = [-b, a, a]; .weight(n+18) = w;    
+         .point(n+19,:) = [ b,-a, a]; .weight(n+19) = w;    
+         .point(n+20,:) = [-b,-a, a]; .weight(n+20) = w;    
+         .point(n+21,:) = [ b, a,-a]; .weight(n+21) = w;    
+         .point(n+22,:) = [-b, a,-a]; .weight(n+22) = w;    
+         .point(n+23,:) = [ b,-a,-a]; .weight(n+23) = w;    
+         .point(n+24,:) = [-b,-a,-a]; .weight(n+24) = w;    
+
+      case (5)
+         n  = .n
+         .n = .n + 24
+         .n_points_per_shell(.s) = 24
+         b = sqrt(ONE-a*a)
+         .point(n+ 1,:) = [ a, b,ZERO]; .weight(n+ 1) = w;    
+         .point(n+ 2,:) = [-a, b,ZERO]; .weight(n+ 2) = w;    
+         .point(n+ 3,:) = [ a,-b,ZERO]; .weight(n+ 3) = w;    
+         .point(n+ 4,:) = [-a,-b,ZERO]; .weight(n+ 4) = w;    
+         .point(n+ 5,:) = [ b, a,ZERO]; .weight(n+ 5) = w;    
+         .point(n+ 6,:) = [-b, a,ZERO]; .weight(n+ 6) = w;    
+         .point(n+ 7,:) = [ b,-a,ZERO]; .weight(n+ 7) = w;    
+         .point(n+ 8,:) = [-b,-a,ZERO]; .weight(n+ 8) = w;    
+         .point(n+ 9,:) = [ a,ZERO, b]; .weight(n+ 9) = w;    
+         .point(n+10,:) = [-a,ZERO, b]; .weight(n+10) = w;    
+         .point(n+11,:) = [ a,ZERO,-b]; .weight(n+11) = w;    
+         .point(n+12,:) = [-a,ZERO,-b]; .weight(n+12) = w;    
+         .point(n+13,:) = [ b,ZERO, a]; .weight(n+13) = w;    
+         .point(n+14,:) = [-b,ZERO, a]; .weight(n+14) = w;    
+         .point(n+15,:) = [ b,ZERO,-a]; .weight(n+15) = w;    
+         .point(n+16,:) = [-b,ZERO,-a]; .weight(n+16) = w;    
+         .point(n+17,:) = [ZERO, a, b]; .weight(n+17) = w;    
+         .point(n+18,:) = [ZERO,-a, b]; .weight(n+18) = w;    
+         .point(n+19,:) = [ZERO, a,-b]; .weight(n+19) = w;    
+         .point(n+20,:) = [ZERO,-a,-b]; .weight(n+20) = w;    
+         .point(n+21,:) = [ZERO, b, a]; .weight(n+21) = w;    
+         .point(n+22,:) = [ZERO,-b, a]; .weight(n+22) = w;    
+         .point(n+23,:) = [ZERO, b,-a]; .weight(n+23) = w;    
+         .point(n+24,:) = [ZERO,-b,-a]; .weight(n+24) = w;    
+
+      case (6)
+         n  = .n
+         .n = .n+48
+         .n_points_per_shell(.s) = 48
+         c = sqrt(ONE - a*a - b*b)
+         .point(n+ 1,:) = [ a, b, c]; .weight(n+ 1) = w;    
+         .point(n+ 2,:) = [-a, b, c]; .weight(n+ 2) = w;    
+         .point(n+ 3,:) = [ a,-b, c]; .weight(n+ 3) = w;    
+         .point(n+ 4,:) = [-a,-b, c]; .weight(n+ 4) = w;    
+         .point(n+ 5,:) = [ a, b,-c]; .weight(n+ 5) = w;    
+         .point(n+ 6,:) = [-a, b,-c]; .weight(n+ 6) = w;    
+         .point(n+ 7,:) = [ a,-b,-c]; .weight(n+ 7) = w;    
+         .point(n+ 8,:) = [-a,-b,-c]; .weight(n+ 8) = w;    
+         .point(n+ 9,:) = [ a, c, b]; .weight(n+ 9) = w;    
+         .point(n+10,:) = [-a, c, b]; .weight(n+10) = w;    
+         .point(n+11,:) = [ a,-c, b]; .weight(n+11) = w;    
+         .point(n+12,:) = [-a,-c, b]; .weight(n+12) = w;    
+         .point(n+13,:) = [ a, c,-b]; .weight(n+13) = w;    
+         .point(n+14,:) = [-a, c,-b]; .weight(n+14) = w;    
+         .point(n+15,:) = [ a,-c,-b]; .weight(n+15) = w;    
+         .point(n+16,:) = [-a,-c,-b]; .weight(n+16) = w;    
+         .point(n+17,:) = [ b, a, c]; .weight(n+17) = w;    
+         .point(n+18,:) = [-b, a, c]; .weight(n+18) = w;    
+         .point(n+19,:) = [ b,-a, c]; .weight(n+19) = w;    
+         .point(n+20,:) = [-b,-a, c]; .weight(n+20) = w;    
+         .point(n+21,:) = [ b, a,-c]; .weight(n+21) = w;    
+         .point(n+22,:) = [-b, a,-c]; .weight(n+22) = w;    
+         .point(n+23,:) = [ b,-a,-c]; .weight(n+23) = w;    
+         .point(n+24,:) = [-b,-a,-c]; .weight(n+24) = w;    
+         .point(n+25,:) = [ b, c, a]; .weight(n+25) = w;    
+         .point(n+26,:) = [-b, c, a]; .weight(n+26) = w;    
+         .point(n+27,:) = [ b,-c, a]; .weight(n+27) = w;    
+         .point(n+28,:) = [-b,-c, a]; .weight(n+28) = w;    
+         .point(n+29,:) = [ b, c,-a]; .weight(n+29) = w;    
+         .point(n+30,:) = [-b, c,-a]; .weight(n+30) = w;    
+         .point(n+31,:) = [ b,-c,-a]; .weight(n+31) = w;    
+         .point(n+32,:) = [-b,-c,-a]; .weight(n+32) = w;    
+         .point(n+33,:) = [ c, a, b]; .weight(n+33) = w;    
+         .point(n+34,:) = [-c, a, b]; .weight(n+34) = w;    
+         .point(n+35,:) = [ c,-a, b]; .weight(n+35) = w;    
+         .point(n+36,:) = [-c,-a, b]; .weight(n+36) = w;    
+         .point(n+37,:) = [ c, a,-b]; .weight(n+37) = w;    
+         .point(n+38,:) = [-c, a,-b]; .weight(n+38) = w;    
+         .point(n+39,:) = [ c,-a,-b]; .weight(n+39) = w;    
+         .point(n+40,:) = [-c,-a,-b]; .weight(n+40) = w;    
+         .point(n+41,:) = [ c, b, a]; .weight(n+41) = w;    
+         .point(n+42,:) = [-c, b, a]; .weight(n+42) = w;    
+         .point(n+43,:) = [ c,-b, a]; .weight(n+43) = w;    
+         .point(n+44,:) = [-c,-b, a]; .weight(n+44) = w;    
+         .point(n+45,:) = [ c, b,-a]; .weight(n+45) = w;    
+         .point(n+46,:) = [-c, b,-a]; .weight(n+46) = w;    
+         .point(n+47,:) = [ c,-b,-a]; .weight(n+47) = w;    
+         .point(n+48,:) = [-c,-b,-a]; .weight(n+48) = w;    
+
       end
+
    end
 
-   ld0006 ::: leaky
+   ld0006 ::: leaky, PURE
    ! Lebedev 6-point angular grid
    ! L=3?
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(6,1) 
       .l = 3
       w=0.1666666666666667d+0
       .gen_oh(1,a,b,w)
+
    end
 
-   ld0014 ::: leaky
+   ld0014 ::: leaky, PURE
    ! Lebedev 14-point angular grid
    ! L=5
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(14,2) 
       .l = 5
       w=0.6666666666666667d-1
       .gen_oh(1,a,b,w)
       w=0.7500000000000000d-1
       .gen_oh(3,a,b,w)
+
    end
 
-   ld0026 ::: leaky
+   ld0026 ::: leaky, PURE
    ! Lebedev 26-point angular grid
    ! L=7?
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(26,3) 
       .l = 7
       w=0.4761904761904762d-1
@@ -452,13 +455,16 @@ contains
       .gen_oh(2,a,b,w)
       w=0.3214285714285714d-1
       .gen_oh(3,a,b,w)
+
    end
 
-   ld0038 ::: leaky
+   ld0038 ::: leaky, PURE
    ! Lebedev 38-point angular grid
    ! L = 9
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(38,3) 
       .l = 9
       w=0.9523809523809524d-2
@@ -468,13 +474,16 @@ contains
       a=0.4597008433809831d+0
       w=0.2857142857142857d-1
       .gen_oh(5,a,b,w)
+
    end
 
-   ld0050 ::: leaky
+   ld0050 ::: leaky, PURE
    ! Lebedev 50-point angular grid
    ! L=11
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(50,4) 
       .l = 11
       w=0.1269841269841270d-1
@@ -486,13 +495,16 @@ contains
       a=0.3015113445777636d+0
       w=0.2017333553791887d-1
       .gen_oh(4,a,b,w)
+
    end
 
-   ld0074 ::: leaky
+   ld0074 ::: leaky, PURE
    ! Lebedev 74-point angular grid
    ! L=13?
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(74,5) 
       .l = 13
       w=0.5130671797338464d-3
@@ -507,13 +519,16 @@ contains
       a=0.3207726489807764d+0
       w=0.1652217099371571d-1
       .gen_oh(5,a,b,w)
+
    end
 
-   ld0086 ::: leaky
+   ld0086 ::: leaky, PURE
    ! Lebedev 86-point angular grid
    ! L=15
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(86,5) 
       .l = 15
       w=0.1154401154401154d-1
@@ -529,13 +544,16 @@ contains
       a=0.3742430390903412d+0
       w=0.1181230374690448d-1
       .gen_oh(5,a,b,w)
+
    end
 
-   ld0110 ::: leaky
+   ld0110 ::: leaky, PURE
    ! Lebedev 110-point angular grid
    ! L=17
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(110,6) 
       .l = 17
       w=0.3828270494937162d-2
@@ -554,13 +572,16 @@ contains
       a=0.4783690288121502d+0
       w=0.9694996361663028d-2
       .gen_oh(5,a,b,w)
+
    end
 
-   ld0146 ::: leaky
+   ld0146 ::: leaky, PURE
    ! Lebedev 146-point angular grid
    ! L=19
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(146,7) 
       .l = 19
       w=0.5996313688621381d-3
@@ -582,13 +603,16 @@ contains
       b=0.4493328323269557d+0
       w=0.6991087353303262d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0170 ::: leaky
+   ld0170 ::: leaky, PURE
    ! Lebedev 170-point angular grid
    ! L=21?
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(170,8) 
       .l = 21
       w=0.5544842902037365d-2
@@ -613,13 +637,16 @@ contains
       b=0.1446630744325115d+0
       w=0.5968383987681156d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0194 ::: leaky
+   ld0194 ::: leaky, PURE
    ! Lebedev 194-point angular grid
    ! L=23
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(194,9) 
       .l = 23
       w=0.1782340447244611d-2
@@ -647,13 +674,16 @@ contains
       b=0.8360360154824589d+0
       w=0.5530248916233094d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0230 ::: leaky
+   ld0230 ::: leaky, PURE
    ! Lebedev 230-point angular grid
    ! L=25
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(230,10) 
       .l = 25
       w=-0.5522639919727325d-1
@@ -685,13 +715,16 @@ contains
       b=0.4864661535886647d+0
       w=0.4695720972568883d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0266 ::: leaky
+   ld0266 ::: leaky, PURE
    ! Lebedev 266-point angular grid
    ! L=27
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(266,11) 
       .l = 27
       w=-0.1313769127326952d-2
@@ -726,13 +759,16 @@ contains
       b=0.5244939240922365d+0
       w=0.4071467593830964d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0302 ::: leaky
+   ld0302 ::: leaky, PURE
    ! Lebedev 302-point angular grid
    ! L=29
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(302,12) 
       .l = 29
       w=0.8545911725128148d-3
@@ -771,13 +807,16 @@ contains
       b=0.4127724083168531d+0
       w=0.3392312205006170d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0350 ::: leaky
+   ld0350 ::: leaky, PURE
    ! Lebedev 350-point angular grid
    ! L=31?
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(350,13) 
       .l = 31
       w=0.3006796749453936d-2
@@ -820,13 +859,16 @@ contains
       b=0.9074658265305127d+0
       w=0.2832187403926303d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0434 ::: leaky
+   ld0434 ::: leaky, PURE
    ! Lebedev 434-point angular grid
    ! L=35
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(434,16) 
       .l = 35
       w=0.5265897968224436d-3
@@ -878,13 +920,16 @@ contains
       b=0.3344363145343455d+0
       w=0.2236607760437849d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ta0434 ::: leaky
+   ta0434 ::: leaky, PURE
    ! Updated Treutler-Ahlrichs 434-point angular grid
    ! L=35
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(434,16) 
       .l = 35
       w=0.52659765761428065d-3
@@ -936,13 +981,16 @@ contains
       b=0.33443631695748371d+0
       w=0.22366077071364263d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0590 ::: leaky
+   ld0590 ::: leaky, PURE
    ! Lebedev 590-point angular grid
    ! L=41
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(590,20) 
       .l = 41
       w=0.3095121295306187d-3
@@ -1009,13 +1057,16 @@ contains
       b=0.8999205842074875d-1
       w=0.1802239128008525d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0770 ::: leaky
+   ld0770 ::: leaky, PURE
    ! Lebedev 770-point angular grid
    ! L=47
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(770,25) 
       .l = 47
       w=0.2192942088181184d-3
@@ -1099,13 +1150,16 @@ contains
       b=0.5648768149099500d+0
       w=0.1415914757466932d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld0974 ::: leaky
+   ld0974 ::: leaky, PURE
    ! Lebedev 974-point angular grid
    ! L=53
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(974,30) 
       .l = 53
       w=0.1438294190527431d-3
@@ -1208,13 +1262,16 @@ contains
       b=0.5674997546074373d+0
       w=0.1121780048519972d-2
       .gen_oh(6,a,b,w)
+
    end
 
-   ld1202 ::: leaky
+   ld1202 ::: leaky, PURE
    ! Lebedev 1202-point angular grid
    ! L=59
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(1202,36) 
       .l = 59
       w=0.1105189233267572d-3
@@ -1338,12 +1395,15 @@ contains
       b=0.5693702498468441d+0
       w=0.9105760258970126d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld1454 ::: leaky
+   ld1454 ::: leaky, PURE
    ! Lebedev 1454-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(1454,42) 
       .l = 65
       w=0.7777160743261247d-4
@@ -1490,12 +1550,15 @@ contains
       b=0.5797589531445219d-1
       w=0.7489908329079234d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld1730 ::: leaky
+   ld1730 ::: leaky, PURE
    ! Lebedev 1730-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(1730,49) 
       .l = 71
       w=0.6309049437420976d-4
@@ -1667,12 +1730,15 @@ contains
       b=0.5354789536565540d-1
       w=0.6375414170333233d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld2030 ::: leaky
+   ld2030 ::: leaky, PURE
    ! Lebedev 2030-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(2030,56) 
       .l = 77
       w=0.4656031899197431d-4
@@ -1871,12 +1937,15 @@ contains
       b=0.9861621540127005d-1
       w=0.5433312705027845d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld2354 ::: leaky
+   ld2354 ::: leaky, PURE
    ! Lebedev 2354-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(2354,64) 
       .l = 83
       w=0.3922616270665292d-4
@@ -2104,12 +2173,15 @@ contains
       b=0.4589901487275583d-1
       w=0.4691445539106986d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld2702 ::: leaky
+   ld2702 ::: leaky, PURE
    ! Lebedev 2702-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(2702,72) 
       .l = 89
       w=0.2998675149888161d-4
@@ -2368,12 +2440,15 @@ contains
       b=0.8551925814238349d-1
       w=0.4087191292799671d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld3074 ::: leaky
+   ld3074 ::: leaky, PURE
    ! Lebedev 3074-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(3074,81) 
       .l = 95
       w=0.2599095953754734d-4
@@ -2665,12 +2740,15 @@ contains
       b=0.4015955957805969d-1
       w=0.3595855034661997d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld3470 ::: leaky
+   ld3470 ::: leaky, PURE
    ! Lebedev 3470-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(3470,90) 
       .l = 101
       w=0.2040382730826330d-4
@@ -2997,12 +3075,15 @@ contains
       b=0.7548443301360158d-1
       w=0.3185447944625510d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld3890 ::: leaky
+   ld3890 ::: leaky, PURE
    ! Lebedev 3890-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(3890,100) 
       .l = 107
       w=0.1807395252196920d-4
@@ -3366,12 +3447,15 @@ contains
       b=0.3569455268820809d-1
       w=0.2843455206008783d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld4334 ::: leaky
+   ld4334 ::: leaky, PURE
    ! Lebedev 4334-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(4334,110) 
       .l = 113
       w=0.1449063022537883d-4
@@ -3774,12 +3858,15 @@ contains
       b=0.6755249309678028d-1
       w=0.2552114127580376d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld4802 ::: leaky
+   ld4802 ::: leaky, PURE
    ! Lebedev 4802-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(4802,121) 
       .l = 119
       w=0.9687521879420705d-4
@@ -4223,12 +4310,15 @@ contains
       b=0.3211853196273233d-1
       w=0.2304831913227114d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld5294 ::: leaky
+   ld5294 ::: leaky, PURE
    ! Lebedev 5294-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(5294,132) 
       .l = 125
       w=0.9080510764308163d-4
@@ -4715,12 +4805,15 @@ contains
       b=0.6112185773983089d-1
       w=0.2090509712889637d-3
       .gen_oh(6,a,b,w)
+
    end
 
-   ld5810 ::: leaky
+   ld5810 ::: leaky, PURE
    ! Lebedev 5810-point angular grid
-      self  :: PTR
+      self :: INOUT
+      
       a,b,w :: REAL
+
       .set(5810,144) 
       .l = 131
       w=0.9735347946175486d-5
@@ -5252,7 +5345,9 @@ contains
       b=0.2919946135808105d-1
       w=0.1905534498734563d-3
       .gen_oh(6,a,b,w)
+
    end
+
 
    put
    ! Put out basic info

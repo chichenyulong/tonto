@@ -111,7 +111,7 @@ contains
       status :: INT
 #endif
 
-      if (.disassociated) return
+      if (.deallocated) return
 
 #ifdef USE_PRECONDITIONS
       deallocate(self,stat=status)
@@ -599,6 +599,29 @@ contains
          self = [ value ]
       else
          self = [ self, value ]
+      end
+
+   end
+
+   append_listed_to(res,list) ::: leaky, PURE
+   ! Append together (i.e. concatenate) the vectors in self whose
+   ! indices are listed in "list".
+      self :: IN
+      list :: VEC{INT}, IN
+      res :: VEC{INTRINSIC}@, OUT
+
+   ENSURE(list.dim>=1,"list must not have zero dimension")
+   ENSURE(maxval(list)<=.dim,"some elements of list are too large")
+   ENSURE(minval(list)>=1,"list elements must be +ve")
+
+      i,l :: INT
+
+      l = list(1)
+      res = self(l)
+
+      do i = 2,list.dim
+         l = list(i)
+         res.append(self(l).element)
       end
 
    end

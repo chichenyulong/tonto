@@ -78,7 +78,6 @@ contains
    ! Nullify the pointer parts of the molecule
 
       nullify(.atom)
-      nullify(.atoms_bonded_to_atom)
       nullify(.atom_group)
 
       nullify(.basis)
@@ -88,8 +87,6 @@ contains
       nullify(.plot_grid)
       nullify(.interpolator)
       nullify(.isosurface)
-
-      nullify(.becke_grid)
 
       nullify(.crystal)
       nullify(.cluster)
@@ -109,7 +106,6 @@ contains
       nullify(.precomputed_basis_shellpair)
       nullify(.max_I)
       nullify(.overlapping_atoms)
-      nullify(.overlapping_atoms_for_atom)
 
       nullify(.scfdata)
 
@@ -387,8 +383,6 @@ contains
       if (mol.interpolator.associated)               .interpolator.create_copy(mol.interpolator)
       if (mol.isosurface.associated)                 .isosurface.create_copy(mol.isosurface)
 
-      if (mol.becke_grid.associated)                 .becke_grid.create_copy(mol.becke_grid)
-
       if (mol.crystal.associated)                    .crystal.create_copy(mol.crystal)
       if (mol.cluster.associated)                    .cluster.create_copy(mol.cluster)
       if (mol.cif.associated)                        .cif.create_copy(mol.cif)
@@ -404,8 +398,6 @@ contains
       if (mol.last_basis_fn_for_shell.associated)    .last_basis_fn_for_shell.create_copy(mol.last_basis_fn_for_shell)
       if (mol.angular_moment_for_shell.associated)   .angular_moment_for_shell.create_copy(mol.angular_moment_for_shell)
       if (mol.overlapping_atoms.associated)          .overlapping_atoms.create_copy(mol.overlapping_atoms)
-      if (mol.overlapping_atoms_for_atom.associated) &
-         .overlapping_atoms_for_atom.create_copy(mol.overlapping_atoms_for_atom)
       if (mol.first_basis_fn_for_atom.associated)    .first_basis_fn_for_atom.create_copy(mol.first_basis_fn_for_atom)
       if (mol.last_basis_fn_for_atom.associated)     .last_basis_fn_for_atom.create_copy(mol.last_basis_fn_for_atom)
 
@@ -430,8 +422,6 @@ contains
       if (mol.fock_matrix.associated)                .fock_matrix.create_copy(mol.fock_matrix)
       if (mol.fock_2e_matrix.associated)             .fock_2e_matrix.create_copy(mol.fock_2e_matrix)
       if (mol.constraint_matrix.associated)          .constraint_matrix.create_copy(mol.constraint_matrix)
-
-      if (mol.atom_group.associated)                 .atom_group.create_copy(mol.atom_group)
 
       if (mol.U_electric_dipole.associated)          .U_electric_dipole.create_copy(mol.U_electric_dipole)
       if (mol.dipole_polarisability.associated)      .dipole_polarisability.create_copy(mol.dipole_polarisability)
@@ -742,7 +732,7 @@ contains
    ! Initialise DFT grids, if not already done so.
    ENSURE(.scfdata.associated,"no scfdata")
 
-      if (.becke_grid.disassociated) then
+      if (.becke_grid.deallocated) then
          .becke_grid.create
          .becke_grid.set_grid_data(.atom)
       end
@@ -3705,14 +3695,14 @@ contains
       self :: INOUT
 
    DIE_IF(.atom.disassociated,"no atom info")
-   DIE_IF(.atoms_bonded_to_atom.disassociated,"no connection table")
+   DIE_IF(.atoms_bonded_to_atom.deallocated,"no connection table")
 
       n_comp, g :: INT
 
       if (NOT .:do_MFCC) return
 
       ! Assign connections
-      VEC{ATOM}:assign_connection_table(.atoms_bonded_to_atom)
+      VEC{ATOM}:set_connection_table(.atoms_bonded_to_atom)
 
       n_comp = .atom.no_of_compounds
 
@@ -3721,8 +3711,8 @@ contains
          ! Make groups from compound_id's
          .atom_group.create(n_comp)
          do g = 1,n_comp
-            .atom_group(g).atom_index => .atom(:).compound_sequence_id.indices_of_elements_matching(g)
-            .atom_group(g).n_atoms     = .atom_group(g).atom_index.dim
+            .atom_group(g).atom_index = .atom(:).compound_sequence_id.indices_of_elements_matching(g)
+            .atom_group(g).n_atoms    = .atom_group(g).atom_index.dim
          end
 
       end
@@ -3739,7 +3729,7 @@ contains
       end
 
       ! Clear connections
-      VEC{ATOM}:nullify_connection_table
+      VEC{ATOM}:destroy_connection_table
 
    end
 
@@ -3880,10 +3870,10 @@ contains
       mol :: MOLECULE, INOUT
 
    DIE_IF(.atom_group.disassociated,"no atom_group info")
-   ENSURE(.atoms_bonded_to_atom.created,"no connection table")
+   ENSURE(.atoms_bonded_to_atom.allocated,"no connection table")
 
       i,j, cp,cf,dp,last :: INT
-      bp_bonds,cp_bonds :: VEC{INT}*
+      bp_bonds,cp_bonds :: VEC{INT}@
       length :: REAL
       label :: STR
 
@@ -3894,7 +3884,7 @@ contains
 
       ! Find connections to atom bp ... in SMILES:
       ! -ap-res1 - bp-res2(cp_1-res2)(cp_2-res2) ...
-      bp_bonds => .atoms_bonded_to_atom(bp).element
+      bp_bonds = .atoms_bonded_to_atom(bp).element
 
       ! Find connections to bp
       do i = 1,bp_bonds.dim
@@ -3914,7 +3904,7 @@ contains
 
             ! Add caps for all non-H atom ... should be 3
             ! (serging for cap atom 3)
-            cp_bonds => .atoms_bonded_to_atom(cp).element
+            cp_bonds = .atoms_bonded_to_atom(cp).element
 
             ! Index of cp in atom_group(g) fragment
             cf = last
@@ -4059,8 +4049,8 @@ contains
         
             ! Make groups from group index
             do g = 1,.atom_group.dim
-               .atom_group(g).atom_index => .atom(:).group.indices_of_elements_matching(g)
-               .atom_group(g).n_atoms     = .atom_group(g).atom_index.dim
+               .atom_group(g).atom_index = .atom(:).group.indices_of_elements_matching(g)
+               .atom_group(g).n_atoms    = .atom_group(g).atom_index.dim
             end
         
             ! Set charges
@@ -4250,11 +4240,11 @@ contains
       .atom.append(mol_B.atom)
       .atom_group.create(2)
       .atom_group(1).set_atom(mol_A.atom)
-      .atom_group(1).atom_index.create_copy([ (i, i=1,n_A) ])
+      .atom_group(1).atom_index = [ (i, i=1,n_A) ]
       .atom_group(1).mol => mol_A
 
       .atom_group(2).set_atom(mol_B.atom)
-      .atom_group(2).atom_index.create_copy([ (i, i=n_A + 1,n_A + n_B) ])
+      .atom_group(2).atom_index = [ (i, i=n_A + 1,n_A + n_B) ]
       .atom_group(2).mol => mol_B
 
       .:join_atom_groups
@@ -4379,10 +4369,13 @@ contains
 
    end
 
-   nuclear_dipole_moment result (res)
+   nuclear_dipole_moment result (res) ::: PURE
    ! Return the nuclear dipole moment
+      self :: IN
       res :: VEC{REAL}(3)
+
       res = .atom.nuclear_dipole_moment
+
    end
 
    chemical_formula(with_spaces) result (res) ::: PURE
@@ -4424,50 +4417,65 @@ contains
 
    end
 
-   molecular_weight result (res)
+   molecular_weight result (res) ::: PURE
    ! Return the molceular weight
+      self :: IN
       res :: REAL
+
    ENSURE(.atom.associated,"atom list required")
+
       res = .atom.molecular_weight
+
    end
 
-   reduced_mass result (res)
+   reduced_mass result (res) ::: PURE
    ! Return the reduced mass
+      self :: IN
       res :: REAL
+
    ENSURE(.atom.associated,"atom list required")
+
       res = .atom.reduced_mass
+
    end
 
-   move_origin_to_center_of_mass
+   move_origin_to_center_of_mass ::: PURE
    ! Move the origin to the center of mass
+      self :: INOUT
+
    ENSURE(.atom.associated,"atom list required")
 
       .atom.move_origin_to_center_of_mass
 
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom) ! leaky
+      if (.becke_grid.allocated) .becke_grid.set_grid_data(.atom) ! leaky
 
    end
 
-   move_origin_to_center_of_atoms
+   move_origin_to_center_of_atoms ::: PURE
    ! Move the origin to the center of atoms
+      self :: INOUT
+
    ENSURE(.atom.associated,"atom list required")
 
       .atom.move_origin_to_center_of_atoms
 
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom) ! leaky
+      if (.becke_grid.allocated) .becke_grid.set_grid_data(.atom) ! leaky
 
    end
 
    move_origin
    ! Move the origin by a user specified vector
+      self :: INOUT
+
    ENSURE(.atom.associated,"atom list required")
    ENSURE(stdin.buffer.n_items==4 OR stdin.buffer.n_items==5,"origin shift needed on same line")
+
       shift :: VEC{REAL}(3)
 
       stdin.read_quantity(shift)
       .atom.translate_by(shift)
 
-      if (.becke_grid.associated) .becke_grid.set_grid_data(.atom) ! leaky
+      if (.becke_grid.allocated) .becke_grid.set_grid_data(.atom) ! leaky
 
    end
 
@@ -4650,9 +4658,9 @@ contains
       self :: IN
       res :: BIN
 
-      res = .becke_grid.associated  &
+      res = .becke_grid.allocated  &
           AND .overlapping_atoms.associated &
-          AND .overlapping_atoms_for_atom.associated
+          AND .overlapping_atoms_for_atom.allocated
 
    end
 
@@ -4824,7 +4832,7 @@ contains
       self :: INOUT
 
    ENSURE(.basis_info_made,"no basis set")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
 
       r_max :: VEC{REAL}*
       d :: VEC{REAL}(3)
@@ -7504,20 +7512,20 @@ contains
 
       select case (genre)
 
-         case("restricted")
-            .:rotate_molecular_orbitals_r(.molecular_orbitals.restricted,R)
+      case("restricted")
+         .:rotate_molecular_orbitals_r(.molecular_orbitals.restricted,R)
 
-         case("unrestricted")
-            .:rotate_molecular_orbitals_r(.molecular_orbitals.alpha,R)
-            .:rotate_molecular_orbitals_r(.molecular_orbitals.beta,R)
+      case("unrestricted")
+         .:rotate_molecular_orbitals_r(.molecular_orbitals.alpha,R)
+         .:rotate_molecular_orbitals_r(.molecular_orbitals.beta,R)
 
-         case default;   DIE("unknown kind, "//trim(genre))
+      case default;   DIE("unknown kind, "//trim(genre))
 
       end
 
    end
 
-   rotate_molecular_orbitals_r(MO,R)
+   rotate_molecular_orbitals_r(MO,R) ::: PURE
    ! Rotate a restricted molecular orbitals "MO" using matrix "R",
    ! where "R" specifies how positions in space are to be transformed
    ! i.e. x' = Rx.
@@ -7530,12 +7538,13 @@ contains
    ENSURE(R.dim1==3,"rotation matrix R is not 3x3")
    ENSURE(NOT .use_spherical_basis,"only for cartesian bases")
 
-      new :: MAT{REAL}*
-      tr :: VEC{MAT_{REAL}}*
+      new :: MAT{REAL}@
+      tr :: VEC{MAT_{REAL}}@
       s,f,l,a :: INT
 
       new.create(.n_bf,.n_bf)
-      tr.make_gaussian_xyz_matrices(R)
+
+      tr = GAUSSIAN_DATA:gaussian_xyz_matrices(R)
 
       do s = 1,.n_shell
          f = .first_basis_fn_for_shell(s)
@@ -7545,9 +7554,6 @@ contains
       end
 
       MO = new
-
-      tr.destroy
-      new.destroy
 
    end
 
@@ -7583,7 +7589,7 @@ contains
 
    end
 
-   rotate_density_matrix_r(P,R)
+   rotate_density_matrix_r(P,R) ::: PURE
    ! Rotate the density matrix "P" using matrix "R", where "R" specifies
    ! how positions in space are to be transformed i.e. x' = Rx.
       self :: IN
@@ -7595,12 +7601,13 @@ contains
    ENSURE(R.is_square,"rotation matrix R is not square")
    ENSURE(R.dim1==3,"rotation matrix R is not 3x3")
 
-      new :: MAT{REAL}*
-      tr :: VEC{MAT_{REAL}}*
+      new :: MAT{REAL}@
+      tr :: VEC{MAT_{REAL}}@
       s,f,l,a :: INT
 
       new.create(.n_bf,.n_bf)
-      tr.make_gaussian_xyz_matrices(R)
+
+      tr = GAUSSIAN_DATA:gaussian_xyz_matrices(R)
 
       do s = 1,.n_shell
          f = .first_basis_fn_for_shell(s)
@@ -7615,9 +7622,6 @@ contains
          a = .angular_moment_for_shell(s)
          P(:,f:l).to_product_of(new(:,f:l),tr(a)[:,:],transpose_b=TRUE)
       end
-
-      tr.destroy
-      new.destroy
 
    end
 
@@ -7651,11 +7655,11 @@ contains
 
    end
 
-   rotate_fock_matrix_r(F,R)
+   rotate_fock_matrix_r(F,R) ::: PURE
    ! Rotate the fock matrix "P" using matrix "R", where "R" specifies
    ! how positions in space are to be transformed i.e. x' = Rx.
       self :: IN
-      F :: MAT{REAL}, INOUT
+      F :: MAT{REAL}, OUT
       R :: MAT{REAL}, IN
 
    ENSURE(F.is_square,"wrong shape for density matrix P")
@@ -7668,7 +7672,8 @@ contains
       s,first,last,a :: INT
 
       new.create(.n_bf,.n_bf)
-      tr.make_gaussian_xyz_matrices(R)
+
+      tr = GAUSSIAN_DATA:gaussian_xyz_matrices(R)
 
       do s = 1,.n_shell
          first = .first_basis_fn_for_shell(s)
@@ -7676,14 +7681,10 @@ contains
          a = .angular_moment_for_shell(s)
          new(first:last,:).to_product_of(tr(a)[:,:],F(first:last,:), transpose_b=TRUE)
       end
+
       F = new
 
-      tr.destroy
-      new.destroy
-
    end
-
-
 
    rotate_group(g,axis,angle) ::: leaky
    ! Rotate a group "g" of atoms in the molecule using a matrix defined by its
@@ -7693,6 +7694,7 @@ contains
    ! problem for group off-diagonal blocks; this routine works for progroup
    ! densities only.
    ! Checked, 7/2/06; the energy decomposition was checked by manual rotation
+      self :: INOUT
       g :: INT
       axis :: VEC{REAL}(3)
       angle :: REAL
@@ -8909,7 +8911,7 @@ contains
       if (.pointgroup.associated)  .:put_pointgroup
       if (.crystal.associated)     .:put_crystal
       if (.cluster.associated)     .:put_cluster
-      if (.becke_grid.associated)  .:put_becke_grid
+      if (.becke_grid.allocated)  .:put_becke_grid
 
       if (.overlapping_atoms.associated AND .atom.associated) then
          .:put_overlapping_atoms
@@ -9342,7 +9344,7 @@ contains
    ! Output the current DFT grid.
       self :: IN
 
-   ENSURE(.becke_grid.associated,"no Becke integration grid to output")
+   ENSURE(.becke_grid.allocated,"no Becke integration grid to output")
 
       .becke_grid.put
 
@@ -9875,7 +9877,7 @@ contains
 
       ! Becke grid
       if (.scfdata.is_DFT_calculation) then
-      if (.becke_grid.associated) then
+      if (.becke_grid.allocated) then
       psi( 6) = trim(.becke_grid.kind)
       psi( 7) = trim(.becke_grid.accuracy)
       psi( 8) = trim(.becke_grid.pruning_scheme)

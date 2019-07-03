@@ -154,27 +154,28 @@ contains
       .d.nullify_ptr_part
 
       if (.cd_nullify) then
-       nullify(.cd_exponent_sum)
-       nullify(.cd_exponent_inv)
-       if (.cd_same_center) then
-          nullify(.cd_contraction_prefactor)
-          nullify(.cd_contraction_s_prefactor)
-          nullify(.cd_contraction_p_prefactor)
-       else
-          .cd_contraction_prefactor.destroy
-          .cd_contraction_s_prefactor.destroy
-          .cd_contraction_p_prefactor.destroy
-       end
-   !   nullify(.cd_form_3dints_yz_rms_indices)
+
+         nullify(.cd_exponent_sum)
+         nullify(.cd_exponent_inv)
+         if (.cd_same_center) then
+            nullify(.cd_contraction_prefactor)
+            nullify(.cd_contraction_s_prefactor)
+            nullify(.cd_contraction_p_prefactor)
+         else
+            .cd_contraction_prefactor.destroy
+            .cd_contraction_s_prefactor.destroy
+            .cd_contraction_p_prefactor.destroy
+         end
+   !     nullify(.cd_form_3dints_yz_rms_indices)
 
       else
 
-       .cd_exponent_sum.destroy
-       .cd_exponent_inv.destroy
-       .cd_contraction_prefactor.destroy
-       .cd_contraction_s_prefactor.destroy
-       .cd_contraction_p_prefactor.destroy
-   !   .cd_form_3dints_yz_rms_indices.destroy
+         .cd_exponent_sum.destroy
+         .cd_exponent_inv.destroy
+         .cd_contraction_prefactor.destroy
+         .cd_contraction_s_prefactor.destroy
+         .cd_contraction_p_prefactor.destroy
+   !     .cd_form_3dints_yz_rms_indices.destroy
 
       end
 
@@ -571,7 +572,7 @@ contains
 !
 !===============================================================================
 
-   make_ERI(abcd) ::: public
+   make_ERI(abcd) ::: public, PURE
    ! Makes the (ab|cd) integrals, summed over the primitives
    ! (uses the transfer equation to make (ab|cd) from (es|fs))
    ! ENSURE(.is_spherical,"wrong ERI routine call, sph vs cart violation")
@@ -598,11 +599,12 @@ contains
 
    end
 
-   make_ERI_c(abcd)
+   make_ERI_c(abcd) ::: PURE
    ! Makes the (ab|cd) integrals, summed over the primitives
    ! (uses the transfer equation to make (ab|cd) from (es|fs))
       self :: IN
       abcd :: VEC{REAL}(*), OUT
+
  ! ENSURE(.n_ab==(.ab_last_gaussian-.ab_first_gaussian+1),"n_ab wrong")
  ! ENSURE(.n_cd==(.cd_last_gaussian-.cd_first_gaussian+1),"n_cd wrong")
 
@@ -642,18 +644,18 @@ contains
 
    end
 
-   change_to_spherical(C,S) ::: leaky
+   change_to_spherical(C,S) ::: leaky, PURE
    ! Normalise a cartesian integral block "C" to a spherical integral
    ! block "S" . "C" is destroyed.
       self :: IN
       C :: MAT4{REAL}*
       S :: MAT4{REAL}(.a.n_sph,.b.n_sph,.c.n_sph,.d.n_sph), OUT
 
-      UU  :: VEC{MAT_{REAL}}*
-      U :: MAT{REAL}*
+      UU  :: VEC{MAT_{REAL}}@
+      U :: MAT{REAL}@
       W,WW :: MAT4{REAL}*
 
-      UU => GAUSSIAN_DATA::spherical_harmonics_for
+      UU = GAUSSIAN_DATA::spherical_harmonics_for
 
       if (max(.ab_l_max,.cd_l_max)<2) then
 
@@ -665,7 +667,7 @@ contains
          W => C
 
          if (.a.l>=2) then
-            U => UU(.a.l).element
+            U = UU(.a.l).element
             WW.create(.a.n_sph,.b.n_comp,.c.n_comp,.d.n_comp)
             W.change_index_1_to(WW,U)
             W.destroy
@@ -673,7 +675,7 @@ contains
          end
 
          if (.b.l>=2) then
-            U => UU(.b.l).element
+            U = UU(.b.l).element
             WW.create(.a.n_sph,.b.n_sph,.c.n_comp,.d.n_comp)
             W.change_index_2_to(WW,U)
             W.destroy
@@ -681,7 +683,7 @@ contains
          end
 
          if (.c.l>=2) then
-            U => UU(.c.l).element
+            U = UU(.c.l).element
             WW.create(.a.n_sph,.b.n_sph,.c.n_sph,.d.n_comp)
             W.change_index_3_to(WW,U)
             W.destroy
@@ -689,7 +691,7 @@ contains
          end
 
          if (.d.l>=2) then
-            U => UU(.d.l).element
+            U = UU(.d.l).element
             WW.create(.a.n_sph,.b.n_sph,.c.n_sph,.d.n_sph)
             W.change_index_4_to(WW,U)
             W.destroy
@@ -707,10 +709,10 @@ contains
 ! This is a general purpose routine which always works
 ! but it calls special case code
 
-   make_esfs(esfs)
+   make_esfs(esfs) ::: PURE
    ! Makes the (es|fs) integrals, summed over primitives.
       self :: IN
-      esfs :: MAT{REAL}(.n_ab,.n_cd)
+      esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
 
       l_max :: INT
       l_max = max(.ab_l_sum,.cd_l_sum)
@@ -1031,7 +1033,7 @@ contains
 ! These are optimised routines derived from the make_esfs_general routine
 ! and from the code in RMS2_INDICES which generates optimal fortran source.
 
-   make_esfs_ss_0000(v11) ::: private
+   make_esfs_ss_0000(v11) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       v11 :: REAL, OUT
@@ -1074,7 +1076,7 @@ contains
 
    end
 
-   make_esfs_ss_ssss(esfs) ::: private
+   make_esfs_ss_ssss(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}, OUT
@@ -1123,7 +1125,7 @@ contains
 
    end
 
-   make_esfs_ps_psss(esfs) ::: private
+   make_esfs_ps_psss(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: VEC{REAL}(.n_ab), OUT
@@ -1191,7 +1193,7 @@ contains
 
    end
 
-   make_esfs_sp_ssps(esfs) ::: private
+   make_esfs_sp_ssps(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: VEC{REAL}(.n_cd), OUT
@@ -1259,7 +1261,7 @@ contains
 
    end
 
-   make_esfs_pp_psps(esfs) ::: private
+   make_esfs_pp_psps(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -1365,100 +1367,7 @@ contains
 
    end
 
-!   make_esfs_pp(esfs) ::: private
-!   ! Makes the initial (es|fs) integrals, summed over the primitives
-!     self :: IN
-!     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
-!     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
-!     zeta,eta,xx,ab_cc,cd_cc,zinv,rho,einv,rho_zinv,rho_einv :: REAL
-!     wt,t2,t2_rz,t2_re,bb,half_einv :: REAL
-!     Ix12,Iy12,Iz12,Ix21,Iy21,Iz21,Ix22,Iy22,Iz22 :: REAL
-!     v11,v21,v31,v12,v22,v32,v13,v23,v33 :: REAL
-!     n_roots,dim1,dim2 :: INT
-!     e,f,em1,fm1,ep1,fp1,n,i,j,k,n_sum :: INT
-!     rys :: RYS*
-!
-!     dim1 = .ab_l_sum + 1
-!     dim2 = .cd_l_sum + 1
-!     n_roots = (dim1+dim2)/2
-!     n_sum = n_roots * .ab_n_gaussian_pairs * .cd_n_gaussian_pairs
-!     Ixa.create(n_sum,dim1,dim2)
-!     Iya.create(n_sum,dim1,dim2)
-!     Iza.create(n_sum,dim1,dim2)
-!
-!     rys.create(n_roots)
-!
-!     i = 0
-!     do k = 1,.ab_n_gaussian_pairs
-!         ab_cc = .ab_contraction_prefactor(k)
-!         zeta = .ab_exponent_sum(k)
-!         zinv = .ab_exponent_inv(k)
-!         ab_cc = ab_cc * TWOPI5ON2
-!         Px = .ab_pair_center(1,k)
-!         Py = .ab_pair_center(2,k)
-!         Pz = .ab_pair_center(3,k)
-!         PAx = .ab_center_diff(1,k)
-!         PAy = .ab_center_diff(2,k)
-!         PAz = .ab_center_diff(3,k)
-!         do j = 1,.cd_n_gaussian_pairs
-!             cd_cc = .cd_contraction_prefactor(j)
-!             eta  = .cd_exponent_sum(j)
-!             einv = .cd_exponent_inv(j)
-!             Qx = .cd_pair_center(1,j)
-!             Qy = .cd_pair_center(2,j)
-!             Qz = .cd_pair_center(3,j)
-!             QCx = .cd_center_diff(1,j)
-!             QCy = .cd_center_diff(2,j)
-!             QCz = .cd_center_diff(3,j)
-!             rho  = zeta * eta / (zeta + eta)
-!             rho_zinv = rho * zinv
-!             rho_einv = rho * einv
-!             half_einv = HALF * einv
-!             QPx = Qx - Px;   QPy = Qy - Py;   QPz = Qz - Pz
-!             xx  = rho * (QPx*QPx + QPy*QPy + QPz*QPz)
-!             rys.get_weights(xx)
-!             rys.weight = rys.weight * ab_cc * cd_cc * sqrt(rho)
-!             ! Now make the 2 dimensional integrals.
-!             do n = 1,n_roots
-!               i = i + 1
-!               Ix => Ixa(i,:,:)
-!               Iy => Iya(i,:,:)
-!               Iz => Iza(i,:,:)
-!               t2      = rys.root(n)
-!               Ix(1,1) = ONE
-!               Iy(1,1) = ONE
-!               Iz(1,1) = wt
-!
-!                 t2_rz = t2 * rho_zinv
-!                 Ix21 = PAx + t2_rz*QPx; Ix(2,1) = Ix21
-!                 Iy21 = PAy + t2_rz*QPy; Iy(2,1) = Iy21
-!                 Iz21 = PAz + t2_rz*QPz; Iz(2,1) = Iz21*wt
-!
-!                 t2_re = t2 * rho_einv
-!                 Ix12 = QCx - t2_re*QPx; Ix(1,2) = Ix12
-!                 Iy12 = QCy - t2_re*QPy; Iy(1,2) = Iy12
-!                 Iz12 = QCz - t2_re*QPz; Iz(1,2) = Iz12*wt
-!
-!                 bb = t2_rz * half_einv
-!                 Ix22 = Ix12*Ix21 + bb; Ix(2,2) = Ix22
-!                 Iy22 = Iy12*Iy21 + bb; Iy(2,2) = Iy22
-!                 Iz22 = Iz12*Iz21 + bb; Iz(2,2) = Iz22*wt
-!             end
-!         end     ! -- loops over c,d
-!     end         ! -- loops over a,b
-!
-!     rys.destroy
-!
-!     .form_esfs(esfs,Ixa,Iya,Iza,Iza(:,1,1))
-!
-!     Iza.destroy
-!     Iya.destroy
-!     Ixa.destroy
-!   end
-
-   make_esfs_ds_dsss(esfs) ::: private
+   make_esfs_ds_dsss(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: VEC{REAL}(.n_ab), OUT
@@ -1548,7 +1457,7 @@ contains
 
    end
 
-   make_esfs_ds_ppss(esfs) ::: private
+   make_esfs_ds_ppss(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}, OUT
@@ -1647,90 +1556,7 @@ contains
 
    end
 
-!   make_esfs_ds(esfs) ::: private
-!   ! Makes the initial (es|fs) integrals, summed over the primitives
-!     self :: IN
-!     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
-!     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,Px,Py,Pz :: REAL
-!     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,rho_zinv :: REAL
-!     wt,t2,t2_rz,t2_re,half_zinv,ce :: REAL
-!     Ix21,Iy21,Iz21 :: REAL
-!     Ix31,Iy31,Iz31 :: REAL
-!     v11,v21,v31,v41,v51,v61 :: REAL
-!     n_roots,dim1,dim2 :: INT
-!     n,i,j,k,n_sum :: INT
-!     rys :: RYS*
-!
-!     dim1 = .ab_l_sum + 1
-!     dim2 = .cd_l_sum + 1
-!     n_roots = (dim1+dim2)/2
-!     n_sum = n_roots * .ab_n_gaussian_pairs * .cd_n_gaussian_pairs
-!     Ixa.create(n_sum,dim1,dim2)
-!     Iya.create(n_sum,dim1,dim2)
-!     Iza.create(n_sum,dim1,dim2)
-!
-!     rys.create(n_roots)
-!
-!     i = 0
-!     do k = 1,.ab_n_gaussian_pairs
-!         ab_cc = .ab_contraction_prefactor(k)
-!         zeta = .ab_exponent_sum(k)
-!         zinv = .ab_exponent_inv(k)
-!         half_zinv = HALF * zinv
-!         ab_cc = ab_cc * TWOPI5ON2
-!         Px = .ab_pair_center(1,k)
-!         Py = .ab_pair_center(2,k)
-!         Pz = .ab_pair_center(3,k)
-!         PAx = .ab_center_diff(1,k)
-!         PAy = .ab_center_diff(2,k)
-!         PAz = .ab_center_diff(3,k)
-!         do j = 1,.cd_n_gaussian_pairs
-!             cd_cc = .cd_contraction_prefactor(j)
-!             eta  = .cd_exponent_sum(j)
-!             Qx = .cd_pair_center(1,j)
-!             Qy = .cd_pair_center(2,j)
-!             Qz = .cd_pair_center(3,j)
-!             rho  = zeta * eta / (zeta + eta)
-!             rho_zinv = rho * zinv
-!             QPx = Qx - Px;   QPy = Qy - Py;   QPz = Qz - Pz
-!             xx  = rho * (QPx*QPx + QPy*QPy + QPz*QPz)
-!             rys.get_weights(xx)
-!             rys.weight = rys.weight * ab_cc * cd_cc * sqrt(rho)
-!             ! Now make the 2 dimensional integrals.
-!             do n = 1,n_roots
-!               i = i + 1
-!               Ix => Ixa(i,:,:)
-!               Iy => Iya(i,:,:)
-!               Iz => Iza(i,:,:)
-!               t2      = rys.root(n)
-!               wt      = rys.weight(n)
-!               ! Ix(1,1) = ONE
-!               ! Iy(1,1) = ONE
-!               Iz(1,1) = wt
-!                 t2_rz = t2 * rho_zinv
-!                 Ix21 = PAx + t2_rz*QPx; Ix(2,1) = Ix21
-!                 Iy21 = PAy + t2_rz*QPy; Iy(2,1) = Iy21
-!                 Iz21 = PAz + t2_rz*QPz; Iz(2,1) = Iz21*wt
-!                 ce  = (ONE - t2_rz) * half_zinv
-!                 Ix31 = Ix21*Ix21 + ce; Ix(3,1) = Ix31
-!                 Iy31 = Iy21*Iy21 + ce; Iy(3,1) = Iy31
-!                 Iz31 = Iz21*Iz21 + ce; Iz(3,1) = Iz31*wt
-!             end
-!         end     ! -- loops over c,d
-!     end         ! -- loops over a,b
-!
-!     rys.destroy
-!
-!     .form_esfs(esfs,Ixa,Iya,Iza,Iza(:,1,1))
-!
-!     Iza.destroy
-!     Iya.destroy
-!     Ixa.destroy
-!   end
-
-   make_esfs_sd_ssds(esfs) ::: private
+   make_esfs_sd_ssds(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: VEC{REAL}(.n_cd), OUT
@@ -1820,7 +1646,7 @@ contains
 
    end
 
-   make_esfs_sd_sspp(esfs) ::: private
+   make_esfs_sd_sspp(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: VEC{REAL}(.n_cd), OUT
@@ -1919,89 +1745,7 @@ contains
 
    end
 
-!   make_esfs_sd(esfs) ::: private
-!   ! Makes the initial (es|fs) integrals, summed over the primitives
-!     self :: IN
-!     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
-!     QPx,QPy,QPz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
-!     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_einv :: REAL
-!     wt,t2,t2_re,half_einv,cf :: REAL
-!     Ix12,Iy12,Iz12 :: REAL
-!     Ix13,Iy13,Iz13 :: REAL
-!     n_roots,dim1,dim2 :: INT
-!     n,i,j,k,n_sum :: INT
-!     rys :: RYS*
-!
-!     dim1 = .ab_l_sum + 1
-!     dim2 = .cd_l_sum + 1
-!     n_roots = (dim1+dim2)/2
-!     n_sum = n_roots * .ab_n_gaussian_pairs * .cd_n_gaussian_pairs
-!     Ixa.create(n_sum,dim1,dim2)
-!     Iya.create(n_sum,dim1,dim2)
-!     Iza.create(n_sum,dim1,dim2)
-!
-!     rys.create(n_roots)
-!
-!     i = 0
-!     do k = 1,.ab_n_gaussian_pairs
-!         ab_cc = .ab_contraction_prefactor(k)
-!         zeta = .ab_exponent_sum(k)
-!         ab_cc = ab_cc * TWOPI5ON2
-!         Px = .ab_pair_center(1,k)
-!         Py = .ab_pair_center(2,k)
-!         Pz = .ab_pair_center(3,k)
-!         do j = 1,.cd_n_gaussian_pairs
-!             cd_cc = .cd_contraction_prefactor(j)
-!             eta  = .cd_exponent_sum(j)
-!             einv = .cd_exponent_inv(j)
-!             Qx = .cd_pair_center(1,j)
-!             Qy = .cd_pair_center(2,j)
-!             Qz = .cd_pair_center(3,j)
-!             QCx = .cd_center_diff(1,j)
-!             QCy = .cd_center_diff(2,j)
-!             QCz = .cd_center_diff(3,j)
-!             rho  = zeta * eta / (zeta + eta)
-!             rho_einv = rho * einv
-!             half_einv = HALF * einv
-!             QPx = Qx - Px;   QPy = Qy - Py;   QPz = Qz - Pz
-!             xx  = rho * (QPx*QPx + QPy*QPy + QPz*QPz)
-!             rys.get_weights(xx)
-!             rys.weight = rys.weight * ab_cc * cd_cc * sqrt(rho)
-!             ! Now make the 2 dimensional integrals.
-!             do n = 1,n_roots
-!               i = i + 1
-!               Ix => Ixa(i,:,:)
-!               Iy => Iya(i,:,:)
-!               Iz => Iza(i,:,:)
-!               t2      = rys.root(n)
-!               wt      = rys.weight(n)
-!               ! Ix(1,1) = ONE
-!               ! Iy(1,1) = ONE
-!               Iz(1,1) = wt
-!               t2_re = t2 * rho_einv
-!               Ix12 = QCx - t2_re*QPx; Ix(1,2) = Ix12
-!               Iy12 = QCy - t2_re*QPy; Iy(1,2) = Iy12
-!               Iz12 = QCz - t2_re*QPz; Iz(1,2) = Iz12*wt
-!               cf  = (ONE - t2_re) * half_einv
-!               Ix13 = Ix12*Ix12 + cf; Ix(1,3) = Ix13
-!               Iy13 = Iy12*Iy12 + cf; Iy(1,3) = Iy13
-!               Iz13 = Iz12*Iz12 + cf; Iz(1,3) = Iz13*wt
-!             end
-!         end     ! -- loops over c,d
-!     end         ! -- loops over a,b
-!
-!     rys.destroy
-!
-!     .form_esfs(esfs,Ixa,Iya,Iza,Iza(:,1,1))
-!
-!     Iza.destroy
-!     Iya.destroy
-!     Ixa.destroy
-!   end
-
-   make_esfs_dp_dsps(esfs) ::: private
+   make_esfs_dp_dsps(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -2145,7 +1889,7 @@ contains
 
    end
 
-   make_esfs_dp_ppps(esfs) ::: private
+   make_esfs_dp_ppps(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -2316,106 +2060,7 @@ contains
 
    end
 
-!   make_esfs_dp(esfs) ::: private
-!   ! Makes the initial (es|fs) integrals, summed over the primitives
-!     self :: IN
-!     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
-!     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
-!     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
-!     wt,t2,t2_rz,t2_re,half_zinv,half_einv,ce,bb :: REAL
-!     Ix12,Iy12,Iz12,Ix21,Iy21,Iz21,Ix22,Iy22,Iz22 :: REAL
-!     Ix31,Iy31,Iz31,Ix32,Iy32,Iz32 :: REAL
-!     n_roots,dim1,dim2 :: INT
-!     n,i,j,k,n_sum :: INT
-!     rys :: RYS*
-!
-!     dim1 = .ab_l_sum + 1
-!     dim2 = .cd_l_sum + 1
-!     n_roots = (dim1+dim2)/2
-!     n_sum = n_roots * .ab_n_gaussian_pairs * .cd_n_gaussian_pairs
-!     Ixa.create(n_sum,dim1,dim2)
-!     Iya.create(n_sum,dim1,dim2)
-!     Iza.create(n_sum,dim1,dim2)
-!
-!     rys.create(n_roots)
-!
-!     i = 0
-!     do k = 1,.ab_n_gaussian_pairs
-!         ab_cc = .ab_contraction_prefactor(k)
-!         zeta = .ab_exponent_sum(k)
-!         zinv = .ab_exponent_inv(k)
-!         half_zinv = HALF * zinv
-!         ab_cc = ab_cc * TWOPI5ON2
-!         Px = .ab_pair_center(1,k)
-!         Py = .ab_pair_center(2,k)
-!         Pz = .ab_pair_center(3,k)
-!         PAx = .ab_center_diff(1,k)
-!         PAy = .ab_center_diff(2,k)
-!         PAz = .ab_center_diff(3,k)
-!         do j = 1,.cd_n_gaussian_pairs
-!             cd_cc = .cd_contraction_prefactor(j)
-!             eta  = .cd_exponent_sum(j)
-!             einv = .cd_exponent_inv(j)
-!             half_einv = HALF * einv
-!             Qx = .cd_pair_center(1,j)
-!             Qy = .cd_pair_center(2,j)
-!             Qz = .cd_pair_center(3,j)
-!             QCx = .cd_center_diff(1,j)
-!             QCy = .cd_center_diff(2,j)
-!             QCz = .cd_center_diff(3,j)
-!             rho  = zeta * eta / (zeta + eta)
-!             rho_zinv = rho * zinv
-!             rho_einv = rho * einv
-!             QPx = Qx - Px;   QPy = Qy - Py;   QPz = Qz - Pz
-!             xx  = rho * (QPx*QPx + QPy*QPy + QPz*QPz)
-!             rys.get_weights(xx)
-!             rys.weight = rys.weight * ab_cc * cd_cc * sqrt(rho)
-!             ! Now make the 2 dimensional integrals.
-!             do n = 1,n_roots
-!               i = i + 1
-!               Ix => Ixa(i,:,:)
-!               Iy => Iya(i,:,:)
-!               Iz => Iza(i,:,:)
-!               t2      = rys.root(n)
-!               wt      = rys.weight(n)
-!               Ix(1,1) = ONE
-!               Iy(1,1) = ONE
-!               Iz(1,1) = wt
-!               t2_rz = t2 * rho_zinv
-!               Ix21 = PAx + t2_rz*QPx; Ix(2,1) = Ix21
-!               Iy21 = PAy + t2_rz*QPy; Iy(2,1) = Iy21
-!               Iz21 = PAz + t2_rz*QPz; Iz(2,1) = Iz21*wt
-!               ce  = (ONE - t2_rz) * half_zinv
-!               Ix31 = Ix21*Ix21 + ce; Ix(3,1) = Ix31
-!               Iy31 = Iy21*Iy21 + ce; Iy(3,1) = Iy31
-!               Iz31 = Iz21*Iz21 + ce; Iz(3,1) = Iz31*wt
-!               t2_re = t2 * rho_einv
-!               Ix12 = QCx - t2_re*QPx; Ix(1,2) = Ix12
-!               Iy12 = QCy - t2_re*QPy; Iy(1,2) = Iy12
-!               Iz12 = QCz - t2_re*QPz; Iz(1,2) = Iz12*wt
-!               bb = t2_rz * half_einv
-!               Ix22 = Ix12*Ix21 + bb; Ix(2,2) = Ix22
-!               Iy22 = Iy12*Iy21 + bb; Iy(2,2) = Iy22
-!               Iz22 = Iz12*Iz21 + bb; Iz(2,2) = Iz22*wt
-!               Ix32 = Ix21*Ix22 + ce*Ix12 + bb*Ix21; Ix(3,2) = Ix32
-!               Iy32 = Iy21*Iy22 + ce*Iy12 + bb*Iy21; Iy(3,2) = Iy32
-!               Iz32 = Iz21*Iz22 + ce*Iz12 + bb*Iz21; Iz(3,2) = Iz32*wt
-!             end
-!         end     ! -- loops over c,d
-!     end         ! -- loops over a,b
-!
-!     rys.destroy
-!
-!     .form_esfs(esfs,Ixa,Iya,Iza,Iza(:,1,1))
-!
-!     Iza.destroy
-!     Iya.destroy
-!     Ixa.destroy
-!   end
-
-   make_esfs_pd_psds(esfs) ::: private
+   make_esfs_pd_psds(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -2558,7 +2203,7 @@ contains
 
    end
 
-   make_esfs_pd_pspp(esfs) ::: private
+   make_esfs_pd_pspp(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -2728,105 +2373,7 @@ contains
 
    end
 
-!   make_esfs_pd(esfs) ::: private
-!   ! Makes the initial (es|fs) integrals, summed over the primitives
-!     self :: IN
-!     esfs :: MAT{REAL}, OUT
-!     Ixa,Iya,Iza :: MAT3{REAL}*
-!     Ix,Iy,Iz :: MAT{REAL}*
-!     QPx,QPy,QPz,PAx,PAy,PAz,Qx,Qy,Qz,QCx,QCy,QCz,Px,Py,Pz :: REAL
-!     zeta,eta,xx,ab_cc,cd_cc,rho,zinv,einv,rho_zinv,rho_einv :: REAL
-!     wt,t2,t2_rz,t2_re,half_einv,cf,bb :: REAL
-!     Ix12,Iy12,Iz12,Ix21,Iy21,Iz21,Ix22,Iy22,Iz22 :: REAL
-!     Ix13,Iy13,Iz13,Ix23,Iy23,Iz23 :: REAL
-!     n_roots,dim1,dim2 :: INT
-!     n,i,j,k,n_sum :: INT
-!     rys :: RYS*
-!
-!     dim1 = .ab_l_sum + 1
-!     dim2 = .cd_l_sum + 1
-!     n_roots = (dim1+dim2)/2
-!     n_sum = n_roots * .ab_n_gaussian_pairs * .cd_n_gaussian_pairs
-!     Ixa.create(n_sum,dim1,dim2)
-!     Iya.create(n_sum,dim1,dim2)
-!     Iza.create(n_sum,dim1,dim2)
-!
-!     rys.create(n_roots)
-!
-!     i = 0
-!     do k = 1,.ab_n_gaussian_pairs
-!         ab_cc = .ab_contraction_prefactor(k)
-!         zeta = .ab_exponent_sum(k)
-!         zinv = .ab_exponent_inv(k)
-!         ab_cc = ab_cc * TWOPI5ON2
-!         Px = .ab_pair_center(1,k)
-!         Py = .ab_pair_center(2,k)
-!         Pz = .ab_pair_center(3,k)
-!         PAx = .ab_center_diff(1,k)
-!         PAy = .ab_center_diff(2,k)
-!         PAz = .ab_center_diff(3,k)
-!         do j = 1,.cd_n_gaussian_pairs
-!             cd_cc = .cd_contraction_prefactor(j)
-!             eta  = .cd_exponent_sum(j)
-!             einv = .cd_exponent_inv(j)
-!             Qx = .cd_pair_center(1,j)
-!             Qy = .cd_pair_center(2,j)
-!             Qz = .cd_pair_center(3,j)
-!             QCx = .cd_center_diff(1,j)
-!             QCy = .cd_center_diff(2,j)
-!             QCz = .cd_center_diff(3,j)
-!             rho  = zeta * eta / (zeta + eta)
-!             rho_zinv = rho * zinv
-!             rho_einv = rho * einv
-!             half_einv = HALF * einv
-!             QPx = Qx - Px;   QPy = Qy - Py;   QPz = Qz - Pz
-!             xx  = rho * (QPx*QPx + QPy*QPy + QPz*QPz)
-!             rys.get_weights(xx)
-!             rys.weight = rys.weight * ab_cc * cd_cc * sqrt(rho)
-!             ! Now make the 2 dimensional integrals.
-!             do n = 1,n_roots
-!               i = i + 1
-!               Ix => Ixa(i,:,:)
-!               Iy => Iya(i,:,:)
-!               Iz => Iza(i,:,:)
-!               t2      = rys.root(n)
-!               wt      = rys.weight(n)
-!               Ix(1,1) = ONE
-!               Iy(1,1) = ONE
-!               Iz(1,1) = wt
-!               t2_rz = t2 * rho_zinv
-!               Ix21 = PAx + t2_rz*QPx; Ix(2,1) = Ix21
-!               Iy21 = PAy + t2_rz*QPy; Iy(2,1) = Iy21
-!               Iz21 = PAz + t2_rz*QPz; Iz(2,1) = Iz21*wt
-!               t2_re = t2 * rho_einv
-!               Ix12 = QCx - t2_re*QPx; Ix(1,2) = Ix12
-!               Iy12 = QCy - t2_re*QPy; Iy(1,2) = Iy12
-!               Iz12 = QCz - t2_re*QPz; Iz(1,2) = Iz12*wt
-!               cf  = (ONE - t2_re) * half_einv
-!               Ix13 = Ix12*Ix12 + cf; Ix(1,3) = Ix13
-!               Iy13 = Iy12*Iy12 + cf; Iy(1,3) = Iy13
-!               Iz13 = Iz12*Iz12 + cf; Iz(1,3) = Iz13*wt
-!               bb = t2_rz * half_einv
-!               Ix22 = Ix12*Ix21 + bb; Ix(2,2) = Ix22
-!               Iy22 = Iy12*Iy21 + bb; Iy(2,2) = Iy22
-!               Iz22 = Iz12*Iz21 + bb; Iz(2,2) = Iz22*wt
-!               Ix23 = Ix12*Ix22 + cf*Ix21 + bb*Ix12; Ix(2,3) = Ix23
-!               Iy23 = Iy12*Iy22 + cf*Iy21 + bb*Iy12; Iy(2,3) = Iy23
-!               Iz23 = Iz12*Iz22 + cf*Iz21 + bb*Iz12; Iz(2,3) = Iz23*wt
-!             end
-!         end     ! -- loops over c,d
-!     end         ! -- loops over a,b
-!
-!     rys.destroy
-!
-!     .form_esfs(esfs,Ixa,Iya,Iza,Iza(:,1,1))
-!
-!     Iza.destroy
-!     Iya.destroy
-!     Ixa.destroy
-!   end
-
-   make_esfs_dd_dsds(esfs) ::: private
+   make_esfs_dd_dsds(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -3030,7 +2577,7 @@ contains
 
    end
 
-   make_esfs_dd_dspp(esfs) ::: private
+   make_esfs_dd_dspp(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -3285,7 +2832,7 @@ contains
 
    end
 
-   make_esfs_dd_ppds(esfs) ::: private
+   make_esfs_dd_ppds(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -3540,7 +3087,7 @@ contains
 
    end
 
-   make_esfs_dd_pppp(esfs) ::: private
+   make_esfs_dd_pppp(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -6760,7 +6307,7 @@ contains
 !     Ixa.destroy
 !   end
 
-   make_esfs_Xs(esfs) ::: private
+   make_esfs_Xs(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: VEC{REAL}(.n_ab), OUT
@@ -6859,7 +6406,7 @@ contains
       Ixa.destroy
    end
 
-   make_esfs_sX(esfs) ::: private
+   make_esfs_sX(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: VEC{REAL}(.n_cd), OUT
@@ -6958,7 +6505,7 @@ contains
       Ixa.destroy
    end
 
-   make_esfs_Xp(esfs) ::: private
+   make_esfs_Xp(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -7090,7 +6637,7 @@ contains
       Ixa.destroy
    end
 
-   make_esfs_pX(esfs) ::: private
+   make_esfs_pX(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -7221,7 +6768,7 @@ contains
       Ixa.destroy
    end
 
-   make_esfs_Xd(esfs) ::: private
+   make_esfs_Xd(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -7386,7 +6933,7 @@ contains
       Ixa.destroy
    end
 
-   make_esfs_dX(esfs) ::: private
+   make_esfs_dX(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -7551,7 +7098,7 @@ contains
       Ixa.destroy
    end
 
-   make_esfs_XX(esfs) ::: private
+   make_esfs_XX(esfs) ::: private, PURE
    ! Makes the initial (es|fs) integrals, summed over the primitives
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
@@ -7748,17 +7295,18 @@ contains
 !  Form (e0|f0) integrals as sum(Ix*Iy*Iz*wt)
 !  ==========================================
 
-   form_esfs(esfs,Ix,Iy,Iz,wt) ::: private
+   form_esfs(esfs,Ix,Iy,Iz,wt) ::: private, PURE
    ! Forms (es|fs) from the two dimensional integrals, summed over primitives.
    ! This version does not use the reduced multiplication scheme.
+      self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), OUT
       self :: IN
 
       Ix,Iy,Iz :: MAT3{REAL}, IN
       wt :: VEC{REAL}, IN
 
-      ex,ey,ez :: VEC{INT}*
-      fx,fy,fz :: VEC{INT}*
+      ex,ey,ez :: VEC{INT}@
+      fx,fy,fz :: VEC{INT}@
       fe,le,ff,lf,e,f,ze,ye,xe,zf,yf,xf :: INT
 
       if      (.ab_l_max==0 AND .cd_l_max==0) then
@@ -7766,8 +7314,8 @@ contains
       else
         fe = .ab_first_gaussian; le = .ab_last_gaussian
         ff = .cd_first_gaussian; lf = .cd_last_gaussian
-        ex => GAUSSIAN_DATA::nx(fe:le); ey => GAUSSIAN_DATA::ny(fe:le); ez => GAUSSIAN_DATA::nz(fe:le)
-        fx => GAUSSIAN_DATA::nx(ff:lf); fy => GAUSSIAN_DATA::ny(ff:lf); fz => GAUSSIAN_DATA::nz(ff:lf)
+        ex = GAUSSIAN_DATA::nx(fe:le); ey = GAUSSIAN_DATA::ny(fe:le); ez = GAUSSIAN_DATA::nz(fe:le)
+        fx = GAUSSIAN_DATA::nx(ff:lf); fy = GAUSSIAN_DATA::ny(ff:lf); fz = GAUSSIAN_DATA::nz(ff:lf)
         do f = 1,esfs.dim2
            xf = fx(f); yf = fy(f); zf = fz(f)
            do e = 1,esfs.dim1
@@ -7779,7 +7327,7 @@ contains
 
    end
 
-   form_esss(esfs,Ix,Iy,Iz,wt,n_sum) ::: private
+   form_esss(esfs,Ix,Iy,Iz,wt,n_sum) ::: private, PURE
    ! Forms (es|fs) from the two dimensional integrals, summed over primitives.
    ! This version does not use the reduced multiplication scheme.
       self :: IN
@@ -7789,7 +7337,7 @@ contains
       Ix,Iy,Iz :: MAT{REAL}(n_sum,*), IN
       wt :: VEC{REAL}, IN
 
-      ex,ey,ez :: VEC{INT}*
+      ex,ey,ez :: VEC{INT}@
       fe,le,e,ze,ye,xe :: INT
 
 !     Ixy :: VEC{REAL}*
@@ -7805,9 +7353,9 @@ contains
       else
 
         fe = .ab_first_gaussian; le = .ab_last_gaussian
-        ex => GAUSSIAN_DATA::nx(fe:le)
-        ey => GAUSSIAN_DATA::ny(fe:le)
-        ez => GAUSSIAN_DATA::nz(fe:le)
+        ex = GAUSSIAN_DATA::nx(fe:le)
+        ey = GAUSSIAN_DATA::ny(fe:le)
+        ez = GAUSSIAN_DATA::nz(fe:le)
         do e = 1,esfs.dim
            xe = ex(e); ye = ey(e); ze = ez(e)
            esfs(e) = sum(Ix(:,xe)*Iy(:,ye)*Iz(:,ze))
@@ -7888,7 +7436,7 @@ contains
 
    end
 
-   form_ssfs(esfs,Ix,Iy,Iz,wt,n_sum) ::: private
+   form_ssfs(esfs,Ix,Iy,Iz,wt,n_sum) ::: private, PURE
    ! Forms (es|fs) from the two dimensional integrals, summed over primitives.
    ! This version does not use the reduced multiplication scheme.
       self :: IN
@@ -7898,7 +7446,7 @@ contains
       Ix,Iy,Iz :: MAT{REAL}(n_sum,*), IN
       wt :: VEC{REAL}, IN
 
-      fx,fy,fz :: VEC{INT}*
+      fx,fy,fz :: VEC{INT}@
       ff,lf,f,zf,yf,xf :: INT
 
 !     Ixy :: VEC{REAL}*
@@ -7914,9 +7462,9 @@ contains
       else
 
         ff = .cd_first_gaussian; lf = .cd_last_gaussian
-        fx => GAUSSIAN_DATA::nx(ff:lf)
-        fy => GAUSSIAN_DATA::ny(ff:lf)
-        fz => GAUSSIAN_DATA::nz(ff:lf)
+        fx = GAUSSIAN_DATA::nx(ff:lf)
+        fy = GAUSSIAN_DATA::ny(ff:lf)
+        fz = GAUSSIAN_DATA::nz(ff:lf)
 
         do f = 1,esfs.dim
            xf = fx(f); yf = fy(f); zf = fz(f)
@@ -8433,7 +7981,7 @@ contains
 !  Transfer relations
 !  ==================
 
-   transfer_cd(esfs,escd)
+   transfer_cd(esfs,escd) ::: PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd)
       self :: IN
       esfs :: MAT{REAL}(.n_ab,.n_cd), IN
@@ -8455,7 +8003,7 @@ contains
 
    end
 
-   transfer_l_c_same(esfs,escd) ::: private
+   transfer_l_c_same(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where c and d have
    ! the same center and c has high momentum.
       self :: IN
@@ -8567,7 +8115,7 @@ contains
 
    end
 
-   transfer_l_d_same(esfs,escd) ::: private
+   transfer_l_d_same(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where c and d have
    ! the same center and d has high momentum.
       self :: IN
@@ -8679,7 +8227,7 @@ contains
 
    end
 
-   transfer_l_c_high(esfs,escd) ::: private
+   transfer_l_c_high(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where shell c has the higher
    ! angular momentum.
       self :: IN
@@ -8804,7 +8352,7 @@ contains
 
    end
 
-   transfer_l_d_high(esfs,escd) ::: private
+   transfer_l_d_high(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where shell d has the higher
    ! angular momentum.
       self :: IN
@@ -8930,7 +8478,7 @@ contains
    end
 
 
-   transfer_cd_s(esfs,escd)
+   transfer_cd_s(esfs,escd) ::: PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd)
    ! in the case when e=s.
       self :: IN
@@ -8953,7 +8501,7 @@ contains
 
    end
 
-   transfer_l_c_same_s(esfs,escd) ::: private
+   transfer_l_c_same_s(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where c and d have
    ! the same center and c has high momentum. This version is when .n_ab is 1.
       self :: IN
@@ -9054,7 +8602,7 @@ contains
 
    end
 
-   transfer_l_d_same_s(esfs,escd) ::: private
+   transfer_l_d_same_s(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where c and d have
    ! the same center and d has high momentum.
       self :: IN
@@ -9156,7 +8704,7 @@ contains
 
    end
 
-   transfer_l_c_high_s(esfs,escd) ::: private
+   transfer_l_c_high_s(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where shell c has the higher
    ! angular momentum.
       self :: IN
@@ -9271,7 +8819,7 @@ contains
 
    end
 
-   transfer_l_d_high_s(esfs,escd) ::: private
+   transfer_l_d_high_s(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where shell d has the higher
    ! angular momentum.
       self :: IN
@@ -9387,7 +8935,7 @@ contains
    end
 
 
-   transfer_cd_s_add(esfs,escd)
+   transfer_cd_s_add(esfs,escd) ::: PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd)
    ! in the case when e=s. This version accumulates.
       self :: IN
@@ -9410,7 +8958,7 @@ contains
 
    end
 
-   transfer_l_c_same_s_add(esfs,escd) ::: private
+   transfer_l_c_same_s_add(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where c and d have
    ! the same center and c has high momentum. This version accumulates.
       self :: IN
@@ -9511,7 +9059,7 @@ contains
 
    end
 
-   transfer_l_d_same_s_add(esfs,escd) ::: private
+   transfer_l_d_same_s_add(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where c and d have
    ! the same center and d has high momentum. This version accumulates.
       self :: IN
@@ -9613,7 +9161,7 @@ contains
 
    end
 
-   transfer_l_c_high_s_add(esfs,escd) ::: private
+   transfer_l_c_high_s_add(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where shell c has the higher
    ! angular momentum. This version acumulates.
       self :: IN
@@ -9728,7 +9276,7 @@ contains
 
    end
 
-   transfer_l_d_high_s_add(esfs,escd) ::: private
+   transfer_l_d_high_s_add(esfs,escd) ::: private, PURE
    ! Applies the transfer equation to (es|fs) to give (es|cd) where shell d has the higher
    ! angular momentum. This version accumulates.
       self :: IN
@@ -9844,7 +9392,7 @@ contains
    end
 
 
-   transfer_ab(escd,abcd)
+   transfer_ab(escd,abcd) ::: PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd)
       self :: IN
       escd :: MAT3{REAL}(.n_ab,.c.n_comp,.d.n_comp), IN
@@ -9866,7 +9414,7 @@ contains
 
    end
 
-   transfer_l_a_same(escd,abcd) ::: private
+   transfer_l_a_same(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where a and b have
    ! the same center and where shell a has the higher angular momentum. NOTE:
    ! this routine treats the cd indices an compressed together, with size "ncd".
@@ -9980,7 +9528,7 @@ contains
 
    end
 
-   transfer_l_b_same(escd,abcd) ::: private
+   transfer_l_b_same(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where a and b have
    ! the same center and where shell b has the higher angular momentum. NOTE:
    ! this routine treats the cd indices an compressed together, with size "ncd".
@@ -10094,7 +9642,7 @@ contains
 
    end
 
-   transfer_l_a_high(escd,abcd) ::: private
+   transfer_l_a_high(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where shell a has the higher
    ! angular momentum. NOTE: this routine treats the cd indices an compressed
    ! together, with size "ncd".
@@ -10221,7 +9769,7 @@ contains
 
    end
 
-   transfer_l_b_high(escd,abcd) ::: private
+   transfer_l_b_high(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where shell b has the higher
    ! angular momentum. NOTE: this routine treats the cd indices an compressed
    ! together, with size "ncd".
@@ -10349,7 +9897,7 @@ contains
    end
 
 
-   transfer_ab_s(escd,abcd)
+   transfer_ab_s(escd,abcd) ::: PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd)
    ! in the case when f=s.
       self :: IN
@@ -10372,7 +9920,7 @@ contains
 
    end
 
-   transfer_l_a_same_s(escd,abcd) ::: private
+   transfer_l_a_same_s(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where a and b have
    ! the same center and where shell a has the higher angular momentum. NOTE:
    ! this routine treats the cd indices an compressed together, with size "ncd".
@@ -10380,8 +9928,8 @@ contains
       self :: IN
       escd :: VEC{REAL}(.n_ab), IN
       abcd :: MAT{REAL}(.a.n_comp,.b.n_comp), OUT
-   ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
 
+   ENSURE(.a.l>=.b.l,"shell a must have higher momentum than b")
  ! ENSURE(.n_cd==1,"n_cd must be 1")
  ! ENSURE(ne==(GAUSSIAN_DATA:n_comp_up_to(.ab_l_sum)-GAUSSIAN_DATA:n_comp_up_to(.ab_l_max-1)),"wrong 1st dimension, escd")
  ! ENSURE(ncd==.c.n_comp*.d.n_comp,"wrong last dimension, escd and abcd")
@@ -10473,7 +10021,7 @@ contains
 
    end
 
-   transfer_l_b_same_s(escd,abcd) ::: private
+   transfer_l_b_same_s(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where a and b have
    ! the same center and where shell b has the higher angular momentum. NOTE:
    ! this routine treats the cd indices an compressed together, with size "ncd".
@@ -10574,7 +10122,7 @@ contains
 
    end
 
-   transfer_l_a_high_s(escd,abcd) ::: private
+   transfer_l_a_high_s(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where shell a has the higher
    ! angular momentum. NOTE: this routine treats the cd indices an compressed
    ! together, with size "ncd". NOTE: .set_hrr_indexing_arrays must be called beforehand.
@@ -10687,7 +10235,7 @@ contains
 
    end
 
-   transfer_l_b_high_s(escd,abcd) ::: private
+   transfer_l_b_high_s(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where shell b has the higher
    ! angular momentum. NOTE: this routine treats the cd indices an compressed
    ! together, with size "ncd". NOTE: .set_hrr_indexing_arrays must be called beforehand.
@@ -10801,7 +10349,7 @@ contains
    end
 
 
-   transfer_ab_s_add(escd,abcd)
+   transfer_ab_s_add(escd,abcd) ::: PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd)
    ! in the case when f=s. This version accumulates.
       self :: IN
@@ -10824,7 +10372,7 @@ contains
 
    end
 
-   transfer_l_a_same_s_add(escd,abcd) ::: private
+   transfer_l_a_same_s_add(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where a and b have
    ! the same center and where shell a has the higher angular momentum. NOTE:
    ! this routine treats the cd indices as compressed together, with size "ncd".
@@ -10925,7 +10473,7 @@ contains
 
    end
 
-   transfer_l_b_same_s_add(escd,abcd) ::: private
+   transfer_l_b_same_s_add(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where a and b have
    ! the same center and where shell b has the higher angular momentum. NOTE:
    ! this routine treats the cd indices an compressed together, with size "ncd".
@@ -11026,7 +10574,7 @@ contains
 
    end
 
-   transfer_l_a_high_s_add(escd,abcd) ::: private
+   transfer_l_a_high_s_add(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where shell a has the higher
    ! angular momentum. NOTE: this routine treats the cd indices an compressed
    ! together, with size "ncd". This version accumulates.
@@ -11139,7 +10687,7 @@ contains
 
    end
 
-   transfer_l_b_high_s_add(escd,abcd) ::: private
+   transfer_l_b_high_s_add(escd,abcd) ::: private, PURE
    ! Applies the transfer equation to (es|cd) to give (ab|cd) where shell b has the higher
    ! angular momentum. NOTE: this routine treats the cd indices an compressed
    ! together, with size "ncd". This version accumulates.
@@ -11362,12 +10910,12 @@ contains
 !  Make only the J contributions from the shell4 and density matrix
 !  ================================================================
 
-   make_r_J(J,Pab,Pcd,factor,fa,la,fb,lb,fc,lc,fd,ld)
+   make_r_J(J,Pab,Pcd,factor,fa,la,fb,lb,fc,lc,fd,ld) ::: PURE
    ! Makes the J matrix directly from the (es|fs) integrals.
    ! This is a J matrix engine.
       self :: IN
-      J :: MAT{REAL}
-      Pab,Pcd :: VEC{REAL}
+      J :: MAT{REAL}, INOUT
+      Pab,Pcd :: VEC{REAL}, IN
       factor :: REAL, IN
       fa,la,fb,lb,fc,lc,fd,ld :: INT, IN
 
@@ -11432,11 +10980,11 @@ contains
 
    end
 
-   make_r_J_engine(Jab,Jcd,Pab,Pcd,factor,same)
+   make_r_J_engine(Jab,Jcd,Pab,Pcd,factor,same) ::: PURE
    ! Makes the J matrix directly from the (es|fs) integrals.
    ! This is a J matrix engine.
       self :: IN
-      Jab,Jcd :: VEC{REAL}
+      Jab,Jcd :: VEC{REAL}, INOUT
       Pab,Pcd :: VEC{REAL}, IN
       factor :: REAL, IN
       same :: BIN, IN
@@ -11502,13 +11050,13 @@ contains
 
    end
 
-   make_r_JK_engine(Jab,Jcd,Pab,Pcd,K,P,skip_J,skip_K,same,factor,fa,la,fb,lb,fc,lc,fd,ld)
+   make_r_JK_engine(Jab,Jcd,Pab,Pcd,K,P,skip_J,skip_K,same,factor,fa,la,fb,lb,fc,lc,fd,ld) ::: PURE
    ! Makes the J matrix directly from the (es|fs) integrals (J matrix engine).
    ! Makes the K matrix normally. There are independent skips for each.
       self :: IN
-      Jab,Jcd :: VEC{REAL}
+      Jab,Jcd :: VEC{REAL}, INOUT
       Pab,Pcd :: VEC{REAL}, IN
-      K :: MAT{REAL}
+      K :: MAT{REAL}, INOUT
       P :: MAT{REAL}, IN
       skip_J,skip_K,same :: BIN, IN
       factor :: REAL, IN
@@ -11645,13 +11193,13 @@ contains
 
    end
 
-   make_r_JK_engine(JAab,JBab,JAcd,JBcd,PAab,PBab,PAcd,PBcd,Ka,Kb,Pa,Pb,sJ,sK,same,factor,fa,la,fb,lb,fc,lc,fd,ld)
+   make_r_JK_engine(JAab,JBab,JAcd,JBcd,PAab,PBab,PAcd,PBcd,Ka,Kb,Pa,Pb,sJ,sK,same,factor,fa,la,fb,lb,fc,lc,fd,ld) ::: PURE
    ! Makes the alpha and beta J matrix directly from the (es|fs) integrals (J matrix engine).
    ! Makes the alpha and beta K matrix normally. There are independent skips for each.
       self :: IN
-      JAab,JBab,JAcd,JBcd :: VEC{REAL}
+      JAab,JBab,JAcd,JBcd :: VEC{REAL}, INOUT
       PAab,PBab,PAcd,PBcd :: VEC{REAL}, IN
-      Ka,Kb :: MAT{REAL}
+      Ka,Kb :: MAT{REAL}, INOUT
       Pa,Pb :: MAT{REAL}, IN
       sJ,sK,same :: BIN, IN ! skip_J, skip_K, same
       factor :: REAL, IN

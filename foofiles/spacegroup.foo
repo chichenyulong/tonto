@@ -3873,7 +3873,7 @@ contains
 
       n :: INT
       jf :: VEC{STR}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
       ! Title
       stdout.flush
@@ -3898,7 +3898,6 @@ contains
       table.put
 
       ! Clean
-      table.clear_columns
       table.destroy
       jf.destroy
 
@@ -3909,7 +3908,7 @@ contains
       self :: IN
 
       n,g :: INT
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
 
       ! Title
@@ -3938,7 +3937,6 @@ contains
       table.put
 
       ! Clean
-      table.clear_columns
       table.destroy
 
    end
@@ -3947,7 +3945,7 @@ contains
    ! Put the inverse symops
       self :: IN
 
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
 
       ! Title
@@ -3965,7 +3963,6 @@ contains
       table.put
 
       ! Clean
-      table.clear_columns
       table.destroy
 
    end
@@ -3979,7 +3976,7 @@ contains
 
       n :: INT
       unique :: VEC{STR}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
       stdout.flush
@@ -4023,7 +4020,6 @@ contains
       table.put
 
       ! Clear
-      table.clear_columns
       table.destroy
       unique.destroy
 

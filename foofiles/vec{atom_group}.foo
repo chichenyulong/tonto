@@ -59,6 +59,26 @@ contains
    ! Copy "vec".
    end
 
+!  =========
+!  Shrinking
+!  =========
+
+   shrink(dim) ::: get_from(VEC{OBJECT}), leaky
+   ! Shrink self to dimension dim.  Contents are retained.
+   end
+
+   expand(dim) ::: get_from(VEC{OBJECT}), leaky
+   ! Expand the vector "self" to "dim". New slots are left undefined.
+   end
+
+   append(v) ::: get_from(VEC{OBJECT}), leaky
+   ! Expands self and appends the contents of vector "v".
+   end
+
+   append(value) ::: get_from(VEC{OBJECT}), leaky
+   ! Expands self by 1, and appends the single scalar "value" onto the end.
+   end
+
 !  ===========
 !  Set methods
 !  ===========
@@ -184,27 +204,11 @@ contains
 
    end
 
-   shrink(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Shrink self to dimension dim.  Contents are retained.
-   end
-
-   expand(dim) ::: get_from(VEC{OBJECT}), leaky
-   ! Expand the vector "self" to "dim". New slots are left undefined.
-   end
-
-   append(v) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self and appends the contents of vector "v".
-   end
-
-   append(value) ::: get_from(VEC{OBJECT}), leaky
-   ! Expands self by 1, and appends the single scalar "value" onto the end.
-   end
-
 !  =======
 !  Enquiry
 !  =======
 
-   has_all_mols_ptr result (res)
+   has_all_mols_ptr result (res) ::: PURE
    ! True if all the mols files are defined
       self :: PTR
       res :: BIN
@@ -234,7 +238,7 @@ contains
 
    end
 
-   has_wavefunction_files_ptr result (res)
+   has_wavefunction_files_ptr result (res) ::: PURE
    ! True if all the fchk files are defined
       self :: PTR
       res :: BIN
@@ -254,7 +258,7 @@ contains
 
    end
 
-   has_MO_files_ptr result (res)
+   has_MO_files_ptr result (res) ::: PURE
    ! True if all the MO files are defined
       self :: PTR
       res :: BIN
@@ -274,7 +278,7 @@ contains
 
    end
 
-   has_atom_indices_ptr result (res)
+   has_atom_indices_ptr result (res) ::: PURE
    ! True if all the fchk files are defined
       self :: PTR
       res :: BIN
@@ -295,24 +299,24 @@ contains
       res = FALSE
 
       do g = 1,.dim
-         res = self(g).atom_index.associated
+         res = self(g).atom_index.allocated
          if (NOT res) exit
       end
 
    end
 
-   atom_lists result (res) ::: leaky
+   atom_lists result (res) ::: leaky, PURE
    ! Produce a list of integer lists for each atom group.
    ! Useful for ROBY module.
       self :: IN
-      res :: VEC{VEC_{INT}}*
+      res :: VEC{VEC_{INT}}@
 
       g :: INT
 
       res.create(.dim)
 
       do g = 1,.dim
-         res(g).element.create_copy(self(g).atom_index)
+         res(g).element = self(g).atom_index
       end
 
    end
@@ -346,9 +350,8 @@ contains
       nm :: VEC{STR}*
       qq :: VEC{REAL}*
       na :: VEC{INT}*
-      at :: VEC{VEC_{INT}}*
-      g  :: INT
-      table :: VEC{TABLE_COLUMN}*
+      at :: VEC{VEC_{INT}}@
+      table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
       stdout.flush
@@ -367,10 +370,7 @@ contains
       nm.create(.dim); nm = .name
       qq.create(.dim); qq = .charge
       na.create(.dim); na = .n_atoms
-      at.create(.dim)
-      do g = 1,.dim
-         at(g).element => self(g).atom_index
-      end
+      at = self.atom_lists
 
       ! Table
       table.create(4)
@@ -385,9 +385,8 @@ contains
       table.put(label_rows=TRUE)
 
       ! Clean
-      table.clear_columns
       table.destroy
-      at.nullify_ptr_part; at.destroy
+      at.destroy
       na.destroy
       qq.destroy
       nm.destroy

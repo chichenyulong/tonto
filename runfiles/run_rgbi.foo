@@ -29,8 +29,8 @@ program run_RGBI
    analysis,fchk :: STR
    option,value :: STR
    ci_labels,use_NAOs :: BIN
-   grpstr :: VEC{STR}*
-   groups :: VEC{VEC_{INT}}*
+   grpstr :: VEC{STR}@
+   groups :: VEC{VEC_{INT}}@
    i :: INT
    m :: MOLECULE*
 
@@ -46,7 +46,6 @@ program run_RGBI
    analysis  = "atom_bond_analysis"
    ci_labels = FALSE
    use_NAOs  = FALSE
-   nullify(groups)
 
    ! Get command line !!!!!!!!!
    command_line.create
@@ -335,9 +334,9 @@ program run_RGBI
    m.roby.set_roby_kind("atom_bond_analysis")
    m.roby.set_use_NAOs(use_NAOs)
    m.roby.set_output_ci_latex_labels(ci_labels)
-   if (groups.created) then
+   if (groups.allocated) then
       m.roby.set_roby_kind("group_bond_analysis")
-      m.roby.atom_group => groups
+      m.roby.atom_group = groups
    end
    m.PROP:roby_analysis
 

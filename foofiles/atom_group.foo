@@ -48,7 +48,6 @@ contains
    ! Nullify the pointer parts
       self :: INOUT
 
-      nullify(.atom_index)
       nullify(.atom)
       nullify(.mol)
 
@@ -74,10 +73,13 @@ contains
 
    copy(atom_group) ::: leaky
    ! Set self to be "group".
+      self :: INOUT
       atom_group :: ATOM_GROUP, IN
+
       self = atom_group
+
       .nullify_ptr_part
-      if (atom_group.atom_index.associated) .atom_index.create_copy(atom_group.atom_index)
+
    end
 
 !  ===========
@@ -107,8 +109,6 @@ contains
 
       i :: INT
 
-      .atom_index.destroy
-      .atom_index.create(.atom.dim)
       .atom_index = [ (i, i=1,.atom.dim) ]
 
    end
@@ -347,7 +347,7 @@ contains
       .set_atom(atom)
 
       ! Ensure .atom_index is defined and OK
-      DIE_IF(.atom_index.disassociated,"no atom_index in the group")
+      DIE_IF(.atom_index.deallocated,"no atom_index in the group")
       DIE_IF(.atom_index.dim>.atom.dim,"more atom_index than # of atoms!")
       DIE_IF(.atom_index.has_repetitions,"there are repeated atom_index!")
       DIE_IF(any(.atom_index<=0),"non-positive atom atom_index!")

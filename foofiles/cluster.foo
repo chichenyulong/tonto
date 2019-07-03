@@ -70,11 +70,9 @@ contains
       nullify(.is_fragment_atom)
       nullify(.occupation_list)
       nullify(.molecule_for_atom)
-      nullify(.molecule)
       nullify(.molecule_centroid)
       nullify(.unique_molecule_for)
       nullify(.unique_symcode_for)
-      nullify(.atom_connection)
 
    end
 
@@ -143,11 +141,9 @@ contains
       if (cluster.is_fragment_atom.associated)        .is_fragment_atom.create_copy(cluster.is_fragment_atom)
       if (cluster.occupation_list.associated)         .occupation_list.create_copy(cluster.occupation_list)
       if (cluster.molecule_for_atom.associated)       .molecule_for_atom.create_copy(cluster.molecule_for_atom)
-      if (cluster.molecule.associated)                .molecule.create_copy(cluster.molecule)
       if (cluster.molecule_centroid.associated)       .molecule_centroid.create_copy(cluster.molecule_centroid)
       if (cluster.unique_molecule_for.associated)     .unique_molecule_for.create_copy(cluster.unique_molecule_for)
       if (cluster.unique_symcode_for.associated)      .unique_symcode_for.create_copy(cluster.unique_symcode_for)
-      if (cluster.atom_connection.associated)         .atom_connection.create_copy(cluster.atom_connection)
 
    end
 
@@ -462,9 +458,10 @@ contains
    make_info ::: leaky
    ! Make all the cluster information from an arbitrary .fragment_geometry.
    ! NOTE: .set_defaults must be called before this.
+      self :: INOUT
 
    ENSURE(.crystal.associated,"no crystal")
-   ENSURE(.crystal.unit_cell_connection.associated,"no unit cell connection table")
+   ENSURE(.crystal.unit_cell_connection.allocated,"no unit cell connection table")
    ENSURE(.fragment_geometry.associated,"no fragment_geometry")
 
       if (.info_made) return
@@ -475,24 +472,24 @@ contains
       ! Generate the cluster
       select case (.generation_method)
 
-         case ("within_radius")
-            .make_within_radius
+      case ("within_radius")
+         .make_within_radius
 
-         case ("for_hirshfeld_surface")
-            .make_HS_radius
-            .make_within_radius
-            .defragment = FALSE
+      case ("for_hirshfeld_surface")
+         .make_HS_radius
+         .make_within_radius
+         .defragment = FALSE
 
-         case ("for_unit_cell_density")
-          ! .do_defragment
-            .make_HS_radius
-            .make_within_radius
-            .defragment = FALSE
+      case ("for_unit_cell_density")
+       ! .do_defragment
+         .make_HS_radius
+         .make_within_radius
+         .defragment = FALSE
 
-         case ("offset_unit_cell_density")
-            .make_HS_radius
-            .make_within_radius
-            .defragment = FALSE
+      case ("offset_unit_cell_density")
+         .make_HS_radius
+         .make_within_radius
+         .defragment = FALSE
 
       end
 
@@ -911,19 +908,16 @@ contains
    do_connectify ::: leaky
    ! Find the connected molecules in the "occupation_list" from the
    ! .crystal.unit_cell_connection table.
+      self :: INOUT
 
    ENSURE(.crystal.associated,"no crystal")
-   ENSURE(.crystal.unit_cell_connection.associated,"no unit cell connection table")
+   ENSURE(.crystal.unit_cell_connection.allocated,"no unit cell connection table")
 
       i,c,code,h1,h2,h3,u,k1,k2,k3,t,old,mi,mo :: INT
-      con,molecule_for_atom :: VEC{INT}*
-      unit_cell_connection :: VEC{VEC_{VEC_{INT}}}*
+      molecule_for_atom :: VEC{INT}*
 
       ! No. of atoms
       .n_atoms = .occupation_list.dim
-
-      ! Connection table
-      unit_cell_connection => .crystal.unit_cell_connection
 
       ! Clear info arrays
       .atom_connection.destroy
@@ -952,7 +946,7 @@ contains
          u    = CLUSTER_UA_FROM_CODE(code) ! Unit cell atom
 
          ! No connections? next ...
-         if (unit_cell_connection(u).element.dim==0) cycle
+         if (.crystal.unit_cell_connection(u).element.dim==0) cycle
 
          ! Get unit cell atom offset for atom "i"
          h1 = CLUSTER_H1_FROM_CODE(code)
@@ -960,16 +954,13 @@ contains
          h3 = CLUSTER_H3_FROM_CODE(code)
 
          ! Find atoms which connect to u
-         do c = 1,unit_cell_connection(u).element.dim
-
-            ! List of connections
-            con => unit_cell_connection(u)[c].element
+         do c = 1,.crystal.unit_cell_connection(u).element.dim
 
             ! Get code for connected atom
-            k1 = h1 + con(1)
-            k2 = h2 + con(2)
-            k3 = h3 + con(3)
-            t  =      con(4)
+            k1 = h1 + .crystal.unit_cell_connection(u)[c][1]
+            k2 = h2 + .crystal.unit_cell_connection(u)[c][2]
+            k3 = h3 + .crystal.unit_cell_connection(u)[c][3]
+            t  =      .crystal.unit_cell_connection(u)[c][4]
             code = CLUSTER_AT_CODE(k1,k2,k3,t)
 
             ! Is it new in the occupation list?
@@ -1005,22 +996,19 @@ contains
    end
 
    do_defragment ::: leaky
-   ! Defragment the generated cluster and find the connected molecules using the
-   ! .unit_cell_connection table.
+   ! Defragment the generated cluster and find the connected molecules
+   ! using the .unit_cell_connection table.
+      self :: INOUT
 
    ENSURE(.occupation_list.associated,"no occupation_list")
    ENSURE(.crystal.associated,"no crystal")
-   ENSURE(.crystal.unit_cell_connection.associated,"no unit cell connection table")
+   ENSURE(.crystal.unit_cell_connection.allocated,"no unit cell connection table")
 
       i,c,code,h1,h2,h3,u,k1,k2,k3,t,old,mi,mo :: INT
-      con,molecule_for_atom :: VEC{INT}*
-      unit_cell_connection :: VEC{VEC_{VEC_{INT}}}*
+      molecule_for_atom :: VEC{INT}*
 
       ! Initial no. of atoms
       .n_atoms = .occupation_list.dim
-
-      ! Connection table
-      unit_cell_connection => .crystal.unit_cell_connection
 
       ! Clear info arrays
       .atom_connection.destroy
@@ -1049,7 +1037,7 @@ contains
          u    = CLUSTER_UA_FROM_CODE(code) ! Unit cell atom
 
          ! No connections to this atom? next ...
-         if (unit_cell_connection(u).element.dim==0) cycle
+         if (.crystal.unit_cell_connection(u).element.dim==0) cycle
 
          ! Get unit cell atom offset for atom "i"
          h1 = CLUSTER_H1_FROM_CODE(code)
@@ -1057,16 +1045,13 @@ contains
          h3 = CLUSTER_H3_FROM_CODE(code)
 
          ! Loop on atoms "c" connected to "u"
-         do c = 1,unit_cell_connection(u).element.dim
-
-            ! List of connections
-            con => unit_cell_connection(u)[c].element
+         do c = 1,.crystal.unit_cell_connection(u).element.dim
 
             ! Get code for connected atom
-            k1 = h1 + con(1)
-            k2 = h2 + con(2)
-            k3 = h3 + con(3)
-            t  =      con(4)
+            k1 = h1 + .crystal.unit_cell_connection(u)[c][1]
+            k2 = h2 + .crystal.unit_cell_connection(u)[c][2]
+            k3 = h3 + .crystal.unit_cell_connection(u)[c][3]
+            t  =      .crystal.unit_cell_connection(u)[c][4]
             code = CLUSTER_AT_CODE(k1,k2,k3,t)
 
             ! Is it new in the occupation list?
@@ -1115,17 +1100,15 @@ contains
 
    ENSURE(occupation_list.associated,"no occupation_list")
    ENSURE(.crystal.associated,"no crystal")
-   ENSURE(.crystal.unit_cell_connection.associated,"no unit cell connection table")
+   ENSURE(.crystal.unit_cell_connection.allocated,"no unit cell connection table")
 
-      n_atoms,i,c,code,h1,h2,h3,u,k1,k2,k3,t,old :: INT
-      con :: VEC{INT}*
-      unit_cell_connection :: VEC{VEC_{VEC_{INT}}}*
+      n_atoms,i,c,code :: INT
+      h1,h2,h3 :: INT
+      k1,k2,k3 :: INT
+      u,t,old  :: INT
 
       ! Initial no. of atoms
       n_atoms = occupation_list.dim
-
-      ! Connection table
-      unit_cell_connection => .crystal.unit_cell_connection
 
       ! Loop on all atoms "i"
       i = 0
@@ -1142,7 +1125,7 @@ contains
          u    = CLUSTER_UA_FROM_CODE(code) ! Unit cell atom
 
          ! No connections to this atom? next ...
-         if (unit_cell_connection(u).element.dim==0) cycle
+         if (.crystal.unit_cell_connection(u).element.dim==0) cycle
 
          ! Get unit cell atom offset "h"
          h1 = CLUSTER_H1_FROM_CODE(code)
@@ -1150,16 +1133,13 @@ contains
          h3 = CLUSTER_H3_FROM_CODE(code)
 
          ! Loop on atoms "c" connected to "u"
-         do c = 1,unit_cell_connection(u).element.dim
-
-            ! List of connections
-            con => unit_cell_connection(u)[c].element
+         do c = 1,.crystal.unit_cell_connection(u).element.dim
 
             ! Get code for connected atom
-            k1 = h1 + con(1)
-            k2 = h2 + con(2)
-            k3 = h3 + con(3)
-            t  =      con(4)
+            k1 = h1 + .crystal.unit_cell_connection(u)[c][1]
+            k2 = h2 + .crystal.unit_cell_connection(u)[c][2]
+            k3 = h3 + .crystal.unit_cell_connection(u)[c][3]
+            t  =      .crystal.unit_cell_connection(u)[c][4]
             code = CLUSTER_AT_CODE(k1,k2,k3,t)
 
             ! Is it new in the occupation list?
@@ -1445,22 +1425,12 @@ contains
 
    ENSURE(.molecule_for_atom.associated,"no molecule_for_atom")
 
-      li,lj :: VEC{INT}*
-      ci,cj,ui,uj,ai,aj, permutation, new :: VEC{INT}*
+      permutation,new :: VEC{INT}@
+      ci,cj,ui,uj,ai,aj :: VEC{INT}*
       mi,mj, ni, s,si,sj, ic,i0,i1,i2,i3, jc,j0,j1,j2,j3 :: INT
       pi,pj,ps :: VEC{REAL}(3)
       shift :: VEC{INT}(3)
       related :: BIN
-
-   ! stdout.text("=============================")
-   ! stdout.text("Occupation list before unique")
-   ! stdout.text("=============================")
-   ! .put_occupation_list
-
-   !  stdout.save
-   !  stdout.set_no_of_fields_per_line(10)
-   !  stdout.set_int_width(4)
-   !  stdout.set_using_array_labels(FALSE)
 
       ! Clean & get ready
       .unique_molecule_for.destroy
@@ -1480,14 +1450,13 @@ contains
          ! Processed?
          if (.unique_molecule_for(mi)>0) cycle
 
-         li => .molecule(mi).element
-         ni  = li.dim
+         ni  = .molecule(mi).element.dim
 
          ai.create(ni)
          ui.create(ni)
          ci.create(ni)
 
-         ci  = .occupation_list(li)
+         ci  = .occupation_list(.molecule(mi).element)
          ui  = CLUSTER_UA_FROM_CODE(ci)
          ai  = .crystal.asym_atom_for_unit_cell_atom(ui)
          si  = .crystal.asym_symop_for_unit_cell_atom(ui(1))
@@ -1507,19 +1476,17 @@ contains
          ! Find matching molecules
          do mj = mi+1,.n_molecules
 
-            lj => .molecule(mj).element
-
             ! Found?
             if (.unique_molecule_for(mj)>0) cycle
 
             ! Same # on atoms?
-            if (lj.dim/=ni) cycle
+            if (.molecule(mj).element.dim/=ni) cycle
 
             aj.create(ni)
             uj.create(ni)
             cj.create(ni)
 
-            cj  = .occupation_list(lj)
+            cj  = .occupation_list(.molecule(mj).element)
             uj  = CLUSTER_UA_FROM_CODE(cj)
             aj  = .crystal.asym_atom_for_unit_cell_atom(uj)
             sj  = .crystal.asym_symop_for_unit_cell_atom(uj(1))
@@ -1531,38 +1498,13 @@ contains
             permutation.create(ni)
             ai.is_permutation_of(aj,related,permutation)
 
-       ! stdout.text("here")
-       ! stdout.show("mi      =",mi)
-       ! stdout.show("mj      =",mj)
-       ! stdout.show("related =",related)
-
             if (related) then
 
-       ! stdout.text("ai")
-       ! stdout.put(ai,by_row=TRUE)
-       ! stdout.text("aj(permutation)")
-       ! stdout.put(aj(permutation),by_row=TRUE)
-       ! stdout.text("aj")
-       ! stdout.put(aj,by_row=TRUE)
-       ! stdout.text("permutation")
-       ! stdout.put(permutation,by_row=TRUE)
-       ! stdout.text("li")
-       ! stdout.put(li,by_row=TRUE)
-       ! stdout.text("lj")
-       ! stdout.put(lj,by_row=TRUE)
-       ! stdout.text("lj(permutation)")
-       ! stdout.put(lj(permutation),by_row=TRUE)
-       ! stdout.text("ui")
-       ! stdout.put(ui,by_row=TRUE)
-       ! stdout.text("uj")
-       ! stdout.put(uj,by_row=TRUE)
-
                ! New order
-               new.create_copy(lj(permutation))
+               new = .molecule(mj).element(permutation)
 
                ! First atom in mj (matched to mi)
                jc = .occupation_list(new(1))
-       ! stdout.show("new(1) =",new(1))
 
                ! Position of first atom in mj
                j0 = CLUSTER_UA_FROM_CODE(jc)
@@ -1571,21 +1513,6 @@ contains
                j3 = CLUSTER_H3_FROM_CODE(jc)
                pj = .crystal.unit_cell_geometry(:,j0) + [j1,j2,j3] + .fragment_offset
 
-       ! stdout.text("fragment_offset")
-       ! stdout.put(.fragment_offset,by_row=TRUE)
-       ! stdout.text("pi0")
-       ! stdout.put(.crystal.unit_cell_geometry(:,i0),by_row=TRUE)
-       ! stdout.text("pj0")
-       ! stdout.put(.crystal.unit_cell_geometry(:,j0),by_row=TRUE)
-       ! stdout.show_bit_string("ci =",ic)
-       ! stdout.show_bit_string("cj =",jc)
-       ! stdout.text("ix")
-       ! stdout.put([i0,i1,i2,i3],by_row=TRUE)
-       ! stdout.text("jx")
-       ! stdout.put([j0,j1,j2,j3],by_row=TRUE)
-       ! stdout.text("pi")
-       ! stdout.put(pi,by_row=TRUE)
-             
                ! Symop which maps mi->mj
                s = .crystal.spacegroup.product_of_symops(sj,si)
 
@@ -1593,17 +1520,8 @@ contains
                ps = pi
                .crystal.spacegroup.transform_position(ps,s)
 
-       ! stdout.show("si =",si)
-       ! stdout.show("sj =",sj)
-       ! stdout.show("s  =",s)
-       ! stdout.text("ps= s(pi)")
-       ! stdout.put(ps,by_row=TRUE)
-       ! stdout.text("pj")
-       ! stdout.put(pj,by_row=TRUE)
                ps    = pj - ps
                shift = nint(ps)
-       ! stdout.show("pj-ps' =",ps)
-       ! stdout.show("shift  =",shift)
 
                ! Unique molecule
                .unique_molecule_for(mj) = mi
@@ -1612,8 +1530,8 @@ contains
                .unique_symcode_for(mj) = CLUSTER_AT_CODE(shift(1),shift(2),shift(3),s)
              
                ! Reorder atoms in mj to be consistent with mi
-               .occupation_list(lj) = .occupation_list(new)
-               lj = new 
+               .occupation_list(.molecule(mj).element) = .occupation_list(new)
+               .molecule(mj).element = new 
 
                new.destroy
 
@@ -1634,13 +1552,6 @@ contains
 
       end
 
-   !  stdout.unsave
-
-   ! stdout.text("=============================")
-   ! stdout.text("Occupation list AFTER  unique")
-   ! stdout.text("=============================")
-   ! .put_occupation_list
-
    end
 
 !  ==================================================
@@ -1651,13 +1562,14 @@ contains
    ! Extract the .geometry (fractional) from the final .occupation list.
    ! . Place connected molecules in order
    ! . Set the .is_fragment_atom flag array
+      self :: INOUT
 
    ENSURE(.occupation_list.associated,"no occupation_list")
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.crystal.unit_cell_geometry.associated,"no crystal unit cell geometry")
 
       a,m,i,code,h1,h2,h3,u :: INT
-      atom_connection :: VEC{VEC_{INT}}*
+      atom_connection :: VEC{VEC_{INT}}@
       new_order :: VEC{INT}*
       connected :: BIN
 
@@ -1730,12 +1642,11 @@ contains
       ! Reorder connection table
       atom_connection.create(.n_atoms)
       do i = 1,.n_atoms
-         connected = .atom_connection(i).element.associated
+         connected = .atom_connection(i).element.allocated
          if (NOT connected) cycle
-         atom_connection(new_order(i)).element.create_copy(new_order(.atom_connection(i)[:]))
+         atom_connection(new_order(i)).element = new_order(.atom_connection(i)[:])
       end
-      .atom_connection.destroy
-      .atom_connection => atom_connection
+      .atom_connection = atom_connection
 
       ! Clean
       new_order.destroy
@@ -5100,7 +5011,7 @@ contains
 
       if (.fragment_geometry.associated)    .put_fragment_geometry
       if (.occupation_list.associated)      .put_occupation_list
-      if (.atom_connection.associated)      .put_atom_connection_table
+      if (.atom_connection.allocated)       .put_atom_connection_table
       if (.occupation_list.associated)      .put_atom_symmetry_table
 
    end
@@ -5113,7 +5024,7 @@ contains
 
       ID :: VEC{STR}*
       ind :: VEC{INT}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
       stdout.text("=======================================")
@@ -5139,7 +5050,6 @@ contains
       table.put
 
       ! Clean
-      table.clear_columns
       table.destroy
       ID.destroy
       ind.destroy
@@ -5157,7 +5067,7 @@ contains
       fi :: VEC{INT}*
       h1,h2,h3,hc,ui :: VEC{INT}*
       r1,r2,r3 :: VEC{REAL}*
-      table :: VEC{TABLE_COLUMN}*
+      table :: VEC{TABLE_COLUMN}@
       a,n :: INT
 
       stdout.flush
@@ -5218,7 +5128,6 @@ contains
       table.put
 
       ! Clean
-      table.clear_columns
       table.destroy
       hc.destroy
       r3.destroy; r2.destroy; r1.destroy
@@ -5229,8 +5138,9 @@ contains
 
    put_atom_connection_table
    ! Put the .atom_connection table
+      self :: IN
 
-   ENSURE(.atom_connection.associated,"no atom_connection")
+   ENSURE(.atom_connection.allocated,"no atom_connection")
    ENSURE(.molecule_for_atom.associated,"no molecule_for_atom")
 
       m,a,i :: INT
@@ -5273,7 +5183,7 @@ contains
             stdout.put(a)
             first = FALSE
 
-            if (.atom_connection(a).element.disassociated) then
+            if (.atom_connection(a).element.deallocated) then
 
                stdout.flush
 

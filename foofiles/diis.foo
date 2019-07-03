@@ -45,8 +45,6 @@ module DIIS
 
    implicit none
 
-   debug_list :: VEC{STR}*  DEFAULT_NULL
-
 contains
 
 ! =================
@@ -68,8 +66,6 @@ contains
       nullify(.oldest)
       nullify(.iter_4)
       nullify(.itor_4)
-      nullify(.param)
-      nullify(.error)
       nullify(.lhs)
       nullify(.rhs)
       nullify(.coeff)
@@ -111,8 +107,6 @@ contains
       if (object.oldest.associated)   .oldest.create_copy(object.oldest)
       if (object.iter_4.associated)   .iter_4.create_copy(object.iter_4)
       if (object.itor_4.associated)   .itor_4.create_copy(object.itor_4)
-      if (object.param.associated)    .param.create_copy(object.param)
-      if (object.error.associated)    .error.create_copy(object.error)
       if (object.lhs.associated)      .lhs.create_copy(object.lhs)
       if (object.rhs.associated)      .rhs.create_copy(object.rhs)
       if (object.coeff.associated)    .coeff.create_copy(object.coeff)
@@ -262,7 +256,8 @@ contains
    ! Process a command "keyword". Data is inputted from "stdin", unless
    ! "word" is a sequence of blank separated strings. In this case,
    ! the sequence is processed as if it were a separate file.
-      keyword :: STR
+      self :: INOUT
+      keyword :: STR, IN
 
       word :: STR
 
@@ -270,17 +265,14 @@ contains
       word.to_lower_case
 
       select case (word)
-         case ("}                       ")  ! exit case
-         case ("convergence_tolerance=  "); .read_convergence_tolerance
-         case ("debug_on                "); .read_debug_on
-         case ("debug_off               "); .read_debug_off
-         case ("keep=                   "); .read_keep
-         case ("put_debug_list          "); .put_debug_list
-         case ("replacement_method=     "); .read_replacement_method
-         case ("save_iteration=         "); .read_save_iteration
-         case ("start_iteration=        "); .read_start_iteration
-         case ("start_tolerance=        "); .read_start_tolerance
-         case default;           UNKNOWN(word)
+      case ("}                       ")  ! exit case
+      case ("convergence_tolerance=  "); .read_convergence_tolerance
+      case ("keep=                   "); .read_keep
+      case ("replacement_method=     "); .read_replacement_method
+      case ("save_iteration=         "); .read_save_iteration
+      case ("start_iteration=        "); .read_start_iteration
+      case ("start_tolerance=        "); .read_start_tolerance
+      case default;           UNKNOWN(word)
       end
 
    end
@@ -593,7 +585,6 @@ contains
       dim :: INT, IN
       par :: VEC{REAL}(dim), INOUT
 
-      err :: VEC{REAL}*
       ind :: INT
 
       ! Increment iteration
@@ -625,11 +616,10 @@ contains
 
       ! Define error for *previous* param vector
       ind =  .oldest(.kept-1)
-      err => .error(ind).element
-      err = par - .param(ind)[:] 
+      .error(ind)[:] = par - .param(ind)[:] 
 
       ! Set the error length
-      .error_length = err.norm
+      .error_length = .error(ind).element.norm
 
       ! Make sure .dimension is one smaller
       .use_errors = FALSE ! <<<
@@ -675,15 +665,11 @@ contains
       .error(.new)[:] = err
       .kept = min(.kept+1,.keep)
 
-      .put_debug(par,"extrapolate: par, before")
-
       ! Set the error length
       .error_length = err.norm
 
       ! Now set up and solve the DIIS equations
       .do_extrapolate(par,dim)
-
-      .put_debug(par,"extrapolate: par, after")
 
    end
 
@@ -694,7 +680,6 @@ contains
       par :: VEC{REAL}(dim), INOUT
 
       d,i,j :: INT
-      ei,ej :: VEC{REAL}*
       fac :: REAL
 
       ! Size of the equations
@@ -721,9 +706,7 @@ contains
          if (i==.new) fac = fac + 0.02d0 
 
          ! Define lower half of LHS
-         ei => .error(i).element
-         ej => .error(j).element
-         .lhs(i,j) = fac*dot_product(ei,ej)
+         .lhs(i,j) = fac*dot_product(.error(i)[:],.error(j)[:])
 
       end
       end
@@ -793,79 +776,6 @@ contains
       stdout.put(.coeff,by_column=TRUE,auto_width=TRUE)
       end
 
-   end
-
-!  ==============
-!  Debug printing
-!  ==============
-
-   set_debug_on(name) ::: get_from(DEBUG), leaky
-   ! Add a debug descriptor to the list.
-   end
-
-   set_debug_off(name) ::: get_from(DEBUG), leaky
-   ! Remove a debug descriptor from the list.
-   end
-
-   read_debug_on ::: get_from(DEBUG), leaky
-   ! Read a debug descriptor and add it to the list.
-   end
-
-   read_debug_off ::: get_from(DEBUG), leaky
-   ! Read a debug descriptor and remove it from the list.
-   end
-
-   debugging(name) result (res) ::: get_from(DEBUG)
-   ! Return TRUE if the debug switch "name" has been set.
-   end
-
-   put_debug_list ::: get_from(DEBUG)
-   ! Put of the list of debug switches
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG, X?=>STR)
-   ! Put *number* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG, X?=>BIN)
-   ! Put *number* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG, X?=>INT)
-   ! Put *number* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG, X?=>REAL)
-   ! Put *number* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG, X?=>VEC{INT})
-   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG, X?=>VEC{REAL})
-   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG, X?=>MAT{REAL})
-   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG, X?=>MAT{CPX})
-   ! Put *array* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
-   end
-
-   put_debug(X,name) ::: get_from(DEBUG)
-   ! Put *opmatrix* "X" to output, with descriptor "name", if the debug switch for
-   ! it has been set.
    end
 
 end

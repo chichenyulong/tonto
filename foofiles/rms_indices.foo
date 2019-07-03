@@ -59,11 +59,6 @@ contains
       nullify(.x0)
       nullify(.n0)
       nullify(.a0)
-   !  nullify(.xy_rms)
-      nullify(.xy_rms_n)
-   !  nullify(.xy_unique_n)
-      nullify(.xy_rms_a)
-   !  nullify(.xy_unique_a)
 
       nullify(.yz0px)
       nullify(.xz0py)
@@ -78,10 +73,6 @@ contains
       nullify(.n1px)
       nullify(.n1py)
       nullify(.n1pz)
-      nullify(.n2)
-      nullify(.n2px)
-      nullify(.n2py)
-      nullify(.n2pz)
 
    end
  

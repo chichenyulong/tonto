@@ -32,39 +32,37 @@ contains
 !  ==========
 
    create(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create space for object
+   ! Allocate vector with dimension "dim"
    end
 
    create(dim,dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create space for a vector of vectors
+   ! Allocate a vector of vectors with primary dimension "dim" and
+   ! secondary dimension "dimv"
    end
 
-   create(dim,bounds) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create space for a vector of vectors
+   create(dim,bounds2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard secondary "bounds2"
+   end
+
+   create(bounds1) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate a vector of vectors with non-standard primary "bounds1"
    end
 
    create(bounds1,bounds2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create space for a vector of vectors
-   end
-
-   create_vec(dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Allocate the pointer parts
-   end
-
-   create_vec(bounds) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Allocate the pointer parts
+   ! Allocate a vector of vectors with non-standard primary "bounds1"
+   ! and secondary "bounds2"
    end
 
    destroy ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Destroy space for object
+   ! Deallocate the vector
    end
 
-   nullify_ptr_part ::: get_from(VEC{VEC_{INTRINSIC}}), pure
-   ! Nullify the pointer parts
+   create_vec(dimv) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate the array part
    end
 
-   destroy_ptr_part ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Destroy the pointer parts
+   create_vec(bounds) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   ! Allocate the array part
    end
 
 !  ==================
@@ -83,43 +81,36 @@ contains
    ! Return the maximum element dimension
    end
 
-!  ====
-!  Copy
-!  ====
-
-   create_copy(vec) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Create a replica copy of "vec".
-   end
-
-   copy(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Make a copy of "v".
-   end
-
 !  =======================
 !  Shrinking and expansion
 !  =======================
 
    shrink(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Shrinks self to dimension "dim". Contents are retained.
+   ! Shrink allocatable "self" to dimension "dim" from the end.
+   ! Contents are retained. 
    end
 
    expand(dim) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Expands self to dimension "dim". Contents are retained.
-   ! NOTE: pointer assignment is used to retain contents.
-   ! NOTE: Elements which are added are nullified.
+   ! Expand allocatable "self" to dimension "dim" from the end. 
    end
 
-   append(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Expands self to the required dimension, and append the contents
-   ! of encapsulated vector "v". 
+   append(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Append the contents of vector "v" to allocatable "self".
    end
 
-   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
-   ! Expands self to the required dimension, and append the single
-   ! "value" onto the end of self.
+   append(v1,v2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Appends vectors "v1" and "v2" to allocatable "self".
    end
 
-   append_fifo(value,length) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
+   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Appends the scalar "value" onto the end of allocatable "self".
+   end
+
+   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Extend self and append the vector "value" as the element part.
+   end
+
+   append_fifo(value,length) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
    ! Expands self and insert "value"; if equal to "length", push the
    ! first/oldest vectors down/up the list
    end
@@ -128,6 +119,20 @@ contains
    ! Append together (i.e. concatenate) the vectors in self whose
    ! indices are listed in "list".
    end
+
+   prepend(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Prepend vector "v" to allocatable "self".
+   end
+
+   prepend(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Prepend a single "value" to allocatable "self".
+   end
+
+   prune_element(k) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   ! Removes the element at position "k" from allocatable "self".
+   ! Elements after that position are moved downward.
+   end
+
 
    unflatten(vec_mat) ::: PURE
    ! unflatten the vectors of a vector of vectors into matrices
@@ -170,16 +175,16 @@ contains
    ! a given set of "charges" located at a set of "points", up to a maximum
    ! angular momentum "l_max".  Reference: the book by Helgaker, Olsen, and
    ! Simons, p. 414. NOTE: "qc" and "qs" are created.
-      qc,qs :: VEC{VEC_{REAL}}*
-      charges :: VEC{REAL}
-      points :: MAT{REAL}
-      l_max :: INT
+      qc,qs :: VEC{VEC_{REAL}}@, OUT
+      charges :: VEC{REAL}, IN
+      points :: MAT{REAL}, IN
+      l_max :: INT, IN
 
    ENSURE(charges.dim==points.dim1,"inconsistent charges and points arrays")
    ENSURE(points.dim2==3,"wrong 2nd dimension, points arrays")
    ENSURE(l_max>=0,"l_max must be non-negative")
 
-      Rc,Rs :: VEC{VEC_{VEC_{REAL}}}*
+      Rc,Rs :: VEC{VEC_{VEC_{REAL}}}@
       cv,sv :: VEC{REAL}*
       c,s,q :: REAL
       L,M,n,i :: INT
@@ -198,16 +203,13 @@ contains
 
          do M = 0,L
 
-            cv => Rc(L).element(M).element
-            sv => Rs(L).element(M).element
-
             c = ZERO
             s = ZERO
 
             do i = 1,n
                q = charges(i)
-               c = c + q*cv(i)
-               s = s + q*sv(i)
+               c = c + q*Rc(L).element(M)[i]
+               s = s + q*Rs(L).element(M)[i]
             end
 
             qc(L).element(M) = c
@@ -218,21 +220,12 @@ contains
       end
 
       ! Clean
-      do L = 0,l_max
-         do M = -L,L
-            deallocate(Rs(L)[M].element)
-            deallocate(Rc(L)[M].element)
-         end
-         deallocate(Rs(L).element)
-         deallocate(Rc(L).element)
-      end
       deallocate(Rs)
       deallocate(Rc)
 
    end
 
-   schmidt_orthonormalise(S,scales,n_dependent)
-   ! Schmidt orthonormalise the vectors in "self" using "S" as the
+   schmidt_orthonormalise(S,scales,n_dependent) ! Schmidt orthonormalise the vectors in "self" using "S" as the
    ! metric. "scales" is set to the
    ! normalisation factors used to normalise each column after the Schmidt
    ! procedure. Only those vectors with norm more than the linear dependence

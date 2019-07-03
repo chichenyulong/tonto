@@ -355,9 +355,9 @@ contains
        end 
 
        i, l, m :: INT
-       lebedev :: LEBEDEV*
-       f_vals :: VEC{REAL}*
-       grid :: MAT{REAL}*
+       lebedev :: LEBEDEV@
+       f_vals :: VEC{REAL}@
+       grid :: MAT{REAL}@
 
        lebedev.create
        lebedev.set_n_points(5810)
@@ -380,9 +380,9 @@ contains
        f_vals.destroy
    end 
 
-   get_centre(points) result(centre) ::: selfless
+   get_centre(points) result (centre) ::: selfless
    ! Get the mean of the list of "points"
-       points :: MAT{REAL}*, IN ! Assumed to be a 3 x N matrix
+       points :: MAT{REAL}, IN ! Assumed to be a 3 x N matrix
        centre :: VEC{REAL}(3)
 
        centre(1) = sum(points(1,:)) / points.dim2 
@@ -393,22 +393,26 @@ contains
 
    shift_origin(points) ::: selfless
    ! Shift the origin of the points
-       points :: MAT{REAL}*, INOUT
-       centre :: VEC{REAL}(3)
-       N :: INT
-       ! shift surface to be about origin
-       centre = get_centre(points)
-       do N = 1, points.dim2
-           points(:,N) = (points(:,N) - centre)
-       end
+      points :: MAT{REAL}, INOUT
+
+      centre :: VEC{REAL}(3)
+
+      N :: INT
+
+      centre = get_centre(points)
+      do N = 1, points.dim2
+         points(:,N) = (points(:,N) - centre)
+      end
+
    end
 
    interpolate_surface_functions(grid, surface_sph, property, f1, f2) ::: selfless
    ! Assumes spherical_points is 3 x N and column 1 contains the function values
    ! to be interpolated
-       grid, surface_sph :: MAT{REAL}*, IN
-       property :: VEC{REAL}*, IN
-       f1, f2 :: VEC{REAL}*, OUT
+       grid, surface_sph :: MAT{REAL}, IN
+       property :: VEC{REAL}, IN
+       f1, f2 :: VEC{REAL}@, OUT
+
        N, X :: INT
        minimum_dist, d :: REAL
        p, tmp :: VEC{REAL}(3)
@@ -434,21 +438,22 @@ contains
            ! Hacky test to see if we've got something sensible
            ENSURE(NOT minimum_dist >= 100000000, "Couldn't find any point even close???")
        end
+
    end
 
    get_surface_decomposition(l_max, surface, property, coeff, pcoeff, radius) ::: leaky, selfless, public
    ! Get the spherical harmonic surface decomposition
        l_max :: INT, IN
-       surface :: MAT{REAL}*, INOUT
-       property :: VEC{REAL}*, IN
-       coeff, pcoeff :: VEC{CPX}*, INOUT
+       surface :: MAT{REAL}, INOUT
+       property :: VEC{REAL}, IN
+       coeff, pcoeff :: VEC{CPX}@, OUT
        radius  :: REAL, OUT
 
-       grid_points, grid_sph, surface_sph :: MAT{REAL}*
+       grid_points, grid_sph, surface_sph :: MAT{REAL}@
        ylm :: VEC{CPX}(n_points)
        n_pt, L, M, X, lm :: INT
-       lebedev :: LEBEDEV*
-       cvals, fvals :: VEC{REAL}*
+       lebedev :: LEBEDEV@
+       cvals, fvals :: VEC{REAL}@
        val, cval :: CPX
 
        X = (l_max + 1)**2
@@ -600,12 +605,13 @@ contains
 
    cart2sph(cartesian, spherical) ::: leaky, selfless
    ! expects a 3xN array and will create spherical_points as 3xN
-       cartesian :: MAT{REAL}*, IN
-       spherical :: MAT{REAL}*, OUT
+       cartesian :: MAT{REAL}, IN
+       spherical :: MAT{REAL}@, OUT
 
        N :: INT
        x, y, z :: REAL
        r, theta, phi :: REAL
+
        spherical.create(3, cartesian.dim2)
 
        do N = 1, cartesian.dim2
