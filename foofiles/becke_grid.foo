@@ -1086,8 +1086,6 @@ contains
 
       u,p,p_max,a,np :: INT
       s,s3 :: REAL
-      pt :: MAT{REAL}@
-      wt :: VEC{REAL}@
 
       ! Create unique-atom points and weights
       .atom_weights.destroy
@@ -1250,7 +1248,7 @@ contains
    ENSURE(.unique_atom.allocated,"no unique_atom array")
    ENSURE(.atom_points.allocated,"no atom_points array")
 
-      n_atom,a,val :: INT
+      n_atom,a :: INT
 
       n_atom = .atom.dim
 
@@ -1413,7 +1411,7 @@ contains
       if (present(scheme))  scheem = scheme
 
       select case (scheem)
-      case ("none             "); grid = .pruning_scheme_no(i,nr,do_H)
+      case ("none             "); grid = .pruning_scheme_no(do_H)
       case ("jayatilaka0      "); grid = .pruning_scheme_J0(i,nr,do_H)
       case ("jayatilaka1      "); grid = .pruning_scheme_J1(i,nr,do_H)
       case ("jayatilaka2      "); grid = .pruning_scheme_J2(i,nr,do_H)
@@ -1422,10 +1420,9 @@ contains
 
    end
 
-   pruning_scheme_no(i,nr,do_H) result (grid) ::: private, PURE
+   pruning_scheme_no(do_H) result (grid) ::: private, PURE
    ! Yield the appropriate lebedev "grid"
       self :: IN
-      i,nr :: INT, IN
       do_H :: BIN, IN
       grid :: LEBEDEV
 

@@ -546,7 +546,7 @@ contains
       res :: INT
 
    ENSURE(.atom.associated,"No atom infpormation")
-   ENSURE(.atom_a.associated,"No atom A group")
+   ENSURE(.atom_a.allocated,"No atom A group")
 
       res = .n_bf(.atom_a)
 
@@ -558,7 +558,7 @@ contains
       res :: INT
 
    ENSURE(.atom.associated,"No atom infpormation")
-   ENSURE(.atom_b.associated,"No atom B group")
+   ENSURE(.atom_b.allocated,"No atom B group")
 
       res = .n_bf(.atom_b)
 
@@ -570,7 +570,7 @@ contains
       res :: INT
 
    ENSURE(.atom.associated,"No atom infpormation")
-   ENSURE(.atom_ab.associated,"No atom AB group")
+   ENSURE(.atom_ab.allocated,"No atom AB group")
 
       res = .n_bf(.atom_ab)
 
@@ -1290,9 +1290,9 @@ contains
    ! ".atom_a" and ".atom_b", including theta subspace populations
       self :: INOUT
 
-   ENSURE(.atom_a.associated,"no atom A group")
-   ENSURE(.atom_b.associated,"no atom B group")
-   ENSURE(.atom_ab.associated,"no atom AB group")
+   ENSURE(.atom_a.allocated,"no atom A group")
+   ENSURE(.atom_b.allocated,"no atom B group")
+   ENSURE(.atom_ab.allocated,"no atom AB group")
 
       I :: MAT{REAL}*
       theta_I :: MAT{REAL}*
@@ -1387,9 +1387,9 @@ contains
    ! groups ".atom_a" and everything not in ".atom".
       self :: INOUT
 
-   ENSURE(.atom_a.associated,"no atom A group")
-   ENSURE(.atom_b.associated,"no atom B group")
-   ENSURE(.atom_ab.associated,"no atom AB group")
+   ENSURE(.atom_a.allocated,"no atom A group")
+   ENSURE(.atom_b.allocated,"no atom B group")
+   ENSURE(.atom_ab.allocated,"no atom AB group")
 
       I :: MAT{REAL}*
       theta_I :: MAT{REAL}*
@@ -1507,7 +1507,7 @@ contains
       pop_a,pop_b :: VEC{REAL}, OUT
       theta :: MAT{REAL}, IN
 
-   ENSURE(.atom_ab.associated,"No roby atom group AB")
+   ENSURE(.atom_ab.allocated,"No roby atom group AB")
    ENSURE(pop.dim==theta.dim2,"wrong size, pop")
 
       i :: INT
@@ -1556,9 +1556,9 @@ contains
    ! This routine is necessary in cases where there are degeneracies.
       self :: INOUT
 
-   ENSURE(.atom_a.associated,"No roby atom A")
-   ENSURE(.atom_b.associated,"No roby atom B")
-   ENSURE(.atom_ab.associated,"No roby atom AB")
+   ENSURE(.atom_a.allocated,"No roby atom A")
+   ENSURE(.atom_b.allocated,"No roby atom B")
+   ENSURE(.atom_ab.allocated,"No roby atom AB")
    ENSURE(.atom.associated,"No atom information")
    ENSURE(.theta_I.associated,"No theta_I array")
    ENSURE(.theta_I.dim1==.n_bf_ab,"wrong shape, theta_I")
@@ -1868,9 +1868,9 @@ contains
    ! populations
       self :: INOUT
 
-   ENSURE(.atom_a.associated,"no atom A group")
-   ENSURE(.atom_b.associated,"no atom B group")
-   ENSURE(.atom_ab.associated,"no atom AB group")
+   ENSURE(.atom_a.allocated,"no atom A group")
+   ENSURE(.atom_b.allocated,"no atom B group")
+   ENSURE(.atom_ab.allocated,"no atom AB group")
 
       I :: MAT{REAL}*
       n_a,n_b,n_ab :: INT
@@ -1926,7 +1926,7 @@ contains
       E :: VEC{REAL}, OUT
       theta :: MAT{REAL}, OUT
 
-   ENSURE(.atom_ab.associated,"No roby atom group AB")
+   ENSURE(.atom_ab.allocated,"No roby atom group AB")
    ENSURE(E.dim==.n_bf_ab,"wrong size, E")
 
       i :: INT
@@ -2469,9 +2469,9 @@ contains
 !      self :: IN
 !      R :: MAT{REAL}, OUT
 !
-!   ENSURE(.atom_a.associated,"No roby atom A")
-!   ENSURE(.atom_b.associated,"No roby atom B")
-!   ENSURE(.atom_ab.associated,"No roby atom AB")
+!   ENSURE(.atom_a.allocated,"No roby atom A")
+!   ENSURE(.atom_b.allocated,"No roby atom B")
+!   ENSURE(.atom_ab.allocated,"No roby atom AB")
 !
 !      P_A,P_B,P_AB :: MAT{REAL}*
 !      n_a, n_b, n_ab :: INT
@@ -2504,9 +2504,9 @@ contains
        self :: IN
        I :: MAT{REAL}, OUT
 
-   ENSURE(.atom_a.associated,"No roby atom A")
-   ENSURE(.atom_b.associated,"No roby atom B")
-   ENSURE(.atom_ab.associated,"No roby atom AB")
+   ENSURE(.atom_a.allocated,"No roby atom A")
+   ENSURE(.atom_b.allocated,"No roby atom B")
+   ENSURE(.atom_ab.allocated,"No roby atom AB")
 
       P_B,P_A :: MAT{REAL}*
       n_a, n_b, n_ab :: INT
@@ -2660,11 +2660,13 @@ contains
 !   ! for the Roby projection.
 !      rho,density :: MAT{REAL}
 !      ANO :: MAT{REAL}, optional
+!
 !   ENSURE(rho.dim1==.n_bf,"rho has wrong shape")
 !   ENSURE(rho.is_square,"rho has wrong shape")
 !   ENSURE(density.dim1==.n_bf,"wrong shape, density")
 !   ENSURE(density.is_square,"wrong shape, density")
-!   ENSURE(.atom_ab.associated,"No atom AB group")
+!   ENSURE(.atom_ab.allocated,"No atom AB group")
+!
 !      D,P,rho_P :: MAT{REAL}*
 !      n_bf :: INT
 !      n_bf = .n_bf_ab
@@ -5115,9 +5117,9 @@ contains
    ! Output Theta-space information
       self :: IN
 
-   ENSURE(.atom_a.associated, "No Roby atom A data")
-   ENSURE(.atom_b.associated, "No Roby atom B data")
-   ENSURE(.atom_ab.associated,"No Roby atom AB data")
+   ENSURE(.atom_a.allocated, "No Roby atom A data")
+   ENSURE(.atom_b.allocated, "No Roby atom B data")
+   ENSURE(.atom_ab.allocated,"No Roby atom AB data")
 
       n,i,j :: INT
       cst,snt,ang :: VEC{REAL}*
@@ -5938,9 +5940,9 @@ contains
 !   ! Output Roby angles and populations
 !      self :: IN
 !
-!   ENSURE(.atom_a.associated, "No Roby atom A data")
-!   ENSURE(.atom_b.associated, "No Roby atom B data")
-!   ENSURE(.atom_ab.associated,"No Roby atom AB data")
+!   ENSURE(.atom_a.allocated, "No Roby atom A data")
+!   ENSURE(.atom_b.allocated, "No Roby atom B data")
+!   ENSURE(.atom_ab.allocated,"No Roby atom AB data")
 !   ENSURE(.theta_angle.associated, "No theta angles")
 !
 !      n,i,j :: INT

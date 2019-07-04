@@ -256,6 +256,10 @@ contains
    ! NOTE: this routine returns a pointer!
    end
 
+   to_indices_of_elements_matching(item,source) ::: get_from(VEC{INTRINSIC}), leaky, PURE
+   ! Return in "self" indices of the elements in "source" which match "item"
+   end
+
    is_permutation_of(v,res,permutation) ::: get_from(VEC{INTRINSIC}), PURE
    ! Return true if "self" is a permutation of "v" 
    ! i.e. self = v(permutation).

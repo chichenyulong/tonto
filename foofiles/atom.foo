@@ -8243,7 +8243,7 @@ contains
       nabla_grid :: MAT{REAL}, OUT
       pts :: MAT{REAL}, IN
 
-   ENSURE(.natural_orbitals.number_kind=="real","complex case not implemented")) then
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not implemented")
 
       if (.natural_orbitals.number_kind == "real") then
          .make_nabla_density_grid_r(nabla_grid,pts)
@@ -8259,7 +8259,7 @@ contains
       grid :: VEC{REAL}, OUT
       pts :: MAT{REAL}, IN
 
-   ENSURE(.natural_orbitals.number_kind=="real","complex case not implemented")) then
+   ENSURE(.natural_orbitals.number_kind=="real","complex case not implemented") 
 
       if (.natural_orbitals.number_kind == "real") then
          .make_nabla_density_grid_r(nabla_grid,grid,pts)

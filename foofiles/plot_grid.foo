@@ -2145,7 +2145,10 @@ contains
 
    read_contour_min_color ::: private
    ! Read the color used for the minimum-value contour
+      self :: INOUT
+
       .contour_min_color.read
+
    end
 
    read_contour_max_color ::: private
@@ -2159,7 +2162,10 @@ contains
    read_contour_mid_color ::: private
    ! Read the color used for the mid-value contour, usually the
    ! zero-value contour
+      self :: INOUT
+
       .contour_mid_color.read
+
    end
 
    read_contour_color_scale ::: get_from(OBJECT:read_and_set, VAL?=>STR, SET?=>.set_contour_color_scale), private

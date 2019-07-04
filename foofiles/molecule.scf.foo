@@ -515,7 +515,7 @@ contains
       self :: INOUT
       spin_density :: BIN, optional, IN
 
-   ENSURE(.atom_group.associated,"no atom_group's")
+   ENSURE(.atom_group.allocated,"no atom_group's")
    ENSURE(.cif.associated,"no cif specified")
    ENSURE(.cif.is_mmCIF,"you must use an mmCIF for input!")
    ENSURE(.cif.use_MFCC,"you must set use_MFCC= in the cif= section!")
@@ -6308,7 +6308,7 @@ contains
       E_SCF,E_T,E_Z,E_C,E_K :: REAL, OUT
       fac :: REAL, optional, IN
 
-   ENSURE(.atom_group.associated,"no atom_group info")
+   ENSURE(.atom_group.allocated,"no atom_group info")
    ENSURE(g<=.atom_group.dim,"group out of range")
    ENSURE(.atom_group(g).mol.associated,"no atom_group molecule")
    ENSURE(.atom_group(g).mol.scfdata.associated,"no atom_group molecule scfdata")
@@ -6684,7 +6684,7 @@ contains
    ! All occupied first, then all virtuals, as columns.
       self :: INOUT
 
-   ENSURE(.atom_group.associated,    "no atom_group info")
+   ENSURE(.atom_group.allocated,"no atom_group info")
 
       mol :: MOLECULE*
       P,GP :: MAT{REAL}*
@@ -6769,7 +6769,7 @@ contains
    ! All occupied first, then all virtuals, as columns.
       self :: INOUT
 
-   ENSURE(.atom_group.associated,    "no atom_group info")
+   ENSURE(.atom_group.allocated,"no atom_group info")
 
       mol :: MOLECULE*
       MO,GO :: MAT{REAL}*
@@ -6892,7 +6892,7 @@ contains
    ! All occupied first, then all virtuals, as columns.
       self :: INOUT
 
-   ENSURE(.atom_group.associated,    "no atom_group info")
+   ENSURE(.atom_group.allocated,"no atom_group info")
 
       mol :: MOLECULE*
       MO,GO :: MAT{REAL}*
@@ -7113,7 +7113,7 @@ contains
       MOs :: BIN, optional, IN
       output :: BIN, optional, IN
 
-   ENSURE(.atom_group.associated,"no atom_group info")
+   ENSURE(.atom_group.allocated,"no atom_group info")
    ENSURE(.scfdata.associated,"no scfdata")
 
       do_output,do_MOs :: BIN
@@ -7254,7 +7254,7 @@ contains
       spin_density :: BIN, optional, IN
       do_SFs :: BIN, optional, IN
 
-   ENSURE(.atom_group.associated,"no atom_group info")
+   ENSURE(.atom_group.allocated,"no atom_group info")
    ENSURE(.scfdata.associated,"no scfdata")
    ENSURE(.crystal.associated,"no crystal")
    ENSURE(.cif.associated,"no cif specified")

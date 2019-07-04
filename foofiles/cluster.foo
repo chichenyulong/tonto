@@ -2024,12 +2024,13 @@ contains
 
    create_mol_atom_list(mol_atom,m) ::: leaky
    ! Create the "mol_atom" ATOM list for molecule "m".
+      self :: INOUT
       mol_atom :: VEC{ATOM}*
       m :: INT, IN
 
-   ENSURE(.molecule.associated,"no molecule list")
+   ENSURE(.molecule.allocated,"no molecule list")
+   ENSURE(.molecule(m).element.allocated,"no molecule m atom indices")
    ENSURE(.molecule.dim>=m,"molecule m too large")
-   ENSURE(.molecule(m).element.associated,"no molecule m atom indices")
 
       mol_atom.create(.molecule(m).element.dim)
 

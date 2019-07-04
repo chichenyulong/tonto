@@ -564,7 +564,7 @@ contains
 
    end
 
-   append(v) ::: leaky, pure
+   append(v) ::: leaky, PURE
    ! Append the contents of vector "v" to allocatable "self".
       self :: allocatable, INOUT
       v :: VEC{OBJECT}, IN
@@ -577,7 +577,7 @@ contains
 
    end
 
-   append(v1,v2) ::: leaky, pure
+   append(v1,v2) ::: leaky, PURE
    ! Appends vectors "v1" and "v2" to allocatable "self".
       self :: allocatable, INOUT
       v1,v2 :: VEC{OBJECT}, IN
@@ -590,7 +590,7 @@ contains
 
    end
 
-   append(value) ::: leaky, pure
+   append(value) ::: leaky, PURE
    ! Appends the scalar "value" onto the end of allocatable "self".
       self :: allocatable, INOUT
       value :: OBJECT, IN
@@ -626,7 +626,7 @@ contains
 
    end
 
-   append_only_if_unique(value) ::: leaky, pure
+   append_only_if_unique(value) ::: leaky, PURE
    ! Appends the single scalar "value" to the end of allocatable
    ! "self", but only if the "value" does not already occur in "self"
       self :: allocatable, INOUT
@@ -640,7 +640,7 @@ contains
 
    end
 
-   prepend(v) ::: leaky, pure
+   prepend(v) ::: leaky, PURE
    ! Prepend vector "v" to allocatable "self".
       self :: allocatable, INOUT
       v :: VEC{OBJECT}, IN
@@ -653,7 +653,7 @@ contains
 
    end
 
-   prepend(value) ::: leaky, pure
+   prepend(value) ::: leaky, PURE
    ! Prepend a single "value" to allocatable "self".
       self :: allocatable, INOUT
       value :: OBJECT, IN
@@ -666,7 +666,7 @@ contains
 
    end
 
-   prune_element(k) ::: leaky, pure
+   prune_element(k) ::: leaky, PURE
    ! Removes the element at position "k" from allocatable "self".
    ! Elements after that position are moved downward.
       self :: allocatable, INOUT
@@ -681,7 +681,7 @@ contains
 
    end
 
-   prune(values) ::: leaky, pure
+   prune(values) ::: leaky, PURE
    ! Removes the scalar "values" from allocatable "self" (if there).
    ! The order of the elements is otherwise unchanged.
       self :: allocatable, INOUT
@@ -695,7 +695,7 @@ contains
 
    end
 
-   prune(value) ::: leaky, pure
+   prune(value) ::: leaky, PURE
    ! Remove the scalar "value" from allocatable "self" (if there).
    ! The order of the elements is otherwise unchanged.
       self :: allocatable, INOUT
@@ -1255,6 +1255,478 @@ contains
 !  =======================
 
    read_keywords ::: recursive, leaky
+   ! Read in and process normal (non list-type) keywords from "stdin",
+   ! for allocatable arrays.
+      self :: allocatable
+
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
+
+      word :: STR
+
+      ! Read the opening brace
+      stdin.read(word)
+
+      ! Echo the brace if requested
+      if (tonto.keyword_echo) then
+         stdout.flush
+         stdout.text("keyword found --> " // trim(word))
+      end
+
+      do ! Loop over keywords within brace
+
+         ! Read a keyword
+         stdin.read(word)
+         
+         ! Unexpected end of file?
+         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+         
+         ! Lower case word
+         word.to_lower_case
+         
+         ! Is there an equals next? Then join it on
+         if (NOT stdin.buffer_exhausted) then 
+         if (stdin.next_item=="=") then
+            stdin.skip_next_item
+            word = trim(word) // "="
+         end
+         end
+         
+         ! Echo the keyword if requested
+         if (tonto.keyword_echo) then
+            stdout.flush
+            stdout.text("keyword found --> " // trim(word))
+         end
+         
+         ! Exit if it is a close brace
+         if (word=="}") exit
+         
+         ! Process the keyword
+         .process_keyword(word)
+
+      end
+
+   end
+
+   read_list_keywords ::: recursive, leaky
+   ! Read in and process list-based keywords from "stdin",
+   ! for allocatable arrays.
+      self :: allocatable
+
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol, {")
+
+      word :: STR
+
+      ! Read the open brace
+      stdin.read(word)
+
+      ! Echo the brace if requested
+      if (tonto.keyword_echo) then
+         stdout.flush
+         stdout.text("keyword found --> " // trim(word))
+      end
+
+      do ! Loop over input list-type keywords
+
+         ! Read a keyword
+         stdin.read(word)
+        
+         ! Unexpected end of file?
+         DIE_IF(stdin.reverted,"unexpected end of file while reading list keywords")
+        
+         ! Lower case the word
+         word.to_lower_case
+        
+         ! Is there an equals next? Then join it on
+         if (NOT stdin.buffer_exhausted) then 
+         if (stdin.next_item=="=") then 
+            stdin.skip_next_item
+            word = trim(word) // "="
+         end
+         end
+        
+         ! Echo the keyword if requested
+         if (tonto.keyword_echo) then
+            stdout.flush
+            stdout.text("keyword found --> " // trim(word))
+         end
+        
+         ! Exit if it is a close brace
+         if (word=="}") exit
+        
+         ! Process the list keyword
+         .process_list_keyword(word)
+
+      end
+
+   end
+
+   process_list_keyword(keyword) ::: leaky
+   ! Process a list-type "keyword". For allocatable arrays.
+      self :: allocatable
+      keyword :: STR, IN
+
+      word :: STR
+
+      word = keyword
+      word.to_lower_case
+
+      select case (word)
+
+      ! Standard list-input keywords
+      case("altered_data=    "); .read_altered_data
+      case("append_data=     "); .read_append_data
+      case("data=            "); .read_data
+      case("do               "); .read_keywords
+      case("keys=            "); .read_keys
+      case("new_data=        "); .destroy; .read_data
+      case("process_keys     "); .process_keys
+      case("process_keys_once"); .process_keys_once
+      case("redirect         "); .redirect
+      case("revert           "); .revert
+
+      ! Backtrack & assume data= sans braces
+      case default 
+         stdin.move_to_previous_item
+         .read_data_sans_braces
+
+      end
+
+   end
+
+   read_data ::: leaky
+   ! Repeatedly process keywords in "keys" on the data list from
+   ! "stdin". Opening and closing braces needed. For allocatables.
+      self :: allocatable
+
+      word :: STR
+
+      ! Read open braces
+      stdin.read(word) ! move past open brace
+      ENSURE(word=="{","expecting open bracket symbol, {")
+
+      ! Read data (process keys)
+      .read_data_sans_braces
+
+      ! Read close brace
+      stdin.read(word)
+      ENSURE(word=="}","expecting close bracket symbol, }")
+
+   end
+
+   read_data_sans_braces ::: leaky
+   ! Repeatedly process keywords in "keys" on the data list from
+   ! "stdin". Opening and closing braces not needed. For allocatables.
+      self :: allocatable
+
+      length :: INT
+
+      ! Get the vector length
+      length = .data_length
+
+      if (.allocated) then
+
+         ! If created, is dimension the same
+         ENSURE(length==.dim,"Mismatching new and old data lists")
+
+      else
+
+         ! If not created, create it
+         .create(length)
+
+      end
+
+      ! Process keys
+      .process_keys
+
+   end
+
+   read_data_BL_terminated ::: leaky
+   ! Repeatedly process keywortds in "keys" in a blank-line (BL)
+   ! terminated data list from "stdin". Opening braces *not* needed.
+   ! For allocatable arrays.
+      self :: allocatable
+
+      length :: INT
+
+      ! Get the vector length
+      length = .data_length_BL_terminated
+
+      if (.allocated) then
+
+         ! If created, is dimension the same
+         ENSURE(length==.dim,"Mismatching new and old data lists")
+
+      else
+
+         ! If not created, create it
+         .create(length)
+
+      end
+
+      ! Process keys
+      .process_keys
+
+      ! Empty line there? Read it.
+      stdin.read_line
+      ENSURE(stdin.buffer.string==" ","expecting blank line")
+
+   end
+
+   data_length result (length)
+   ! Return the "length" of the data list from "stdin", by processing
+   ! each keyword in "keys". The data must begin with the first data
+   ! item, *not* a "{" symbol, and must be terminated by a "}" symbol. 
+   ! For allocatable arrays.
+      self :: allocatable
+      length :: INT
+
+   ENSURE(stdin.next_item/="}","empty data list!")
+
+      tmp :: OBJECT@
+      word :: STR
+      line,item :: INT
+
+      ! Remove warning
+      if (FALSE) self = self
+
+      ! Initialize result
+      length = 0
+
+      ! Read first item, initialize line no & item no.
+      stdin.read(word)
+      line = stdin.line_number
+      item = stdin.previous_line_item
+
+      ! Get the length
+      do
+
+         ! Move just before
+         stdin.move_to_previous_item
+
+         ! Read a scalar & increment
+         tmp.create
+         tmp.process_keys
+         tmp.destroy
+         length = length + 1
+
+         ! Closing-brace there?
+         stdin.read(word)
+         word.to_lower_case
+         if (word=="}") exit
+         if (stdin.at_end_of_file) exit
+
+      end
+
+      ! Go back to start
+      stdin.move_to_line(line)
+      stdin.move_to_line_item(item)
+
+   end
+
+   data_length_BL_terminated result (length)
+   ! Read ahead in stdin to get the "length" of the data list. The
+   ! data list begins with the first data item, *not* a "{" symbol.
+   ! The data list must be terminated by a blank line (BL).
+   ! Allocatable version!
+      self :: allocatable
+      length :: INT
+
+   ENSURE(stdin.next_item/="}","empty data list!")
+
+      tmp :: OBJECT@
+      word :: STR
+      line,item :: INT
+
+      ! Remove warning
+      if (FALSE) self = self
+
+      ! Initialize result
+      length = 0
+
+      ! Read first item, initialize line no & item no.
+      stdin.read(word)
+      line = stdin.line_number
+      item = stdin.previous_line_item
+
+      ! Get the length
+      do
+
+         ! Move just before
+         stdin.move_to_previous_item
+
+         ! Read a scalar & increment
+         tmp.create
+         tmp.process_keys
+         tmp.destroy
+         length = length + 1
+
+         ! Blank-line terminated?
+         stdin.read_line
+         if (stdin.buffer.string==" ") exit
+         if (stdin.at_end_of_file) exit
+
+         ! No blank line ... read first item
+         stdin.read(word)
+         if (stdin.at_end_of_file) exit ! Oops
+
+      end
+
+      ! Go back to start
+      stdin.move_to_line(line)
+      stdin.move_to_line_item(item)
+
+   end
+
+   read_altered_data ::: leaky
+   ! Read in from "stdin" indices of data list elements to alter data
+   ! for, followed by the altered data list on which the keywords in
+   ! "keys" are processed. For allocatable arrays.
+      self :: allocatable
+   
+   ENSURE(.allocated,"list does not exist yet")
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol: {")
+
+      word :: STR
+      s :: INT
+
+      ! Read brace {
+      stdin.read(word)
+
+      do
+
+         ! Read index
+         stdin.read(word)
+
+         ! End of indices
+         if (word=="}") exit
+
+         ! Get index
+         ENSURE(word.is_int,"expecting integer list-element index")
+         s = word.to_int
+         ENSURE(s<=.dim,"list-element too large")
+         ENSURE(s>0,"list-element must be positive")
+
+         ! Altered data for this index
+         self(s).process_keys
+
+      end
+
+   end
+
+   read_append_data ::: leaky
+   ! Append data obtained by repeatedly process keywords in "keys" on
+   ! the data list from "stdin". For allocatables.
+      self :: allocatable
+
+   ENSURE(.allocated,"list does not exist yet")
+   ENSURE(stdin.next_item=="{","expecting open bracket symbol: {")
+
+      tmp :: VEC{OBJECT}@
+
+      ! Read data
+      tmp.read_data
+
+      ! Append it
+      .append(tmp)
+
+      ! Clean
+      tmp.destroy
+
+   end
+
+   process_keys ::: leaky
+   ! Process the keywords in "keys" on each element of the list,
+   ! for allocatable arrays.
+      self :: allocatable
+
+      s :: INT
+
+      if (.allocated) then
+
+         ! Process keys on each element
+         do s = 1,.dim
+            self(s).process_keys
+         end
+
+      else 
+
+         ! Process keys once on anonymous element
+         .process_keys_once
+
+      end
+
+   end
+
+   process_keys_once 
+   ! Process the keywords in "keys" just once on an anonymous data
+   ! list. This is useful for setting global variables in the list
+   ! module, e.g. the default order of lists *within* the list data.
+   ! For allocatable arrays.
+      self :: allocatable
+
+      tmp :: OBJECT
+
+      if (FALSE) self = self
+
+      tmp.set_defaults
+      tmp.process_keys
+
+   end
+
+   keys_created result (res)
+   ! Return TRUE if the list-element keys are created,
+   ! for allocatable arrays.
+      self :: allocatable
+      res :: BIN
+
+      tmp :: OBJECT@
+
+      if (FALSE) self = self
+
+      res = tmp.keys_created
+
+   end
+
+   set_keys(the_keys)
+   ! Setting the keywords in "keys" to "the_keys". For allocatables.
+      self :: allocatable
+      the_keys :: VEC{STR}, OUT
+
+      tmp :: OBJECT@
+
+      if (FALSE) self = self
+
+      tmp.set_keys(the_keys)
+
+   end
+
+   clear_keys ::: leaky
+   ! Destroy the keywords in the "keys" array. For allocatables.
+      self :: allocatable
+
+      tmp :: OBJECT@
+
+      if (FALSE) self = self
+
+      tmp.clear_keys
+
+   end
+
+   read_keys ::: leaky
+   ! Read a new set of keywords into "keys". For allocatables.
+      self :: allocatable
+
+      tmp :: OBJECT@
+
+      if (FALSE) self = self
+
+      tmp.read_keys
+
+   end
+
+! Old
+
+   read_keywords ::: recursive, leaky
    ! Read in and process normal (non list-type) keywords from "stdin".
       self :: PTR
 
@@ -1373,22 +1845,22 @@ contains
 
       select case (word)
 
-      ! Standard list-input keywords
-      case("altered_data=    "); .read_altered_data
-      case("append_data=     "); .read_append_data
-      case("data=            "); .read_data
-      case("do               "); .read_keywords
-      case("keys=            "); .read_keys
-      case("new_data=        "); .destroy; .read_data
-      case("process_keys     "); .process_keys
-      case("process_keys_once"); .process_keys_once
-      case("redirect         "); .redirect
-      case("revert           "); .revert
+         ! Standard list-input keywords
+         case("altered_data=    "); .read_altered_data
+         case("append_data=     "); .read_append_data
+         case("data=            "); .read_data
+         case("do               "); .read_keywords
+         case("keys=            "); .read_keys
+         case("new_data=        "); .destroy; .read_data
+         case("process_keys     "); .process_keys
+         case("process_keys_once"); .process_keys_once
+         case("redirect         "); .redirect
+         case("revert           "); .revert
 
-      ! Backtrack & assume data= sans braces
-      case default 
-         stdin.move_to_previous_item
-         .read_data_sans_braces
+         ! Backtrack & assume data= sans braces
+         case default 
+            stdin.move_to_previous_item
+            .read_data_sans_braces
 
       end
 

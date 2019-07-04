@@ -38,7 +38,7 @@ contains
       self :: INOUT
 
    DIE_IF(NOT .atom.associated, "no atoms to fit")
-   DIE_IF(NOT .atom_group.associated, "no atom_group's")
+   DIE_IF(NOT .atom_group.allocated, "no atom_group's")
    DIE_IF(NOT .scfdata.associated,"no scfdata")
    DIE_IF(NOT .crystal.associated, "no crystal")
    DIE_IF(NOT .crystal.data.associated,"no crystal data")
@@ -863,7 +863,7 @@ contains
    ENSURE(.atom.has_all_interpolators,"No interpolators")
    ENSURE(rho_av.dim==interpolator.n_data,"wrong size, rho_av")
    ENSURE(a.is_in_range([1,.n_atom]),"a out of range")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
       pt :: MAT{REAL}*
       rho,Wa :: VEC{REAL}*

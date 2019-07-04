@@ -34,7 +34,7 @@ contains
 !  ==========
 
    create ::: get_from(OBJECT), leaky, PURE
-   ! Allocate an object
+   ! Allocate an object and set defaults
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE

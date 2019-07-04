@@ -2617,7 +2617,7 @@ contains
    ! Prints out the SCF iteration banner (and related options)
       self :: IN
 
-   ENSURE(.table.associated,"no table created")
+   ENSURE(.table.allocated,"no table created")
 
       if (NOT .output) return
 
@@ -2879,7 +2879,7 @@ contains
    put_CP_table_head
    ! Prints out the CP iteration banner
 
-   ENSURE(.table.associated,"no table created")
+   ENSURE(.table.allocated,"no table created")
 
       if (NOT .output) return
 

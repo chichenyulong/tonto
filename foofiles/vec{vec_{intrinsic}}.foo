@@ -100,8 +100,6 @@ contains
       self :: allocatable, OUT
       bounds1,bounds2 :: VEC{INT}(2), IN
 
-      status :: INT
-
       .create(bounds1)
       .create_vec(bounds2)
 

@@ -766,14 +766,13 @@ contains
 
    read_keywords ::: get_from(OBJECT), recursive, leaky
    ! Read data from "stdin" using keyword style input.
-      self :: PTR
    end
 
    process_keyword(keyword) ::: leaky
    ! Process command "keyword". Any required data needed by the "keyword" is
    ! inputted from "stdin".
-      self :: PTR
-      keyword :: STR
+      self :: INOUT
+      keyword :: STR, IN
 
       word :: STR
 
@@ -890,10 +889,6 @@ contains
    end
 
 ! Reading
-
-!   read_units ::: get_from(OBJECT), private
-!   ! Read a string which describes the units to be used
-!   end
 
    read_junk ::: get_from(OBJECT), private
    ! Read in a junk string, useful for ignoring a field

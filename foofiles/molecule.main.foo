@@ -169,8 +169,7 @@ contains
 !  =================
 
    read_keywords ::: get_from(OBJECT), recursive, leaky
-   ! Read data from "stdin" using keyword style input.
-      self :: PTR
+   ! Read and process keywords from "stdin", pointer version.
    end
 
    process_keyword(keyword) ::: recursive, leaky
@@ -1012,7 +1011,9 @@ contains
    ! problem for group off-diagonal blocks; this routine works for progroup
    ! densities only.
    ! Checked, 7/2/06; the energy decomposition was checked by manual rotation
-   ENSURE(.atom_group.associated,"no atom group information")
+      self :: INOUT
+
+   ENSURE(.atom_group.allocated,"no atom group information")
 
       axis :: VEC{REAL}(3)
       angle :: REAL

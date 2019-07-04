@@ -28,7 +28,7 @@ module ATOM_GROUP
 
    implicit none
 
-   keys :: VEC{STR}*, private DEFAULT_NULL
+   keys :: VEC{STR}@
 
 contains
 
@@ -37,49 +37,11 @@ contains
 !  ==========
 
    create ::: get_from(OBJECT), leaky, PURE
-   ! Create an object
+   ! Allocate an object
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
-   ! Destroy an object
-   end
-
-   nullify_ptr_part ::: pure
-   ! Nullify the pointer parts
-      self :: INOUT
-
-      nullify(.atom)
-      nullify(.mol)
-
-   end
-
-   destroy_ptr_part ::: leaky, PURE
-   ! Destroy the pointer parts
-      self :: INOUT
-
-      .atom_index.destroy
-      nullify(.atom) ! do not destroy
-      ! .mol.destroy ! destroy manually
-
-   end
-
-!  ====
-!  Copy
-!  ====
-
-   create_copy(object) ::: get_from(OBJECT), leaky
-   ! Create a copy of object
-   end
-
-   copy(atom_group) ::: leaky
-   ! Set self to be "group".
-      self :: INOUT
-      atom_group :: ATOM_GROUP, IN
-
-      self = atom_group
-
-      .nullify_ptr_part
-
+   ! Deallocate "self"
    end
 
 !  ===========
@@ -360,24 +322,23 @@ contains
 !  ====================
 
    read_keys ::: get_from(OBJECT), leaky
-   ! Read the "keys".
+   ! Read the "keys", allocatable version.
    end
 
    process_keys ::: get_from(OBJECT), leaky
-   ! Process each of the words in the "keys" list.
-   ENSURE(keys.associated,"no keys")
+   ! Process the keywords in the "keys" list, allocatable version.
    end
 
    keys_created result (res) ::: get_from(OBJECT)
-   ! Return TRUE if the list-element keys are created.
+   ! Return TRUE if the "keys" are created, allocatable version.
    end
 
    set_keys(the_keys) ::: get_from(OBJECT)
-   ! This is for setting the "keys" externally.
+   ! Set the "keys" to "the_keys", allocatable version.
    end
 
    clear_keys ::: get_from(OBJECT), leaky
-   ! This is for destroying the "keys" externally.
+   ! Destroying the "keys", allocatable version.
    end
 
 end

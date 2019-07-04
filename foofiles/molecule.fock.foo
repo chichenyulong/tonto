@@ -3543,7 +3543,7 @@ contains
       group :: INT, optional
       res :: BIN
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.allocated,"no atom group information")
    ENSURE(atom_a<=.atom.dim,"atom_a out of range")
    ENSURE(atom_b<=.atom.dim,"atom_b out of range")
 
@@ -3578,7 +3578,7 @@ contains
       atom_a,atom_b,atom_c,atom_d :: INT
       res :: BIN
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.allocated,"no atom group information")
    ENSURE(atom_a<=.atom.dim,"atom_a out of range")
    ENSURE(atom_b<=.atom.dim,"atom_b out of range")
    ENSURE(atom_c<=.atom.dim,"atom_c out of range")
@@ -4050,7 +4050,7 @@ contains
    ENSURE(.density_matrix.restricted.associated,"no restricted density matrix")
    ENSURE(.becke_grid.allocated, "no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms_for_atom")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms_for_atom")
 
       ga0,gax,gay,gaz :: VEC{REAL}@
       gb0,gbx,gby,gbz :: VEC{REAL}@
@@ -4414,7 +4414,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.allocated, "no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms_for_atom")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms_for_atom")
 
       ga0,gb0 :: VEC{REAL}@
       overlapping_atom, pi,pj,pn :: VEC{INT}@
@@ -4723,7 +4723,7 @@ contains
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.allocated, "no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms_for_atom")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms_for_atom")
 
       ga0,gax,gay,gaz :: VEC{REAL}@
       gb0,gbx,gby,gbz :: VEC{REAL}@

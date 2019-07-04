@@ -3519,7 +3519,7 @@ contains
    ENSURE(.dim==(j_max+1)*(j_max+1),"self has wrong length")
 
       Ic,Is :: VEC{VEC_{REAL}}@
-      j,k,jk,sj,sk, L :: INT
+      j,k,jk,sj,sk :: INT
       fac,fk :: REAL
 
       ! Leaky

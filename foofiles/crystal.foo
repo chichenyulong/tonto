@@ -490,7 +490,8 @@ contains
    process_keyword(keyword) ::: leaky
    ! Process command "keyword". Any required data needed by the "keyword" is
    ! inputted from "stdin".
-      keyword :: STR
+      self :: INOUT
+      keyword :: STR, IN
 
       word :: STR
 
@@ -564,12 +565,11 @@ contains
    end
 
    redirect ::: get_from(OBJECT), leaky
-   ! Redirect input. (This code is for non-pointer self objects).
+   ! Redirect input
    end
 
    revert ::: get_from(OBJECT), leaky
-   ! Revert back to previous stdin file. (This code is for non-pointer self
-   ! objects).
+   ! Revert back to previous stdin file
    end
 
    read_kind
@@ -6897,8 +6897,8 @@ contains
       if (.fragment_geometry.associated)        .put_fragment_data
       if (.unit_cell_geometry.associated)       .put_unit_cell_geometry
 
-    ! if (.unit_cell_connection.associated)     .put_uc_connection_table
-    ! if (.uc_vdw_connection.associated)        .put_uc_vdw_connection_table
+    ! if (.unit_cell_connection.allocated)      .put_uc_connection_table
+    ! if (.uc_vdw_connection.allocated)         .put_uc_vdw_connection_table
 
     ! .put_reflection_data
 
@@ -7975,7 +7975,7 @@ contains
    ! Put the .unit_cell_connection table
       self :: IN
 
-   ENSURE(.unit_cell_connection.associated,"no unit_cell_connection")
+   ENSURE(.unit_cell_connection.allocated,"no unit_cell_connection")
    ENSURE(.unit_cell_mol_for_atom.associated,"no unit_cell_mol_for_atom")
 
       m,ma,a,i,b :: INT
@@ -8052,7 +8052,7 @@ contains
    ! Put the .unit_cell_connection table
       self :: IN
 
-   ENSURE(.uc_vdw_connection.associated,"no uc_vdw_connection")
+   ENSURE(.uc_vdw_connection.allocated,"no uc_vdw_connection")
    ENSURE(.unit_cell_mol_for_atom.associated,"no unit_cell_mol_for_atom")
 
       m,ma,a,i,b :: INT
@@ -9464,7 +9464,7 @@ contains
    ! NOTE: .set_defaults must be called before this.
       self :: INOUT
 
-   ENSURE(.unit_cell_connection.associated,"no unit cell connection table")
+   ENSURE(.unit_cell_connection.allocated,"no unit cell connection table")
    ENSURE(.fragment_geometry.associated,"no fragment_geometry")
 
       if (.cluster_info_made) return
@@ -10904,9 +10904,9 @@ contains
       mol_atom :: VEC{ATOM}*
       m :: INT, IN
 
-   ENSURE(.molecule.associated,"no molecule list")
+   ENSURE(.molecule.allocated,"no molecule list")
    ENSURE(.molecule.dim>=m,"molecule m too large")
-   ENSURE(.molecule(m).element.associated,"no molecule m atom indices")
+   ENSURE(.molecule(m).element.allocated,"no molecule m atom indices")
 
       mol_atom.create(.molecule(m).element.dim)
 

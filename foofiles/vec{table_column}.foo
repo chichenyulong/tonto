@@ -32,7 +32,7 @@ contains
 !  ==========
 
    create(dim) ::: get_from(VEC{OBJECT}), leaky, PURE
-   ! Allocate vector
+   ! Allocate vector and set defaults
    end
 
    destroy ::: get_from(VEC{OBJECT}), leaky, PURE
@@ -76,14 +76,11 @@ contains
 !  Inquiry methods
 !  ===============
 
-   no_of_rows result (res)
+   no_of_rows result (res) ::: PURE
    ! The number of rows in the list of columns. They must all be the
    ! same to avoid an error.
       self :: IN
       res :: INT
-
-      ! Check no. of rows
-      .check_no_of_rows
 
       ! OK
       res = self(1).n_rows
@@ -92,6 +89,7 @@ contains
 
    check_no_of_rows ::: private
    ! Check that the number of rows are all the same
+      self :: IN
       i,n1 :: INT
 
       ! No. of rows in col 1
@@ -105,9 +103,10 @@ contains
 
    end
 
-   dash_width(label_rows) result (res) ::: private
+   dash_width(label_rows) result (res) ::: private, PURE
    ! The length of the dashed line
-      label_rows :: BIN, optional
+      self :: IN
+      label_rows :: BIN, optional, IN
       res :: INT
 
       lr,ls :: INT
@@ -237,6 +236,9 @@ contains
 
       row_labels = FALSE
       if (present(label_rows)) row_labels = label_rows
+
+      ! Check no. of rows
+      .check_no_of_rows
 
       ! No. of rows
       n_rows = .no_of_rows

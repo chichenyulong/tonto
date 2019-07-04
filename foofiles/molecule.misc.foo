@@ -2461,7 +2461,7 @@ contains
    ENSURE(.atom.associated,"no atom list")
    ENSURE(.molecular_orbitals.associated, "no MO's")
    ENSURE(.molecular_orbitals.restricted.associated, "no restricted MO's")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
    ENSURE(kappa.dim==.n_atom,"wrong size, kappa")
 
@@ -2548,7 +2548,7 @@ contains
    ENSURE(.atom.associated,"no atom list")
    ENSURE(.molecular_orbitals.associated, "no MO's")
    ENSURE(.molecular_orbitals.restricted.associated, "no restricted MO's")
-   ENSURE(.becke_grid.associated,"no becke_grid")
+   ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
 
       pt :: MAT{REAL}@

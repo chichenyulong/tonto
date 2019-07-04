@@ -94,19 +94,19 @@ contains
    ! Expand allocatable "self" to dimension "dim" from the end. 
    end
 
-   append(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   append(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
    ! Append the contents of vector "v" to allocatable "self".
    end
 
-   append(v1,v2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   append(v1,v2) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
    ! Appends vectors "v1" and "v2" to allocatable "self".
    end
 
-   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
    ! Appends the scalar "value" onto the end of allocatable "self".
    end
 
-   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   append(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
    ! Extend self and append the vector "value" as the element part.
    end
 
@@ -115,15 +115,15 @@ contains
    ! indices are listed in "list".
    end
 
-   prepend(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   prepend(v) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
    ! Prepend vector "v" to allocatable "self".
    end
 
-   prepend(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   prepend(value) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
    ! Prepend a single "value" to allocatable "self".
    end
 
-   prune_element(k) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, pure
+   prune_element(k) ::: get_from(VEC{VEC_{INTRINSIC}}), leaky, PURE
    ! Removes the element at position "k" from allocatable "self".
    ! Elements after that position are moved downward.
    end
@@ -138,7 +138,7 @@ contains
       self :: allocatable, OUT
       list :: VEC{STR}, IN
 
-   ENSURE(.disassociated,"self exists")
+   ENSURE(.deallocated,"self exists")
 
       n,n_rep,i,j,k :: INT
       mask :: VEC{BIN}*
@@ -192,7 +192,7 @@ contains
       list :: VEC{STR}, IN
       unique :: VEC{INT}@, OUT
 
-   ENSURE(.disassociated,"self exists")
+   ENSURE(.deallocated,"self exists")
 
       u,n,n_rep,i,j,k :: INT
       mask :: VEC{BIN}*

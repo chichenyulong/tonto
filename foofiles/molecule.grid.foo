@@ -5921,7 +5921,7 @@ contains
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
    ENSURE(.becke_grid.allocated,"no becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
       bf_lgval :: VEC{VEC_{INT}}@
       bf_grid0 :: VEC{MAT_{REAL}}@
@@ -6485,7 +6485,7 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
       xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
       ra :: VEC{REAL}(3)
@@ -6745,7 +6745,7 @@ contains
    ENSURE(.density_matrix.associated,"no density matrix")
    ENSURE(.becke_grid.allocated,"no becke_grid")
    ENSURE(.becke_grid.finalized,"no finalized becke_grid")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
       xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
       ra :: VEC{REAL}(3)
@@ -7789,7 +7789,7 @@ contains
 
    ENSURE(.natural_orbitals.associated,"no natural orbitals")
    ENSURE(.occupation_numbers.associated,"no natural orbitals")
-   ENSURE(.atom_group.associated,"no atom_group")
+   ENSURE(.atom_group.allocated,"no atom_group")
    ENSURE(.atom_group(1).mol.associated,"no atom_group(1).mol")
 
       prop,prop_grid :: VEC{REAL}@
@@ -11177,7 +11177,7 @@ contains
       grid :: VEC{REAL}
       pt :: MAT{REAL}
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.allocated,"no atom group information")
    ENSURE(.atom_group.dim>=2 ,"must have more than 2 groups")
    ENSURE(.atom_group(1).mol.density_matrix.associated ,"no mol 1 DM!")
    ENSURE(.atom_group(2).mol.density_matrix.associated ,"no mol 2 DM!")
@@ -11230,7 +11230,7 @@ contains
       grid :: VEC{REAL}
       pt :: MAT{REAL}
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.allocated,"no atom group information")
    ENSURE(.atom_group.dim>=2 ,"must have more than 2 groups")
    ENSURE(.atom_group(1).mol.density_matrix.associated ,"no mol 1 DM!")
    ENSURE(.atom_group(2).mol.density_matrix.associated ,"no mol 2 DM!")
@@ -11298,7 +11298,7 @@ contains
       grid :: VEC{REAL}
       pt :: MAT{REAL}
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.allocated,"no atom group information")
    ENSURE(.atom_group.dim>=2 ,"must have more than 2 groups")
    ENSURE(.atom_group(1).mol.density_matrix.associated ,"no mol 1 DM!")
    ENSURE(.atom_group(2).mol.density_matrix.associated ,"no mol 2 DM!")
@@ -11374,7 +11374,7 @@ contains
       grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.allocated,"no atom group information")
    ENSURE(.isosurface.associated,"no isosurface")
 
       list :: VEC{VEC_{INT}}@
@@ -11465,7 +11465,7 @@ contains
       grid :: VEC{REAL}
       pt :: MAT{REAL}
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.allocated,"no atom group information")
    ENSURE(.atom_group.dim>=2 ,"must have more than 2 groups")
    ENSURE(.atom_group(1).mol.density_matrix.associated ,"no mol 1 DM!")
    ENSURE(.atom_group(2).mol.density_matrix.associated ,"no mol 2 DM!")
@@ -11545,7 +11545,7 @@ contains
       grid :: VEC{REAL}, OUT
       pt :: MAT{REAL}, IN
 
-   ENSURE(.atom_group.associated,"no atom group information")
+   ENSURE(.atom_group.allocated,"no atom group information")
    ENSURE(.isosurface.associated,"no isosurface")
 
       list :: VEC{VEC_{INT}}@
@@ -12236,7 +12236,7 @@ contains
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
       ! Overlapping atom electron density
       .:make_overlapping_atom_density(N0,pt,c,D)
@@ -12259,7 +12259,7 @@ contains
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
       xa,ya,za,a2, ga0,gb0 :: VEC{REAL}@
       ra :: VEC{REAL}(3)
@@ -12482,7 +12482,7 @@ contains
          n_pt = pt.dim1
          Wa.create(n_pt)
          if (.use_interpolators) then
-            ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+            ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
             .:make_stockholder_atom_grid_int(Wa,a,pt,.overlapping_atoms_for_atom(a).element)
          else
             .:make_stockholder_atom_grid_acc(Wa,a,pt)
@@ -12678,7 +12678,7 @@ contains
 
    ENSURE(.basis_info_made, "no basis info")
    ENSURE(.atom.associated,  "no atom list")
-   ENSURE(.overlapping_atoms_for_atom.associated,"no overlapping_atoms")
+   ENSURE(.overlapping_atoms_for_atom.allocated,"no overlapping_atoms")
 
       ! Overlapping atom electron density
       .:make_overlapping_atom_density(N0,pt,c,D)
