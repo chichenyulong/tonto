@@ -176,8 +176,8 @@ contains
          .n_cc           = shell.n_cc
          .exponent.create_copy(shell.exponent)
          .contraction.create_copy(shell.contraction)
-         .contraction_s.create_copy(shell.contraction_s)
-         .contraction_p.create_copy(shell.contraction_p)
+       ! .contraction_s.create_copy(shell.contraction_s)
+       ! .contraction_p.create_copy(shell.contraction_p)
       end
 
       if (present(pos)) .position = pos

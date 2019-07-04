@@ -456,6 +456,7 @@ contains
 
       lb,ub :: INT
       chop_end :: BIN
+      old :: VEC{OBJECT}@
 
       ! Chop from start or end?
       chop_end = TRUE
@@ -465,13 +466,16 @@ contains
       lb = lbound(self,dim=1)
       ub = ubound(self,dim=1)
 
+      call move_alloc(self,old)
+      self.create(lb,lb+dim-1)
+
       if (chop_end) then
 
-         self(lb:) = [ self(lb:lb+dim-1) ]
+         self(lb:) = old(lb:lb+dim-1)
 
       else 
 
-         self(lb:) = [ self(ub-dim+1:ub) ]
+         self(lb:) = old(ub-dim+1:ub)
 
       end
 
@@ -487,9 +491,9 @@ contains
 
    ENSURE(dim>=0,"dim not large enough")
 
-      lb,nc :: INT
+      lb,ub :: INT
       grow_end :: BIN
-      val :: OBJECT ! default object
+      old :: VEC{OBJECT}@
 
       ! Chop from start or end?
       grow_end = TRUE
@@ -505,14 +509,17 @@ contains
          ENSURE(dim>0, "dim is not +ve")
         
          ! Bounds
-         nc = dim - .dim
          lb = lbound(self,dim=1)
+         ub = ubound(self,dim=1)
+
+         call move_alloc(self,old)
+         self.create(lb,lb+dim-1)
 
          ! Grow it
          if (grow_end) then
-            self(lb:) = [ self, spread(val,dim=1,ncopies=nc) ]
+            self(lb:ub) = old
          else 
-            self(lb:) = [ spread(val,dim=1,ncopies=nc), self ]
+            self(ub-dim+1:ub) = old
          end
         
       end
@@ -529,8 +536,9 @@ contains
       init :: OBJECT, optional, IN
       grow_start :: BIN, optional, IN
 
-      lb,nc :: INT
+      lb,ub :: INT
       grow_end :: BIN
+      old :: VEC{OBJECT}@
       val :: OBJECT
 
       ! Value to initialize
@@ -552,14 +560,19 @@ contains
          ENSURE(dim>0, "dim is not +ve")
         
          ! Bounds
-         nc = dim - .dim
          lb = lbound(self,dim=1)
+         ub = ubound(self,dim=1)
+
+         call move_alloc(self,old)
+         self.create(lb,lb+dim-1)
 
          ! Grow it
          if (grow_end) then
-            self(lb:) = [ self, spread(val,dim=1,ncopies=nc) ]
+            self(lb:ub) = old
+            self(ub+1:) = init
          else 
-            self(lb:) = [ spread(val,dim=1,ncopies=nc), self ]
+            self(ub-dim+1:ub) = old
+            self(lb:ub-dim)   = init
          end
         
       end
@@ -571,23 +584,24 @@ contains
       self :: allocatable, INOUT
       v :: VEC{OBJECT}, IN
 
+      lb,ub :: INT
+      old :: VEC{OBJECT}@
+
       if (self.deallocated) then
+
          self = v
+
       else
-         self = [ self, v ]
-      end
 
-   end
+         lb = lbound(self,dim=1)
+         ub = ubound(self,dim=1)
 
-   append(v1,v2) ::: leaky, PURE
-   ! Appends vectors "v1" and "v2" to allocatable "self".
-      self :: allocatable, INOUT
-      v1,v2 :: VEC{OBJECT}, IN
+         call move_alloc(self,old)
+         self.create(lb,ub+v.dim)
 
-      if (self.deallocated) then
-         self = [ v1, v2 ]
-      else
-         self = [ self, v1, v2 ]
+         self(lb  :ub) = old
+         self(ub+1:  ) = v
+
       end
 
    end
@@ -597,10 +611,24 @@ contains
       self :: allocatable, INOUT
       value :: OBJECT, IN
 
+      lb,ub :: INT
+      old :: VEC{OBJECT}@
+
       if (self.deallocated) then
+
          self = [ value ]
+
       else
-         self = [ self, value ]
+
+         lb = lbound(self,dim=1)
+         ub = ubound(self,dim=1)
+
+         call move_alloc(self,old)
+         self.create(lb,ub+1)
+
+         self(lb  :ub) = old
+         self(ub+1:  ) = value
+
       end
 
    end
@@ -637,7 +665,7 @@ contains
       if (self.deallocated) then
          self = [ value ]
       else if (all(self/=value)) then
-         self = [ self, value ]
+         self.append(value)
       end
 
    end
@@ -675,11 +703,15 @@ contains
       k :: INT, IN
 
       lb,ub :: INT
+      old :: VEC{OBJECT}@
 
       lb = lbound(self,dim=1)
       ub = ubound(self,dim=1)
 
-      self(lb:ub-1) = [ self(lb:k-1),self(k+1:ub) ]
+      call move_alloc(self,old)
+      self.create(lb,ub-1)
+
+      self(lb:ub-1) = [ self(lb:k-1), self(k+1:ub) ]
 
    end
 

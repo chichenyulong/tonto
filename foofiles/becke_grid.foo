@@ -183,7 +183,7 @@ contains
 ! ==========
 
    create ::: get_from(OBJECT), leaky, PURE
-   ! Allocate an object
+   ! Allocate an object and set defaults
    end
 
    destroy ::: get_from(OBJECT), leaky, PURE
@@ -1066,7 +1066,10 @@ contains
    ! Make the list of unique_atoms, and a map array to the unique list of atoms.
       self :: INOUT
 
-      .atom(:).atomic_number.make_unique_element_maps(.unique_atom,.unique_atom_for) 
+      an :: VEC{INT}@
+
+      an = .atom(:).atomic_number
+      an.make_unique_element_maps(.unique_atom,.unique_atom_for) 
 
       .n_unique_atoms = .unique_atom.dim
 
@@ -1099,7 +1102,7 @@ contains
       ! Loop over atoms with periodic table row=p
       do p = 1,p_max                       
 
-         if (all(period(.atom.atomic_number)/=p)) cycle
+         if (all(period(.atom(:).atomic_number)/=p)) cycle
 
          ! Set unscaled reference grid for row=p
          .set_unscaled_grid(p)             

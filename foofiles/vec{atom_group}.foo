@@ -35,6 +35,10 @@ contains
    ! Allocate vector
    end
 
+   create(lb,ub) ::: get_from(VEC{OBJECT}), leaky, PURE
+   ! Allocate the vector with lower bound "lb", upper bound "ub"
+   end
+
    destroy ::: get_from(VEC{OBJECT}), leaky, PURE
    ! Deallocate the vector
    end

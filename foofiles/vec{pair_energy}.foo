@@ -75,6 +75,7 @@ contains
    ! Create a copy of "vec" for the elements in "list".
    end
 
+
    expand(dim) ::: get_from(VEC{OBJECT}), leaky
    ! Expand the vector "self" to "dim". New slots are left undefined.
    end
@@ -104,7 +105,7 @@ contains
 !  Container operations
 !  ====================
 
-   equivalent_pair(pair) result(res) ::: pure
+   equivalent_pair(pair) result(res)
    ! ?
       self :: IN
       pair :: PAIR_ENERGY, IN
@@ -122,7 +123,7 @@ contains
 
    end
 
-   identical_pair(pair) result (res) ::: pure
+   identical_pair(pair) result (res)
    ! ?
       self :: IN
       pair :: PAIR_ENERGY, IN
@@ -140,10 +141,10 @@ contains
 
    end
 
-   append_or_increment(val) ::: pure
+   append_or_increment(val)
    ! ?
       self :: allocatable, INOUT
-      val :: PAIR_ENERGY, value, IN
+      val :: PAIR_ENERGY, IN
 
       idx :: INT
       idx = -1
@@ -275,7 +276,7 @@ contains
       res = res * KJOULEMOL_PER_HARTREE * fac
    end
 
-   calculated_pairs result (res) ::: pure
+   calculated_pairs result (res)
    ! ?
       self :: IN
       res :: VEC{INT}@

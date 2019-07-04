@@ -261,19 +261,6 @@ contains
 
    end
 
-   append(v1,v2) ::: leaky, pure
-   ! Appends vectors "v1" and "v2" to allocatable "self".
-      self :: allocatable, INOUT
-      v1,v2 :: VEC{VEC_{INTRINSIC}}, IN
-
-      if (self.deallocated) then
-         self = [ v1, v2 ]
-      else
-         self = [ self, v1, v2 ]
-      end
-
-   end
-
    append(value) ::: leaky, pure
    ! Appends the scalar "value" onto the end of allocatable "self".
       self :: allocatable, INOUT

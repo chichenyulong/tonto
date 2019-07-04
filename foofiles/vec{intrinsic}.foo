@@ -172,10 +172,6 @@ contains
    ! Append the contents of vector "v" to allocatable "self".
    end
 
-   append(v1,v2) ::: get_from(VEC{OBJECT}), leaky, pure
-   ! Appends vectors "v1" and "v2" to allocatable "self".
-   end
-
    append(value) ::: get_from(VEC{OBJECT}), leaky, pure
    ! Appends the scalar "value" onto the end of allocatable "self".
    end
@@ -415,29 +411,6 @@ contains
       .expand(dim+v.dim)
 
       self(dim+1:) = v
-
-   end
-
-   append(v1,v2) ::: leaky, PURE
-   ! Expands self and appends the contents of vectors "v1" and "v2".
-      self :: PTR
-      v1,v2 :: VEC{INTRINSIC}, IN
-
-      dim,dim1,dim2 :: INT
-
-      if (.disassociated) then; dim = 0
-      else;                 dim = .dim
-      end
-
-      dim1 = v1.dim
-      dim2 = v2.dim
-
-      .expand(dim+dim1+dim2)
-
-      ! Copy
-      self(dim+1:dim+dim1) = v1
-      dim = dim + dim1
-      self(dim+1:dim+dim2) = v2
 
    end
 
@@ -1357,6 +1330,7 @@ contains
             k = k + 1
             unique_element(k) = n
             unique_element_for(n) = k
+
          else           
 
             ! Bah. It's not unique

@@ -90,8 +90,8 @@ contains
       .nullify_ptr_part
       if (shell.exponent.associated)      .exponent.create_copy(shell.exponent)
       if (shell.contraction.associated)   .contraction.create_copy(shell.contraction)
-      if (shell.contraction_s.associated) .contraction_s.create_copy(shell.contraction_s)
-      if (shell.contraction_p.associated) .contraction_p.create_copy(shell.contraction_p)
+    ! if (shell.contraction_s.associated) .contraction_s.create_copy(shell.contraction_s)
+    ! if (shell.contraction_p.associated) .contraction_p.create_copy(shell.contraction_p)
 
    end
 
