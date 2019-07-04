@@ -1159,6 +1159,7 @@ contains
    ENSURE(.atom_points.allocated,"no atom_points array")
 
       u,a,np,nb :: INT
+      pos :: VEC{REAL}(3)
 
       .atom_grid0.destroy
       .atom_grid1.destroy
@@ -1175,10 +1176,11 @@ contains
          .atom_grid0(u).element.create(np,nb)
          .atom_grid1(u).element.create(np,nb,3)
 
-         ! Make them here
+         ! Make them here; not a local variable, not nice
+         pos = .atom(a).position
          .atom(a).set_position([ZERO,ZERO,ZERO]) ! Reset atom to origin temporarily
          .atom(a).make_nabla_bf_grid(.atom_grid1(u).element,.atom_grid0(u).element,.atom_points(u).element)   
-         .atom(a).set_position(.atom(a).position                    )
+         .atom(a).set_position(pos)
 
       end
 
@@ -1192,7 +1194,10 @@ contains
    ENSURE(.atom.associated,"no atom list")
 
       n_atom,i,j :: INT
-      px,py,pz,dx,dy,dz,d2min,d2 :: REAL
+      px,py,pz :: REAL
+      qx,qy,qz :: REAL
+      dx,dy,dz :: REAL
+      d2min,d2 :: REAL
 
       ! No. of atoms
       n_atom = .atom.dim1
@@ -1217,16 +1222,21 @@ contains
 
             if (i==j) cycle
 
+            ! Atom i position
+            qx = .atom(j).position(1)
+            qy = .atom(j).position(2)
+            qz = .atom(j).position(3)
+
             ! x2 distance
-            dx = px - .atom(j).position(1); dx = dx*dx
+            dx = px - qx; dx = dx*dx
             if (dx>=d2min) cycle
 
             ! y2 distance
-            dy = py - .atom(j).position(2); dy = dy*dy
+            dy = py - qy; dy = dy*dy
             if (dy>=d2min) cycle
 
             ! z2 distance
-            dz = pz - .atom(j).position(3); dz = dz*dz
+            dz = pz - qz; dz = dz*dz
             if (dz>=d2min) cycle
 
             d2 = dx + dy + dz
@@ -1545,7 +1555,6 @@ contains
 
    ENSURE(.finalized,"not finalized; use set_grid_data")
    ENSURE(.unique_atom_for.allocated,"no unique_atom_for array")
-   ENSURE(.atom.associated,"no atom list")
    ENSURE(.atom_weights.allocated,"no atom_weights array")
 
       a,u :: INT
