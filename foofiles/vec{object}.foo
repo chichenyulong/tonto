@@ -485,6 +485,8 @@ contains
       dim :: INT, IN
       grow_start :: BIN, optional, IN
 
+   ENSURE(dim>=0,"dim not large enough")
+
       lb,nc :: INT
       grow_end :: BIN
       val :: OBJECT ! default object

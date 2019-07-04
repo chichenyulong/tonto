@@ -63,6 +63,26 @@ contains
 
    end
 
+!   set_to(object) ::: pure
+!   ! Set up defaults
+!      self :: INOUT
+!      object :: IN
+!
+!      .name                   = object.name
+!      .n_atoms                = object.n_atoms
+!      .atom_index             = object.atom_index
+!      .spin_multiplicity      = object.spin_multiplicity
+!      .spin_multiplicity_set  = object.spin_multiplicity_set
+!      .wavefunction_file_name = object.wavefunction_file_name
+!      .charge                 = object.charge
+!      .MO_file_name           = object.MO_file_name
+!      .transform_group        = object.transform_group
+!      .rotation_matrix        = object.rotation_matrix
+!      .shift                  = object.shift
+!      .n_MOs                  = object.n_MOs
+!
+!   end
+
    set_one_group
    ! Set up one group comprising all the atoms
       self :: INOUT

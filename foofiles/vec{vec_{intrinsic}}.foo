@@ -215,6 +215,8 @@ contains
       self :: allocatable, INOUT
       dim :: INT, IN
 
+   ENSURE(dim>=0,"dim not large enough")
+
       lb,ub :: INT
       old :: VEC{VEC_{INTRINSIC}}@
 
@@ -224,12 +226,13 @@ contains
 
       else
 
-         ENSURE(dim>.dim, "dim not large enough")
-         ENSURE(dim>0, "dim is not +ve")
         
          ! Bounds
          lb = lbound(self,dim=1)
          ub = ubound(self,dim=1)
+
+         ENSURE(dim>.dim,"dim not large enough")
+         ENSURE(dim>=0,"dim not large enough")
 
          ! Save
          old = self
@@ -299,7 +302,7 @@ contains
       else
 
          dim = .dim
-         self.expand(1)
+         self.expand(dim+1)
          self(dim+1).element = value
 
       end

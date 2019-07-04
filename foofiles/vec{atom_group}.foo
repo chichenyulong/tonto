@@ -43,24 +43,24 @@ contains
 !  Shrinking
 !  =========
 
-   shrink(dim,chop_start) ::: get_from(VEC{OBJECT}), leaky, PURE
+   shrink(dim,chop_start) ::: get_from(VEC{OBJECT}), leaky
    ! Shrink allocatable "self" to dimension "dim" from the end.
    ! Contents are retained. If "chop_start" is present and TRUE,
    ! "self" is chopped from the start, and the contents from the end
    ! are retained.
    end
 
-   expand(dim,grow_start) ::: get_from(VEC{OBJECT}), leaky, PURE
+   expand(dim,grow_start) ::: get_from(VEC{OBJECT}), leaky
    ! Expand allocatable "self" to dimension "dim" adding to the end.
    ! If "grow_start" is present and TRUE, then "self" is expanded from
    ! the start, keeping the same lower bound.
    end
 
-   append(v) ::: get_from(VEC{OBJECT}), leaky, PURE
+   append(v) ::: get_from(VEC{OBJECT}), leaky
    ! Append the contents of vector "v" to allocatable "self".
    end
 
-   append(value) ::: get_from(VEC{OBJECT}), leaky, PURE
+   append(value) ::: get_from(VEC{OBJECT}), leaky
    ! Appends the scalar "value" onto the end of allocatable "self".
    end
 
