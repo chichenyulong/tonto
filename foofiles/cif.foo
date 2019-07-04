@@ -50,15 +50,22 @@ contains
 
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: pure
    ! Nullify the pointer parts
+      self :: INOUT
+
       nullify(.file)
+
    end
 
    destroy_ptr_part ::: leaky
    ! Destroy the pointer parts
+      self :: INOUT
+
       .file.destroy
+
    end
+
 
    create_copy(object) ::: get_from(OBJECT), leaky
    ! Create a copy of object
@@ -66,11 +73,13 @@ contains
 
    copy(cif) ::: leaky
    ! Set self to be "cif".
+      self :: OUT
       cif :: CIF, IN
 
       self = cif
 
       .nullify_ptr_part
+
       if (cif.file.associated) .file.create_copy(cif.file)
 
    end
@@ -79,9 +88,10 @@ contains
 !  Set routines
 !  ============
 
-   set_defaults(name) 
+   set_defaults(name)
    ! Set up defaults
-      name :: STR, optional
+      self :: INOUT
+      name :: STR, optional, IN
 
       .file_name        = " "
       .use_CIF2         = FALSE

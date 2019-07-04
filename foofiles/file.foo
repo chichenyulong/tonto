@@ -58,7 +58,7 @@ contains
    ! Allocate an object
    end
 
-   create(name) ::: leaky, PURE
+   create(name) ::: leaky
    ! Allocate an object. Set the filename to "name".
    ! DOes not open the file!
       self :: allocatable, INOUT

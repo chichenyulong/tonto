@@ -1597,7 +1597,7 @@ contains
 !  Finalize
 !  ========
 
-   update
+   update ::: PURE
    ! Update/finalize, as far as possible.
       self :: INOUT
 

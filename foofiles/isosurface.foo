@@ -96,7 +96,7 @@ contains
 
    end
 
-   destroy_info_arrays ::: leaky, PURE
+   destroy_info_arrays ::: leaky
    ! Destroy the isosurface information arrays
       self :: INOUT
 

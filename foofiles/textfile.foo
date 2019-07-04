@@ -155,7 +155,7 @@ contains
    end
 
 
-   create(name) ::: leaky
+   create(name) ::: leaky, PURE
    ! Create a textfile, and optionally set the name. Does not open the file.
       self :: PTR
       name :: STR, optional, IN
@@ -723,12 +723,12 @@ contains
 
    end
 
-   set_name(name)
+   set_name(name) ::: PURE
    ! Set the file name
       self :: INOUT
       name :: STR, IN
 
-   DIE_IF(name==" ","name is blank!")
+   ENSURE(name/=" ","name is blank!")
 
       .name = name
 

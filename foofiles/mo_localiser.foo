@@ -30,95 +30,68 @@ module MO_LOCALISER
 
    implicit none
 
-!   type MO_LOCALISER
-!
-!   algorithm :: STR  DEFAULT(MO_LOCALISER_ALGORITHM)
-!   ! Identifier for the kind of localising algorithm
-!
-!   n_orb :: INT  DEFAULT (0)
-!   ! The number of molecular orbitals to be localised. It must not exceed the
-!   ! first dimension of the dipole integrals.
-!
-!   accuracy :: REAL  DEFAULT(MO_LOCALISER_ACCURACY)
-!   ! Used to decide when the iterative localising algorithm should terminate
-!
-!   iteration :: INT  DEFAULT(0)
-!   ! The iteration counter, for the number of iterative steps used to refine
-!   ! the localised orbitals.
-!
-!   max_iterations :: INT  DEFAULT(MO_LOCALISER_MAXIT)
-!   ! The maximum number of iterations allowed
-!
-!   MO :: MAT{REAL}*  DEFAULT_NULL
-!   ! The original molecular orbitals to be localised.
-!
-!   TM :: MAT{REAL}*  DEFAULT_NULL
-!   ! The orthogonal transformation matrix from the old to the new MO's.
-!
-!   dipole :: MAT3{REAL}*  DEFAULT_NULL
-!   ! The dipole moment integrals in the (current) MO basis, used for the Boys
-!   ! scheme and for analysing the spread of the localised orbitals. The first
-!   ! two indices are for the orbitals, the last for the component x, y, or z.
-!
-!   quadrupole :: MAT3{REAL}*  DEFAULT_NULL
-!   ! The quadrupole moment integrals in the (current) MO, used to analyze the
-!   ! localised orbitals. The first two indices are for the orbitals, the last
-!   ! for the component xx, yy, zz, xy, xz, yz.
-!
-!   end
-
 contains
 
 !  ==========================
 !  Create and destroy methods
 !  ==========================
 
-   create ::: get_from(OBJECT), leaky
+   create ::: get_from(OBJECT), leaky, PURE
    ! Create an object
-      self :: PTR
    end
 
-   destroy ::: get_from(OBJECT), leaky
+   destroy ::: get_from(OBJECT), leaky, PURE
    ! Destroy an object
    end
 
-   nullify_ptr_part
+   nullify_ptr_part ::: pure
    ! Nullify the pointer parts
+      self :: INOUT
+
       nullify(.MO)
       nullify(.TM)
       nullify(.dipole)
       nullify(.quadrupole)
+
    end
 
-   destroy_ptr_part ::: leaky
+   destroy_ptr_part ::: leaky, PURE
    ! Destroy the pointer parts
-    .MO.destroy
-    .TM.destroy
-    .dipole.destroy
-    .quadrupole.destroy
+      self :: INOUT
+
+      .MO.destroy
+      .TM.destroy
+      .dipole.destroy
+      .quadrupole.destroy
+
    end
 
 !  ===========
 !  Set methods
 !  ===========
 
-   set_defaults(MO,dipole,quadrupole) ::: leaky
+   set_defaults(MO,dipole,quadrupole) ::: leaky, PURE
    ! Set up the defaults. "MO" are the original molecular orbital coefficients.
    ! "dipole" are the dipole moment integrals in the AO basis. "quadrupole" are
    ! the quadrupole integrals in the AO basis.
-      MO :: MAT{REAL}, optional
-      dipole,quadrupole :: MAT3{REAL}, optional
+      self :: INOUT
+      MO :: MAT{REAL}, optional, IN
+      dipole,quadrupole :: MAT3{REAL}, optional, IN
+
       i :: INT
+
       .algorithm = MO_LOCALISER_ALGORITHM  ! boys
       .accuracy = MO_LOCALISER_ACCURACY    ! TOL(3)
       .max_iterations = MO_LOCALISER_MAXIT ! 20
       .n_orb = 0
       .iteration = 0
+
       if (present(MO)) then
          .n_orb = MO.dim2
          .MO.create_copy(MO)
          .TM.create(.n_orb,.n_orb)
       end
+
       if (present(dipole)) then
          ENSURE(.MO.associated,"must have MO's")
          ENSURE(.n_orb==.MO.dim2,"inconsistent n_orb")
@@ -130,6 +103,7 @@ contains
             dipole(:,:,i).change_basis_to(.dipole(:,:,i),.MO)
          end
       end
+
       if (present(quadrupole)) then
          ENSURE(.MO.associated,"must have MO's")
          ENSURE(.n_orb==.MO.dim2,"inconsistent n_orb")
@@ -141,6 +115,7 @@ contains
             quadrupole(:,:,i).change_basis_to(.quadrupole(:,:,i),.MO)
          end
       end
+
    end
 
    set_accuracy(acc)

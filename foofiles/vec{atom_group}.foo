@@ -196,7 +196,7 @@ contains
 
    has_all_mols_ptr result (res) ::: PURE
    ! True if all the mols files are defined
-      self :: allocatable
+      self :: allocatable, IN
       res :: BIN
 
       res = TRUE
@@ -226,7 +226,7 @@ contains
 
    has_wavefunction_files_ptr result (res) ::: PURE
    ! True if all the fchk files are defined
-      self :: allocatable
+      self :: allocatable, IN
       res :: BIN
 
       res = FALSE
@@ -246,7 +246,7 @@ contains
 
    has_MO_files_ptr result (res) ::: PURE
    ! True if all the MO files are defined
-      self :: allocatable
+      self :: allocatable, IN
       res :: BIN
 
       res = FALSE
@@ -266,7 +266,7 @@ contains
 
    has_atom_indices_ptr result (res) ::: PURE
    ! True if all the fchk files are defined
-      self :: allocatable
+      self :: allocatable, IN
       res :: BIN
 
       res = FALSE

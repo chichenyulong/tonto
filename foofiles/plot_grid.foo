@@ -45,23 +45,6 @@ contains
 
    end
 
-   create_copy(grid) ::: leaky
-   ! Create a grid object which is a duplicate of grid.
-      self :: PTR
-      grid :: PLOT_GRID, IN
-      .create
-      .copy(grid)
-   end
-
-   copy(grid)
-   ! Copy the contents of grid to self.
-      grid :: PLOT_GRID, IN
-      self = grid
-      .nullify_ptr_part
-      if (grid.atom.associated)              .atom.copy(grid.atom)
-      if (grid.bond_density_atom.associated) .bond_density_atom.copy(grid.bond_density_atom)
-   end
-
    destroy ::: get_from(OBJECT), leaky
    ! Destroy an object
    end
@@ -91,11 +74,36 @@ contains
 
    end
 
+
+   create_copy(grid) ::: leaky
+   ! Create a grid object which is a duplicate of grid.
+      self :: PTR
+      grid :: PLOT_GRID, IN
+
+      .create
+      .copy(grid)
+
+   end
+
+   copy(grid)
+   ! Copy the contents of grid to self.
+      grid :: PLOT_GRID, IN
+
+      self = grid
+
+      .nullify_ptr_part
+
+      if (grid.atom.associated)              .atom.copy(grid.atom)
+      if (grid.bond_density_atom.associated) .bond_density_atom.copy(grid.bond_density_atom)
+
+   end
+
+
 !  ============
 !  Set routines
 !  ============
 
-   set_defaults ::: PURE
+   set_defaults
    ! Set up a default grid.
       self :: INOUT
 
