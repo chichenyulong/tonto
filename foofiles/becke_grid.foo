@@ -2302,10 +2302,10 @@ contains
       zero.create(n1_SS+1,n_pt) ! Note lbound
 
       ! Make the distances and zero partition weights
-      .make_distances(dist,zero,pt,atom_a,overlapping_atom) 
+      .make_distances(dist,zero,pt,atom_a,overlapping_atom,n1_SS) 
 
       ! Compress out the zero partition weights
-      .compress_zeros(pt,wt,f0,dist,zero,atom_a)
+      ::compress_zeros_0(pt,wt,f0,dist,zero,n1_SS)
       zero.destroy
 
       if (n_atom>1) then
@@ -2313,7 +2313,7 @@ contains
          ! Make the Stratman-Scuseria weights
          n_pt = wt.dim
          ww.create(n1_SS+1,n_pt)
-         .make_SS_weight(ww,dist,atom_a,overlapping_atom)
+         .make_SS_weight(ww,dist,atom_a,overlapping_atom,n1_SS)
    
          ! Incorporate SS weights into grid weights
          wt(n1_SS+1:) = ww(n1_SS+1:) * wt(n1_SS+1:)
@@ -2359,10 +2359,10 @@ contains
       zero.create(n1_SS+1,n_pt) ! Note lbound
 
       ! Make the distances and zero partition weights
-      .make_distances(dist,zero,pt,atom_a,overlapping_atom) 
+      .make_distances(dist,zero,pt,atom_a,overlapping_atom,n1_SS) 
 
       ! Compress out the zero partition weights
-      .compress_zeros(pt,wt,f0,gx,gy,gz,dist,zero,atom_a)
+      ::compress_zeros_1(pt,wt,f0,gx,gy,gz,dist,zero,n1_SS)
       zero.destroy
 
       if  (n_atom>1) then
@@ -2370,7 +2370,7 @@ contains
          ! Make the Stratman-Scuseria weights
          n_pt = wt.dim
          ww.create(n1_SS+1,n_pt)
-         .make_SS_weight(ww,dist,atom_a,overlapping_atom)
+         .make_SS_weight(ww,dist,atom_a,overlapping_atom,n1_SS)
    
          ! Incorporate SS weights into grid weights
          wt(n1_SS+1:) = ww(n1_SS+1:) * wt(n1_SS+1:)
@@ -2383,22 +2383,20 @@ contains
 
    end
 
-   compress_zeros(pt,wt,f0,dist,zero,atom_a) ::: leaky, private, PURE
+   compress_zeros(pt,wt,f0,dist,zero,n1_SS) ::: selfless, leaky, private, PURE
    ! Compress the zero values out of the grid and displacements
-      self :: IN
-      pt,f0, dist :: MAT{REAL}@, OUT
-      wt :: VEC{REAL}@, OUT
-      zero :: VEC{BIN}, IN
-      atom_a :: INT, IN
+      n1_SS :: INT, IN
+      pt,f0, dist :: MAT{REAL}@, INOUT
+      wt :: VEC{REAL}@, INOUT
+      zero :: VEC{BIN}(n1_SS+1:), IN ! Note lbound
 
       map :: VEC{INT}@
-      n_pt,n1_SS,n_ov,n_bf, n,k,b,f :: INT
+      n_pt,n_ov,n_bf, n,k,b,f :: INT
 
       if (NOT any(zero)) return
 
       ! Sizes
       n_pt  = pt.dim1
-      n1_SS = .atom_n1_SS(atom_a)
       n_ov  = dist.dim2
       n_bf  = f0.dim2
 
@@ -2450,22 +2448,20 @@ contains
 
    end
 
-   compress_zeros(pt,wt,f0,gx,gy,gz,dist,zero,atom_a) ::: leaky, private, PURE
+   compress_zeros(pt,wt,f0,gx,gy,gz,dist,zero,n1_SS) ::: selfless, leaky, private, PURE
    ! Compress the zero values out of the grid and displacements
-      self :: IN
-      pt,f0,gx,gy,gz, dist :: MAT{REAL}@, OUT
-      wt :: VEC{REAL}@, OUT
-      zero :: VEC{BIN}, IN
-      atom_a :: INT, IN
+      n1_SS :: INT, IN
+      pt,f0,gx,gy,gz, dist :: MAT{REAL}@, INOUT
+      wt :: VEC{REAL}@, INOUT
+      zero :: VEC{BIN}(n1_SS+1:), IN
 
-      map :: VEC{INT}*
-      n_pt,n1_SS,n_ov,n_bf, n,k,b,f :: INT
+      map :: VEC{INT}@
+      n_pt,n_ov,n_bf, n,k,b,f :: INT
 
       if (NOT any(zero)) return
 
       ! Sizes
       n_pt  = pt.dim1
-      n1_SS = .atom_n1_SS(atom_a)
       n_ov  = dist.dim2
       n_bf  = f0.dim2
 
@@ -2523,23 +2519,23 @@ contains
 
    end
 
-   make_distances(dist,zero,pt,atom_a,overlapping_atom) ::: private, PURE
+   make_distances(dist,zero,pt,atom_a,overlapping_atom,n1_SS) ::: private, PURE
    ! Make the distances "dist" to the grid points "pt" for "atom_a"
    ! from the "overlapping_atoms" .  Also return "zero(:,b)" which is
    ! TRUE for grid points (:) which have zero SS partiton weight.
       self :: IN
       dist :: MAT{REAL}, OUT
-      zero :: VEC{BIN}, OUT ! Note lbound
+      n1_SS :: INT, IN
+      zero :: VEC{BIN}(n1_SS+1:), OUT ! Note lbound
       pt :: MAT{REAL}, IN
       atom_a :: INT, IN
       overlapping_atom :: VEC{INT}, IN
 
-      n_pt,n1_SS,n_ov,n,b,ob :: INT
+      n_pt,n_ov,n,b,ob :: INT
       b1,b2,b3,x,y,z,r,r_max_SS :: REAL
 
       ! Sizes
       n_pt  = pt.dim1
-      n1_SS = .atom_n1_SS(atom_a)
       n_ov  = overlapping_atom.dim
 
       ! Initially no zero weights
@@ -2578,7 +2574,7 @@ contains
             r_max_SS = .r_max_SS_for_atom(ob)
 
             do n = n1_SS+1,n_pt
-                
+
                 if (zero(n)) cycle
 
                 x = pt(n,1) - b1
@@ -2597,25 +2593,25 @@ contains
 
    end
 
-   make_SS_weight(wt,dist,atom_a,overlapping_atom) ::: private, PURE
+   make_SS_weight(wt,dist,atom_a,overlapping_atom,n1_SS) ::: private, PURE
    ! Make the Stratman-Scuseria partition weight "wt" for "atom_a"
    ! given distances "dist" from the grid points to all relevant
    ! "overlapping_atoms"
       self :: IN
-      wt :: VEC{REAL}, OUT ! Note lbound
+      n1_SS :: INT, IN
+      wt :: VEC{REAL}(n1_SS+1:), OUT ! Note lbound
       dist :: MAT{REAL}, IN
       atom_a :: INT, IN
       overlapping_atom :: VEC{INT}, IN
 
       ws,wb, ra,rb :: VEC{REAL}@
       zero :: VEC{BIN}@
-      n_pt,n1_SS,n_ov, n,a,b,oa,ob :: INT
+      n_pt,n_ov, n,a,b,oa,ob :: INT
       a1,a2,a3,b1,b2,b3,x,y,z,r :: REAL
       aa,c5,c21,c35,mu,mu1,mu2,mu3,mu5,mu7 :: REAL
 
       ! Sizes
       n_pt  = ubound(wt,1)
-      n1_SS = .atom_n1_SS(atom_a)
       n_ov  = overlapping_atom.dim
 
       ! Stratmann-Scuseria constants
