@@ -3184,10 +3184,10 @@ contains
       table( 9).set_heading(" Bond")
       table( 9).set_subhead("index")
       table( 9).set_width_from(ONE)
-      table(10).set_heading("% Cov")
+      table(10).set_heading("% Ion")
       table(10).set_heading("Pythag.")
       table(10).set_width_from(100d0)
-      table(11).set_heading("% Cov")
+      table(11).set_heading("% Ion")
       table(11).set_heading("Araki")
       table(11).set_width_from(100d0)
 
@@ -3222,8 +3222,8 @@ contains
          cAB(i) =  .cov_index(a,b)
          iAB(i) =  .ion_index(a,b)
          tAB(i) = .bond_index(a,b)
-         pAB(i) = .percent_covalency_P(a,b)
-         aAB(i) = .percent_covalency_A(a,b)
+         pAB(i) = 100-.percent_covalency_P(a,b)
+         aAB(i) = 100-.percent_covalency_A(a,b)
       end
       end
 
@@ -3324,10 +3324,10 @@ contains
       table(5).set_heading(" Bond")
       table(5).set_subhead("index")
       table(5).set_width_from(ONE)
-      table(6).set_heading("% Cov")
+      table(6).set_heading("% Ion")
       table(6).set_subhead("Pythag.")
       table(6).set_width_from(100d0)
-      table(7).set_heading("% Cov")
+      table(7).set_heading("% Ion")
       table(7).set_subhead("Araki")
       table(7).set_width_from(100d0)
 
@@ -3351,8 +3351,8 @@ contains
          cAB(i) =  .cov_index(a,a)
          iAB(i) =  .ion_index(a,a)
          tAB(i) = .bond_index(a,a)
-         pAB(i) = .percent_covalency_P(a,a)
-         aAB(i) = .percent_covalency_A(a,a)
+         pAB(i) = 100-.percent_covalency_P(a,a)
+         aAB(i) = 100-.percent_covalency_A(a,a)
       end
 
       ! Set table data
@@ -3507,10 +3507,10 @@ contains
       table(14).set_heading(" Bond")
       table(14).set_subhead("index")
       table(14).set_width_from(ONE)
-      table(15).set_heading("% Cov")
+      table(15).set_heading("% Ion")
       table(15).set_subhead("Pythag.")
       table(15).set_width_from(100d0)
-      table(16).set_heading("% Cov")
+      table(16).set_heading("% Ion")
       table(16).set_subhead("Araki")
       table(16).set_width_from(100d0)
 
@@ -3574,8 +3574,8 @@ contains
          cAB(i) =  .cov_index(pair(i,1),pair(i,2))
          iAB(i) =  .ion_index(pair(i,1),pair(i,2))
          tAB(i) = .bond_index(pair(i,1),pair(i,2))
-         pAB(i) = .percent_covalency_P(pair(i,1),pair(i,2))
-         aAB(i) = .percent_covalency_A(pair(i,1),pair(i,2))
+         pAB(i) = 100-.percent_covalency_P(pair(i,1),pair(i,2))
+         aAB(i) = 100-.percent_covalency_A(pair(i,1),pair(i,2))
          end
 
          ! Set table data
@@ -3737,10 +3737,10 @@ contains
       table(7).set_heading(" Bond")
       table(7).set_subhead("index")
       table(7).set_width_from(ONE)
-      table(8).set_heading("% Cov")
+      table(8).set_heading("% Ion")
       table(8).set_subhead("Pythag.")
       table(8).set_width_from(100d0)
-      table(9).set_heading("% Cov")
+      table(9).set_heading("% Ion")
       table(9).set_subhead("Araki")
       table(9).set_width_from(100d0)
 
@@ -3787,8 +3787,8 @@ contains
          cAB(i) =  .cov_index(pair(i,1),pair(i,2))
          iAB(i) =  .ion_index(pair(i,1),pair(i,2))
          tAB(i) = .bond_index(pair(i,1),pair(i,2))
-         pAB(i) = .percent_covalency_P(pair(i,1),pair(i,2))
-         aAB(i) = .percent_covalency_A(pair(i,1),pair(i,2))
+         pAB(i) = 100-.percent_covalency_P(pair(i,1),pair(i,2))
+         aAB(i) = 100-.percent_covalency_A(pair(i,1),pair(i,2))
          end
 
          ! Sort & rearrange
@@ -3862,7 +3862,7 @@ contains
       labels :: MAT{STR}*
       dash :: VEC{STR}*
       s1,s2,val :: STR
-      dist,cAB,iAB,tAB,pAB,aAB :: VEC{REAL}*
+      dist,cAB,iAB,tAB,aAB :: VEC{REAL}*
       has_unique_labels :: BIN
 
       ! Anything to do?
@@ -3921,15 +3921,13 @@ contains
          cAB.create(n_bonds)
          iAB.create(n_bonds)
          tAB.create(n_bonds)
-         pAB.create(n_bonds)
          aAB.create(n_bonds)
 
          forall (i=1:n_bonds)
          cAB(i) =  .cov_index(pair(i,1),pair(i,2))
          iAB(i) =  .ion_index(pair(i,1),pair(i,2))
          tAB(i) = .bond_index(pair(i,1),pair(i,2))
-         pAB(i) = .percent_covalency_P(pair(i,1),pair(i,2))
-         aAB(i) = .percent_covalency_A(pair(i,1),pair(i,2))
+         aAB(i) = 100-.percent_covalency_A(pair(i,1),pair(i,2))
          end
 
          ! Put latex table
@@ -3955,7 +3953,7 @@ contains
             if (.output_ci_latex_labels) then
                val = REAL:to_str(cAB(a),"f10.2",left_justify=TRUE)
             else
-               val = INT:to_str(nint(pAB(a)),"i3",left_justify=TRUE)
+               val = INT:to_str(nint(aAB(a)),"i3",left_justify=TRUE)
             end
             stdout.put(val,width=len_trim(val))
             stdout.put("}",width=1)
@@ -3964,7 +3962,6 @@ contains
 
          ! Clean
          aAB.destroy
-         pAB.destroy
          tAB.destroy
          iAB.destroy
          cAB.destroy
@@ -4022,7 +4019,7 @@ contains
       dash :: VEC{STR}*
       vdw :: VEC{INT}(2)
       s1,s2,val :: STR
-      dist,cAB,iAB,tAB,pAB,aAB :: VEC{REAL}*
+      dist,cAB,iAB,tAB,aAB :: VEC{REAL}*
       has_unique_labels :: BIN
 
       ! Anything to do?
@@ -4082,15 +4079,13 @@ contains
          cAB.create(n_bonds)
          iAB.create(n_bonds)
          tAB.create(n_bonds)
-         pAB.create(n_bonds)
          aAB.create(n_bonds)
 
          forall (i=1:n_bonds)
          cAB(i) =  .cov_index(pair(i,1),pair(i,2))
          iAB(i) =  .ion_index(pair(i,1),pair(i,2))
          tAB(i) = .bond_index(pair(i,1),pair(i,2))
-         pAB(i) = .percent_covalency_P(pair(i,1),pair(i,2))
-         aAB(i) = .percent_covalency_A(pair(i,1),pair(i,2))
+         aAB(i) = 100-.percent_covalency_A(pair(i,1),pair(i,2))
          end
 
          ! Put latex table
@@ -4117,7 +4112,6 @@ contains
 
          ! Clean
          aAB.destroy
-         pAB.destroy
          tAB.destroy
          iAB.destroy
          cAB.destroy
@@ -4144,7 +4138,7 @@ contains
          aAB.create(1)
 
          tAB(1) = .bond_index(vdw(1),vdw(2))
-         aAB(1) = .percent_covalency_A(vdw(1),vdw(2))
+         aAB(1) = 100-.percent_covalency_A(vdw(1),vdw(2))
 
             ! Print tabele
             stdout.put("\namebond{a",width=11)
@@ -4184,7 +4178,7 @@ contains
       labels :: MAT{STR}*
       dash :: VEC{STR}*
       s1,s2,val :: STR
-      dist,cAB,iAB,tAB,pAB,aAB :: VEC{REAL}*
+      dist,cAB,iAB,tAB,aAB :: VEC{REAL}*
       non_H_atom_for_atom,non_H_atom :: VEC{INT}@
       has_unique_labels :: BIN
 
@@ -4249,15 +4243,13 @@ contains
          cAB.create(n_bonds)
          iAB.create(n_bonds)
          tAB.create(n_bonds)
-         pAB.create(n_bonds)
          aAB.create(n_bonds)
 
          forall (i=1:n_bonds)
          cAB(i) =  .cov_index(pair(i,1),pair(i,2))
          iAB(i) =  .ion_index(pair(i,1),pair(i,2))
          tAB(i) = .bond_index(pair(i,1),pair(i,2))
-         pAB(i) = .percent_covalency_P(pair(i,1),pair(i,2))
-         aAB(i) = .percent_covalency_A(pair(i,1),pair(i,2))
+         aAB(i) = 100-.percent_covalency_A(pair(i,1),pair(i,2))
          end
 
          ! Put latex table
@@ -4294,7 +4286,6 @@ contains
 
          ! Clean
          aAB.destroy
-         pAB.destroy
          tAB.destroy
          iAB.destroy
          cAB.destroy
