@@ -6975,7 +6975,7 @@ contains
       ra :: VEC{REAL}(3)
       overlapping_atom, pi,pj,pn :: VEC{INT}@
       skipa0,skipab, skipa,skipb :: VEC{BIN}@
-      DD :: MAT{REAL}*
+      DD :: MAT{REAL}@
       grida0,gridax,griday,gridaz :: MAT{REAL}@
       gridb0,gridbx,gridby,gridbz :: MAT{REAL}@
       gridc0,gridcx,gridcy,gridcz :: MAT{REAL}@
@@ -7468,7 +7468,7 @@ contains
       ra :: VEC{REAL}(3)
       overlapping_atom, pi,pj,pn :: VEC{INT}@
       skipa0,skipab, skipa,skipb :: VEC{BIN}@
-      DDa,DDb :: MAT{REAL}*
+      DDa,DDb :: MAT{REAL}@
       grida0,gridax,griday,gridaz :: MAT{REAL}@
       gridb0,gridbx,gridby,gridbz :: MAT{REAL}@
       gridc0,gridcx,gridcy,gridcz :: MAT{REAL}@

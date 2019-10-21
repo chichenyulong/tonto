@@ -5113,8 +5113,8 @@ contains
    ENSURE(.atom_ab.allocated,"No Roby atom AB data")
 
       n,i,j :: INT
-      cst,snt,ang :: VEC{REAL}*
-      evn,par :: VEC{INT}*
+      csb,csa,snb,sna,ang :: VEC{REAL}@
+      evn,par :: VEC{INT}@
       table :: VEC{TABLE_COLUMN}@
 
       stdout.flush
@@ -5158,8 +5158,10 @@ contains
       evn.create(n)
       par.create(n)
       ang.create(n)
-      cst.create(n)
-      snt.create(n)
+      csb.create(n)
+      csa.create(n)
+      sna.create(n)
+      snb.create(n)
 
       ! Set column data
       j = 0
@@ -5172,9 +5174,11 @@ contains
          j = j + 1
          evn(j) = i
          par(j) = .pair(i)
-         cst(j) = .eigen_C(i)
-         snt(j) = .eigen_I(i)
-         ang(j) = atan2(.theta_ion_index(i),.theta_cov_index(i))*DEGREE_PER_RADIAN
+         csb(j) = .eigen_C(i)
+         csa(j) = .eigen_C(.pair(i))
+         snb(j) = .eigen_I(i)
+         sna(j) = .eigen_I(.pair(i))
+         ang(j) = atan2(snb(j),csb(j))*DEGREE_PER_RADIAN
 
       end
 
@@ -5188,7 +5192,7 @@ contains
       stdout.flush
 
       ! Do table
-      table.create(5)
+      table.create(7)
 
       table(1).set_heading("Bond")
       table(1).set_subhead("orb.")
@@ -5196,6 +5200,7 @@ contains
 
       table(2).set_heading("Anti")
       table(2).set_subhead("bond")
+      table(2).set_sb3head("orb.")
       table(2).set_values(par(1:n))
 
       table(3).set_heading("theta")
@@ -5204,18 +5209,32 @@ contains
 
       table(4).set_heading("  cos")
       table(4).set_subhead("theta")
-      table(4).set_values(cst(1:n))
+      table(4).set_sb3head("bond")
+      table(4).set_values(csb(1:n))
 
-      table(5).set_heading("  sin")
+      table(5).set_heading("  cos")
       table(5).set_subhead("theta")
-      table(5).set_values(snt(1:n))
+      table(5).set_sb3head("anti")
+      table(5).set_values(csa(1:n))
+
+      table(6).set_heading("  sin")
+      table(6).set_subhead("theta")
+      table(6).set_sb3head("bond")
+      table(6).set_values(snb(1:n))
+
+      table(7).set_heading("  sin")
+      table(7).set_subhead("theta")
+      table(7).set_sb3head("bond")
+      table(7).set_values(sna(1:n))
 
       table.put(label_rows=FALSE)
 
       ! Clean
       table.destroy
-      snt.destroy
-      cst.destroy
+      snb.destroy
+      sna.destroy
+      csb.destroy
+      csa.destroy
       ang.destroy
       par.destroy
       evn.destroy
@@ -5279,8 +5298,7 @@ contains
          c_m(j) = .theta_pop_C(.pair(i))
          cov(j) = .theta_cov_index(i)
          ion(j) = .theta_ion_index(i)
-       ! ang(j) = .theta_angle(i)
-         ang(j) = atan2(ion(j),cov(j))*DEGREE_PER_RADIAN
+         ang(j) = atan2(.eigen_I(i),.eigen_C(i))*DEGREE_PER_RADIAN
 
           bi(j) = sqrt(cov(j)*cov(j)+ion(j)*ion(j))
 
