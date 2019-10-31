@@ -2717,7 +2717,7 @@ contains
 
    end
 
-   atomic_scf ::: leaky
+   atomic_ks ::: leaky
    ! Do an atomic SCF calculation. This is mor initial guesses.
    ! The molecule comprises a single atom. The .molecular_orbitals,
    ! .orbital_energies, and .density_matrix are produced as results.
@@ -2728,7 +2728,93 @@ contains
    ENSURE(.basis_info_made,"no basis info")
    ENSURE(.scfdata.associated,"no scfdata")
 
-      .:initialize_atomic_scf
+      .:initialize_atomic_ks
+
+      .:put_scf_banner_and_options
+      .:put_scf_table_header
+
+      ! HF iteration
+      do
+
+         .:extrapolate_fock_matrix
+
+         .:update_molecular_orbitals
+
+         .BASE:make_scf_density_matrix
+
+         .:make_fock_matrix
+
+         .:update_scfdata
+         .:update_scfdata_error
+
+         .:put_scf_table_body
+
+         if (.scfdata.scf_done) exit
+
+      end
+
+      .:put_scf_results
+
+      .:archive_scf_results
+
+      .:cleanup_scf
+
+      ! Set up the second KS iteration
+      select case (.scfdata.scf_kind)
+      case("rhf         ")
+         .scfdata.set_scf_kind("rks")
+         .scfdata.set_initial_density("restricted")
+      case("uhf         ")
+         .scfdata.set_scf_kind("uks")
+         .scfdata.set_initial_density("unrestricted")
+      case default
+         .scfdata.set_scf_kind("rks")
+         .scfdata.set_initial_density("restricted")
+      end
+
+      .:put_scf_banner_and_options
+      .:put_scf_table_header
+
+      ! KS iteration
+      do
+
+         .:extrapolate_fock_matrix
+
+         .:update_molecular_orbitals
+
+         .BASE:make_scf_density_matrix
+
+         .:make_fock_matrix
+
+         .:update_scfdata
+         .:update_scfdata_error
+
+         .:put_scf_table_body
+
+         if (.scfdata.scf_done) exit
+
+      end
+
+      .:put_scf_results
+
+      .:archive_scf_results
+
+      .:cleanup_scf
+
+   end
+
+   atomic_hf ::: leaky
+   ! Do an atomic SCF calculation. This is mor initial guesses.
+   ! The molecule comprises a single atom. The .molecular_orbitals,
+   ! .orbital_energies, and .density_matrix are produced as results.
+      self :: INOUT
+
+   ENSURE(.atom.associated,   "no atom list")
+   ENSURE(.atom.dim==1 ,   "atom list length > 1")
+   ENSURE(.basis_info_made,"no basis info")
+   ENSURE(.scfdata.associated,"no scfdata")
+
+      .:initialize_atomic_hf
 
       .:put_scf_banner_and_options
       .:put_scf_table_header
@@ -2855,7 +2941,7 @@ contains
 
    end
 
-   initialize_atomic_scf ::: leaky
+   initialize_atomic_hf ::: leaky
    ! Initialize an atomic SCF procedure
    ! The guess must be core. There is not fitting.
       self :: INOUT
@@ -2895,6 +2981,57 @@ contains
 
       ! Initialise SCF table (leaky)
       .scfdata.set_table
+
+   end
+
+   initialize_atomic_ks ::: leaky
+   ! Initialize an atomic DFT SCF procedure
+   ! The guess must be core. There is not fitting.
+      self :: INOUT
+
+   ENSURE(.scfdata.associated,"no scfdata")
+   ENSURE(NOT .scfdata.fitting,"fitting not allowed")
+
+      ! Overlap matrix
+      .INTS:make_overlap_matrix
+      .BASE:put_debug(.overlap_matrix,"initialize_atomic_scf: overlap_matrix")
+
+      ! Integration grids
+      if (.scfdata.is_DFT_calculation) .BASE:initialize_DFT_grids
+      .BASE:put_debug(.overlap_matrix,"initialize_atomic_scf: overlap_matrix")
+
+      ! Get core guess -- different
+      .scfdata.set_is_guess(TRUE)
+      .:make_core_guess
+
+      ! Core matrix: both kinds
+      .core_matrix.destroy
+      .:make_core_matrix(.scfdata.spinorbital_kind)
+      .:make_core_matrix(.scfdata.molecular_orbital_kind)
+
+      ! Get Fock matrix
+      .:make_fock_matrix
+
+      ! Reset all SCF data (except DFT parts)
+      .scfdata.reset
+      .:update_scfdata_energies
+
+      ! Initialise DIIS error
+      .:update_scfdata_error
+
+      ! Initialise Schwarz inequality integrals (leaky)
+      .FOCK:initialize_max_I
+
+      ! Initialise SCF table (leaky)
+      .scfdata.set_table
+
+      ! Set up the initial HF iteration
+      select case (.scfdata.scf_kind)
+      case("rks         "); .scfdata.set_scf_kind("rhf")
+      case("uks         "); .scfdata.set_scf_kind("uhf")
+      case default;         .scfdata.set_scf_kind("rhf")
+      end
+
 
    end
 
@@ -7319,7 +7456,7 @@ contains
 
       name,guess :: STR
       mol :: MOLECULE*
-      n_group,g :: INT
+      n_group,g,i :: INT
       SFs :: BIN
 
       ! Do structure factors?
@@ -7329,7 +7466,6 @@ contains
       ! Need these for SFs
       if (SFs) &
          .:make_ANO_data
-
       ! Output details?
       .BASE:put_atom_group_mols
 
@@ -7414,7 +7550,7 @@ contains
       mol :: MOLECULE*
       n_group,g :: INT
       SFs :: BIN
-      x,w :: INT
+      i,x,w :: INT
       n_bf :: VEC{INT}@
 
       ! Do structure factors?
@@ -7821,7 +7957,11 @@ contains
       if (.scfdata.guess_output) mol.BASE:put_basics
 
       ! Do the atomic SCF
-      mol.:atomic_scf
+      if (.scfdata.is_DFT_calculation) then
+         mol.:atomic_ks
+      else
+         mol.:atomic_hf
+      end if
 
       ! Spherically average the AO density
       mol.BASE:make_ao_density_matrix

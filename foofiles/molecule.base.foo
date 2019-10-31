@@ -3770,6 +3770,7 @@ contains
 
       mol :: MOLECULE*
       name :: STR
+      i :: INT
       
       ! This is atom_group(g).mol
       mol.:create
