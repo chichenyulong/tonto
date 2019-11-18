@@ -2730,6 +2730,7 @@ contains
 
       .:initialize_atomic_ks
 
+
       .:put_scf_banner_and_options
       .:put_scf_table_header
 
@@ -2737,7 +2738,7 @@ contains
       do
 
          .:extrapolate_fock_matrix
-
+      
          .:update_molecular_orbitals
 
          .BASE:make_scf_density_matrix
@@ -3031,7 +3032,6 @@ contains
       case("uks         "); .scfdata.set_scf_kind("uhf")
       case default;         .scfdata.set_scf_kind("rhf")
       end
-
 
    end
 
@@ -5005,6 +5005,7 @@ contains
    ! Solve for the molecular orbitals.  Requires a set of old molecular
    ! orbitals.
    ENSURE(.scfdata.associated,"no scfdata")
+      
 
       .:MO_eigen_update
    
@@ -5120,6 +5121,7 @@ contains
          end
       end
 
+      
       ! Get rotation U from old to new MO's
       U.create(.n_bf,.n_bf)
       G.solve_symmetric_eigenproblem(MO_energies,U)
@@ -7741,7 +7743,7 @@ contains
    ! NOTE: this applies only to molecules with more than one atom.
       self :: INOUT
 
-      if (.n_atom<=1) return
+     ! if (.n_atom<=1) return
 
       ! Atomic natural orbitals, atomic energy, atomic density
       ! matrices, and atomic MO's
