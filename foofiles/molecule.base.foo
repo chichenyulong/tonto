@@ -3246,7 +3246,7 @@ contains
    write_aim2000_wfn_file(give_name) ::: leaky
    ! Writes a proaim2000 .wfn file
    ENSURE(.orbital_energies.is_associated_with_genre("restricted"), "No orbital energies")
-   ENSURE(.molecular_orbitals.is_associated_with_genre("restricted"), "No orbitals")
+   ENSURE(.molecular_orbitals.is_allocated_with_genre("restricted"), "No orbitals")
       give_name :: STR, optional
       name :: STR
       wfnfile :: TEXTFILE*
@@ -3361,7 +3361,7 @@ contains
    write_florian_wfn_file(give_name) ::: leaky
    ! Writes a full wavefunction .ffn file
    ENSURE(.orbital_energies.is_associated_with_genre("restricted"), "No orbital energies")
-   ENSURE(.molecular_orbitals.is_associated_with_genre("restricted"), "No orbitals")
+   ENSURE(.molecular_orbitals.is_allocated_with_genre("restricted"), "No orbitals")
       give_name :: STR, optional
       name :: STR
       wfnfile :: TEXTFILE*

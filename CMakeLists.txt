@@ -64,16 +64,6 @@ else()
         ${PROJECT_BINARY_DIR}/external/lapack-release/lib/libblas.a
     )
     message(STATUS "Compiling lapack: ${LAPACK_LIBRARIES}")
-else()
-  find_package(LAPACK)
-  if(${LAPACK_FOUND})
-  else()
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/lapack-release)
-    set(LAPACK_LIBRARIES
-        ${PROJECT_BINARY_DIR}/external/lapack-release/lib/liblapack.a
-        ${PROJECT_BINARY_DIR}/external/lapack-release/lib/libblas.a
-    )
-    message(STATUS "Compiling lapack: ${LAPACK_LIBRARIES}")
     set(COMPILE_LAPACK "ON")
   endif()
 endif()
